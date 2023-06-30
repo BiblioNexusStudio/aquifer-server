@@ -24,10 +24,12 @@ jobs:
         run: yarn install --frozen-lockfile
       - name: Build
         run: yarn run build
+      - name: Zip artifact
+        run: zip -r aquifer-server-build.zip .
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: aquifer-server-build
+          name: aquifer-server-build.zip
           path: .
 
   deploy_to_dev:
@@ -41,6 +43,8 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: aquifer-server-build
+      - name: Unzip artifact
+        run: unzip aquifer-server-build.zip && rm aquifer-server-build.zip
       - name: Deploy to Azure WebApp
         id: deploy-to-webapp
         uses: azure/webapps-deploy@2.2.9
