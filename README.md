@@ -27,8 +27,8 @@ $ yarn run start:prod
 # unit tests
 $ yarn run test
 
-# e2e tests
-$ yarn run test:e2e
+# integration tests
+$ yarn run test:integration
 
 # test coverage
 $ yarn run test:cov

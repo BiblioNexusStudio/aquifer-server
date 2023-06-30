@@ -1,0 +1,50 @@
+name: Post-merge
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  AZURE_WEBAPP_NAME: KyleTesting
+  AZURE_WEBAPP_PACKAGE_PATH: '.'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.16.0
+          cache: yarn
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Build
+        run: yarn run build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: aquifer-server-build
+          path: .
+
+  deploy_to_dev:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: dev
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v3
+        with:
+          name: aquifer-server-build
+      - name: Deploy to Azure WebApp
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@2.2.9
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: .

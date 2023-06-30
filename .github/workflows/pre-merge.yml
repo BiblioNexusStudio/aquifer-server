@@ -1,9 +1,6 @@
-name: Lint and Test
+name: Pre-merge
 
 on:
-  push:
-    branches:
-      - master
   pull_request:
     branches:
       - '**'
@@ -25,7 +22,7 @@ jobs:
         run: yarn run lint
       - name: Test
         run: yarn run test
-      - name: E2E
-        run: yarn run test:e2e
+      - name: Test (integration)
+        run: yarn run test:integration
       - name: Build
         run: yarn run build
