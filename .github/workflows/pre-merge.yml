@@ -6,7 +6,7 @@ on:
       - '**'
 
 jobs:
-  build:
+  lint_and_test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
