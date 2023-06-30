@@ -29,8 +29,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: aquifer-server-build.zip
-          path: .
+          name: aquifer-server-build
+          path: aquifer-server-build.zip
 
   deploy_to_dev:
     runs-on: ubuntu-latest
