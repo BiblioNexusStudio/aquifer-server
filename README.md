@@ -21,6 +21,13 @@ $ yarn run start:dev
 $ yarn run start:prod
 ```
 
+## Lint
+
+```bash
+# lint
+$ yarn run lint
+```
+
 ## Test
 
 ```bash
@@ -29,9 +36,6 @@ $ yarn run test
 
 # integration tests
 $ yarn run test:integration
-
-# test coverage
-$ yarn run test:cov
 ```
 
 ## License
