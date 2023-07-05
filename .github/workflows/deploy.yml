@@ -1,4 +1,4 @@
-name: Post-merge
+name: Deploy
 
 on:
   push:
