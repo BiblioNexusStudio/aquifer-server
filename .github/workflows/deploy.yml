@@ -50,3 +50,22 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: aquifer-server-build.zip
+
+  e2e_tests:
+    runs-on: ubuntu-latest
+    needs: deploy_to_dev
+    steps:
+      - name: Checkout E2E test code
+        uses: actions/checkout@v3
+        with:
+          repository: BiblioNexusStudio/aquifer-e2e
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.16.0
+          cache: yarn
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Test
+        run: yarn run test
+
