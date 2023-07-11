@@ -22,6 +22,12 @@ jobs:
         run: yarn run lint
       - name: Test
         run: yarn run test
+      - name: Setup test env
+        run: cp .env.test .env
+      - name: Spin up MSSQL and wait for DB creation
+        run: cd dev && docker-compose up -d && ./wait-for-db.sh
+      - name: Run migrations
+        run: yarn migration:run
       - name: Test (integration)
         run: yarn run test:integration
       - name: Build
