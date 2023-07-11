@@ -16,7 +16,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:integration": "jest --config ./src/__tests__/jest-integration.json"
+    "test:integration": "jest --config ./src/jest-integration.json"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -57,8 +57,8 @@
       "json",
       "ts"
     ],
-    "rootDir": "src/__tests__",
-    "testRegex": ".*\\.test\\.ts$",
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
