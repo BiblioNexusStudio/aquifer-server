@@ -63,7 +63,7 @@ jobs:
       - name: Setup env
         run: cp .env.dev .env
       - name: Reinstall dependencies (to make sure CLI is there)
-        run: yarn install --frozen-lockfile
+        run: yarn install --check-files
       - name: Run migrations
         run: yarn migration:run
       - name: Deploy to Azure WebApp
