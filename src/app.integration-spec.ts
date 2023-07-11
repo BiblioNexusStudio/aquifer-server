@@ -19,7 +19,7 @@ describe('AppController (integration)', () => {
         await app.close();
     });
 
-    it.skip('/passages (GET)', () => {
+    it('/passages (GET)', () => {
         return request(app.getHttpServer())
             .get('/passages')
             .expect(200)

@@ -43,6 +43,12 @@ jobs:
       name: dev
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v3
+        with:
+          name: aquifer-server-build
+      - name: Unzip artifact
+        run: unzip aquifer-server-build.zip
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
@@ -56,12 +62,10 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Setup env
         run: cp .env.dev .env
+      - name: Reinstall dependencies (to make sure CLI is there)
+        run: yarn install --frozen-lockfile
       - name: Run migrations
         run: yarn migration:run
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v3
-        with:
-          name: aquifer-server-build
       - name: Deploy to Azure WebApp
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2.2.9
