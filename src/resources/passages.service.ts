@@ -6,6 +6,7 @@ import { upsertEntityUsingRepository } from '../utils/repository-upsert';
 import { Repository } from 'typeorm';
 import { CreatePassageDto } from './dto/create-passage.dto';
 import { Passage } from './entities/passage.entity';
+import { Resource } from './entities/resource.entity';
 
 @Injectable()
 export class PassagesService {
@@ -34,6 +35,16 @@ export class PassagesService {
             );
         } else {
             throw new Error('Invalid passage reference');
+        }
+    }
+
+    async linkPassageToResource(passage: Passage, resource: Resource) {
+        await passage.loadRelation('resources');
+        if (passage.resources.every((r) => r.id !== resource.id)) {
+            passage.resources.push(resource);
+            return await this.passagesRepository.save(passage);
+        } else {
+            return passage;
         }
     }
 

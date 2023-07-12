@@ -9,4 +9,5 @@ async function bootstrap() {
     });
     server.context.ResourceType = ResourceType;
 }
+// eslint-disable-next-line
 bootstrap();

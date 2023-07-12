@@ -22,19 +22,21 @@ export class ResourcesService {
         });
 
         const tag = passage.toString();
-        const resource = this.resourcesRepository.create({
+        let resource = this.resourcesRepository.create({
             type: dto.type,
             englishLabel: tag,
             tag,
         });
 
-        // TODO: create passage-resource link
-
-        return await upsertEntityUsingRepository(
+        resource = await upsertEntityUsingRepository(
             resource,
             ['type', 'tag'],
             this.resourcesRepository,
         );
+
+        await this.passagesService.linkPassageToResource(passage, resource);
+
+        return resource;
     }
 
     findAll() {
