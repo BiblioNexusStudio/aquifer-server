@@ -280,6 +280,10 @@ export class BookChapterVerse {
         this.chapter = chapter;
         this.verse = verse;
     }
+
+    toString(): string {
+        return `${this.book} ${this.chapter}:${this.verse}`;
+    }
 }
 
 export function bookChapterVerseToBnVerse(bookChapterVerse: BookChapterVerse): number {

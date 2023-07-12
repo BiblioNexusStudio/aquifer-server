@@ -1,3 +1,4 @@
+import { Language } from '../../core/entities/language.entity';
 import {
     Entity,
     Column,
@@ -6,20 +7,22 @@ import {
     PrimaryGeneratedColumn,
     ManyToOne,
     JoinColumn,
+    Index,
+    VersionColumn,
 } from 'typeorm';
-import { Language } from './language.entity';
 import { Resource } from './resource.entity';
 
 @Entity({ name: 'ResourceContent' })
+@Index(['resource', 'language'], { unique: true })
 export class ResourceContent {
     @PrimaryGeneratedColumn({ name: 'Id' })
     id: number;
 
-    @ManyToOne(() => Resource)
+    @ManyToOne(() => Resource, { nullable: false })
     @JoinColumn({ name: 'ResourceId' })
     resource: Resource;
 
-    @ManyToOne(() => Language)
+    @ManyToOne(() => Language, { nullable: false })
     @JoinColumn({ name: 'LanguageId' })
     language: Language;
 
@@ -29,7 +32,7 @@ export class ResourceContent {
     @Column({ name: 'Summary', nullable: true })
     summary: string | undefined;
 
-    @Column({ name: 'CurrentVersion' })
+    @VersionColumn({ name: 'CurrentVersion', default: 1 })
     currentVersion: number;
 
     @Column({ name: 'IsComplete' })
