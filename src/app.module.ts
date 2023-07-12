@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PassagesModule } from './passages/passages.module';
+import { ResourcesModule } from './resources/resources.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
 
@@ -15,7 +15,7 @@ import configuration from './config/configuration';
             }),
             inject: [ConfigService],
         }),
-        PassagesModule,
+        ResourcesModule,
     ],
     controllers: [],
     providers: [],

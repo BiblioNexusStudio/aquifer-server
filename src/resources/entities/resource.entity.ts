@@ -6,9 +6,11 @@ import {
     PrimaryGeneratedColumn,
     JoinTable,
     ManyToMany,
+    Index,
 } from 'typeorm';
 
 @Entity({ name: 'Resources' })
+@Index(['type', 'tag'], { unique: true })
 export class Resource {
     @PrimaryGeneratedColumn({ name: 'Id' })
     id: number;
@@ -16,7 +18,7 @@ export class Resource {
     @Column({ type: 'int', name: 'Type' })
     type: ResourceType;
 
-    @ManyToMany(() => Resource)
+    @ManyToMany(() => Resource, { onDelete: 'NO ACTION', onUpdate: 'NO ACTION' })
     @JoinTable({
         name: 'SupportingResources',
         joinColumn: { name: 'ParentResourceId' },
@@ -38,5 +40,5 @@ export class Resource {
 }
 
 export enum ResourceType {
-    CCBT_ER = 0,
+    CBBT_ER = 0,
 }
