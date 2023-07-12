@@ -8,10 +8,11 @@ import {
     ManyToMany,
     Index,
 } from 'typeorm';
+import { BNBaseEntity } from '../../utils/bn-base-entity';
 
 @Entity({ name: 'Resources' })
 @Index(['type', 'tag'], { unique: true })
-export class Resource {
+export class Resource extends BNBaseEntity {
     @PrimaryGeneratedColumn({ name: 'Id' })
     id: number;
 

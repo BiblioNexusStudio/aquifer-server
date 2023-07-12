@@ -5,9 +5,10 @@ import {
     CreateDateColumn,
     PrimaryGeneratedColumn,
 } from 'typeorm';
+import { BNBaseEntity } from '../../utils/bn-base-entity';
 
 @Entity({ name: 'Languages' })
-export class Language {
+export class Language extends BNBaseEntity {
     @PrimaryGeneratedColumn({ name: 'Id' })
     id: number;
 

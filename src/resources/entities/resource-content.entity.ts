@@ -11,10 +11,11 @@ import {
     VersionColumn,
 } from 'typeorm';
 import { Resource } from './resource.entity';
+import { BNBaseEntity } from '../..//utils/bn-base-entity';
 
 @Entity({ name: 'ResourceContent' })
 @Index(['resource', 'language'], { unique: true })
-export class ResourceContent {
+export class ResourceContent extends BNBaseEntity {
     @PrimaryGeneratedColumn({ name: 'Id' })
     id: number;
 

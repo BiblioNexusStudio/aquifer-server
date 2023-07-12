@@ -7,4 +7,5 @@ async function bootstrap() {
     app.enableCors();
     await app.listen(app.get(ConfigService).get('PORT'));
 }
+// eslint-disable-next-line
 bootstrap();
