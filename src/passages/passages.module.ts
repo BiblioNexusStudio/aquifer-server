@@ -6,9 +6,10 @@ import { Resource } from './entities/resource.entity';
 import { ResourcesService } from './resources.service';
 import { ResourceContent } from './entities/resource-content.entity';
 import { Language } from './entities/language.entity';
+import { Passage } from './entities/passage.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Language, Resource, ResourceContent])],
+    imports: [TypeOrmModule.forFeature([Language, Passage, Resource, ResourceContent])],
     controllers: [PassagesController],
     providers: [PassagesService, ResourcesService],
 })
