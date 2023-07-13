@@ -20,13 +20,10 @@ $ yarn install
 
 ```bash
 # development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
+$ yarn start:dev
 
 # production mode
-$ yarn run start:prod
+$ yarn start:prod
 ```
 
 ## REPL
@@ -34,7 +31,7 @@ $ yarn run start:prod
 The REPL is useful for playing around with data from the command line.
 
 ```bash
-$ yarn run repl
+$ yarn repl
 ```
 
 Then an example from inside the REPL:
@@ -47,18 +44,53 @@ Then an example from inside the REPL:
 
 ```bash
 # lint
-$ yarn run lint
+$ yarn lint
+```
+
+## Database Migrations
+
+There are two ways to create migrations. Generated and manual.
+
+* **Generated** - This method is easier and preferred, it will look at the
+  defined entities and attempt to create a migration by looking at the diff of
+  the current database structure and the expected structure.
+```bash
+$ yarn migration:generate migrations/name-here
+```
+
+* **Manual** - If for some reason the generate command isn't working or you
+  just need more fine-grained control, use this to create the file and then
+  manually write your own queries.
+```bash
+$ yarn migration:create migrations/name-here
+```
+
+To run migrations:
+```bash
+$ yarn migration:run
 ```
 
 ## Test
 
 ```bash
 # unit tests
-$ yarn run test
+$ yarn test
 
 # integration tests
-$ yarn run test:integration
+$ yarn migration:test # make sure your test DB is up to date
+$ yarn test:integration
 ```
+
+## Troubleshooting
+
+* Database connection issues during integration tests
+  * Make sure you've setup the database correctly using the `Setup`
+    instructions above.
+* Missing columns during integration tests
+  * Make sure you've run the migrations for test `yarn migration:test`
+* Unexpected data during integration tests
+  * The integration tests should be run inside transactions, but if data gets
+    into a weird state, try running `yarn reset:db:test`
 
 ## License
 

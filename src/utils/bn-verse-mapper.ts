@@ -297,7 +297,7 @@ export function bookChapterVerseToBnVerse(bookChapterVerse: BookChapterVerse): n
 
 export function bnVerseToBookChapterVerse(bnVerse: number): BookChapterVerse {
     const stringified = bnVerse.toString();
-    const bookNumber = stringified.substring(1, 3);
+    const bookNumber = parseInt(stringified.substring(1, 3), 10);
     const chapterNumber = parseInt(stringified.substring(3, 6), 10);
     const verseNumber = parseInt(stringified.substring(6, 9), 10);
     return new BookChapterVerse(integerToBookMapping[bookNumber], chapterNumber, verseNumber);

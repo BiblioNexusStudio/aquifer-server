@@ -1,4 +1,4 @@
-import { bnVerseToBookChapterVerse } from '../../utils/bn-verse-mapper';
+import { bnVerseToBookChapterVerse, BookChapterVerse } from '../../utils/bn-verse-mapper';
 import {
     Entity,
     Column,
@@ -15,11 +15,14 @@ import { BNBaseEntity } from '../../utils/bn-base-entity';
 @Entity({ name: 'Passages' })
 @Index(['type', 'startBnVerse', 'endBnVerse'], { unique: true })
 export class Passage extends BNBaseEntity {
+    private _startBookChapterVerse: BookChapterVerse;
+    private _endBookChapterVerse: BookChapterVerse;
+
     @PrimaryGeneratedColumn({ name: 'Id' })
     id: number;
 
     @Column({ type: 'int', name: 'Type' })
-    type: PassageType;
+    type: PassageTypeInt;
 
     @ManyToMany(() => Resource, { onDelete: 'NO ACTION', onUpdate: 'NO ACTION' })
     @JoinTable({
@@ -41,13 +44,27 @@ export class Passage extends BNBaseEntity {
     @UpdateDateColumn({ name: 'UpdateDate' })
     updateDate: Date;
 
+    get startBookChapterVerse() {
+        if (!this._startBookChapterVerse) {
+            this._startBookChapterVerse = bnVerseToBookChapterVerse(this.startBnVerse);
+        }
+        return this._startBookChapterVerse;
+    }
+
+    get endBookChapterVerse() {
+        if (!this._endBookChapterVerse) {
+            this._endBookChapterVerse = bnVerseToBookChapterVerse(this.endBnVerse);
+        }
+        return this._endBookChapterVerse;
+    }
+
     toString(): string {
-        const start = bnVerseToBookChapterVerse(this.startBnVerse);
-        const end = bnVerseToBookChapterVerse(this.endBnVerse);
-        return `${start}-${end}`;
+        return `${this.startBookChapterVerse}-${this.endBookChapterVerse}`;
     }
 }
 
-export enum PassageType {
+export enum PassageTypeInt {
     CBBT_ER = 0,
 }
+
+export type PassageType = keyof typeof PassageTypeInt;

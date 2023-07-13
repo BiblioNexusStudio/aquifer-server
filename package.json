@@ -19,10 +19,12 @@
         "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
         "test:integration": "jest --config ./src/jest-integration.json",
         "migration:create": "typeorm-ts-node-esm migration:create",
-        "migration:generate": "typeorm-ts-node-esm migration:generate",
-        "migration:revert": "typeorm-ts-node-esm migration:revert -d src/database-migrations/config.ts",
-        "migration:run": "typeorm-ts-node-esm migration:run -d src/database-migrations/config.ts",
-        "query": "typeorm-ts-node-esm query -d src/database-migrations/config.ts"
+        "migration:generate": "gen() { yarn typeorm-ts-node-esm migration:generate \"${1}\" -d migrations/config.ts; }; gen",
+        "migration:revert": "typeorm-ts-node-esm migration:revert -d migrations/config.ts",
+        "migration:run": "typeorm-ts-node-esm migration:run -d migrations/config.ts",
+        "migration:run:test": "DATABASE_NAME=biblionexus-test-db typeorm-ts-node-esm migration:run -d migrations/config.ts",
+        "query": "typeorm-ts-node-esm query -d migrations/config.ts",
+        "reset:db:test": "DATABASE_NAME=master yarn query 'DROP DATABASE [biblionexus-test-db]; CREATE DATABASE [biblionexus-test-db];' && DATABASE_NAME=biblionexus-test-db yarn migration:run:test"
     },
     "dependencies": {
         "@nestjs/common": "^10.0.0",
@@ -31,6 +33,9 @@
         "@nestjs/mapped-types": "*",
         "@nestjs/platform-express": "^10.0.0",
         "@nestjs/typeorm": "^10.0.0",
+        "class-transformer": "^0.5.1",
+        "class-validator": "^0.14.0",
+        "compression": "^1.7.4",
         "mssql": "^9.1.1",
         "reflect-metadata": "^0.1.13",
         "rxjs": "^7.8.1",
@@ -68,6 +73,9 @@
             "js",
             "json",
             "ts"
+        ],
+        "setupFiles": [
+            "./test-utils/setup-tests.ts"
         ],
         "rootDir": "src",
         "testRegex": ".*\\.spec\\.ts$",
