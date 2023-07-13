@@ -1,5 +1,6 @@
 import { BaseEntity as TypeOrmBaseEntity } from 'typeorm';
 
+// copied from https://github.com/typeorm/typeorm/issues/2285#issuecomment-1382969816
 export class BNBaseEntity extends TypeOrmBaseEntity {
     async loadRelation<T>(relationKey: string, shouldLoadMany?: boolean): Promise<T> {
         if (relationKey.trim().length === 0) {

@@ -8,10 +8,11 @@ import { PassagesService } from './passages.service';
 import { Passage } from './entities/passage.entity';
 import { ResourceContentService } from './resource-content.service';
 import { PassagesController } from './passages.controller';
+import { ResourceContentController } from './resource-content.controller';
 
 @Module({
     imports: [TypeOrmModule.forFeature([Passage, Resource, ResourceContent]), CoreModule],
-    controllers: [PassagesController],
+    controllers: [PassagesController, ResourceContentController],
     providers: [PassagesService, ResourcesService, ResourceContentService],
 })
 export class ResourcesModule {}

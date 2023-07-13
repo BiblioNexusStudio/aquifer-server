@@ -20,9 +20,6 @@ $ yarn install
 
 ```bash
 # development
-$ yarn run start
-
-# watch mode
 $ yarn run start:dev
 
 # production mode
@@ -48,6 +45,29 @@ Then an example from inside the REPL:
 ```bash
 # lint
 $ yarn run lint
+```
+
+## Database Migrations
+
+There are two ways to create migrations. Generated and manual.
+
+* **Generated** - This method is easier and preferred, it will look at the
+  defined entities and attempt to create a migration by looking at the diff of
+  the current database structure and the expected structure.
+```bash
+$ yarn migration:generate migrations/name-here
+```
+
+* **Manual** - If for some reason the generate command isn't working or you
+  just need more fine-grained control, use this to create the file and then
+  manually write your own queries.
+```bash
+$ yarn migration:create migrations/name-here
+```
+
+To run migrations:
+```bash
+$ yarn migration:run
 ```
 
 ## Test

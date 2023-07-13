@@ -1,5 +1,6 @@
 export default () => ({
     port: parseInt(process.env.PORT, 10) || 3000,
+    useCompression: process.env.USE_COMPRESSION === 'true',
     database: {
         type: 'mssql' as const,
         host: process.env.DATABASE_HOST,

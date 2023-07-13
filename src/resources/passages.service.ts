@@ -5,8 +5,8 @@ import { parsePassageReference } from '../utils/bn-verse-parser';
 import { upsertEntityUsingRepository } from '../utils/repository-upsert';
 import { Repository } from 'typeorm';
 import { CreatePassageDto } from './dto/create-passage.dto';
-import { Passage } from './entities/passage.entity';
-import { Resource } from './entities/resource.entity';
+import { Passage, PassageTypeInt } from './entities/passage.entity';
+import { Resource, ResourceType, ResourceTypeInt } from './entities/resource.entity';
 
 @Injectable()
 export class PassagesService {
@@ -23,7 +23,7 @@ export class PassagesService {
             const endBnVerse = bookChapterVerseToBnVerse(endBookChapterVerse);
 
             const passage = this.passagesRepository.create({
-                type: dto.type,
+                type: PassageTypeInt[dto.type],
                 startBnVerse,
                 endBnVerse,
             });
@@ -48,8 +48,27 @@ export class PassagesService {
         }
     }
 
-    findAll() {
-        return `This action returns all passages`;
+    async findAllWithResourcesInLanguage(
+        resourceTypes: ResourceType[],
+        languageCode = '',
+    ): Promise<Passage[]> {
+        if (!resourceTypes.length) {
+            return [];
+        } else {
+            return this.passagesRepository
+                .createQueryBuilder('passage')
+                .innerJoinAndSelect('passage.resources', 'resource')
+                .innerJoinAndSelect('resource.resourceContents', 'resourceContent')
+                .innerJoin('resourceContent.language', 'language')
+                .where(
+                    'language.ISO639_3Code = :languageCode AND resource.type IN (:...resourceType)',
+                    {
+                        resourceType: resourceTypes.map((t) => ResourceTypeInt[t]),
+                        languageCode,
+                    },
+                )
+                .getMany();
+        }
     }
 
     findOne(id: number) {
