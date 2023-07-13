@@ -6,7 +6,10 @@ import configuration from './config/configuration';
 
 @Module({
     imports: [
-        ConfigModule.forRoot({ load: [configuration] }),
+        ConfigModule.forRoot({
+            envFilePath: [process.env.NODE_ENV === 'test' ? '.env.test' : null, '.env'],
+            load: [configuration],
+        }),
         TypeOrmModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: (configService: ConfigService) => ({

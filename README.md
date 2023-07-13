@@ -20,10 +20,10 @@ $ yarn install
 
 ```bash
 # development
-$ yarn run start:dev
+$ yarn start:dev
 
 # production mode
-$ yarn run start:prod
+$ yarn start:prod
 ```
 
 ## REPL
@@ -31,7 +31,7 @@ $ yarn run start:prod
 The REPL is useful for playing around with data from the command line.
 
 ```bash
-$ yarn run repl
+$ yarn repl
 ```
 
 Then an example from inside the REPL:
@@ -44,7 +44,7 @@ Then an example from inside the REPL:
 
 ```bash
 # lint
-$ yarn run lint
+$ yarn lint
 ```
 
 ## Database Migrations
@@ -74,11 +74,23 @@ $ yarn migration:run
 
 ```bash
 # unit tests
-$ yarn run test
+$ yarn test
 
 # integration tests
-$ yarn run test:integration
+$ yarn migration:test # make sure your test DB is up to date
+$ yarn test:integration
 ```
+
+## Troubleshooting
+
+* Database connection issues during integration tests
+  * Make sure you've setup the database correctly using the `Setup`
+    instructions above.
+* Missing columns during integration tests
+  * Make sure you've run the migrations for test `yarn migration:test`
+* Unexpected data during integration tests
+  * The integration tests should be run inside transactions, but if data gets
+    into a weird state, try running `yarn reset:db:test`
 
 ## License
 

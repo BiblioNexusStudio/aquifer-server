@@ -5,6 +5,7 @@ export default () => ({
         type: 'mssql' as const,
         host: process.env.DATABASE_HOST,
         database: process.env.DATABASE_NAME,
+        retryAttempts: process.env.DATABASE_NO_RETRIES === 'true' ? 0 : 10,
         ...(process.env.USE_LOCAL_DB === 'true'
             ? {
                   username: 'sa',

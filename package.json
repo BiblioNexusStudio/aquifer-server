@@ -22,7 +22,9 @@
         "migration:generate": "gen() { yarn typeorm-ts-node-esm migration:generate \"${1}\" -d migrations/config.ts; }; gen",
         "migration:revert": "typeorm-ts-node-esm migration:revert -d migrations/config.ts",
         "migration:run": "typeorm-ts-node-esm migration:run -d migrations/config.ts",
-        "query": "typeorm-ts-node-esm query -d migrations/config.ts"
+        "migration:run:test": "DATABASE_NAME=biblionexus-test-db typeorm-ts-node-esm migration:run -d migrations/config.ts",
+        "query": "typeorm-ts-node-esm query -d migrations/config.ts",
+        "reset:db:test": "DATABASE_NAME=master yarn query 'DROP DATABASE [biblionexus-test-db]; CREATE DATABASE [biblionexus-test-db];' && DATABASE_NAME=biblionexus-test-db yarn migration:run:test"
     },
     "dependencies": {
         "@nestjs/common": "^10.0.0",
@@ -71,6 +73,9 @@
             "js",
             "json",
             "ts"
+        ],
+        "setupFiles": [
+            "./test-utils/setup-tests.ts"
         ],
         "rootDir": "src",
         "testRegex": ".*\\.spec\\.ts$",

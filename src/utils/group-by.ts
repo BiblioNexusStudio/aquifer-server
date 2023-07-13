@@ -1,5 +1,7 @@
-interface Array<T> {
-    groupBy(keyFunction: (item: T) => any): Record<any, T[]>;
+declare global {
+    interface Array<T> {
+        groupBy(keyFunction: (item: T) => any): Record<any, T[]>;
+    }
 }
 
 Array.prototype.groupBy = function <T>(keyFunction: (item: T) => any): Record<any, T[]> {
@@ -13,3 +15,5 @@ Array.prototype.groupBy = function <T>(keyFunction: (item: T) => any): Record<an
     });
     return groups;
 };
+
+export {};
