@@ -5,8 +5,8 @@ namespace Aquifer.API.Data;
 
 public class AquiferDbContext : DbContext
 {
-    public DbSet<BibleEntity> BibleEntities { get; set; }
-    public DbSet<VerseEntity> VerseEntities { get; set; }
+    public DbSet<BibleEntity> Bibles { get; set; }
+    public DbSet<VerseEntity> Verses { get; set; }
     public DbSet<PassageEntity> Passages { get; set; }
     public DbSet<ResourceEntity> Resources { get; set; }
     public DbSet<VerseResourceEntity> VerseResources { get; set; }
