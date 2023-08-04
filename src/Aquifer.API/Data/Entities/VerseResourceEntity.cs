@@ -1,5 +1,8 @@
-﻿namespace Aquifer.API.Data.Entities;
+﻿using Microsoft.EntityFrameworkCore;
 
+namespace Aquifer.API.Data.Entities;
+
+[PrimaryKey(nameof(VerseId), nameof(ResourceId))]
 public class VerseResourceEntity
 {
     public int VerseId { get; set; }
