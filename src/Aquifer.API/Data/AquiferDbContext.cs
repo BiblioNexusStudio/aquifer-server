@@ -15,14 +15,26 @@ public class AquiferDbContext : DbContext
     public DbSet<ResourceContentEntity> ResourceContents { get; set; }
     public DbSet<SupportingResourceEntity> SupportingResources { get; set; }
 
-    public AquiferDbContext(DbContextOptions<AquiferDbContext> options) : base(options)
-    {
-
-    }
+    public AquiferDbContext(DbContextOptions<AquiferDbContext> options)
+        : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
         SqlDefaultValueAttributeConvention.Apply(builder);
+        CreatedDateAttributeConvention.Apply(builder);
+        UpdatedDateAttributeConvention.Apply(builder);
+    }
+
+    public override int SaveChanges()
+    {
+        UpdatedDateAttributeConvention.SaveChanges(this);
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
+    {
+        UpdatedDateAttributeConvention.SaveChanges(this);
+        return base.SaveChangesAsync(cancellationToken);
     }
 }

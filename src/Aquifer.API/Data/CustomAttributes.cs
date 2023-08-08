@@ -21,3 +21,8 @@ public class SqlDefaultValueAttribute : Attribute
     }
 }
 
+[AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+public class CreatedDateAttribute : Attribute { }
+
+[AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+public class UpdatedDateAttribute : Attribute { }

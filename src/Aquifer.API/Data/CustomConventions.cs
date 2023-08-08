@@ -7,17 +7,58 @@ public static class SqlDefaultValueAttributeConvention
 {
     public static void Apply(ModelBuilder builder)
     {
-        ConventionBehaviors
-            .SetSqlValueForPropertiesWithAttribute<SqlDefaultValueAttribute>(builder, x => x.DefaultValue);
+        ConventionBehaviors.SetSqlValueForPropertiesWithAttribute<SqlDefaultValueAttribute>(
+            builder,
+            x => x.DefaultValue
+        );
+    }
+}
+
+public static class CreatedDateAttributeConvention
+{
+    public static void Apply(ModelBuilder builder)
+    {
+        ConventionBehaviors.SetSqlValueForPropertiesWithAttribute<CreatedDateAttribute>(builder, _ => "GETUTCDATE()");
+    }
+}
+
+public static class UpdatedDateAttributeConvention
+{
+    public static void Apply(ModelBuilder builder)
+    {
+        ConventionBehaviors.SetSqlValueForPropertiesWithAttribute<UpdatedDateAttribute>(builder, _ => "GETUTCDATE()");
+    }
+
+    public static void SaveChanges(AquiferDbContext context)
+    {
+        var entries = context.ChangeTracker.Entries().Where(e => e.State is EntityState.Added or EntityState.Modified);
+
+        foreach (var entityEntry in entries)
+        {
+            var modifiedAttribute = entityEntry.Entity.GetType().GetProperty("ModifiedDate");
+            if (modifiedAttribute != null && Attribute.IsDefined(modifiedAttribute, typeof(UpdatedDateAttribute)))
+            {
+                entityEntry.Property("ModifiedDate").CurrentValue = DateTime.UtcNow;
+            }
+        }
     }
 }
 
 public static class ConventionBehaviors
 {
-    public static void SetSqlValueForPropertiesWithAttribute<TAttribute>(ModelBuilder builder,
-        Func<TAttribute, string> lambda) where TAttribute : class
+    public static void SetSqlValueForPropertiesWithAttribute<TAttribute>(
+        ModelBuilder builder,
+        Func<TAttribute, string> lambda
+    )
+        where TAttribute : class
     {
-        SetPropertyValue<TAttribute>(builder).ForEach(x => x.Item1.SetDefaultValueSql(lambda(x.Item2)));
+        SetPropertyValue<TAttribute>(builder)
+            .ForEach(
+                (x) =>
+                {
+                    x.Item1.SetDefaultValueSql(lambda(x.Item2));
+                }
+            );
     }
 
     private static List<Tuple<IMutableProperty, TAttribute>> SetPropertyValue<TAttribute>(ModelBuilder builder)
@@ -29,9 +70,10 @@ public static class ConventionBehaviors
             var properties = entity.GetProperties();
             foreach (var property in properties)
             {
-                if (property.PropertyInfo?
-                        .GetCustomAttributes(typeof(TAttribute), false)
-                        .FirstOrDefault() is TAttribute attribute)
+                if (
+                    property.PropertyInfo?.GetCustomAttributes(typeof(TAttribute), false).FirstOrDefault()
+                    is TAttribute attribute
+                )
                 {
                     propsToModify.Add(new Tuple<IMutableProperty, TAttribute>(property, attribute));
                 }

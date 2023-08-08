@@ -6,10 +6,10 @@ public class PassageEntity
     public int StartBnVerse { get; set; }
     public int EndBnVerse { get; set; }
 
-    [SqlDefaultValue("getutcdate()")]
+    [CreatedDate]
     public DateTime Created { get; set; }
 
-    [SqlDefaultValue("getutcdate()")]
+    [UpdatedDate]
     public DateTime Updated { get; set; }
 
     public ICollection<PassageResourceEntity> PassageResources { get; set; } = new List<PassageResourceEntity>();

@@ -6,10 +6,10 @@ public class BibleEntity
     public int LanguageId { get; set; }
     public string Name { get; set; } = null!;
 
-    [SqlDefaultValue("getutcdate()")]
+    [CreatedDate]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    [SqlDefaultValue("getutcdate()")]
+    [UpdatedDate]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 
     public ICollection<VerseResourceEntity> Verses { get; set; } = new List<VerseResourceEntity>();

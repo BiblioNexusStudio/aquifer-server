@@ -7,8 +7,7 @@ var configuration = builder.Configuration;
 
 builder.Services
     .AddApplicationInsightsTelemetry()
-    .AddDbContext<AquiferDbContext>(options =>
-        options.UseSqlServer(configuration.GetConnectionString("BiblioNexus")))
+    .AddDbContext<AquiferDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("BiblioNexus")))
     .RegisterModules();
 
 var app = builder.Build();

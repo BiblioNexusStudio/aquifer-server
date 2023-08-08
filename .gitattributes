@@ -1,0 +1,2 @@
+* text eol=crlf
+.config/hooks/pre-commit text eol=lf

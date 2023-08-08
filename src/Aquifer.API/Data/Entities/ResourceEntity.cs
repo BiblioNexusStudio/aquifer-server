@@ -13,7 +13,8 @@ public class ResourceEntity
     public ICollection<PassageResourceEntity> PassageResources { get; set; } = null!;
     public ResourceContentEntity ResourceContent { get; set; } = null!;
 
-    public ICollection<SupportingResourceEntity> SupportingResources { get; set; } = new List<SupportingResourceEntity>();
+    public ICollection<SupportingResourceEntity> SupportingResources { get; set; } =
+        new List<SupportingResourceEntity>();
     public SupportingResourceEntity? SupportingResource { get; set; }
 }
 
