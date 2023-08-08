@@ -1,7 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Aquifer.API.Data.Entities;
 
+[PrimaryKey(nameof(Id), nameof(BibleId))]
 public class VerseEntity
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
@@ -16,4 +18,5 @@ public class VerseEntity
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 
     public ICollection<VerseResourceEntity> VerseResources { get; set; } = new List<VerseResourceEntity>();
+    public BibleEntity Bible { get; set; } = null!;
 }

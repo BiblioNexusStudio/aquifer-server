@@ -9,5 +9,5 @@ public class VerseResourceEntity
     public int ResourceId { get; set; }
     
     public ICollection<VerseEntity> Verses { get; set; } = null!;
-    public ICollection<ResourceEntity> Resources { get; set; } = null!;
+    public ResourceEntity Resource { get; set; } = null!;
 }

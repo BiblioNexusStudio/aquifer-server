@@ -9,8 +9,8 @@ public class ResourceEntity
     public DateTime Created { get; set; } = DateTime.UtcNow;
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 
-    public VerseResourceEntity? VerseResource { get; set; }
-    public PassageResourceEntity? PassageResource { get; set; }
+    public ICollection<VerseResourceEntity> VerseResources { get; set; } = null!;
+    public ICollection<PassageResourceEntity> PassageResources { get; set; } = null!;
     public ResourceContentEntity ResourceContent { get; set; } = null!;
 
     public ICollection<SupportingResourceEntity> SupportingResources { get; set; } = new List<SupportingResourceEntity>();
