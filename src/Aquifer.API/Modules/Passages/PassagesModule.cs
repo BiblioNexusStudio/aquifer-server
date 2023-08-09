@@ -11,7 +11,7 @@ public class PassagesModule : IModule
     {
         var group = endpoints.MapGroup("passages");
         group.MapGet("/", GetAllPassages);
-        group.MapGet("/{id}", Get);
+        group.MapGet("/{id:int}", Get);
         return endpoints;
     }
 
@@ -30,7 +30,8 @@ public class PassagesModule : IModule
             Resources = x.PassageResources.Select(y => new PassageResourceResponse
             {
                 DisplayName = y.Resource.ResourceContent.DisplayName,
-                Content = JsonSerializer.Deserialize<object>(y.Resource.ResourceContent.Content, JsonSerializerOptions.Default)
+                Content = JsonSerializer.Deserialize<object>(y.Resource.ResourceContent.Content,
+                    JsonSerializerOptions.Default)
             }).ToList()
         }).SingleOrDefaultAsync(cancellationToken);
 
