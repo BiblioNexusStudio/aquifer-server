@@ -1,0 +1,8 @@
+steps:
+    - template: templates/setup_dotnet.yml@devops
+
+    - script: dotnet restore
+      displayName: Install NuGet packages
+
+    - script: dotnet tool restore
+      displayName: Restore CLI tools
