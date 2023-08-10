@@ -1,8 +1,12 @@
-﻿namespace Aquifer.API.Data.Entities;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Aquifer.API.Data.Entities;
 
 public class PassageEntity
 {
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int Id { get; set; }
+
     public int StartVerseId { get; set; }
     public int EndVerseId { get; set; }
 

@@ -45,10 +45,9 @@ namespace Aquifer.API.Data.Migrations
                 name: "Passages",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    StartBnVerse = table.Column<int>(type: "int", nullable: false),
-                    EndBnVerse = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false),
+                    StartVerseId = table.Column<int>(type: "int", nullable: false),
+                    EndVerseId = table.Column<int>(type: "int", nullable: false),
                     Created = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "getutcdate()"),
                     Updated = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "getutcdate()")
                 },
@@ -79,17 +78,10 @@ namespace Aquifer.API.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    BibleEntityId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Verses", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Verses_Bibles_BibleEntityId",
-                        column: x => x.BibleEntityId,
-                        principalTable: "Bibles",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -173,7 +165,7 @@ namespace Aquifer.API.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "VerseContentEntity",
+                name: "VerseContents",
                 columns: table => new
                 {
                     VerseId = table.Column<int>(type: "int", nullable: false),
@@ -186,15 +178,15 @@ namespace Aquifer.API.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_VerseContentEntity", x => new { x.VerseId, x.BibleId });
+                    table.PrimaryKey("PK_VerseContents", x => new { x.VerseId, x.BibleId });
                     table.ForeignKey(
-                        name: "FK_VerseContentEntity_Bibles_BibleId",
+                        name: "FK_VerseContents_Bibles_BibleId",
                         column: x => x.BibleId,
                         principalTable: "Bibles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_VerseContentEntity_Verses_VerseId",
+                        name: "FK_VerseContents_Verses_VerseId",
                         column: x => x.VerseId,
                         principalTable: "Verses",
                         principalColumn: "Id",
@@ -248,19 +240,14 @@ namespace Aquifer.API.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_VerseContentEntity_BibleId",
-                table: "VerseContentEntity",
+                name: "IX_VerseContents_BibleId",
+                table: "VerseContents",
                 column: "BibleId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_VerseResources_ResourceId",
                 table: "VerseResources",
                 column: "ResourceId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Verses_BibleEntityId",
-                table: "Verses",
-                column: "BibleEntityId");
         }
 
         /// <inheritdoc />
@@ -276,7 +263,7 @@ namespace Aquifer.API.Data.Migrations
                 name: "SupportingResources");
 
             migrationBuilder.DropTable(
-                name: "VerseContentEntity");
+                name: "VerseContents");
 
             migrationBuilder.DropTable(
                 name: "VerseResources");
@@ -288,13 +275,13 @@ namespace Aquifer.API.Data.Migrations
                 name: "Languages");
 
             migrationBuilder.DropTable(
+                name: "Bibles");
+
+            migrationBuilder.DropTable(
                 name: "Resources");
 
             migrationBuilder.DropTable(
                 name: "Verses");
-
-            migrationBuilder.DropTable(
-                name: "Bibles");
         }
     }
 }

@@ -78,10 +78,7 @@ namespace Aquifer.API.Data.Migrations
             modelBuilder.Entity("Aquifer.API.Data.Entities.PassageEntity", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
@@ -260,10 +257,7 @@ namespace Aquifer.API.Data.Migrations
             modelBuilder.Entity("Aquifer.API.Data.Entities.VerseEntity", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.HasKey("Id");
 

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.API.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    [Migration("20230810184418_FixBibleRelationship")]
-    partial class FixBibleRelationship
+    [Migration("20230810204921_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -81,20 +81,17 @@ namespace Aquifer.API.Data.Migrations
             modelBuilder.Entity("Aquifer.API.Data.Entities.PassageEntity", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("getutcdate()");
 
-                    b.Property<int>("EndBnVerse")
+                    b.Property<int>("EndVerseId")
                         .HasColumnType("int");
 
-                    b.Property<int>("StartBnVerse")
+                    b.Property<int>("StartVerseId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Updated")
@@ -263,10 +260,7 @@ namespace Aquifer.API.Data.Migrations
             modelBuilder.Entity("Aquifer.API.Data.Entities.VerseEntity", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.HasKey("Id");
 
