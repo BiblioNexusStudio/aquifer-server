@@ -11,7 +11,11 @@ public class ResourceContentEntity
     public bool Completed { get; set; }
     public bool Trusted { get; set; }
     public string Content { get; set; } = null!;
+
+    [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
+
+    [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 
     public LanguageEntity Language { get; set; } = null!;
