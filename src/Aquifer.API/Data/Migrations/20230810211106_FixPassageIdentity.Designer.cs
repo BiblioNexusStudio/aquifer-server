@@ -4,6 +4,7 @@ using Aquifer.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.API.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    partial class AquiferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230810211106_FixPassageIdentity")]
+    partial class FixPassageIdentity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -73,50 +76,6 @@ namespace Aquifer.API.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Languages");
-                });
-
-            modelBuilder.Entity("Aquifer.API.Data.Entities.PassageEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("Created")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.Property<int>("EndVerseId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StartVerseId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Updated")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Passages");
-                });
-
-            modelBuilder.Entity("Aquifer.API.Data.Entities.PassageResourceEntity", b =>
-                {
-                    b.Property<int>("PassageId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ResourceId")
-                        .HasColumnType("int");
-
-                    b.HasKey("PassageId", "ResourceId");
-
-                    b.HasIndex("ResourceId");
-
-                    b.ToTable("PassageResources");
                 });
 
             modelBuilder.Entity("Aquifer.API.Data.Entities.ResourceContentEntity", b =>
@@ -282,25 +241,6 @@ namespace Aquifer.API.Data.Migrations
                     b.ToTable("VerseResources");
                 });
 
-            modelBuilder.Entity("Aquifer.API.Data.Entities.PassageResourceEntity", b =>
-                {
-                    b.HasOne("Aquifer.API.Data.Entities.PassageEntity", "Passage")
-                        .WithMany("PassageResources")
-                        .HasForeignKey("PassageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Aquifer.API.Data.Entities.ResourceEntity", "Resource")
-                        .WithMany("PassageResources")
-                        .HasForeignKey("ResourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Passage");
-
-                    b.Navigation("Resource");
-                });
-
             modelBuilder.Entity("Aquifer.API.Data.Entities.ResourceContentEntity", b =>
                 {
                     b.HasOne("Aquifer.API.Data.Entities.LanguageEntity", "Language")
@@ -382,15 +322,8 @@ namespace Aquifer.API.Data.Migrations
                     b.Navigation("VerseContents");
                 });
 
-            modelBuilder.Entity("Aquifer.API.Data.Entities.PassageEntity", b =>
-                {
-                    b.Navigation("PassageResources");
-                });
-
             modelBuilder.Entity("Aquifer.API.Data.Entities.ResourceEntity", b =>
                 {
-                    b.Navigation("PassageResources");
-
                     b.Navigation("ResourceContent")
                         .IsRequired();
 
