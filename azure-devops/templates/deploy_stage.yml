@@ -1,0 +1,88 @@
+parameters:
+    - name: DeployEnv
+      type: string
+    - name: AzureDevopsEnvName
+      type: string
+    - name: DeployUrl
+      type: string
+    - name: GithubAppPrivateKeyBase64
+      type: string
+    - name: DependsOn
+      type: object
+    - name: CreateGithubRelease
+      type: boolean
+      default: false
+    - name: CheckoutTemplate
+      type: string
+    - name: MigrationConnectionString
+      type: string
+      default: ''
+
+stages:
+    - stage: deploy_to_${{ parameters.DeployEnv }}
+      displayName: ${{ parameters.AzureDevopsEnvName }}
+      dependsOn: ${{ parameters.DependsOn }}
+      jobs:
+          - deployment: deploy
+            environment: ${{ parameters.AzureDevopsEnvName }}
+            strategy:
+                runOnce:
+                    deploy:
+                        steps:
+                            - template: ${{ parameters.CheckoutTemplate }}
+                              parameters:
+                                  WorkingDirectory: $(Build.SourcesDirectory)/aquifer-server
+
+                            - download: current
+                              artifact: Build
+                              displayName: Download artifact
+
+                            - script: chmod +x $PIPELINE_WORKSPACE/Build/Migrate
+                              condition: and(succeeded(), ne('${{ parameters.MigrationConnectionString }}', ''))
+                              displayName: Allow migration execution
+
+                            - task: AzureCLI@2
+                              condition: and(succeeded(), ne('${{ parameters.MigrationConnectionString }}', ''))
+                              inputs:
+                                  azureSubscription: BiblioNexusAzureSubscription
+                                  scriptType: bash
+                                  scriptLocation: inlineScript
+                                  inlineScript: |
+                                      $PIPELINE_WORKSPACE/Build/Migrate --connection '${{ parameters.MigrationConnectionString }}'
+                              displayName: Run migrations
+
+                            - task: AzureWebApp@1
+                              inputs:
+                                  azureSubscription: BiblioNexusAzureSubscription
+                                  appType: webApp
+                                  appName: aquifer-server-dev
+                                  package: $(Pipeline.Workspace)/Build/Aquifer.API.zip
+                              displayName: Deploy
+
+                            - checkout: devops
+                              path: devops
+
+                            - script: |
+                                  $(Pipeline.Workspace)/devops/github-cli/script.sh deployment \
+                                      --privateKeyBase64 "$GITHUB_APP_PRIVATE_KEY_BASE64" \
+                                      --environment "${ENVIRONMENT}" \
+                                      --ref "$(git rev-parse HEAD)" \
+                                      --deployedUrl "$DEPLOY_URL" \
+                                      --repo aquifer-server
+                              displayName: Create deployment in GitHub
+                              workingDirectory: $(Build.SourcesDirectory)/aquifer-server
+                              env:
+                                  ENVIRONMENT: ${{ parameters.DeployEnv }}
+                                  DEPLOY_URL: ${{ parameters.DeployUrl }}
+                                  GITHUB_APP_PRIVATE_KEY_BASE64: ${{ parameters.GithubAppPrivateKeyBase64 }}
+
+                            - ${{ if eq(parameters.CreateGithubRelease, true) }}:
+                                - script: |
+                                    $(Pipeline.Workspace)/devops/github-cli/script.sh release \
+                                        --privateKeyBase64 "$GITHUB_APP_PRIVATE_KEY_BASE64" \
+                                        --ref "$(git rev-parse HEAD)" \
+                                        --repo aquifer-server
+                                  env:
+                                      GITHUB_APP_PRIVATE_KEY_BASE64: $(GithubAppPrivateKeyBase64)
+                                  workingDirectory: $(Build.SourcesDirectory)/aquifer-server
+                                  displayName: Create GitHub release

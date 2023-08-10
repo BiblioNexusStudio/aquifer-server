@@ -1,0 +1,74 @@
+name: ' '
+appendCommitMessageToRunName: true
+
+resources:
+    repositories:
+        - repository: devops
+          type: github
+          name: BiblioNexusStudio/devops
+          endpoint: BiblioNexusStudio
+        - repository: aquifer_e2e
+          type: github
+          name: BiblioNexusStudio/aquifer-e2e
+          endpoint: BiblioNexusStudio
+
+pr: none
+trigger:
+    - master
+
+pool:
+    vmImage: ubuntu-latest
+
+variables:
+    - group: dev-web
+    - group: qa-web
+    - group: dev-api
+    - group: qa-api
+    - group: github-app
+
+stages:
+    - stage: build
+      jobs:
+          - job: build
+            steps:
+                - template: templates/checkout_master.yml@devops
+                - template: templates/install_deps.yml
+                - script: dotnet build --configuration Release
+                  displayName: Build
+                - task: DotNetCoreCLI@2
+                  inputs:
+                      command: publish
+                      arguments: --output Build --configuration Release --runtime win-x64
+                  displayName: Generate build zip
+                - script: dotnet ef migrations bundle --project src/Aquifer.API --output Build/Migrate
+                  displayName: Bundle migrations
+                - publish: Build
+                  artifact: Build
+                  displayName: Publish artifact
+
+    - template: templates/deploy_stage.yml
+      parameters:
+          DeployEnv: dev
+          CheckoutTemplate: templates/checkout_master.yml@devops
+          DependsOn: [build]
+          AzureDevopsEnvName: dev-api
+          DeployUrl: $(AzureStaticWebAppsDeployUrlDev)
+          GithubAppPrivateKeyBase64: $(GithubAppPrivateKeyBase64)
+          MigrationConnectionString: $(AzureSqlConnectionUrlDev)
+
+    - template: templates/deploy_stage.yml
+      parameters:
+          DeployEnv: qa
+          CheckoutTemplate: templates/checkout_master.yml@devops
+          DependsOn: [build]
+          AzureDevopsEnvName: qa-api
+          DeployUrl: $(AzureStaticWebAppsDeployUrlQa)
+          GithubAppPrivateKeyBase64: $(GithubAppPrivateKeyBase64)
+          MigrationConnectionString: $(AzureSqlConnectionUrlQa)
+
+    - stage: e2e_tests
+      dependsOn: [deploy_to_dev]
+      jobs:
+          - template: azure-devops/templates/e2e_tests.yml@aquifer_e2e
+            parameters:
+                Url: $(AzureStaticWebAppsDeployUrlDev)

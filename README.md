@@ -2,96 +2,68 @@
 
 Aquifer Server is the back-end server allowing access to data in the Aquifer.
 
+## Setup
+
+- Make sure you have .NET 7 installed
+
 ## Installation
 
 ```bash
-$ yarn install
+dotnet restore
 ```
-
-## Setup
-
-- Make sure you're using node 18.16.0.
-- `cp .env.example .env` to setup your ENV
-- Setup the database (choose one):
-    - Authenticate with Azure using the CLI (.env with `USE_LOCAL_DB=false`)
-    - Run the docker MSSQL with `cd dev; docker-compose up` (.env with `USE_LOCAL_DB=true`)
 
 ## Running the app
 
 ```bash
-# development
-$ yarn start:dev
+# with hot reload
+dotnet watch run --project src/Aquifer.API
 
-# production mode
-$ yarn start:prod
+# normal mode
+dotnet run --project src/Aquifer.API
 ```
 
-## REPL
+## CLI REPL
 
-The REPL is useful for playing around with data from the command line.
+If you want to use the REPL outside of an IDE, csharprepl is a good option.
 
 ```bash
-$ yarn repl
+# install
+dotnet tool install -g csharprepl
+
+# run
+csharprepl
 ```
 
-Then an example from inside the REPL:
-
-```
-> await get(PassagesService).findAll()
-```
+Then load the project from the csharprepl prompt: `#r "src/Aquifer.API/Aquifer.API.csproj"`
 
 ## Lint
 
 ```bash
-# lint
-$ yarn lint
+dotnet build --no-incremental /p:WarningsAsErrors=true
 ```
 
 ## Database Migrations
 
-There are two ways to create migrations. Generated and manual.
+Entity Framework will generate migrations by comparing the C# Entities defined
+in the project and the current state of the database.
 
-* **Generated** - This method is easier and preferred, it will look at the
-  defined entities and attempt to create a migration by looking at the diff of
-  the current database structure and the expected structure.
+To create a new migration:
 ```bash
-$ yarn migration:generate migrations/name-here
+dotnet ef migrations add --project src/Aquifer.API MigrationNameHere
 ```
 
-* **Manual** - If for some reason the generate command isn't working or you
-  just need more fine-grained control, use this to create the file and then
-  manually write your own queries.
-```bash
-$ yarn migration:create migrations/name-here
-```
+If you run that command and the new migration file is empty, that means there
+were no changes detected between the C# Entities and the database. You can use
+this to your advantage to create empty migrations and add your own custom code.
 
 To run migrations:
 ```bash
-$ yarn migration:run
+dotnet ef database update --project src/Aquifer.API
 ```
 
 ## Test
 
 ```bash
 # unit tests
-$ yarn test
-
-# integration tests
-$ yarn migration:test # make sure your test DB is up to date
-$ yarn test:integration
+dotnet test
 ```
-
-## Troubleshooting
-
-* Database connection issues during integration tests
-  * Make sure you've setup the database correctly using the `Setup`
-    instructions above.
-* Missing columns during integration tests
-  * Make sure you've run the migrations for test `yarn migration:test`
-* Unexpected data during integration tests
-  * The integration tests should be run inside transactions, but if data gets
-    into a weird state, try running `yarn reset:db:test`
-
-## License
-
-Aquifer Server is [MIT licensed](LICENSE).
