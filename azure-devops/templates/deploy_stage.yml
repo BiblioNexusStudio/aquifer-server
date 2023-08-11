@@ -55,7 +55,7 @@ stages:
                               inputs:
                                   azureSubscription: BiblioNexusAzureSubscription
                                   appType: webApp
-                                  appName: aquifer-server-dev
+                                  appName: aquifer-server-${{ parameters.DeployEnv }}
                                   package: $(Pipeline.Workspace)/Build/Aquifer.API.zip
                               displayName: Deploy
 
