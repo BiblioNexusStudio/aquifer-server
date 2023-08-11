@@ -3,8 +3,8 @@
 public class PassageEntity
 {
     public int Id { get; set; }
-    public int StartBnVerse { get; set; }
-    public int EndBnVerse { get; set; }
+    public int StartVerseId { get; set; }
+    public int EndVerseId { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; }

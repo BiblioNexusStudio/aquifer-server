@@ -2,8 +2,8 @@
 
 public class PassageResponse
 {
-    public int StartBnVerse { get; set; }
-    public int EndBnVerse { get; set; }
+    public int StartVerseId { get; set; }
+    public int EndVerseId { get; set; }
     public List<PassageResourceResponse> Resources { get; set; } = new();
 }
 
