@@ -25,8 +25,8 @@ public class PassagesModule : IModule
     {
         var passage = await dbContext.Passages.Where(x => x.Id == id).Select(x => new PassageResponse
         {
-            StartBnVerse = x.StartBnVerse,
-            EndBnVerse = x.EndBnVerse,
+            StartVerseId = x.StartVerseId,
+            EndVerseId = x.EndVerseId,
             Resources = x.PassageResources.Select(y => new PassageResourceResponse
             {
                 DisplayName = y.Resource.ResourceContent.DisplayName,
