@@ -1,8 +1,11 @@
 steps:
     - template: templates/setup_dotnet.yml@devops
 
-    - script: dotnet restore
-      displayName: Install NuGet packages
+    - script: dotnet restore --runtime linux-x64
+      displayName: Install NuGet packages (linux)
+
+    - script: dotnet restore --runtime win-x64
+      displayName: Install NuGet packages (windows)
 
     - script: dotnet tool restore
       displayName: Restore CLI tools
