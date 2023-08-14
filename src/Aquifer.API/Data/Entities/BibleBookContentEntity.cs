@@ -2,14 +2,16 @@
 
 namespace Aquifer.API.Data.Entities;
 
-[PrimaryKey(nameof(VerseId), nameof(BibleId))]
-public class VerseContentEntity
+[PrimaryKey(nameof(BibleId), nameof(BookId))]
+public class BibleBookContentEntity
 {
-    public int VerseId { get; set; }
     public int BibleId { get; set; }
-    public string Content { get; set; } = null!;
-    public float? AudioStartTime { get; set; }
-    public float? AudioEndTime { get; set; }
+    public int BookId { get; set; }
+    public string DisplayName { get; set; } = null!;
+    public string TextUrl { get; set; } = null!;
+    public string AudioUrls { get; set; } = null!; // JSON
+    public int TextSizeKb { get; set; }
+    public int AudioSizeKb { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
@@ -18,5 +20,4 @@ public class VerseContentEntity
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 
     public BibleEntity Bible { get; set; } = null!;
-    public VerseEntity Verse { get; set; } = null!;
 }
