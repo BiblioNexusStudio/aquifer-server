@@ -1,5 +1,8 @@
-﻿namespace Aquifer.API.Data.Entities;
+﻿using Microsoft.EntityFrameworkCore;
 
+namespace Aquifer.API.Data.Entities;
+
+[Index(nameof(ResourceId), nameof(LanguageId), IsUnique = true)]
 public class ResourceContentEntity
 {
     public int Id { get; set; }
