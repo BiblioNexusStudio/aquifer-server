@@ -15,36 +15,19 @@ public class ResourcesModule : IModule
         return endpoints;
     }
 
-    private async Task<Ok<AvailableContentResponse>> GetResourcesByLanguage(int languageId,
-        AquiferDbContext dbContext,
-        CancellationToken cancellationToken)
+    private async Task<Ok<List<ResourceContentResponse>>> GetResourcesByLanguage(int languageId,
+        AquiferDbContext dbContext, CancellationToken cancellationToken)
     {
-        var bibleContent = await dbContext.Bibles.Where(x => x.LanguageId == languageId)
-            .Select(x => new AvailableContentResponseBible
-            {
-                LanguageId = x.LanguageId,
-                Name = x.Name,
-                Contents = x.BibleBookContents.Select(y => new AvailableContentResponseBibleContent
-                {
-                    BookId = y.BookId,
-                    DisplayName = y.DisplayName,
-                    TextUrl = y.TextUrl,
-                    TextSizeKb = y.TextSizeKb,
-                    AudioUrls = JsonUtility.DefaultSerialize(y.AudioUrls),
-                    AudioSizeKb = y.AudioSizeKb
-                })
-            }).ToListAsync(cancellationToken);
-
         var resourceContent = await dbContext.ResourceContents.Where(x => x.LanguageId == languageId)
             .Select(x =>
-                new AvailableContentResponseResourceContent
+                new ResourceContentResponse
                 {
                     LanguageId = x.LanguageId,
                     DisplayName = x.DisplayName,
                     Summary = x.Summary,
                     Content = JsonUtility.DefaultSerialize(x.Content),
                     ContentSizeKb = x.ContentSizeKb,
-                    Parent = new AvailableContentResponseResourceParent
+                    Parent = new ResourceContentResponseParent
                     {
                         Type = (int)x.Resource.Type,
                         MediaType = (int)x.Resource.MediaType,
@@ -53,6 +36,6 @@ public class ResourcesModule : IModule
                     }
                 }).ToListAsync(cancellationToken);
 
-        return TypedResults.Ok(new AvailableContentResponse { Bibles = bibleContent, Resources = resourceContent });
+        return TypedResults.Ok(resourceContent);
     }
 }
