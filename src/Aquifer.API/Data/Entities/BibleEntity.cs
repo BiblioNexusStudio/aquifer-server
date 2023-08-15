@@ -11,4 +11,6 @@ public class BibleEntity
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
+
+    public ICollection<BibleBookContentEntity> BibleBookContents { get; set; } = new List<BibleBookContentEntity>();
 }
