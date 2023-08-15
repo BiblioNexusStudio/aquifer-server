@@ -16,9 +16,12 @@ public class ResourceEntity
 
     public ICollection<VerseResourceEntity> VerseResources { get; set; } =
         new List<VerseResourceEntity>();
+
     public ICollection<PassageResourceEntity> PassageResources { get; set; } =
         new List<PassageResourceEntity>();
-    public ResourceContentEntity ResourceContent { get; set; } = null!;
+
+    public ICollection<ResourceContentEntity> ResourceContents { get; set; } =
+        new List<ResourceContentEntity>();
 
     public ICollection<SupportingResourceEntity> SupportingResources { get; set; } =
         new List<SupportingResourceEntity>();
