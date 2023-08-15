@@ -1,7 +1,7 @@
 ﻿using Aquifer.API.Data;
+using Aquifer.API.Utilities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace Aquifer.API.Modules.Resources;
 
@@ -30,8 +30,7 @@ public class ResourcesModule : IModule
                     DisplayName = y.DisplayName,
                     TextUrl = y.TextUrl,
                     TextSizeKb = y.TextSizeKb,
-                    AudioUrls = JsonSerializer.Deserialize<object>(y.AudioUrls,
-                        JsonSerializerOptions.Default),
+                    AudioUrls = JsonUtility.DefaultSerialize(y.AudioUrls),
                     AudioSizeKb = y.AudioSizeKb
                 })
             }).ToListAsync(cancellationToken);
@@ -43,8 +42,7 @@ public class ResourcesModule : IModule
                     LanguageId = x.LanguageId,
                     DisplayName = x.DisplayName,
                     Summary = x.Summary,
-                    Content = JsonSerializer.Deserialize<object>(x.Content,
-                        JsonSerializerOptions.Default),
+                    Content = JsonUtility.DefaultSerialize(x.Content),
                     ContentSizeKb = x.ContentSizeKb,
                     Parent = new AvailableContentResponseResourceParent
                     {
