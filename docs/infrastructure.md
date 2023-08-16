@@ -17,6 +17,19 @@ sys.sp_addrolemember @rolename = N'db_owner', @membername = N'<user-here>'
 GO
 ```
 
+## Azure Web App Service Configuration
+
+You need to create a Managed Identity for the environment you're deploying.
+Note the name and use it with the above SQL statement to create permissions in
+the MSSQL DB itself.
+
+Then in the Web App Service, assign the identity.
+
+The connection string should then be configured like so, with `CLIENT_ID` set
+to the Client ID of the Managed Identity:
+
+`Server=DB_URL;Authentication=Active Directory MSI;Encrypt=True;User Id=CLIENT_ID;Database=DB_NAME`
+
 ## Azure Devops Configuration
 
 In order to allow Azure Devops pipelines to run migrations and deploy the
