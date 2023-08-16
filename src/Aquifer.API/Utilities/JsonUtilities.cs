@@ -2,7 +2,7 @@
 
 namespace Aquifer.API.Utilities;
 
-public static class JsonUtility
+public static class JsonUtilities
 {
     public static T DefaultSerialize<T>(string json)
     {

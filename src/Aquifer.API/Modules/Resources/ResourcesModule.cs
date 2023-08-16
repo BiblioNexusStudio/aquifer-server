@@ -25,15 +25,17 @@ public class ResourcesModule : IModule
                     LanguageId = x.LanguageId,
                     DisplayName = x.DisplayName,
                     Summary = x.Summary,
-                    Content = JsonUtility.DefaultSerialize(x.Content),
+                    Content = JsonUtilities.DefaultSerialize(x.Content),
                     ContentSizeKb = x.ContentSizeKb,
-                    Parent = new ResourceContentResponseParent
+                    Type = (int)x.Resource.Type,
+                    MediaType = (int)x.Resource.MediaType,
+                    EnglishLabel = x.Resource.EnglishLabel,
+                    Tag = x.Resource.Tag,
+                    Passages = x.Resource.PassageResources.Select(y => new ResourceContentResponsePassage
                     {
-                        Type = (int)x.Resource.Type,
-                        MediaType = (int)x.Resource.MediaType,
-                        EnglishLabel = x.Resource.EnglishLabel,
-                        Tag = x.Resource.Tag
-                    }
+                        PassageStartDetails = BibleUtilities.TranslateVerseId(y.Passage.StartVerseId),
+                        PassageEndDetails = BibleUtilities.TranslateVerseId(y.Passage.EndVerseId)
+                    })
                 }).ToListAsync(cancellationToken);
 
         return TypedResults.Ok(resourceContent);
