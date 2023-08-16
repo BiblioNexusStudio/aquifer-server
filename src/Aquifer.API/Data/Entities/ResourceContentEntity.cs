@@ -14,7 +14,7 @@ public class ResourceContentEntity
     public bool Completed { get; set; }
     public bool Trusted { get; set; }
     public string Content { get; set; } = null!; // JSON
-    public int ContentSizeKb { get; set; }
+    public int ContentSize { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;

@@ -15,8 +15,11 @@ public class ResourcesModule : IModule
         return endpoints;
     }
 
-    private async Task<Ok<List<ResourceContentResponse>>> GetResourcesByLanguage(int languageId,
-        AquiferDbContext dbContext, CancellationToken cancellationToken)
+    private async Task<Ok<List<ResourceContentResponse>>> GetResourcesByLanguage(
+        int languageId,
+        AquiferDbContext dbContext,
+        CancellationToken cancellationToken
+    )
     {
         var resourceContent = await dbContext.ResourceContents.Where(x => x.LanguageId == languageId)
             .Select(x =>
@@ -26,7 +29,7 @@ public class ResourcesModule : IModule
                     DisplayName = x.DisplayName,
                     Summary = x.Summary,
                     Content = JsonUtilities.DefaultSerialize(x.Content),
-                    ContentSizeKb = x.ContentSizeKb,
+                    ContentSize = x.ContentSize,
                     Type = (int)x.Resource.Type,
                     MediaType = (int)x.Resource.MediaType,
                     EnglishLabel = x.Resource.EnglishLabel,

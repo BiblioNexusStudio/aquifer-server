@@ -8,7 +8,7 @@ public class ResourceContentResponse
     public string DisplayName { get; set; } = null!;
     public string? Summary { get; set; }
     public object? Content { get; set; }
-    public int ContentSizeKb { get; set; }
+    public int ContentSize { get; set; }
     public int Type { get; set; }
     public int MediaType { get; set; }
     public string EnglishLabel { get; set; } = null!;

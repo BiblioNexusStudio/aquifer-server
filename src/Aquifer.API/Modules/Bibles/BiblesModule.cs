@@ -28,9 +28,9 @@ public class BiblesModule : IModule
                     BookId = y.BookId,
                     DisplayName = y.DisplayName,
                     TextUrl = y.TextUrl,
-                    TextSizeKb = y.TextSizeKb,
+                    TextSize = y.TextSize,
                     AudioUrls = JsonUtilities.DefaultSerialize(y.AudioUrls),
-                    AudioSizeKb = y.AudioSizeKb
+                    AudioSize = y.AudioSize
                 })
             }).ToListAsync(cancellationToken);
 
