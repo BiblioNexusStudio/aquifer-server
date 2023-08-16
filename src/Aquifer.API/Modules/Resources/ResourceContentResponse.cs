@@ -1,4 +1,6 @@
-﻿namespace Aquifer.API.Modules.Resources;
+﻿using System.Text.Json.Serialization;
+
+namespace Aquifer.API.Modules.Resources;
 
 public class ResourceContentResponse
 {
@@ -7,13 +9,26 @@ public class ResourceContentResponse
     public string? Summary { get; set; }
     public object? Content { get; set; }
     public int ContentSizeKb { get; set; }
-    public ResourceContentResponseParent Parent { get; set; } = null!;
-}
-
-public class ResourceContentResponseParent
-{
     public int Type { get; set; }
     public int MediaType { get; set; }
     public string EnglishLabel { get; set; } = null!;
     public string? Tag { get; set; }
+
+    public IEnumerable<ResourceContentResponsePassage> Passages { get; set; } =
+        new List<ResourceContentResponsePassage>();
+}
+
+public class ResourceContentResponsePassage
+{
+    public int BookId => PassageStartDetails.BookId;
+    public int StartChapter => PassageStartDetails.Chapter;
+    public int EndChapter => PassageEndDetails.Chapter;
+    public int StartVerse => PassageStartDetails.Verse;
+    public int EndVerse => PassageEndDetails.Verse;
+
+    [JsonIgnore]
+    public (int BookId, int Chapter, int Verse) PassageStartDetails { get; set; }
+
+    [JsonIgnore]
+    public (int BookId, int Chapter, int Verse) PassageEndDetails { get; set; }
 }

@@ -29,7 +29,7 @@ public class BiblesModule : IModule
                     DisplayName = y.DisplayName,
                     TextUrl = y.TextUrl,
                     TextSizeKb = y.TextSizeKb,
-                    AudioUrls = JsonUtility.DefaultSerialize(y.AudioUrls),
+                    AudioUrls = JsonUtilities.DefaultSerialize(y.AudioUrls),
                     AudioSizeKb = y.AudioSizeKb
                 })
             }).ToListAsync(cancellationToken);
