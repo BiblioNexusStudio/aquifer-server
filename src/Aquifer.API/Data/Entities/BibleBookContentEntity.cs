@@ -10,8 +10,8 @@ public class BibleBookContentEntity
     public string DisplayName { get; set; } = null!;
     public string TextUrl { get; set; } = null!;
     public string AudioUrls { get; set; } = null!; // JSON
-    public int TextSizeKb { get; set; }
-    public int AudioSizeKb { get; set; }
+    public int TextSize { get; set; }
+    public int AudioSize { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;

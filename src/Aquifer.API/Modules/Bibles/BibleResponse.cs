@@ -15,6 +15,6 @@ public class BibleBookResponseContent
     public string DisplayName { get; set; } = null!;
     public string TextUrl { get; set; } = null!;
     public object? AudioUrls { get; set; }
-    public int TextSizeKb { get; set; }
-    public int AudioSizeKb { get; set; }
+    public int TextSize { get; set; }
+    public int AudioSize { get; set; }
 }
