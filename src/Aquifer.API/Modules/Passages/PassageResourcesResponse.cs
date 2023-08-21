@@ -23,18 +23,12 @@ public class PassageResourcesResponse
 
 public class PassageResourcesResponseResource
 {
-    public int LanguageId { get; set; }
-    public string DisplayName { get; set; } = null!;
-    public string? Summary { get; set; }
-    public object? Content { get; set; }
-    public int ContentSize { get; set; }
     public int Type { get; set; }
     public int MediaType { get; set; }
     public string EnglishLabel { get; set; } = null!;
     public string? Tag { get; set; }
 
-    public IEnumerable<PassageResourcesResponseResourceContent> Contents { get; set; } =
-        new List<PassageResourcesResponseResourceContent>();
+    public PassageResourcesResponseResourceContent? Content { get; set; }
 }
 
 public class PassageResourcesResponseResourceContent

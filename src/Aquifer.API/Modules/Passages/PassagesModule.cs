@@ -18,7 +18,7 @@ public class PassagesModule : IModule
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var passageContent = Enumerable.ToList((await dbContext.Passages.Select(x =>
+        var passageContent = (await dbContext.Passages.Select(x =>
                 new PassageResourcesResponse
                 {
                     PassageStartDetails = BibleUtilities.TranslateVerseId(x.StartVerseId),
@@ -29,18 +29,18 @@ public class PassagesModule : IModule
                         MediaType = (int)y.Resource.MediaType,
                         EnglishLabel = y.Resource.EnglishLabel,
                         Tag = y.Resource.Tag,
-                        Contents = y.Resource.ResourceContents.Select(z => new PassageResourcesResponseResourceContent
+                        Content = y.Resource.ResourceContents.Select(z => new PassageResourcesResponseResourceContent
                         {
                             LanguageId = z.LanguageId,
                             DisplayName = z.DisplayName,
                             Summary = z.Summary,
                             Content = JsonUtilities.DefaultSerialize(z.Content),
                             ContentSize = z.ContentSize
-                        }).Where(content => content.LanguageId == languageId)
+                        }).FirstOrDefault(content => content.LanguageId == languageId)
                     })
                 }).ToListAsync(cancellationToken))
             .OrderBy(x => x.BookId)
-            .ThenBy(x => x.StartChapter).ThenBy(x => x.StartVerse));
+            .ThenBy(x => x.StartChapter).ThenBy(x => x.StartVerse).ToList();
 
         return TypedResults.Ok(passageContent);
     }
