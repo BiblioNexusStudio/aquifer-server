@@ -21,14 +21,15 @@ public class ResourceContentResponse
 public class ResourceContentResponsePassage
 {
     public int BookId => PassageStartDetails.BookId;
+    public string BookName => PassageStartDetails.BookName;
     public int StartChapter => PassageStartDetails.Chapter;
     public int EndChapter => PassageEndDetails.Chapter;
     public int StartVerse => PassageStartDetails.Verse;
     public int EndVerse => PassageEndDetails.Verse;
 
     [JsonIgnore]
-    public (int BookId, int Chapter, int Verse) PassageStartDetails { get; set; }
+    public (string BookName, int BookId, int Chapter, int Verse) PassageStartDetails { get; set; }
 
     [JsonIgnore]
-    public (int BookId, int Chapter, int Verse) PassageEndDetails { get; set; }
+    public (string BookName, int BookId, int Chapter, int Verse) PassageEndDetails { get; set; }
 }
