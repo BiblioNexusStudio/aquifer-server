@@ -28,6 +28,7 @@ public class PassageResourcesResponseResource
     public string EnglishLabel { get; set; } = null!;
     public string? Tag { get; set; }
 
+    public IEnumerable<PassageResourcesResponseResource> SupportingResources { get; set; } = new List<PassageResourcesResponseResource>();
     public PassageResourcesResponseResourceContent? Content { get; set; }
 }
 

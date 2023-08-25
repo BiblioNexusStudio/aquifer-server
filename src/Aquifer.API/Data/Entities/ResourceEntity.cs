@@ -1,8 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.API.Data.Entities;
 
 [Index(nameof(Type), nameof(MediaType), nameof(EnglishLabel), IsUnique = true)]
+[EntityTypeConfiguration(typeof(ResourceEntityConfiguration))]
 public class ResourceEntity
 {
     public int Id { get; set; }
@@ -26,10 +28,30 @@ public class ResourceEntity
     public ICollection<ResourceContentEntity> ResourceContents { get; set; } =
         new List<ResourceContentEntity>();
 
-    public ICollection<SupportingResourceEntity> SupportingResources { get; set; } =
-        new List<SupportingResourceEntity>();
+    public ICollection<ResourceEntity> SupportingResources { get; set; } =
+        new List<ResourceEntity>();
 
-    public SupportingResourceEntity? SupportingResource { get; set; }
+    public ICollection<ResourceEntity> SupportsResources { get; set; } =
+        new List<ResourceEntity>();
+}
+
+public class ResourceEntityConfiguration : IEntityTypeConfiguration<ResourceEntity>
+{
+    public void Configure(EntityTypeBuilder<ResourceEntity> builder)
+    {
+        builder.HasMany(e => e.SupportingResources)
+            .WithMany(j => j.SupportsResources)
+            .UsingEntity<Dictionary<string, object>>(
+                "SupportingResources",
+                j => j
+                    .HasOne<ResourceEntity>()
+                    .WithMany()
+                    .HasForeignKey("SupportingResourceId"),
+                j => j
+                    .HasOne<ResourceEntity>()
+                    .WithMany()
+                    .HasForeignKey("ParentResourceId"));
+    }
 }
 
 public enum ResourceEntityType

@@ -4,6 +4,7 @@ root = true
 # C# files
 [*.cs]
 
+
 #### Core EditorConfig Options ####
 
 # Indentation and spacing
@@ -227,3 +228,6 @@ dotnet_naming_style.begins_with_i.required_prefix = I
 dotnet_naming_style.begins_with_i.required_suffix =
 dotnet_naming_style.begins_with_i.word_separator =
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
+
+[**/Migrations/*.cs]
+generated_code = true
