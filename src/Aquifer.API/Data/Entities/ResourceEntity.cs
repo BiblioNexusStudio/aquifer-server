@@ -31,7 +31,7 @@ public class ResourceEntity
     public ICollection<ResourceEntity> SupportingResources { get; set; } =
         new List<ResourceEntity>();
 
-    public ICollection<ResourceEntity> SupportsResources { get; set; } =
+    public ICollection<ResourceEntity> ResourcesSupported { get; set; } =
         new List<ResourceEntity>();
 }
 
@@ -40,15 +40,15 @@ public class ResourceEntityConfiguration : IEntityTypeConfiguration<ResourceEnti
     public void Configure(EntityTypeBuilder<ResourceEntity> builder)
     {
         builder.HasMany(e => e.SupportingResources)
-            .WithMany(j => j.SupportsResources)
-            .UsingEntity<Dictionary<string, object>>(
-                "SupportingResources",
+            .WithMany(j => j.ResourcesSupported)
+            .UsingEntity(
+                    "SupportingResources",
                 j => j
-                    .HasOne<ResourceEntity>()
+                    .HasOne(typeof(ResourceEntity))
                     .WithMany()
                     .HasForeignKey("SupportingResourceId"),
                 j => j
-                    .HasOne<ResourceEntity>()
+                    .HasOne(typeof(ResourceEntity))
                     .WithMany()
                     .HasForeignKey("ParentResourceId"));
     }

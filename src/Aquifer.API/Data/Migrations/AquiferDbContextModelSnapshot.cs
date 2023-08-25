@@ -264,22 +264,6 @@ namespace Aquifer.API.Data.Migrations
                     b.ToTable("Resources");
                 });
 
-            modelBuilder.Entity("Aquifer.API.Data.Entities.SupportingResourceEntity", b =>
-                {
-                    b.Property<int>("ParentResourceId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SupportingResourceId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ParentResourceId", "SupportingResourceId");
-
-                    b.HasIndex("SupportingResourceId")
-                        .IsUnique();
-
-                    b.ToTable("SupportingResources");
-                });
-
             modelBuilder.Entity("Aquifer.API.Data.Entities.VerseEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -303,6 +287,21 @@ namespace Aquifer.API.Data.Migrations
                     b.HasIndex("ResourceId");
 
                     b.ToTable("VerseResources");
+                });
+
+            modelBuilder.Entity("SupportingResources", b =>
+                {
+                    b.Property<int>("ParentResourceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SupportingResourceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ParentResourceId", "SupportingResourceId");
+
+                    b.HasIndex("SupportingResourceId");
+
+                    b.ToTable("SupportingResources");
                 });
 
             modelBuilder.Entity("Aquifer.API.Data.Entities.BibleBookContentEntity", b =>
@@ -373,25 +372,6 @@ namespace Aquifer.API.Data.Migrations
                     b.Navigation("Resource");
                 });
 
-            modelBuilder.Entity("Aquifer.API.Data.Entities.SupportingResourceEntity", b =>
-                {
-                    b.HasOne("Aquifer.API.Data.Entities.ResourceEntity", "ParentResource")
-                        .WithMany("SupportingResources")
-                        .HasForeignKey("ParentResourceId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("Aquifer.API.Data.Entities.ResourceEntity", "SupportingResource")
-                        .WithOne("SupportingResource")
-                        .HasForeignKey("Aquifer.API.Data.Entities.SupportingResourceEntity", "SupportingResourceId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("ParentResource");
-
-                    b.Navigation("SupportingResource");
-                });
-
             modelBuilder.Entity("Aquifer.API.Data.Entities.VerseResourceEntity", b =>
                 {
                     b.HasOne("Aquifer.API.Data.Entities.ResourceEntity", "Resource")
@@ -411,6 +391,21 @@ namespace Aquifer.API.Data.Migrations
                     b.Navigation("Verse");
                 });
 
+            modelBuilder.Entity("SupportingResources", b =>
+                {
+                    b.HasOne("Aquifer.API.Data.Entities.ResourceEntity", null)
+                        .WithMany()
+                        .HasForeignKey("ParentResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aquifer.API.Data.Entities.ResourceEntity", null)
+                        .WithMany()
+                        .HasForeignKey("SupportingResourceId")
+                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Aquifer.API.Data.Entities.BibleEntity", b =>
                 {
                     b.Navigation("BibleBookContents");
@@ -426,10 +421,6 @@ namespace Aquifer.API.Data.Migrations
                     b.Navigation("PassageResources");
 
                     b.Navigation("ResourceContents");
-
-                    b.Navigation("SupportingResource");
-
-                    b.Navigation("SupportingResources");
 
                     b.Navigation("VerseResources");
                 });
