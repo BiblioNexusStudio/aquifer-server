@@ -43,11 +43,11 @@ public class ResourceEntityConfiguration : IEntityTypeConfiguration<ResourceEnti
             .WithMany(j => j.ResourcesSupported)
             .UsingEntity(
                     "SupportingResources",
-                j => j
+                    j => j
                     .HasOne(typeof(ResourceEntity))
                     .WithMany()
                     .HasForeignKey("SupportingResourceId"),
-                j => j
+                    j => j
                     .HasOne(typeof(ResourceEntity))
                     .WithMany()
                     .HasForeignKey("ParentResourceId"));
