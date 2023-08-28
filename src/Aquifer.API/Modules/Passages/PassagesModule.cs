@@ -18,29 +18,50 @@ public class PassagesModule : IModule
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var passageContent = (await dbContext.Passages.Select(x =>
+        var passageContent = (await dbContext.Passages.Select(passage =>
                 new PassageResourcesResponse
                 {
-                    PassageStartDetails = BibleUtilities.TranslateVerseId(x.StartVerseId),
-                    PassageEndDetails = BibleUtilities.TranslateVerseId(x.EndVerseId),
-                    Resources = x.PassageResources.Select(y => new PassageResourcesResponseResource
+                    PassageStartDetails = BibleUtilities.TranslateVerseId(passage.StartVerseId),
+                    PassageEndDetails = BibleUtilities.TranslateVerseId(passage.EndVerseId),
+                    Resources = passage.PassageResources.Select(passageResource => new PassageResourcesResponseResource
                     {
-                        Type = (int)y.Resource.Type,
-                        MediaType = (int)y.Resource.MediaType,
-                        EnglishLabel = y.Resource.EnglishLabel,
-                        Tag = y.Resource.Tag,
-                        Content = y.Resource.ResourceContents.Select(z => new PassageResourcesResponseResourceContent
-                        {
-                            LanguageId = z.LanguageId,
-                            DisplayName = z.DisplayName,
-                            Summary = z.Summary,
-                            Content = JsonUtilities.DefaultSerialize(z.Content),
-                            ContentSize = z.ContentSize
-                        }).FirstOrDefault(content => content.LanguageId == languageId)
+                        Type = (int)passageResource.Resource.Type,
+                        MediaType = (int)passageResource.Resource.MediaType,
+                        EnglishLabel = passageResource.Resource.EnglishLabel,
+                        Tag = passageResource.Resource.Tag,
+
+                        Content = passageResource.Resource.ResourceContents.Select(
+                                resourceContent => new PassageResourcesResponseResourceContent
+                                {
+                                    LanguageId = resourceContent.LanguageId,
+                                    DisplayName = resourceContent.DisplayName,
+                                    Summary = resourceContent.Summary,
+                                    Content = JsonUtilities.DefaultSerialize(resourceContent.Content),
+                                    ContentSize = resourceContent.ContentSize
+                                }).FirstOrDefault(content => content.LanguageId == languageId),
+
+                        SupportingResources = passageResource.Resource.SupportingResources.Select(
+                                supportingResource => new PassageResourcesResponseResource
+                                {
+                                    Type = (int)supportingResource.Type,
+                                    MediaType = (int)supportingResource.MediaType,
+                                    EnglishLabel = supportingResource.EnglishLabel,
+                                    Tag = supportingResource.Tag,
+
+                                    Content = supportingResource.ResourceContents.Select(
+                                            resourceContent => new PassageResourcesResponseResourceContent
+                                            {
+                                                LanguageId = resourceContent.LanguageId,
+                                                DisplayName = resourceContent.DisplayName,
+                                                Summary = resourceContent.Summary,
+                                                Content = JsonUtilities.DefaultSerialize(resourceContent.Content),
+                                                ContentSize = resourceContent.ContentSize
+                                            }).FirstOrDefault(content => content.LanguageId == languageId)
+                                })
                     })
                 }).ToListAsync(cancellationToken))
-            .OrderBy(x => x.BookId)
-            .ThenBy(x => x.StartChapter).ThenBy(x => x.StartVerse).ToList();
+            .OrderBy(passage => passage.BookId)
+            .ThenBy(passage => passage.StartChapter).ThenBy(passage => passage.StartVerse).ToList();
 
         return TypedResults.Ok(passageContent);
     }

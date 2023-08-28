@@ -20,4 +20,3 @@ public class SqlDefaultValueAttribute : Attribute
         DefaultValue = value;
     }
 }
-
