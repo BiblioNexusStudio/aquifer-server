@@ -19,6 +19,9 @@ insert_final_newline = false
 
 #### .NET Coding Conventions ####
 
+# Attributes on lines above
+place_attribute_on_same_line = false
+
 # Organize usings
 dotnet_separate_import_directive_groups = false
 dotnet_sort_system_directives_first = false
