@@ -4,13 +4,17 @@ Aquifer Server is the back-end server allowing access to data in the Aquifer.
 
 ## Setup
 
-- Make sure you have .NET 7 installed
+- Make sure you have the [.NET 7 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/7.0) installed
 
 ## Installation
 
 ```bash
 dotnet restore
 ```
+Copy `appsettings.example.json` as `appsettings.Development.json` and provide the values needed for your instance.
+If you want multiple instances of this file, create them per environment and set your ASPNETCORE_ENVIRONMENT
+accordingly. For example: `dotnet run --environment Production`. Environment configurations have no reason
+to be checked in.
 
 ## Running the app
 

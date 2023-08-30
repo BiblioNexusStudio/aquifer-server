@@ -1,6 +1,5 @@
 ﻿using Aquifer.API.Data;
 using Aquifer.API.Utilities;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +11,6 @@ public class ResourcesModule : IModule
     {
         var group = endpoints.MapGroup("resources");
         group.MapGet("language/{languageId:int}", GetResourcesByLanguage);
-        group.MapGet("authtest", AuthTest);
 
         return endpoints;
     }
@@ -44,13 +42,5 @@ public class ResourcesModule : IModule
                 }).ToListAsync(cancellationToken);
 
         return TypedResults.Ok(resourceContent);
-    }
-
-    [Authorize(Policy = "write")]
-    private Ok<string> AuthTest()
-    {
-        // This is here as an example PoC for Authorization.
-        // In the future this would be someone trying to insert resources
-        return TypedResults.Ok("authorized");
     }
 }
