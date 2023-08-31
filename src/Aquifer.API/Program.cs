@@ -4,13 +4,13 @@ using Aquifer.API.Modules;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-var configuration = builder.Configuration.Get<ConfigurationOptions>()!;
+var configuration = builder.Configuration.Get<ConfigurationOptions>();
 
 builder.Services
     //.AddAuth(configuration)
     .AddApplicationInsightsTelemetry()
     .AddDbContext<AquiferDbContext>(options =>
-        options.UseSqlServer(configuration.ConnectionStrings.BiblioNexusDb))
+        options.UseSqlServer(configuration?.ConnectionStrings?.BiblioNexusDb))
     .RegisterModules();
 
 var app = builder.Build();
