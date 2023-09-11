@@ -49,6 +49,7 @@ UPDATE ResourceContents SET DisplayName = N'लूका 11:14-32', [Version] = 
 SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 
 
+SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 IF @TextResourceContentId IS NULL
 INSERT INTO ResourceContents(ResourceId, LanguageId, DisplayName, [Version], Completed, Trusted, Content, ContentSize)
 VALUES (@TextResourceId, @LanguageId, N'लूका 11:14-32', 1, 1, 1, '{"url":"https://cdn.aquifer.bible/aquifer-content/resources/CBBTER/HIN/text/HIN_CBBTER_043_LUK_011_014.json"}', 59436)
@@ -113,6 +114,7 @@ UPDATE ResourceContents SET DisplayName = N'मरकुस 1:1-13', [Version] =
 SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 
 
+SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 IF @TextResourceContentId IS NULL
 INSERT INTO ResourceContents(ResourceId, LanguageId, DisplayName, [Version], Completed, Trusted, Content, ContentSize)
 VALUES (@TextResourceId, @LanguageId, N'मरकुस 1:1-13', 1, 1, 1, '{"url":"https://cdn.aquifer.bible/aquifer-content/resources/CBBTER/HIN/text/HIN_CBBTER_042_MRK_001_001.json"}', 38506)
@@ -177,6 +179,7 @@ UPDATE ResourceContents SET DisplayName = N'मरकुस 2:23-3:6', [Version]
 SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 
 
+SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 IF @TextResourceContentId IS NULL
 INSERT INTO ResourceContents(ResourceId, LanguageId, DisplayName, [Version], Completed, Trusted, Content, ContentSize)
 VALUES (@TextResourceId, @LanguageId, N'मरकुस 2:23-3:6', 1, 1, 1, '{"url":"https://cdn.aquifer.bible/aquifer-content/resources/CBBTER/HIN/text/HIN_CBBTER_042_MRK_002_023.json"}', 45246)
@@ -241,6 +244,7 @@ UPDATE ResourceContents SET DisplayName = N'मरकुस 1:14-20', [Version] 
 SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 
 
+SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 IF @TextResourceContentId IS NULL
 INSERT INTO ResourceContents(ResourceId, LanguageId, DisplayName, [Version], Completed, Trusted, Content, ContentSize)
 VALUES (@TextResourceId, @LanguageId, N'मरकुस 1:14-20', 1, 1, 1, '{"url":"https://cdn.aquifer.bible/aquifer-content/resources/CBBTER/HIN/text/HIN_CBBTER_042_MRK_001_014.json"}', 30376)
@@ -305,6 +309,7 @@ UPDATE ResourceContents SET DisplayName = N'मरकुस 1:21-28', [Version] 
 SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 
 
+SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 IF @TextResourceContentId IS NULL
 INSERT INTO ResourceContents(ResourceId, LanguageId, DisplayName, [Version], Completed, Trusted, Content, ContentSize)
 VALUES (@TextResourceId, @LanguageId, N'मरकुस 1:21-28', 1, 1, 1, '{"url":"https://cdn.aquifer.bible/aquifer-content/resources/CBBTER/HIN/text/HIN_CBBTER_042_MRK_001_021.json"}', 31331)
@@ -369,6 +374,7 @@ UPDATE ResourceContents SET DisplayName = N'मरकुस 1:29-34', [Version] 
 SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 
 
+SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 IF @TextResourceContentId IS NULL
 INSERT INTO ResourceContents(ResourceId, LanguageId, DisplayName, [Version], Completed, Trusted, Content, ContentSize)
 VALUES (@TextResourceId, @LanguageId, N'मरकुस 1:29-34', 1, 1, 1, '{"url":"https://cdn.aquifer.bible/aquifer-content/resources/CBBTER/HIN/text/HIN_CBBTER_042_MRK_001_029.json"}', 20528)
@@ -433,6 +439,7 @@ UPDATE ResourceContents SET DisplayName = N'मरकुस 1:35-39', [Version] 
 SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 
 
+SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 IF @TextResourceContentId IS NULL
 INSERT INTO ResourceContents(ResourceId, LanguageId, DisplayName, [Version], Completed, Trusted, Content, ContentSize)
 VALUES (@TextResourceId, @LanguageId, N'मरकुस 1:35-39', 1, 1, 1, '{"url":"https://cdn.aquifer.bible/aquifer-content/resources/CBBTER/HIN/text/HIN_CBBTER_042_MRK_001_035.json"}', 21754)
@@ -497,6 +504,7 @@ UPDATE ResourceContents SET DisplayName = N'मरकुस 1:40-45', [Version] 
 SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 
 
+SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 IF @TextResourceContentId IS NULL
 INSERT INTO ResourceContents(ResourceId, LanguageId, DisplayName, [Version], Completed, Trusted, Content, ContentSize)
 VALUES (@TextResourceId, @LanguageId, N'मरकुस 1:40-45', 1, 1, 1, '{"url":"https://cdn.aquifer.bible/aquifer-content/resources/CBBTER/HIN/text/HIN_CBBTER_042_MRK_001_040.json"}', 28680)
@@ -561,6 +569,7 @@ UPDATE ResourceContents SET DisplayName = N'मरकुस 2:1-12', [Version] =
 SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 
 
+SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 IF @TextResourceContentId IS NULL
 INSERT INTO ResourceContents(ResourceId, LanguageId, DisplayName, [Version], Completed, Trusted, Content, ContentSize)
 VALUES (@TextResourceId, @LanguageId, N'मरकुस 2:1-12', 1, 1, 1, '{"url":"https://cdn.aquifer.bible/aquifer-content/resources/CBBTER/HIN/text/HIN_CBBTER_042_MRK_002_001.json"}', 39673)
@@ -625,6 +634,7 @@ UPDATE ResourceContents SET DisplayName = N'मरकुस 2:13-17', [Version] 
 SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 
 
+SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 IF @TextResourceContentId IS NULL
 INSERT INTO ResourceContents(ResourceId, LanguageId, DisplayName, [Version], Completed, Trusted, Content, ContentSize)
 VALUES (@TextResourceId, @LanguageId, N'मरकुस 2:13-17', 1, 1, 1, '{"url":"https://cdn.aquifer.bible/aquifer-content/resources/CBBTER/HIN/text/HIN_CBBTER_042_MRK_002_013.json"}', 32297)
@@ -689,6 +699,7 @@ UPDATE ResourceContents SET DisplayName = N'मरकुस 2:18-22', [Version] 
 SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 
 
+SELECT @TextResourceContentId = Id FROM ResourceContents WHERE ResourceId = @TextResourceId AND LanguageId = @LanguageId
 IF @TextResourceContentId IS NULL
 INSERT INTO ResourceContents(ResourceId, LanguageId, DisplayName, [Version], Completed, Trusted, Content, ContentSize)
 VALUES (@TextResourceId, @LanguageId, N'मरकुस 2:18-22', 1, 1, 1, '{"url":"https://cdn.aquifer.bible/aquifer-content/resources/CBBTER/HIN/text/HIN_CBBTER_042_MRK_002_018.json"}', 26998)
