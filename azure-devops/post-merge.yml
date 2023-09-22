@@ -42,7 +42,7 @@ stages:
                       command: publish
                       arguments: --output Build --configuration Release --runtime win-x64
                   displayName: Generate build zip
-                - script: dotnet ef migrations bundle --project src/Aquifer.API --output Build/Migrate
+                - script: dotnet ef migrations bundle --startup-project src/Aquifer.API --project src/Aquifer.Data --output Build/Migrate
                   displayName: Bundle migrations
                 - publish: Build
                   artifact: Build
