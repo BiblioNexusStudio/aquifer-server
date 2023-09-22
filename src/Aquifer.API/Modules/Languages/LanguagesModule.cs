@@ -1,4 +1,4 @@
-﻿using Aquifer.API.Data;
+﻿using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
