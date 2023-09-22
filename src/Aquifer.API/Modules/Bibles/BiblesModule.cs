@@ -1,5 +1,5 @@
-﻿using Aquifer.API.Data;
-using Aquifer.API.Utilities;
+﻿using Aquifer.API.Utilities;
+using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,7 +16,8 @@ public class BiblesModule : IModule
     }
 
     private async Task<Ok<List<BibleBookResponse>>> GetBibleContentsByLanguage(int languageId,
-        AquiferDbContext dbContext, CancellationToken cancellationToken)
+        AquiferDbContext dbContext,
+        CancellationToken cancellationToken)
     {
         var bibles = await dbContext.Bibles.Where(x => x.LanguageId == languageId)
             .Select(x => new BibleBookResponse

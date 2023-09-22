@@ -1,7 +1,7 @@
 using Aquifer.API.Configuration;
-using Aquifer.API.Data;
 using Aquifer.API.Modules;
 using Aquifer.API.Services;
+using Aquifer.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);

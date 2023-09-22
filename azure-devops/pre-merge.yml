@@ -49,7 +49,7 @@ stages:
                 - template: templates/checkout_pr.yml@devops
                 - script: |
                       git fetch origin $SYSTEM_PULLREQUEST_TARGETBRANCH
-                      DIFF=$(git diff --name-only --diff-filter=AM origin/$SYSTEM_PULLREQUEST_TARGETBRANCH..HEAD -- src/Aquifer.API/Data/Migrations)
+                      DIFF=$(git diff --name-only --diff-filter=AM origin/$SYSTEM_PULLREQUEST_TARGETBRANCH..HEAD -- src/Aquifer.Data/Migrations)
                       if [ -n "$DIFF" ]; then
                           echo "Deploy being skipped since migrations were included in this commit."
                           echo "It's unsafe to apply migrations except for on the master branch."

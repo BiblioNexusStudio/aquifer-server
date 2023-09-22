@@ -1,5 +1,5 @@
-﻿using Aquifer.API.Data;
-using Aquifer.API.Utilities;
+﻿using Aquifer.API.Utilities;
+using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
