@@ -9,7 +9,7 @@ resources:
           endpoint: BiblioNexusStudio
         - repository: aquifer_e2e
           type: github
-          name: BiblioNexusStudio/aquifer-e2e
+          name: BiblioNexusStudio/well-e2e
           endpoint: BiblioNexusStudio
 
 pr: none
