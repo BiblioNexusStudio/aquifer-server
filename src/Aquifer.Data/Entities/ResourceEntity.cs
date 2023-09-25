@@ -4,9 +4,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Aquifer.Data.Entities;
 
 [Index(nameof(Type),
-     nameof(MediaType),
-     nameof(EnglishLabel),
-     IsUnique = true), EntityTypeConfiguration(typeof(ResourceEntityConfiguration))]
+    nameof(MediaType),
+    nameof(EnglishLabel),
+    IsUnique = true)]
+[EntityTypeConfiguration(typeof(ResourceEntityConfiguration))]
 public class ResourceEntity
 {
     public int Id { get; set; }
@@ -58,7 +59,8 @@ public class ResourceEntityConfiguration : IEntityTypeConfiguration<ResourceEnti
 public enum ResourceEntityType
 {
     None = 0,
-    CBBTER = 1
+    CBBTER = 1,
+    TyndaleBibleDictionary = 2
 }
 
 public enum ResourceEntityMediaType

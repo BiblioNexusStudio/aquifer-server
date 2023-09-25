@@ -5,6 +5,7 @@ public class BibleEntity
     public int Id { get; set; }
     public int LanguageId { get; set; }
     public string Name { get; set; } = null!;
+    public string Abbreviation { get; set; } = null!;
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;

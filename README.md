@@ -53,7 +53,7 @@ in the project and the current state of the database.
 
 To create a new migration:
 ```bash
-dotnet ef migrations add --project src/Aquifer.API MigrationNameHere
+dotnet ef migrations add --startup-project src/Aquifer.API --project src/Aquifer.Data MigrationNameHere
 ```
 
 If you run that command and the new migration file is empty, that means there
@@ -62,7 +62,7 @@ this to your advantage to create empty migrations and add your own custom code.
 
 To run migrations:
 ```bash
-dotnet ef database update --project src/Aquifer.API
+dotnet ef database update --startup-project src/Aquifer.API --project src/Aquifer.Data
 ```
 
 ## Test
