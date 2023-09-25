@@ -15,13 +15,21 @@ public class ResourceContentEntity
     public bool Trusted { get; set; }
     public string Content { get; set; } = null!; // JSON
     public int ContentSize { get; set; }
+    public ResourceContentMediaType MediaType { get; set; }
 
-    [SqlDefaultValue("getutcdate()")]
-    public DateTime Created { get; set; } = DateTime.UtcNow;
+    [SqlDefaultValue("getutcdate()")] public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    [SqlDefaultValue("getutcdate()")]
-    public DateTime Updated { get; set; } = DateTime.UtcNow;
+    [SqlDefaultValue("getutcdate()")] public DateTime Updated { get; set; } = DateTime.UtcNow;
 
     public LanguageEntity Language { get; set; } = null!;
     public ResourceEntity Resource { get; set; } = null!;
+}
+
+public enum ResourceContentMediaType
+{
+    None = 0,
+    Text = 1,
+    Audio = 2,
+    Video = 3,
+    Image = 4
 }

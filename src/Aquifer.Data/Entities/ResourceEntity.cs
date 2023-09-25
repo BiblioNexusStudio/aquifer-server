@@ -4,9 +4,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Aquifer.Data.Entities;
 
 [Index(nameof(Type),
-     nameof(MediaType),
-     nameof(EnglishLabel),
-     IsUnique = true), EntityTypeConfiguration(typeof(ResourceEntityConfiguration))]
+    nameof(MediaType),
+    nameof(EnglishLabel),
+    IsUnique = true)]
+[EntityTypeConfiguration(typeof(ResourceEntityConfiguration))]
 public class ResourceEntity
 {
     public int Id { get; set; }
@@ -15,11 +16,9 @@ public class ResourceEntity
     public string EnglishLabel { get; set; } = null!;
     public string? Tag { get; set; }
 
-    [SqlDefaultValue("getutcdate()")]
-    public DateTime Created { get; set; } = DateTime.UtcNow;
+    [SqlDefaultValue("getutcdate()")] public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    [SqlDefaultValue("getutcdate()")]
-    public DateTime Updated { get; set; } = DateTime.UtcNow;
+    [SqlDefaultValue("getutcdate()")] public DateTime Updated { get; set; } = DateTime.UtcNow;
 
     public ICollection<VerseResourceEntity> VerseResources { get; set; } =
         new List<VerseResourceEntity>();
@@ -58,7 +57,8 @@ public class ResourceEntityConfiguration : IEntityTypeConfiguration<ResourceEnti
 public enum ResourceEntityType
 {
     None = 0,
-    CBBTER = 1
+    CBBTER = 1,
+    TYNDALE_BIBLE_DICTIONARY = 2
 }
 
 public enum ResourceEntityMediaType
