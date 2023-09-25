@@ -14,9 +14,11 @@ public class BibleBookContentEntity
     public int AudioSize { get; set; }
     public int ChapterCount { get; set; }
 
-    [SqlDefaultValue("getutcdate()")] public DateTime Created { get; set; } = DateTime.UtcNow;
+    [SqlDefaultValue("getutcdate()")]
+    public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    [SqlDefaultValue("getutcdate()")] public DateTime Updated { get; set; } = DateTime.UtcNow;
+    [SqlDefaultValue("getutcdate()")]
+    public DateTime Updated { get; set; } = DateTime.UtcNow;
 
     public BibleEntity Bible { get; set; } = null!;
 }

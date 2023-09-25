@@ -17,9 +17,11 @@ public class ResourceContentEntity
     public int ContentSize { get; set; }
     public ResourceContentMediaType MediaType { get; set; }
 
-    [SqlDefaultValue("getutcdate()")] public DateTime Created { get; set; } = DateTime.UtcNow;
+    [SqlDefaultValue("getutcdate()")]
+    public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    [SqlDefaultValue("getutcdate()")] public DateTime Updated { get; set; } = DateTime.UtcNow;
+    [SqlDefaultValue("getutcdate()")]
+    public DateTime Updated { get; set; } = DateTime.UtcNow;
 
     public LanguageEntity Language { get; set; } = null!;
     public ResourceEntity Resource { get; set; } = null!;

@@ -396,5 +396,6 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+*.DotSettings.user
 src/Aquifer.API/appsettings.Development.json
 .idea/
