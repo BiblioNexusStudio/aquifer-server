@@ -7,7 +7,7 @@ resources:
           type: github
           name: BiblioNexusStudio/devops
           endpoint: BiblioNexusStudio
-        - repository: aquifer_e2e
+        - repository: well_e2e
           type: github
           name: BiblioNexusStudio/well-e2e
           endpoint: BiblioNexusStudio
@@ -82,6 +82,6 @@ stages:
     - stage: e2e_tests
       dependsOn: [deploy_to_dev]
       jobs:
-          - template: azure-devops/templates/e2e_tests.yml@aquifer_e2e
+          - template: azure-devops/templates/e2e_tests.yml@well_e2e
             parameters:
                 Url: $(AzureStaticWebAppsDeployUrlDev)
