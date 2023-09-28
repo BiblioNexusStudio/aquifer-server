@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
 
@@ -27,6 +28,7 @@ public class ResourceContentEntity
     public ResourceEntity Resource { get; set; } = null!;
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ResourceContentMediaType
 {
     None = 0,

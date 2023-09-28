@@ -11,64 +11,97 @@ public class PassagesModule : IModule
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("passages");
-        group.MapGet("/resources/language/{languageId:int}", GetPassageResourcesByLanguage);
+        group.MapGet("language/{languageId:int}/resource/{resourceType}", GetPassagesByLanguageAndResource);
+        group.MapGet("{passageId:int}/language/{languageId:int}", GetPassageDetailsForLanguage);
         return endpoints;
     }
 
-    public async Task<Ok<List<PassageResourcesResponse>>> GetPassageResourcesByLanguage(int languageId,
+    private async Task<Ok<List<PassagesBookResponse>>> GetPassagesByLanguageAndResource(int languageId,
+        ResourceEntityType resourceType,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var passageContent = (await dbContext.Passages.Select(passage =>
-                new PassageResourcesResponse
-                {
-                    PassageStartDetails = BibleUtilities.TranslateVerseId(passage.StartVerseId),
-                    PassageEndDetails = BibleUtilities.TranslateVerseId(passage.EndVerseId),
-                    Resources = passage.PassageResources
-                        .Where(pr => pr.Resource.Type != ResourceEntityType.TyndaleBibleDictionary)
-                        .Select(passageResource =>
-                            new PassageResourcesResponseResource
-                            {
-                                Type = (int)passageResource.Resource.Type,
-                                MediaType = (int)passageResource.Resource.MediaType,
-                                EnglishLabel = passageResource.Resource.EnglishLabel,
-                                Tag = passageResource.Resource.Tag,
-                                Content =
-                                    passageResource.Resource.ResourceContents
-                                        .Select(resourceContent =>
-                                            new PassageResourcesResponseResourceContent
-                                            {
-                                                LanguageId = resourceContent.LanguageId,
-                                                DisplayName = resourceContent.DisplayName,
-                                                Summary = resourceContent.Summary,
-                                                Content = JsonUtilities.DefaultSerialize(resourceContent.Content),
-                                                ContentSize = resourceContent.ContentSize
-                                            }).FirstOrDefault(content => content.LanguageId == languageId),
-                                SupportingResources = passageResource.Resource.SupportingResources
-                                    .Where(sr => sr.Type != ResourceEntityType.TyndaleBibleDictionary)
-                                    .Select(
-                                        supportingResource => new PassageResourcesResponseResource
-                                        {
-                                            Type = (int)supportingResource.Type,
-                                            MediaType = (int)supportingResource.MediaType,
-                                            EnglishLabel = supportingResource.EnglishLabel,
-                                            Tag = supportingResource.Tag,
-                                            Content = supportingResource.ResourceContents.Select(resourceContent =>
-                                                new PassageResourcesResponseResourceContent
-                                                {
-                                                    LanguageId = resourceContent.LanguageId,
-                                                    DisplayName = resourceContent.DisplayName,
-                                                    Summary = resourceContent.Summary,
-                                                    Content =
-                                                        JsonUtilities.DefaultSerialize(resourceContent.Content),
-                                                    ContentSize = resourceContent.ContentSize
-                                                }).FirstOrDefault(content => content.LanguageId == languageId)
-                                        })
-                            })
-                }).ToListAsync(cancellationToken))
-            .OrderBy(passage => passage.BookId)
-            .ThenBy(passage => passage.StartChapter).ThenBy(passage => passage.StartVerse).ToList();
+        var passagesByBook = (await dbContext.Passages
+                .Where(p => p.PassageResources.Any(pr =>
+                    pr.Resource.Type == resourceType &&
+                    pr.Resource.ResourceContents.Any(rc => rc.LanguageId == languageId)))
+                .Select(passage =>
+                    new PassagesResponsePassage
+                    {
+                        Id = passage.Id,
+                        PassageStartDetails = BibleUtilities.TranslateVerseId(passage.StartVerseId),
+                        PassageEndDetails = BibleUtilities.TranslateVerseId(passage.EndVerseId)
+                    }
+                ).ToListAsync(cancellationToken))
+            .GroupBy(passage => passage.BookId)
+            .Select(grouped => new PassagesBookResponse
+            {
+                BookId = grouped.Key, Passages = grouped.OrderBy(p => p.StartChapter).ThenBy(p => p.StartVerse)
+            })
+            .OrderBy(book => book.BookId).ToList();
 
-        return TypedResults.Ok(passageContent);
+        return TypedResults.Ok(passagesByBook);
+    }
+
+    private async Task<Results<Ok<PassageDetailsResponse>, NotFound>> GetPassageDetailsForLanguage(
+        int passageId,
+        int languageId,
+        AquiferDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var passage = await dbContext.Passages.FindAsync(new object?[] { passageId }, cancellationToken);
+        if (passage == null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var passageResourceContent = await dbContext.PassageResources
+            // find all passages that overlap with the current passage
+            .Where(pr => (pr.Passage.StartVerseId >= passage.StartVerseId &&
+                          pr.Passage.StartVerseId <= passage.EndVerseId) ||
+                         (pr.Passage.EndVerseId >= passage.StartVerseId &&
+                          pr.Passage.EndVerseId <= passage.EndVerseId))
+            .SelectMany(pr => pr.Resource.ResourceContents.Where(rc => rc.LanguageId == languageId).Select(rc =>
+                new PassageDetailsResponseContent
+                {
+                    ContentId = rc.Id,
+                    ContentSize = rc.ContentSize,
+                    MediaTypeName = rc.MediaType,
+                    TypeName = pr.Resource.Type
+                }))
+            .ToListAsync(cancellationToken);
+
+        var verseResourceContent = await dbContext.VerseResources
+            // find all verses contained within the current passage
+            .Where(vr => vr.VerseId >= passage.StartVerseId && vr.VerseId <= passage.EndVerseId)
+            .SelectMany(vr => vr.Resource.ResourceContents.Where(rc => rc.LanguageId == languageId).Select(rc =>
+                new PassageDetailsResponseContent
+                {
+                    ContentId = rc.Id,
+                    ContentSize = rc.ContentSize,
+                    MediaTypeName = rc.MediaType,
+                    TypeName = vr.Resource.Type
+                }))
+            .ToListAsync(cancellationToken);
+
+        var supportingResourceContent = await dbContext.PassageResources.Where(pr => pr.PassageId == passageId)
+            .SelectMany(pr => pr.Resource.SupportingResources
+                .SelectMany(sr => sr.ResourceContents.Where(rc => rc.LanguageId == languageId)
+                    .Select(rc => new PassageDetailsResponseContent
+                    {
+                        ContentId = rc.Id,
+                        ContentSize = rc.ContentSize,
+                        MediaTypeName = rc.MediaType,
+                        TypeName = sr.Type
+                    })))
+            .ToListAsync(cancellationToken);
+
+        return TypedResults.Ok(new PassageDetailsResponse
+        {
+            Id = passage.Id,
+            PassageStartDetails = BibleUtilities.TranslateVerseId(passage.StartVerseId),
+            PassageEndDetails = BibleUtilities.TranslateVerseId(passage.EndVerseId),
+            Contents = passageResourceContent.Concat(verseResourceContent).Concat(supportingResourceContent)
+        });
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
@@ -56,11 +57,13 @@ public class ResourceEntityConfiguration : IEntityTypeConfiguration<ResourceEnti
     }
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ResourceEntityType
 {
     None = 0,
     CBBTER = 1,
-    TyndaleBibleDictionary = 2
+    TyndaleBibleDictionary = 2,
+    GenericImage = 3,
 }
 
 public enum ResourceEntityMediaType

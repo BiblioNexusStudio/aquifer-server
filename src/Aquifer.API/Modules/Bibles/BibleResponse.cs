@@ -1,20 +1,29 @@
-﻿namespace Aquifer.API.Modules.Bibles;
+﻿using Aquifer.API.Utilities;
 
-public class BibleBookResponse
+namespace Aquifer.API.Modules.Bibles;
+
+public class BibleResponse
 {
-    public int LanguageId { get; set; }
+    public int Id { get; set; }
     public string Name { get; set; } = null!;
+    public string Abbreviation { get; set; } = null!;
 
-    public IEnumerable<BibleBookResponseContent> Contents { get; set; } =
-        new List<BibleBookResponseContent>();
+    public IEnumerable<BibleResponseBook> Books { get; set; } =
+        new List<BibleResponseBook>();
 }
 
-public class BibleBookResponseContent
+public class BibleResponseBook
 {
     public int BookId { get; set; }
+    public BibleUtilities.BookCode BookCode { get; set; }
     public string DisplayName { get; set; } = null!;
-    public string TextUrl { get; set; } = null!;
-    public object? AudioUrls { get; set; }
     public int TextSize { get; set; }
     public int AudioSize { get; set; }
+    public int ChapterCount { get; set; }
+}
+
+public class BibleBookDetailsResponse : BibleResponseBook
+{
+    public string TextUrl { get; set; } = null!;
+    public object? AudioUrls { get; set; }
 }

@@ -10,31 +10,63 @@ public class BiblesModule : IModule
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("bibles");
-        group.MapGet("language/{languageId:int}", GetBibleContentsByLanguage);
+        group.MapGet("language/{languageId:int}", GetBibleByLanguage);
+        group.MapGet("{bibleId:int}/book/{bookId:int}", GetBibleBookDetails);
 
         return endpoints;
     }
 
-    private async Task<Ok<List<BibleBookResponse>>> GetBibleContentsByLanguage(int languageId,
+    private async Task<Ok<List<BibleResponse>>> GetBibleByLanguage(int languageId,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var bibles = await dbContext.Bibles.Where(x => x.LanguageId == languageId)
-            .Select(x => new BibleBookResponse
+            .Select(bible => new BibleResponse
             {
-                LanguageId = x.LanguageId,
-                Name = x.Name,
-                Contents = x.BibleBookContents.Select(y => new BibleBookResponseContent
-                {
-                    BookId = y.BookId,
-                    DisplayName = y.DisplayName,
-                    TextUrl = y.TextUrl,
-                    TextSize = y.TextSize,
-                    AudioUrls = JsonUtilities.DefaultSerialize(y.AudioUrls),
-                    AudioSize = y.AudioSize
-                })
+                Name = bible.Name,
+                Abbreviation = bible.Abbreviation,
+                Id = bible.Id,
+                Books = bible.BibleBookContents.OrderBy(book => book.BookId).Select(book =>
+                    new BibleResponseBook
+                    {
+                        BookId = book.BookId,
+                        BookCode = BibleUtilities.BookIdToCode(book.BookId),
+                        DisplayName = book.DisplayName,
+                        TextSize = book.TextSize,
+                        AudioSize = book.AudioSize,
+                        ChapterCount = book.ChapterCount
+                    })
             }).ToListAsync(cancellationToken);
 
         return TypedResults.Ok(bibles);
+    }
+
+    private async Task<Results<Ok<BibleBookDetailsResponse>, NotFound>> GetBibleBookDetails(
+        int bibleId,
+        int bookId,
+        AquiferDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var book = await dbContext.BibleBookContents
+            .SingleOrDefaultAsync(b => b.BibleId == bibleId && b.BookId == bookId, cancellationToken);
+
+        if (book == null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var response = new BibleBookDetailsResponse
+        {
+            AudioSize = book.AudioSize,
+            AudioUrls = book.AudioUrls,
+            BookId = book.BookId,
+            BookCode = BibleUtilities.BookIdToCode(book.BookId),
+            ChapterCount = book.ChapterCount,
+            DisplayName = book.DisplayName,
+            TextSize = book.TextSize,
+            TextUrl = book.TextUrl
+        };
+
+        return TypedResults.Ok(response);
     }
 }
