@@ -1,5 +1,5 @@
-﻿using Aquifer.API.Utilities;
-using Aquifer.Data;
+﻿using Aquifer.Data;
+using Aquifer.Data.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +11,7 @@ public class BiblesModule : IModule
     {
         var group = endpoints.MapGroup("bibles");
         group.MapGet("language/{languageId:int}", GetBibleByLanguage);
-        group.MapGet("{bibleId:int}/book/{bookId:int}", GetBibleBookDetails);
+        group.MapGet("{bibleId:int}/book/{bookCode}", GetBibleBookDetails);
 
         return endpoints;
     }
@@ -29,8 +29,7 @@ public class BiblesModule : IModule
                 Books = bible.BibleBookContents.OrderBy(book => book.BookId).Select(book =>
                     new BibleResponseBook
                     {
-                        BookId = book.BookId,
-                        BookCode = BibleUtilities.BookIdToCode(book.BookId),
+                        BookCode = book.BookId.ToCode(),
                         DisplayName = book.DisplayName,
                         TextSize = book.TextSize,
                         AudioSize = book.AudioSize,
@@ -43,10 +42,16 @@ public class BiblesModule : IModule
 
     private async Task<Results<Ok<BibleBookDetailsResponse>, NotFound>> GetBibleBookDetails(
         int bibleId,
-        int bookId,
+        string bookCode,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var bookId = BookIdSerializer.FromCode(bookCode);
+        if (bookId == null)
+        {
+            return TypedResults.NotFound();
+        }
+
         var book = await dbContext.BibleBookContents
             .SingleOrDefaultAsync(b => b.BibleId == bibleId && b.BookId == bookId, cancellationToken);
 
@@ -59,8 +64,7 @@ public class BiblesModule : IModule
         {
             AudioSize = book.AudioSize,
             AudioUrls = book.AudioUrls,
-            BookId = book.BookId,
-            BookCode = BibleUtilities.BookIdToCode(book.BookId),
+            BookCode = book.BookId.ToCode(),
             ChapterCount = book.ChapterCount,
             DisplayName = book.DisplayName,
             TextSize = book.TextSize,

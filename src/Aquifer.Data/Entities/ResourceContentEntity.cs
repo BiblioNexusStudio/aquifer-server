@@ -28,7 +28,6 @@ public class ResourceContentEntity
     public ResourceEntity Resource { get; set; } = null!;
 }
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ResourceContentMediaType
 {
     None = 0,

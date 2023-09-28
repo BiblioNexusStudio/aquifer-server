@@ -7,11 +7,6 @@ public class ResourceContentUrlJsonSchema
 
 public class ResourceContentAudioJsonSchema
 {
-    public ResourceContentAudioTypeJsonSchema Webm { get; set; } = null!;
-    public ResourceContentAudioTypeJsonSchema Mp3 { get; set; } = null!;
-}
-
-public class ResourceContentAudioTypeJsonSchema
-{
-    public string Url { get; set; } = null!;
+    public ResourceContentUrlJsonSchema Webm { get; set; } = null!;
+    public ResourceContentUrlJsonSchema Mp3 { get; set; } = null!;
 }

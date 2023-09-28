@@ -8,6 +8,8 @@ namespace Aquifer.API.Modules.Passages;
 
 public class PassagesModule : IModule
 {
+    private static readonly ResourceEntityType[] AllowedResourceTypes = { ResourceEntityType.CBBTER };
+
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("passages");
@@ -16,11 +18,17 @@ public class PassagesModule : IModule
         return endpoints;
     }
 
-    private async Task<Ok<List<PassagesBookResponse>>> GetPassagesByLanguageAndResource(int languageId,
+    private async Task<Results<Ok<List<PassagesBookResponse>>, NotFound>> GetPassagesByLanguageAndResource(
+        int languageId,
         ResourceEntityType resourceType,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        if (!AllowedResourceTypes.Contains(resourceType))
+        {
+            return TypedResults.NotFound();
+        }
+
         var passagesByBook = (await dbContext.Passages
                 .Where(p => p.PassageResources.Any(pr =>
                     pr.Resource.Type == resourceType &&
@@ -49,7 +57,7 @@ public class PassagesModule : IModule
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var passage = await dbContext.Passages.FindAsync(new object?[] { passageId }, cancellationToken);
+        var passage = await dbContext.Passages.FindAsync(passageId, cancellationToken);
         if (passage == null)
         {
             return TypedResults.NotFound();
@@ -102,6 +110,7 @@ public class PassagesModule : IModule
             PassageStartDetails = BibleUtilities.TranslateVerseId(passage.StartVerseId),
             PassageEndDetails = BibleUtilities.TranslateVerseId(passage.EndVerseId),
             Contents = passageResourceContent.Concat(verseResourceContent).Concat(supportingResourceContent)
+                .DistinctBy(rc => rc.ContentId)
         });
     }
 }

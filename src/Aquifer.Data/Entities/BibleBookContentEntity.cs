@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Aquifer.Data.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
 
@@ -6,7 +7,7 @@ namespace Aquifer.Data.Entities;
 public class BibleBookContentEntity
 {
     public int BibleId { get; set; }
-    public int BookId { get; set; }
+    public BookId BookId { get; set; }
     public string DisplayName { get; set; } = null!;
     public string TextUrl { get; set; } = null!;
     public string AudioUrls { get; set; } = null!; // JSON

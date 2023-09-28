@@ -57,7 +57,6 @@ public class ResourceEntityConfiguration : IEntityTypeConfiguration<ResourceEnti
     }
 }
 
-[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ResourceEntityType
 {
     None = 0,
