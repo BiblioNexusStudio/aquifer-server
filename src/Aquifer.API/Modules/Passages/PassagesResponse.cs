@@ -6,7 +6,7 @@ namespace Aquifer.API.Modules.Passages;
 public class PassagesBookResponse
 {
     public int BookId { get; set; }
-    public IEnumerable<PassagesResponsePassage> Passages { get; set; } = null!;
+    public required IEnumerable<PassagesResponsePassage> Passages { get; set; }
 }
 
 public class PassagesResponsePassage
@@ -27,7 +27,7 @@ public class PassagesResponsePassage
 
 public class PassageDetailsResponse : PassagesResponsePassage
 {
-    public IEnumerable<PassageDetailsResponseContent> Contents { get; set; } = null!;
+    public required IEnumerable<PassageDetailsResponseContent> Contents { get; set; }
 }
 
 public class PassageDetailsResponseContent

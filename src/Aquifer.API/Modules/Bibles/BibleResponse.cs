@@ -3,17 +3,16 @@
 public class BibleResponse
 {
     public int Id { get; set; }
-    public string Name { get; set; } = null!;
-    public string Abbreviation { get; set; } = null!;
+    public required string Name { get; set; }
+    public required string Abbreviation { get; set; }
 
-    public IEnumerable<BibleResponseBook> Books { get; set; } =
-        new List<BibleResponseBook>();
+    public required IEnumerable<BibleResponseBook> Books { get; set; }
 }
 
 public class BibleResponseBook
 {
-    public string BookCode { get; set; }
-    public string DisplayName { get; set; } = null!;
+    public required string BookCode { get; set; }
+    public required string DisplayName { get; set; }
     public int TextSize { get; set; }
     public int AudioSize { get; set; }
     public int ChapterCount { get; set; }

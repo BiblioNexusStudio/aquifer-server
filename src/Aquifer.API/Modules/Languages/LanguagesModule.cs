@@ -14,7 +14,7 @@ public class LanguagesModule : IModule
         return endpoints;
     }
 
-    public async Task<Ok<List<LanguageResponse>>> GetLanguages(AquiferDbContext dbContext)
+    private async Task<Ok<List<LanguageResponse>>> GetLanguages(AquiferDbContext dbContext)
     {
         var languages = await dbContext.Languages.Select(x => new LanguageResponse
         {

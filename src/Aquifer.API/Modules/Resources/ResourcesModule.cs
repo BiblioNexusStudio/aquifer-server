@@ -1,6 +1,8 @@
 ﻿using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +21,7 @@ public class ResourcesModule : IModule
         return endpoints;
     }
 
-    private async Task<Ok<ResourceContentInfoForBookResponse>> GetResourcesForBook(
+    private async Task<Results<Ok<ResourceContentInfoForBookResponse>, BadRequest<string>>> GetResourcesForBook(
         int languageId,
         int bookId,
         AquiferDbContext dbContext,
@@ -27,9 +29,14 @@ public class ResourcesModule : IModule
         [FromQuery] ResourceEntityType[]? resourceTypes = null
     )
     {
+        if (resourceTypes == null)
+        {
+            return TypedResults.BadRequest("resourceTypes query param must be specified");
+        }
+
         var passageResourceContent = await dbContext.PassageResources
             // find all passages that overlap with the current book
-            .Where(pr => resourceTypes != null && resourceTypes.Contains(pr.Resource.Type) &&
+            .Where(pr => resourceTypes.Contains(pr.Resource.Type) &&
                          ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
                            pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookId)) ||
                           (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
@@ -48,7 +55,7 @@ public class ResourcesModule : IModule
 
         var verseResourceContent = await dbContext.VerseResources
             // find all verses contained in the current book
-            .Where(vr => resourceTypes != null && resourceTypes.Contains(vr.Resource.Type) &&
+            .Where(vr => resourceTypes.Contains(vr.Resource.Type) &&
                          vr.VerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
                          vr.VerseId < BibleUtilities.UpperBoundOfBook(bookId))
             .SelectMany(vr => vr.Resource.ResourceContents.Where(rc => rc.LanguageId == languageId).Select(rc =>
@@ -115,18 +122,19 @@ public class ResourcesModule : IModule
         if (content.MediaType == ResourceContentMediaType.Audio)
         {
             var deserialized = JsonUtilities.DefaultDeserialize<ResourceContentAudioJsonSchema>(content.Content);
-            if (deserialized != null)
+            if (audioType == "webm" && deserialized.Webm != null)
             {
-                url = audioType == "webm" ? deserialized.Webm.Url : deserialized.Mp3.Url;
+                url = deserialized.Webm.Url;
+            }
+            else if (deserialized.Mp3 != null)
+            {
+                url = deserialized.Mp3.Url;
             }
         }
         else
         {
             var deserialized = JsonUtilities.DefaultDeserialize<ResourceContentUrlJsonSchema>(content.Content);
-            if (deserialized != null)
-            {
-                url = deserialized.Url;
-            }
+            url = deserialized.Url;
         }
 
         if (url != null)
@@ -134,7 +142,10 @@ public class ResourcesModule : IModule
             return TypedResults.Redirect(url);
         }
 
-        return TypedResults.Problem();
+        var telemetry = new TelemetryClient(TelemetryConfiguration.CreateDefault());
+        telemetry.TrackException(
+            new Exception($"Content with ID {contentId} exists but has unexpected `Content` JSON."));
+        return TypedResults.NotFound();
     }
 
     private async Task<Results<Ok<ResourceContentMetadataResponse>, NotFound>> GetResourceMetadataById(
@@ -152,7 +163,7 @@ public class ResourcesModule : IModule
         var response = new ResourceContentMetadataResponse
         {
             DisplayName = content.DisplayName,
-            Additional = content.MediaType == ResourceContentMediaType.Text
+            Metadata = content.MediaType == ResourceContentMediaType.Text
                 ? null
                 : JsonUtilities.DefaultDeserialize(content.Content)
         };

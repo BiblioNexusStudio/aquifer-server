@@ -2,6 +2,6 @@
 
 public class ResourceContentMetadataResponse
 {
-    public string DisplayName { get; set; } = null!;
-    public object? Additional { get; set; }
+    public string? DisplayName { get; set; }
+    public object? Metadata { get; set; }
 }
