@@ -1,6 +1,8 @@
-﻿using Aquifer.API.Utilities;
+﻿using Aquifer.API.Common;
+using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Aquifer.Data.Enums;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -16,19 +18,26 @@ public class ResourcesModule : IModule
         var group = endpoints.MapGroup("resources");
         group.MapGet("{contentId:int}/content", GetResourceContentById);
         group.MapGet("{contentId:int}/metadata", GetResourceMetadataById);
-        group.MapGet("language/{languageId:int}/book/{bookId:int}", GetResourcesForBook);
+        group.MapGet("language/{languageId:int}/book/{bookCode}", GetResourcesForBook);
 
         return endpoints;
     }
 
-    private async Task<Results<Ok<ResourceContentInfoForBookResponse>, BadRequest<string>>> GetResourcesForBook(
-        int languageId,
-        int bookId,
-        AquiferDbContext dbContext,
-        CancellationToken cancellationToken,
-        [FromQuery] ResourceEntityType[]? resourceTypes = null
-    )
+    private async Task<Results<Ok<ResourceContentInfoForBookResponse>, NotFound, BadRequest<string>>>
+        GetResourcesForBook(
+            int languageId,
+            string bookCode,
+            AquiferDbContext dbContext,
+            CancellationToken cancellationToken,
+            [FromQuery] ResourceEntityType[]? resourceTypes = null
+        )
     {
+        var bookId = BookIdSerializer.FromCode(bookCode);
+        if (bookId == null)
+        {
+            return TypedResults.NotFound();
+        }
+
         if (resourceTypes == null)
         {
             return TypedResults.BadRequest("resourceTypes query param must be specified");
@@ -37,10 +46,10 @@ public class ResourcesModule : IModule
         var passageResourceContent = await dbContext.PassageResources
             // find all passages that overlap with the current book
             .Where(pr => resourceTypes.Contains(pr.Resource.Type) &&
-                         ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
-                           pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookId)) ||
-                          (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
-                           pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
+                         ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook((BookId)bookId) &&
+                           pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook((BookId)bookId)) ||
+                          (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook((BookId)bookId) &&
+                           pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook((BookId)bookId))))
             .SelectMany(pr => pr.Resource.ResourceContents.Where(rc => rc.LanguageId == languageId).Select(rc =>
                 new
                 {
@@ -56,8 +65,8 @@ public class ResourcesModule : IModule
         var verseResourceContent = await dbContext.VerseResources
             // find all verses contained in the current book
             .Where(vr => resourceTypes.Contains(vr.Resource.Type) &&
-                         vr.VerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
-                         vr.VerseId < BibleUtilities.UpperBoundOfBook(bookId))
+                         vr.VerseId > BibleUtilities.LowerBoundOfBook((BookId)bookId) &&
+                         vr.VerseId < BibleUtilities.UpperBoundOfBook((BookId)bookId))
             .SelectMany(vr => vr.Resource.ResourceContents.Where(rc => rc.LanguageId == languageId).Select(rc =>
                 new
                 {
@@ -70,7 +79,29 @@ public class ResourcesModule : IModule
                 }))
             .ToListAsync(cancellationToken);
 
-        var allContent = passageResourceContent.Concat(verseResourceContent);
+        // for resource types that are used as the "root", we want to be sure to grab their supporting resources
+        var supportingResourceContent = await dbContext.PassageResources
+            // find all passages that overlap with the current book
+            .Where(pr => Constants.RootResourceTypes.Contains(pr.Resource.Type) &&
+                         resourceTypes.Contains(pr.Resource.Type) &&
+                         ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook((BookId)bookId) &&
+                           pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook((BookId)bookId)) ||
+                          (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook((BookId)bookId) &&
+                           pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook((BookId)bookId))))
+            .SelectMany(pr => pr.Resource.SupportingResources.SelectMany(sr => sr.ResourceContents
+                .Where(rc => rc.LanguageId == languageId).Select(rc =>
+                    new
+                    {
+                        StartChapter = pr.Passage.StartVerseId / 1000 % 1000,
+                        EndChapter = pr.Passage.EndVerseId / 1000 % 1000,
+                        ContentId = rc.Id,
+                        rc.ContentSize,
+                        rc.MediaType,
+                        sr.Type
+                    })))
+            .ToListAsync(cancellationToken);
+
+        var allContent = passageResourceContent.Concat(verseResourceContent).Concat(supportingResourceContent);
 
         var groupedContent = allContent
             .SelectMany(content => Enumerable.Range(content.StartChapter, content.EndChapter - content.StartChapter + 1)
@@ -81,8 +112,8 @@ public class ResourcesModule : IModule
                     {
                         ContentId = content.ContentId,
                         ContentSize = content.ContentSize,
-                        MediaType = content.MediaType,
-                        Type = content.Type
+                        MediaTypeName = content.MediaType,
+                        TypeName = content.Type
                     }
                 }))
             .GroupBy(item => item.ChapterNumber)

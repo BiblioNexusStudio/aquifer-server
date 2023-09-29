@@ -1,4 +1,6 @@
-﻿namespace Aquifer.API.Utilities;
+﻿using Aquifer.Data.Enums;
+
+namespace Aquifer.API.Utilities;
 
 public static class BibleUtilities
 {
@@ -11,13 +13,13 @@ public static class BibleUtilities
         return (bookId, chapter, verse);
     }
 
-    public static int LowerBoundOfBook(int bookId)
+    public static int LowerBoundOfBook(BookId bookId)
     {
-        return (bookId * 1000000) + 1000000000;
+        return ((int) bookId * 1000000) + 1000000000;
     }
 
-    public static int UpperBoundOfBook(int bookId)
+    public static int UpperBoundOfBook(BookId bookId)
     {
-        return (bookId * 1000000) + 1000999999;
+        return ((int) bookId * 1000000) + 1000999999;
     }
 }

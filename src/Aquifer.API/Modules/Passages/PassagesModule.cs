@@ -1,4 +1,5 @@
-﻿using Aquifer.API.Utilities;
+﻿using Aquifer.API.Common;
+using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -8,8 +9,6 @@ namespace Aquifer.API.Modules.Passages;
 
 public class PassagesModule : IModule
 {
-    private static readonly ResourceEntityType[] AllowedResourceTypes = { ResourceEntityType.CBBTER };
-
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("passages");
@@ -24,7 +23,7 @@ public class PassagesModule : IModule
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        if (!AllowedResourceTypes.Contains(resourceType))
+        if (!Constants.RootResourceTypes.Contains(resourceType))
         {
             return TypedResults.NotFound();
         }
