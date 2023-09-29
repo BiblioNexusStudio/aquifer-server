@@ -48,7 +48,7 @@ public class BiblesModule : IModule
         CancellationToken cancellationToken)
     {
         var bookId = BookIdSerializer.FromCode(bookCode);
-        if (bookId == null)
+        if (bookId == BookId.None)
         {
             return TypedResults.NotFound();
         }

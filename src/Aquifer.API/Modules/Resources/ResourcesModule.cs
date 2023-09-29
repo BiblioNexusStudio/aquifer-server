@@ -33,7 +33,7 @@ public class ResourcesModule : IModule
         )
     {
         var bookId = BookIdSerializer.FromCode(bookCode);
-        if (bookId == null)
+        if (bookId == BookId.None)
         {
             return TypedResults.NotFound();
         }
@@ -46,10 +46,10 @@ public class ResourcesModule : IModule
         var passageResourceContent = await dbContext.PassageResources
             // find all passages that overlap with the current book
             .Where(pr => resourceTypes.Contains(pr.Resource.Type) &&
-                         ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook((BookId)bookId) &&
-                           pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook((BookId)bookId)) ||
-                          (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook((BookId)bookId) &&
-                           pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook((BookId)bookId))))
+                         ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                           pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookId)) ||
+                          (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                           pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
             .SelectMany(pr => pr.Resource.ResourceContents.Where(rc => rc.LanguageId == languageId).Select(rc =>
                 new
                 {
@@ -65,8 +65,8 @@ public class ResourcesModule : IModule
         var verseResourceContent = await dbContext.VerseResources
             // find all verses contained in the current book
             .Where(vr => resourceTypes.Contains(vr.Resource.Type) &&
-                         vr.VerseId > BibleUtilities.LowerBoundOfBook((BookId)bookId) &&
-                         vr.VerseId < BibleUtilities.UpperBoundOfBook((BookId)bookId))
+                         vr.VerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                         vr.VerseId < BibleUtilities.UpperBoundOfBook(bookId))
             .SelectMany(vr => vr.Resource.ResourceContents.Where(rc => rc.LanguageId == languageId).Select(rc =>
                 new
                 {
@@ -84,10 +84,10 @@ public class ResourcesModule : IModule
             // find all passages that overlap with the current book
             .Where(pr => Constants.RootResourceTypes.Contains(pr.Resource.Type) &&
                          resourceTypes.Contains(pr.Resource.Type) &&
-                         ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook((BookId)bookId) &&
-                           pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook((BookId)bookId)) ||
-                          (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook((BookId)bookId) &&
-                           pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook((BookId)bookId))))
+                         ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                           pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookId)) ||
+                          (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                           pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
             .SelectMany(pr => pr.Resource.SupportingResources.SelectMany(sr => sr.ResourceContents
                 .Where(rc => rc.LanguageId == languageId).Select(rc =>
                     new
