@@ -1,4 +1,5 @@
-﻿using Aquifer.Data;
+﻿using Aquifer.API.Utilities;
+using Aquifer.Data;
 using Aquifer.Data.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -47,7 +48,7 @@ public class BiblesModule : IModule
         CancellationToken cancellationToken)
     {
         var bookId = BookIdSerializer.FromCode(bookCode);
-        if (bookId == null)
+        if (bookId == BookId.None)
         {
             return TypedResults.NotFound();
         }
@@ -63,7 +64,7 @@ public class BiblesModule : IModule
         var response = new BibleBookDetailsResponse
         {
             AudioSize = book.AudioSize,
-            AudioUrls = book.AudioUrls,
+            AudioUrls = JsonUtilities.DefaultDeserialize(book.AudioUrls),
             BookCode = book.BookId.ToCode(),
             ChapterCount = book.ChapterCount,
             DisplayName = book.DisplayName,

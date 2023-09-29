@@ -17,6 +17,6 @@ public class ResourceContentInfo
 {
     public int ContentId { get; set; }
     public int ContentSize { get; set; }
-    public ResourceContentMediaType MediaType { get; set; }
-    public ResourceEntityType Type { get; set; }
+    public ResourceContentMediaType MediaTypeName { get; set; }
+    public ResourceEntityType TypeName { get; set; }
 }

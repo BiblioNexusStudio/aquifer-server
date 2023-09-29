@@ -78,10 +78,8 @@ public static class BookIdSerializer
         return id.ToString().Replace("Book", "");
     }
 
-    public static BookId? FromCode(string code)
+    public static BookId FromCode(string code)
     {
-        if (Enum.TryParse($"Book{code}", out BookId result)) return result;
-
-        return null;
+        return Enum.TryParse($"Book{code}", out BookId result) ? result : BookId.None;
     }
 }
