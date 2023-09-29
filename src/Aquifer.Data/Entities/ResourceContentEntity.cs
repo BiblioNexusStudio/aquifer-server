@@ -1,9 +1,8 @@
-﻿using System.Text.Json.Serialization;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
 
-[Index(nameof(ResourceId), nameof(LanguageId), IsUnique = true)]
+[Index(nameof(ResourceId), nameof(LanguageId), nameof(MediaType), IsUnique = true)]
 public class ResourceContentEntity
 {
     public int Id { get; set; }
