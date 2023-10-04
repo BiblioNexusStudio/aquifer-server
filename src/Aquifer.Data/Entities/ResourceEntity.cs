@@ -1,11 +1,9 @@
-﻿using System.Text.Json.Serialization;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
 [Index(nameof(Type),
-    nameof(MediaType),
     nameof(EnglishLabel),
     IsUnique = true)]
 [EntityTypeConfiguration(typeof(ResourceEntityConfiguration))]
@@ -13,7 +11,6 @@ public class ResourceEntity
 {
     public int Id { get; set; }
     public ResourceEntityType Type { get; set; }
-    public ResourceEntityMediaType MediaType { get; set; }
     public string EnglishLabel { get; set; } = null!;
     public string? Tag { get; set; }
 
@@ -31,6 +28,12 @@ public class ResourceEntity
 
     public ICollection<ResourceContentEntity> ResourceContents { get; set; } =
         new List<ResourceContentEntity>();
+
+    public ICollection<ResourceEntity> AssociatedResourceChildren { get; set; } =
+        new List<ResourceEntity>();
+
+    public ICollection<ResourceEntity> AssociatedResourceParents { get; set; } =
+        new List<ResourceEntity>();
 
     public ICollection<ResourceEntity> SupportingResources { get; set; } =
         new List<ResourceEntity>();
@@ -54,6 +57,18 @@ public class ResourceEntityConfiguration : IEntityTypeConfiguration<ResourceEnti
                     .HasOne(typeof(ResourceEntity))
                     .WithMany()
                     .HasForeignKey("ParentResourceId"));
+
+        builder.HasMany(e => e.AssociatedResourceChildren)
+            .WithMany(j => j.AssociatedResourceParents)
+            .UsingEntity("AssociatedResources",
+                j => j
+                    .HasOne(typeof(ResourceEntity))
+                    .WithMany()
+                    .HasForeignKey("AssociatedResourceId"),
+                j => j
+                    .HasOne(typeof(ResourceEntity))
+                    .WithMany()
+                    .HasForeignKey("ResourceId"));
     }
 }
 
@@ -62,14 +77,5 @@ public enum ResourceEntityType
     None = 0,
     CBBTER = 1,
     TyndaleBibleDictionary = 2,
-    GenericImage = 3,
-}
-
-public enum ResourceEntityMediaType
-{
-    None = 0,
-    Text = 1,
-    Audio = 2,
-    Video = 3,
-    Image = 4
+    UbsImage = 3,
 }
