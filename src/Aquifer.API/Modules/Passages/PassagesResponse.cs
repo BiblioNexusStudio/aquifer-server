@@ -40,7 +40,7 @@ public class PassageDetailsResponse : PassagesResponsePassage
 public class PassageDetailsResponseContent
 {
     public int ContentId { get; set; }
-    public ResourceEntityType TypeName { get; set; }
+    public string TypeName { get; set; } = null!;
     public ResourceContentMediaType MediaTypeName { get; set; }
     public int ContentSize { get; set; }
 }

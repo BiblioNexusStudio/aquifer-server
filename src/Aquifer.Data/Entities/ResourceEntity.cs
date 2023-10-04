@@ -3,14 +3,15 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
-[Index(nameof(Type),
+[Index(nameof(TypeId),
     nameof(EnglishLabel),
     IsUnique = true)]
 [EntityTypeConfiguration(typeof(ResourceEntityConfiguration))]
 public class ResourceEntity
 {
     public int Id { get; set; }
-    public ResourceEntityType Type { get; set; }
+    public int TypeId { get; set; }
+    public ResourceTypeEntity Type { get; set; } = null!;
     public string EnglishLabel { get; set; } = null!;
     public string? Tag { get; set; }
 
@@ -34,30 +35,12 @@ public class ResourceEntity
 
     public ICollection<ResourceEntity> AssociatedResourceParents { get; set; } =
         new List<ResourceEntity>();
-
-    public ICollection<ResourceEntity> SupportingResources { get; set; } =
-        new List<ResourceEntity>();
-
-    public ICollection<ResourceEntity> ResourcesSupported { get; set; } =
-        new List<ResourceEntity>();
 }
 
 public class ResourceEntityConfiguration : IEntityTypeConfiguration<ResourceEntity>
 {
     public void Configure(EntityTypeBuilder<ResourceEntity> builder)
     {
-        builder.HasMany(e => e.SupportingResources)
-            .WithMany(j => j.ResourcesSupported)
-            .UsingEntity("SupportingResources",
-                j => j
-                    .HasOne(typeof(ResourceEntity))
-                    .WithMany()
-                    .HasForeignKey("SupportingResourceId"),
-                j => j
-                    .HasOne(typeof(ResourceEntity))
-                    .WithMany()
-                    .HasForeignKey("ParentResourceId"));
-
         builder.HasMany(e => e.AssociatedResourceChildren)
             .WithMany(j => j.AssociatedResourceParents)
             .UsingEntity("AssociatedResources",
@@ -70,12 +53,4 @@ public class ResourceEntityConfiguration : IEntityTypeConfiguration<ResourceEnti
                     .WithMany()
                     .HasForeignKey("ResourceId"));
     }
-}
-
-public enum ResourceEntityType
-{
-    None = 0,
-    CBBTER = 1,
-    TyndaleBibleDictionary = 2,
-    UbsImage = 3,
 }

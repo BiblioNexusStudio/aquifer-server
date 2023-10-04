@@ -29,7 +29,7 @@ public class ResourcesModule : IModule
             string bookCode,
             AquiferDbContext dbContext,
             CancellationToken cancellationToken,
-            [FromQuery] ResourceEntityType[]? resourceTypes = null
+            [FromQuery] string[]? resourceTypes = null
         )
     {
         var bookId = BookIdSerializer.FromCode(bookCode);
@@ -43,9 +43,12 @@ public class ResourcesModule : IModule
             return TypedResults.BadRequest("resourceTypes query param must be specified");
         }
 
+        var resourceTypeEntities = await dbContext.ResourceTypes.Where(rt => resourceTypes.Contains(rt.ShortName))
+            .ToListAsync(cancellationToken);
+
         var passageResourceContent = await dbContext.PassageResources
             // find all passages that overlap with the current book
-            .Where(pr => resourceTypes.Contains(pr.Resource.Type) &&
+            .Where(pr => resourceTypeEntities.Contains(pr.Resource.Type) &&
                          ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
                            pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookId)) ||
                           (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
@@ -64,7 +67,7 @@ public class ResourcesModule : IModule
 
         var verseResourceContent = await dbContext.VerseResources
             // find all verses contained in the current book
-            .Where(vr => resourceTypes.Contains(vr.Resource.Type) &&
+            .Where(vr => resourceTypeEntities.Contains(vr.Resource.Type) &&
                          vr.VerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
                          vr.VerseId < BibleUtilities.UpperBoundOfBook(bookId))
             .SelectMany(vr => vr.Resource.ResourceContents.Where(rc => rc.LanguageId == languageId).Select(rc =>
@@ -82,13 +85,13 @@ public class ResourcesModule : IModule
         // for resource types that are used as the "root", we want to be sure to grab their supporting resources
         var supportingResourceContent = await dbContext.PassageResources
             // find all passages that overlap with the current book
-            .Where(pr => Constants.RootResourceTypes.Contains(pr.Resource.Type) &&
-                         resourceTypes.Contains(pr.Resource.Type) &&
+            .Where(pr => Constants.RootResourceTypes.Contains(pr.Resource.Type.ShortName) &&
+                         resourceTypeEntities.Contains(pr.Resource.Type) &&
                          ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
                            pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookId)) ||
                           (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
                            pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
-            .SelectMany(pr => pr.Resource.SupportingResources.SelectMany(sr => sr.ResourceContents
+            .SelectMany(pr => pr.Resource.AssociatedResourceChildren.SelectMany(sr => sr.ResourceContents
                 .Where(rc => rc.LanguageId == languageId).Select(rc =>
                     new
                     {
@@ -113,7 +116,7 @@ public class ResourcesModule : IModule
                         ContentId = content.ContentId,
                         ContentSize = content.ContentSize,
                         MediaTypeName = content.MediaType,
-                        TypeName = content.Type
+                        TypeName = content.Type.ShortName
                     }
                 }))
             .GroupBy(item => item.ChapterNumber)
