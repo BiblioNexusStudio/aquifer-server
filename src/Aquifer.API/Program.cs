@@ -12,6 +12,7 @@ var configuration = builder.Configuration.Get<ConfigurationOptions>();
 builder.Services
     //.AddAuth(configuration)
     .AddSwagger()
+    .AddCors()
     .AddApplicationInsightsTelemetry()
     .AddDbContext<AquiferDbContext>(options =>
         options.UseSqlServer(configuration?.ConnectionStrings?.BiblioNexusDb))
@@ -25,5 +26,6 @@ var app = builder.Build();
 
 //app.UseAuth();
 app.UseSwaggerWithUi();
+app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()); // need to expand on this
 app.MapEndpoints();
 app.Run();
