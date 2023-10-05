@@ -11,7 +11,8 @@ public class ResourceContentEntity
     public string DisplayName { get; set; } = null!;
     public string? Summary { get; set; }
     public int Version { get; set; }
-    public bool Completed { get; set; }
+    public ResourceContentStatus Status { get; set; }
+    public bool Enabled { get; set; }
     public bool Trusted { get; set; }
     public string Content { get; set; } = null!; // JSON
     public int ContentSize { get; set; }
@@ -34,4 +35,12 @@ public enum ResourceContentMediaType
     Audio = 2,
     Video = 3,
     Image = 4
+}
+
+public enum ResourceContentStatus
+{
+    None = 0,
+    NotStarted = 1,
+    InProgress = 2,
+    Completed = 3
 }

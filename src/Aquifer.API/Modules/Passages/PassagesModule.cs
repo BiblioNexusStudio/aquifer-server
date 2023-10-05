@@ -1,7 +1,6 @@
 ﻿using Aquifer.API.Common;
 using Aquifer.API.Utilities;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,21 +11,25 @@ public class PassagesModule : IModule
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("passages");
-        group.MapGet("language/{languageId:int}/resource/{resourceType}", GetPassagesByLanguageAndResource);
+        group.MapGet("language/{languageId:int}/resource/{resourceTypeName}", GetPassagesByLanguageAndResource);
         group.MapGet("{passageId:int}/language/{languageId:int}", GetPassageDetailsForLanguage);
         return endpoints;
     }
 
     private async Task<Results<Ok<List<PassagesBookResponse>>, NotFound>> GetPassagesByLanguageAndResource(
         int languageId,
-        ResourceEntityType resourceType,
+        string resourceTypeName,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        if (!Constants.RootResourceTypes.Contains(resourceType))
+        if (!Constants.RootResourceTypes.Contains(resourceTypeName))
         {
             return TypedResults.NotFound();
         }
+
+        var resourceType =
+            await dbContext.ResourceTypes.SingleOrDefaultAsync(rt => rt.ShortName == resourceTypeName,
+                cancellationToken);
 
         var passagesByBook = (await dbContext.Passages
                 .Where(p => p.PassageResources.Any(pr =>
@@ -74,7 +77,7 @@ public class PassagesModule : IModule
                     ContentId = rc.Id,
                     ContentSize = rc.ContentSize,
                     MediaTypeName = rc.MediaType,
-                    TypeName = pr.Resource.Type
+                    TypeName = pr.Resource.Type.ShortName
                 }))
             .ToListAsync(cancellationToken);
 
@@ -87,19 +90,19 @@ public class PassagesModule : IModule
                     ContentId = rc.Id,
                     ContentSize = rc.ContentSize,
                     MediaTypeName = rc.MediaType,
-                    TypeName = vr.Resource.Type
+                    TypeName = vr.Resource.Type.ShortName
                 }))
             .ToListAsync(cancellationToken);
 
         var supportingResourceContent = await dbContext.PassageResources.Where(pr => pr.PassageId == passageId)
-            .SelectMany(pr => pr.Resource.SupportingResources
+            .SelectMany(pr => pr.Resource.AssociatedResourceChildren
                 .SelectMany(sr => sr.ResourceContents.Where(rc => rc.LanguageId == languageId)
                     .Select(rc => new PassageDetailsResponseContent
                     {
                         ContentId = rc.Id,
                         ContentSize = rc.ContentSize,
                         MediaTypeName = rc.MediaType,
-                        TypeName = sr.Type
+                        TypeName = sr.Type.ShortName
                     })))
             .ToListAsync(cancellationToken);
 

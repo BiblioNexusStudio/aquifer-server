@@ -4,6 +4,7 @@ using Aquifer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    partial class AquiferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231004141811_ImprovementsToResourcesAndBibles")]
+    partial class ImprovementsToResourcesAndBibles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -261,7 +264,7 @@ namespace Aquifer.Data.Migrations
                     b.Property<string>("Tag")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("TypeId")
+                    b.Property<int>("Type")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Updated")
@@ -271,7 +274,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TypeId", "EnglishLabel")
+                    b.HasIndex("Type", "EnglishLabel")
                         .IsUnique();
 
                     b.ToTable("Resources");
@@ -284,9 +287,6 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ComplexityLevel")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
@@ -349,6 +349,21 @@ namespace Aquifer.Data.Migrations
                     b.HasIndex("ResourceId");
 
                     b.ToTable("AssociatedResources");
+                });
+
+            modelBuilder.Entity("SupportingResources", b =>
+                {
+                    b.Property<int>("ParentResourceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SupportingResourceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ParentResourceId", "SupportingResourceId");
+
+                    b.HasIndex("SupportingResourceId");
+
+                    b.ToTable("SupportingResources");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.BibleBookContentEntity", b =>
@@ -419,17 +434,6 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("Resource");
                 });
 
-            modelBuilder.Entity("Aquifer.Data.Entities.ResourceEntity", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.ResourceTypeEntity", "Type")
-                        .WithMany()
-                        .HasForeignKey("TypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Type");
-                });
-
             modelBuilder.Entity("Aquifer.Data.Entities.VerseResourceEntity", b =>
                 {
                     b.HasOne("Aquifer.Data.Entities.ResourceEntity", "Resource")
@@ -460,6 +464,21 @@ namespace Aquifer.Data.Migrations
                     b.HasOne("Aquifer.Data.Entities.ResourceEntity", null)
                         .WithMany()
                         .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SupportingResources", b =>
+                {
+                    b.HasOne("Aquifer.Data.Entities.ResourceEntity", null)
+                        .WithMany()
+                        .HasForeignKey("ParentResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aquifer.Data.Entities.ResourceEntity", null)
+                        .WithMany()
+                        .HasForeignKey("SupportingResourceId")
                         .OnDelete(DeleteBehavior.ClientCascade)
                         .IsRequired();
                 });

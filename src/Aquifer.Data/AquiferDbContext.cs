@@ -19,6 +19,7 @@ public class AquiferDbContext : DbContext
     public DbSet<PassageResourceEntity> PassageResources { get; set; }
     public DbSet<LanguageEntity> Languages { get; set; }
     public DbSet<ResourceContentEntity> ResourceContents { get; set; }
+    public DbSet<ResourceTypeEntity> ResourceTypes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
