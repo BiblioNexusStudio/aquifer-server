@@ -1,4 +1,5 @@
 ﻿using Aquifer.API.Common;
+using Aquifer.API.Modules.Resources.ResourcesSummary;
 using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -19,6 +20,7 @@ public class ResourcesModule : IModule
         group.MapGet("{contentId:int}/content", GetResourceContentById);
         group.MapGet("{contentId:int}/metadata", GetResourceMetadataById);
         group.MapGet("language/{languageId:int}/book/{bookCode}", GetResourcesForBook);
+        group.MapGet("summary", ResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)));
 
         return endpoints;
     }
