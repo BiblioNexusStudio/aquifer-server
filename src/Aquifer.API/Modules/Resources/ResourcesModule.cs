@@ -20,7 +20,7 @@ public class ResourcesModule : IModule
         group.MapGet("{contentId:int}/content", GetResourceContentById);
         group.MapGet("{contentId:int}/metadata", GetResourceMetadataById);
         group.MapGet("language/{languageId:int}/book/{bookCode}", GetResourcesForBook);
-        group.MapGet("summary", ResourcesSummaryEndpoints.Get);
+        group.MapGet("summary", ResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)));
 
         return endpoints;
     }
