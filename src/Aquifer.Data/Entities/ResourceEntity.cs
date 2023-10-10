@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Aquifer.Data.Entities;
 
 [Index(nameof(TypeId),
-    nameof(EnglishLabel),
+    nameof(ExternalId),
     IsUnique = true)]
 [EntityTypeConfiguration(typeof(ResourceEntityConfiguration))]
 public class ResourceEntity
@@ -13,7 +13,7 @@ public class ResourceEntity
     public int TypeId { get; set; }
     public ResourceTypeEntity Type { get; set; } = null!;
     public string EnglishLabel { get; set; } = null!;
-    public string? Tag { get; set; }
+    public string? ExternalId { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
