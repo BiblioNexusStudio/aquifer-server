@@ -9,19 +9,16 @@ public class LanguagesModule : IModule
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("languages");
-        group.MapGet("/", GetLanguages);
+        group.MapGet("/", GetLanguages).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
 
         return endpoints;
     }
 
     private async Task<Ok<List<LanguageResponse>>> GetLanguages(AquiferDbContext dbContext)
     {
-        var languages = await dbContext.Languages.Select(x => new LanguageResponse
-        {
-            Id = x.Id,
-            Iso6393Code = x.ISO6393Code,
-            EnglishDisplay = x.EnglishDisplay
-        }).ToListAsync();
+        var languages = await dbContext.Languages
+            .Select(x => new LanguageResponse(x.Id, x.ISO6393Code, x.EnglishDisplay))
+            .ToListAsync();
 
         return TypedResults.Ok(languages);
     }
