@@ -8,10 +8,20 @@ namespace Aquifer.API.Modules.Resources.ResourcesList;
 
 public static class ResourcesListEndpoints
 {
-    public static async Task<Ok<List<ResourceListItemResponse>>> Get([AsParameters] ResourceListRequest request,
+    public static async Task<Results<Ok<List<ResourceListItemResponse>>, ValidationProblem>> Get(
+        [AsParameters] ResourceListRequest request,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        // There are probably better long term solutions for this sort of thing, something to explore.
+        if (request.Take is > 100 or < 1 || request.Skip < 0)
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                { "outOfRange", new[] { "Take must between 1 and 100. Skip must be greater than 0." } }
+            });
+        }
+
         var resourceFilter = CreateResourceFilterExpression(request);
         var resourceTypes = await dbContext.Resources.Where(resourceFilter)
             .OrderBy(x => x.Id)
