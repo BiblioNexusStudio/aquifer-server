@@ -25,6 +25,7 @@ public class ResourcesModule : IModule
         group.MapGet("summary", ResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
         group.MapGet("types", ResourceTypesEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)));
         group.MapGet("list", ResourcesListEndpoints.Get);
+        group.MapGet("list/count", ResourcesListEndpoints.GetCount);
 
         return endpoints;
     }

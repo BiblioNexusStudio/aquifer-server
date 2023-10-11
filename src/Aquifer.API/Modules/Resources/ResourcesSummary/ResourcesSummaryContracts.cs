@@ -41,7 +41,6 @@ public record ResourcesSummaryByType(int ResourceCount,
 public record ResourcesSummaryByLanguage(string Language,
         int ResourceCount,
         string ResourceType,
-        [property: JsonIgnore]
         DateTime FullDateTime)
     : ResourcesSummaryByType(ResourceCount, ResourceType, FullDateTime);
 
