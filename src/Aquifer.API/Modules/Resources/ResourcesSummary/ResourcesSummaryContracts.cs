@@ -2,17 +2,17 @@
 
 namespace Aquifer.API.Modules.Resources.ResourcesSummary;
 
-public record ResourcesSummaryByTypeDto : ResourcesSummaryDtoCommon
+public class ResourcesSummaryByTypeDto : ResourcesSummaryDtoCommon
 {
     public int Status { get; set; }
 }
 
-public record ResourcesSummaryByLanguageDto : ResourcesSummaryDtoCommon
+public class ResourcesSummaryByLanguageDto : ResourcesSummaryDtoCommon
 {
     public string LanguageName { get; set; } = null!;
 }
 
-public record ResourcesSummaryDtoCommon
+public class ResourcesSummaryDtoCommon
 {
     public string ResourceType { get; set; } = null!;
     public DateTime Date { get; set; }
@@ -41,7 +41,6 @@ public record ResourcesSummaryByType(int ResourceCount,
 public record ResourcesSummaryByLanguage(string Language,
         int ResourceCount,
         string ResourceType,
-        [property: JsonIgnore]
         DateTime FullDateTime)
     : ResourcesSummaryByType(ResourceCount, ResourceType, FullDateTime);
 
