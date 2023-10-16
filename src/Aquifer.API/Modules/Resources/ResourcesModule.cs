@@ -219,12 +219,8 @@ public class ResourcesModule : IModule
     )
     {
         var content = await dbContext.ResourceContents.FindAsync(contentId, cancellationToken);
-        if (content == null)
-        {
-            return TypedResults.NotFound();
-        }
 
-        if (content.MediaType == ResourceContentMediaType.Video)
+        if (content?.MediaType == ResourceContentMediaType.Video)
         {
             var deserialized = JsonUtilities.DefaultDeserialize<ResourceContentVideoJsonSchema>(content.Content);
             if (deserialized.ThumbnailUrl != null)
