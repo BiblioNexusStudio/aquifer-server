@@ -21,6 +21,7 @@ public class ResourcesModule : IModule
         var group = endpoints.MapGroup("resources");
         group.MapGet("{contentId:int}/content", GetResourceContentById);
         group.MapGet("{contentId:int}/metadata", GetResourceMetadataById);
+        group.MapGet("{contentId:int}/thumbnail", GetResourceThumbnailById);
         group.MapGet("language/{languageId:int}/book/{bookCode}", GetResourcesForBook);
         group.MapGet("summary", ResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
         group.MapGet("types", ResourceTypesEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)));
@@ -209,5 +210,25 @@ public class ResourcesModule : IModule
         };
 
         return TypedResults.Ok(response);
+    }
+    
+    private async Task<Results<RedirectHttpResult, NotFound>> GetResourceThumbnailById(
+        int contentId,
+        AquiferDbContext dbContext,
+        CancellationToken cancellationToken
+    )
+    {
+        var content = await dbContext.ResourceContents.FindAsync(contentId, cancellationToken);
+
+        if (content?.MediaType == ResourceContentMediaType.Video)
+        {
+            var deserialized = JsonUtilities.DefaultDeserialize<ResourceContentVideoJsonSchema>(content.Content);
+            if (deserialized.ThumbnailUrl != null)
+            {
+                return TypedResults.Redirect(deserialized.ThumbnailUrl);
+            }
+        }
+
+        return TypedResults.NotFound();
     }
 }
