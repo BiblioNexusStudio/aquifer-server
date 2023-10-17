@@ -24,6 +24,7 @@ public class ResourcesModule : IModule
         group.MapGet("{contentId:int}/thumbnail", GetResourceThumbnailById);
         group.MapGet("language/{languageId:int}/book/{bookCode}", GetResourcesForBook);
         group.MapGet("summary", ResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
+        group.MapGet("summary/{resourceId:int}", ResourcesSummaryEndpoints.GetByResourceId);
         group.MapGet("types", ResourceTypesEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)));
         group.MapGet("list", ResourcesListEndpoints.Get);
         group.MapGet("list/count", ResourcesListEndpoints.GetCount);
@@ -211,7 +212,7 @@ public class ResourcesModule : IModule
 
         return TypedResults.Ok(response);
     }
-    
+
     private async Task<Results<RedirectHttpResult, NotFound>> GetResourceThumbnailById(
         int contentId,
         AquiferDbContext dbContext,

@@ -1,4 +1,5 @@
-﻿using Aquifer.Data;
+﻿using Aquifer.API.Utilities;
+using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -71,6 +72,45 @@ public static class ResourcesSummaryEndpoints
             multiLanguageResourcesCount,
             languages,
             resourceTypes));
+    }
+
+    public static async Task<Ok<ResourcesSummaryById>> GetByResourceId(int resourceId,
+        AquiferDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var resource = await dbContext.Resources.Where(x => x.Id == resourceId).Select(r => new ResourcesSummaryById
+        {
+            Label = r.EnglishLabel,
+            Type = r.Type.DisplayName,
+            Resources = r.ResourceContents.Select(rc => new ResourcesSummaryContentById
+            {
+                Language = new ResourcesSummaryLanguageById
+                {
+                    DisplayName = rc.Language.EnglishDisplay,
+                    Id = rc.LanguageId
+                },
+                DisplayName = rc.DisplayName,
+                Status = rc.Status,
+                ContentSize = rc.ContentSize,
+                Content = JsonUtilities.DefaultDeserialize(rc.Content),
+                MediaType = rc.MediaType
+            }),
+            AssociatedResources =
+                r.AssociatedResourceChildren.Select(ar => new ResourcesSummaryDetailsById
+                {
+                    Label = ar.EnglishLabel,
+                    Type = ar.Type.DisplayName
+                }),
+            PassageReferences =
+                r.PassageResources.Select(pr => new ResourcesSummaryPassageById
+                {
+                    StartVerseId = pr.Passage.StartVerseId,
+                    EndVerseId = pr.Passage.EndVerseId
+                }),
+            VerseReferences = r.VerseResources.Select(vr => new ResourcesSummaryVerseById { VerseId = vr.VerseId })
+        }).FirstOrDefaultAsync(cancellationToken);
+
+        return TypedResults.Ok(resource);
     }
 
     private static List<DateTime> GetMonthsForSummary()
