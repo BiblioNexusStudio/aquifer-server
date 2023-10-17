@@ -15,10 +15,10 @@ pool:
     vmImage: ubuntu-latest
 
 variables:
-    - group: dev-web
-    - group: qa-web
-    - group: dev-api
-    - group: qa-api
+    - group: well-web-dev
+    - group: well-web-qa
+    - group: aquifer-api-dev
+    - group: aquifer-api-qa
     - group: github-app
 
 stages:
@@ -65,7 +65,7 @@ stages:
           DeployEnv: dev
           CheckoutTemplate: templates/checkout_pr.yml@devops
           DependsOn: [prevent_deploy_if_migrations]
-          AzureDevopsEnvName: dev-api
+          AzureDevopsEnvName: aquifer-api-dev
           DeployUrl: $(AzureStaticWebAppsDeployUrlDev)
           GithubAppPrivateKeyBase64: $(GithubAppPrivateKeyBase64)
 
@@ -74,6 +74,6 @@ stages:
           DeployEnv: qa
           CheckoutTemplate: templates/checkout_pr.yml@devops
           DependsOn: [prevent_deploy_if_migrations]
-          AzureDevopsEnvName: qa-api
+          AzureDevopsEnvName: aquifer-api-qa
           DeployUrl: $(AzureStaticWebAppsDeployUrlQa)
           GithubAppPrivateKeyBase64: $(GithubAppPrivateKeyBase64)

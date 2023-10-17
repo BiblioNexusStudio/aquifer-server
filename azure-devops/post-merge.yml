@@ -20,12 +20,12 @@ pool:
     vmImage: ubuntu-latest
 
 variables:
-    - group: dev-web
-    - group: qa-web
-    - group: prod-web
-    - group: dev-api
-    - group: qa-api
-    - group: prod-api
+    - group: well-web-dev
+    - group: well-web-qa
+    - group: well-web-prod
+    - group: aquifer-api-dev
+    - group: aquifer-api-qa
+    - group: aquifer-api-prod
     - group: github-app
 
 stages:
@@ -53,7 +53,7 @@ stages:
           DeployEnv: dev
           CheckoutTemplate: templates/checkout_master.yml@devops
           DependsOn: [build]
-          AzureDevopsEnvName: dev-api
+          AzureDevopsEnvName: aquifer-api-dev
           DeployUrl: $(AzureStaticWebAppsDeployUrlDev)
           GithubAppPrivateKeyBase64: $(GithubAppPrivateKeyBase64)
           MigrationConnectionString: $(AzureSqlConnectionUrlDev)
@@ -63,7 +63,7 @@ stages:
           DeployEnv: qa
           CheckoutTemplate: templates/checkout_master.yml@devops
           DependsOn: [build]
-          AzureDevopsEnvName: qa-api
+          AzureDevopsEnvName: aquifer-api-qa
           DeployUrl: $(AzureStaticWebAppsDeployUrlQa)
           GithubAppPrivateKeyBase64: $(GithubAppPrivateKeyBase64)
           MigrationConnectionString: $(AzureSqlConnectionUrlQa)
@@ -73,7 +73,7 @@ stages:
           DeployEnv: prod
           CheckoutTemplate: templates/checkout_master.yml@devops
           DependsOn: [build]
-          AzureDevopsEnvName: prod-api
+          AzureDevopsEnvName: aquifer-api-prod
           DeployUrl: $(AzureStaticWebAppsDeployUrlProd)
           CreateGithubRelease: true
           GithubAppPrivateKeyBase64: $(GithubAppPrivateKeyBase64)
