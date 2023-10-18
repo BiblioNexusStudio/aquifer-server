@@ -96,10 +96,11 @@ public static class ResourcesSummaryEndpoints
                 MediaType = rc.MediaType
             }),
             AssociatedResources =
-                r.AssociatedResourceChildren.Select(ar => new ResourcesSummaryDetailsById
+                r.AssociatedResourceChildren.Select(ar => new ResourcesSummaryAssociatedContentById
                 {
                     Label = ar.EnglishLabel,
-                    Type = ar.Type.DisplayName
+                    Type = ar.Type.DisplayName,
+                    MediaTypes = ar.ResourceContents.Select(arrc => arrc.MediaType)
                 }),
             PassageReferences =
                 r.PassageResources.Select(pr => new ResourcesSummaryPassageById

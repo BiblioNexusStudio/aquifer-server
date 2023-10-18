@@ -54,13 +54,18 @@ public record ResourcesSummaryById : ResourcesSummaryDetailsById
     public IEnumerable<ResourcesSummaryVerseById> VerseReferences { get; set; } = null!;
     public IEnumerable<ResourcesSummaryPassageById> PassageReferences { get; set; } = null!;
     public IEnumerable<ResourcesSummaryContentById> Resources { get; set; } = null!;
-    public IEnumerable<ResourcesSummaryDetailsById> AssociatedResources { get; set; } = null!;
+    public IEnumerable<ResourcesSummaryAssociatedContentById> AssociatedResources { get; set; } = null!;
 }
 
 public record ResourcesSummaryDetailsById
 {
     public string Type { get; set; } = null!;
     public string Label { get; set; } = null!;
+}
+
+public record ResourcesSummaryAssociatedContentById : ResourcesSummaryDetailsById
+{
+    public IEnumerable<ResourceContentMediaType> MediaTypes { get; set; } = null!;
 }
 
 public record ResourcesSummaryContentById
@@ -77,7 +82,7 @@ public record ResourcesSummaryVerseById
 {
     public int VerseId { get; init; }
 
-    private (Data.Enums.BookId BookId, int Chapter, int Verse) TranslatedVerse =>
+    private (BookId BookId, int Chapter, int Verse) TranslatedVerse =>
         BibleUtilities.TranslateVerseId(VerseId);
 
     public string Book => TranslatedVerse.BookId.ToCode();
