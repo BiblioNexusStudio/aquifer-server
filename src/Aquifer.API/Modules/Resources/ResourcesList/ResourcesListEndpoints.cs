@@ -24,7 +24,7 @@ public static class ResourcesListEndpoints
 
         var resourceFilter = CreateResourceFilterExpression(request);
         var resourceTypes = await dbContext.Resources.Where(resourceFilter)
-            .OrderBy(x => x.Id)
+            .OrderBy(x => x.EnglishLabel)
             .Skip(request.Skip).Take(request.Take)
             .Select(x => new ResourceListItemResponse(x.Id,
                 x.EnglishLabel,
