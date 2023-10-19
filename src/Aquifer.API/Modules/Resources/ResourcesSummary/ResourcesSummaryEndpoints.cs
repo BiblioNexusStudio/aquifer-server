@@ -11,11 +11,10 @@ public static class ResourcesSummaryEndpoints
     private const string GetResourcesByTypeQuery =
         """
         SELECT RT.DisplayName AS ResourceType, DATEADD(MONTH, DATEDIFF(MONTH, 0, R.Created), 0) AS Date,
-               RC.Status, COUNT(DISTINCT R.Id) AS ResourceCount
+            COUNT(DISTINCT R.Id) AS ResourceCount
         FROM Resources R
-                 INNER JOIN ResourceContents RC ON R.Id = RC.ResourceId
-                 INNER JOIN ResourceTypes RT on R.TypeId = RT.Id
-        GROUP BY RC.Status, RT.DisplayName, DATEADD(MONTH, DATEDIFF(MONTH, 0, R.Created), 0)
+            INNER JOIN ResourceTypes RT on R.TypeId = RT.Id
+        GROUP BY RT.DisplayName, DATEADD(MONTH, DATEDIFF(MONTH, 0, R.Created), 0)
         """;
 
     private const string GetResourcesByLanguageQuery =
@@ -138,7 +137,6 @@ public static class ResourcesSummaryEndpoints
                     {
                         ResourceType = resourceGroup.Key,
                         Date = date,
-                        Status = 3,
                         ResourceCount = 0
                     });
                 }
@@ -245,8 +243,7 @@ public static class ResourcesSummaryEndpoints
                     {
                         ResourceType = reader.GetString(0),
                         Date = reader.GetDateTime(1),
-                        Status = reader.GetInt32(2),
-                        ResourceCount = reader.GetInt32(3)
+                        ResourceCount = reader.GetInt32(2)
                     });
                 }
             }

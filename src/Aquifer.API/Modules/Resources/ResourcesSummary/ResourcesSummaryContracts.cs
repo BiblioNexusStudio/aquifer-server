@@ -7,7 +7,6 @@ namespace Aquifer.API.Modules.Resources.ResourcesSummary;
 
 public class ResourcesSummaryByTypeDto : ResourcesSummaryDtoCommon
 {
-    public int Status { get; set; }
 }
 
 public class ResourcesSummaryByLanguageDto : ResourcesSummaryDtoCommon
