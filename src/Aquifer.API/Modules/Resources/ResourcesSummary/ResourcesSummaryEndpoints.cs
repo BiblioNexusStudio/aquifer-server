@@ -1,4 +1,5 @@
-﻿using Aquifer.Data;
+﻿using Aquifer.API.Utilities;
+using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -10,11 +11,10 @@ public static class ResourcesSummaryEndpoints
     private const string GetResourcesByTypeQuery =
         """
         SELECT RT.DisplayName AS ResourceType, DATEADD(MONTH, DATEDIFF(MONTH, 0, R.Created), 0) AS Date,
-               RC.Status, COUNT(DISTINCT R.Id) AS ResourceCount
+            COUNT(DISTINCT R.Id) AS ResourceCount
         FROM Resources R
-                 INNER JOIN ResourceContents RC ON R.Id = RC.ResourceId
-                 INNER JOIN ResourceTypes RT on R.TypeId = RT.Id
-        GROUP BY RC.Status, RT.DisplayName, DATEADD(MONTH, DATEDIFF(MONTH, 0, R.Created), 0)
+            INNER JOIN ResourceTypes RT on R.TypeId = RT.Id
+        GROUP BY RT.DisplayName, DATEADD(MONTH, DATEDIFF(MONTH, 0, R.Created), 0)
         """;
 
     private const string GetResourcesByLanguageQuery =
@@ -73,6 +73,46 @@ public static class ResourcesSummaryEndpoints
             resourceTypes));
     }
 
+    public static async Task<Ok<ResourcesSummaryById>> GetByResourceId(int resourceId,
+        AquiferDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var resource = await dbContext.Resources.Where(x => x.Id == resourceId).Select(r => new ResourcesSummaryById
+        {
+            Label = r.EnglishLabel,
+            Type = r.Type.DisplayName,
+            Resources = r.ResourceContents.Select(rc => new ResourcesSummaryContentById
+            {
+                Language = new ResourcesSummaryLanguageById
+                {
+                    DisplayName = rc.Language.EnglishDisplay,
+                    Id = rc.LanguageId
+                },
+                DisplayName = rc.DisplayName,
+                Status = rc.Status,
+                ContentSize = rc.ContentSize,
+                Content = JsonUtilities.DefaultDeserialize(rc.Content),
+                MediaType = rc.MediaType
+            }),
+            AssociatedResources =
+                r.AssociatedResourceChildren.Select(ar => new ResourcesSummaryAssociatedContentById
+                {
+                    Label = ar.EnglishLabel,
+                    Type = ar.Type.DisplayName,
+                    MediaTypes = ar.ResourceContents.Select(arrc => arrc.MediaType)
+                }),
+            PassageReferences =
+                r.PassageResources.Select(pr => new ResourcesSummaryPassageById
+                {
+                    StartVerseId = pr.Passage.StartVerseId,
+                    EndVerseId = pr.Passage.EndVerseId
+                }),
+            VerseReferences = r.VerseResources.Select(vr => new ResourcesSummaryVerseById { VerseId = vr.VerseId })
+        }).FirstOrDefaultAsync(cancellationToken);
+
+        return TypedResults.Ok(resource);
+    }
+
     private static List<DateTime> GetMonthsForSummary()
     {
         var currentDate = DateTime.UtcNow;
@@ -97,7 +137,6 @@ public static class ResourcesSummaryEndpoints
                     {
                         ResourceType = resourceGroup.Key,
                         Date = date,
-                        Status = 3,
                         ResourceCount = 0
                     });
                 }
@@ -204,8 +243,7 @@ public static class ResourcesSummaryEndpoints
                     {
                         ResourceType = reader.GetString(0),
                         Date = reader.GetDateTime(1),
-                        Status = reader.GetInt32(2),
-                        ResourceCount = reader.GetInt32(3)
+                        ResourceCount = reader.GetInt32(2)
                     });
                 }
             }
