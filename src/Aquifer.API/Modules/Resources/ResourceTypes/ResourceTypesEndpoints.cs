@@ -10,7 +10,7 @@ public static class ResourceTypesEndpoints
         CancellationToken cancellationToken)
     {
         var resourceTypes = await dbContext.ResourceTypes
-            .Select(x => new ResourceTypeResponse(x.Id, x.DisplayName, x.ComplexityLevel))
+            .Select(x => new ResourceTypeResponse(x.Id, x.DisplayName, x.LicenseInfo, x.ComplexityLevel))
             .ToListAsync(cancellationToken);
 
         return TypedResults.Ok(resourceTypes);
