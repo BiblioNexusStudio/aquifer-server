@@ -5,6 +5,7 @@ public class ResourceTypeEntity
     public int Id { get; set; }
     public string ShortName { get; set; } = null!;
     public string DisplayName { get; set; } = null!;
+    public string? LicenseInfo { get; set; }
     public ResourceTypeComplexityLevel ComplexityLevel { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
