@@ -1,13 +1,19 @@
 ﻿using Aquifer.API.Utilities;
 using Aquifer.Data.Entities;
+using System.Text.Json.Serialization;
 
 namespace Aquifer.API.Modules.Resources.ResourceTypes;
 
-public record ResourceTypeResponse(int Id, string DisplayName, object? LicenseInfo, ResourceTypeComplexityLevel
-    ComplexityLevel)
+public class ResourceTypeResponse
 {
-            public ResourceTypeResponse(int id, string displayName, string? licenseInfo, ResourceTypeComplexityLevel complexityLevel)
-            : this(id, displayName, licenseInfo == null ? null : JsonUtilities.DefaultDeserialize(licenseInfo), complexityLevel)
-        {
-        }
+    public int Id { get; init; }
+    public string DisplayName { get; init; } = null!;
+
+    public object? LicenseInfo =>
+        SerializedLicenseInfo == null ? null : JsonUtilities.DefaultDeserialize(SerializedLicenseInfo);
+
+    public ResourceTypeComplexityLevel ComplexityLevel { get; init; }
+
+    [JsonIgnore]
+    public string? SerializedLicenseInfo { get; init; }
 }
