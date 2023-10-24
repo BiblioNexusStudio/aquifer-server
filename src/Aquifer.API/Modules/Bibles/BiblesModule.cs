@@ -11,13 +11,28 @@ public class BiblesModule : IModule
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("bibles");
-        group.MapGet("language/{languageId:int}", GetBibleByLanguage);
+        group.MapGet("/", GetAllBibles);
+        group.MapGet("language/{languageId:int}", GetBiblesByLanguage);
         group.MapGet("{bibleId:int}/book/{bookCode}", GetBibleBookDetails);
 
         return endpoints;
     }
 
-    private async Task<Ok<List<BibleResponse>>> GetBibleByLanguage(int languageId,
+    private async Task<Ok<List<BasicBibleResponse>>> GetAllBibles(AquiferDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var bibles = await dbContext.Bibles.Select(bible => new BasicBibleResponse
+        {
+            Name = bible.Name,
+            Abbreviation = bible.Abbreviation,
+            Id = bible.Id,
+            SerializedLicenseInfo = bible.LicenseInfo
+        }).ToListAsync(cancellationToken);
+
+        return TypedResults.Ok(bibles);
+    }
+
+    private async Task<Ok<List<BibleResponse>>> GetBiblesByLanguage(int languageId,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -26,6 +41,7 @@ public class BiblesModule : IModule
             {
                 Name = bible.Name,
                 Abbreviation = bible.Abbreviation,
+                SerializedLicenseInfo = bible.LicenseInfo,
                 Id = bible.Id,
                 Books = bible.BibleBookContents.OrderBy(book => book.BookId).Select(book =>
                     new BibleResponseBook

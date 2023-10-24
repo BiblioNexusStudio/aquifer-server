@@ -6,6 +6,7 @@ public class BibleEntity
     public int LanguageId { get; set; }
     public string Name { get; set; } = null!;
     public string Abbreviation { get; set; } = null!;
+    public string? LicenseInfo { get; set; }
     public bool Enabled { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
