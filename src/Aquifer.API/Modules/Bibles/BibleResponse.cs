@@ -1,11 +1,23 @@
-﻿namespace Aquifer.API.Modules.Bibles;
+﻿using Aquifer.API.Utilities;
+using System.Text.Json.Serialization;
 
-public class BibleResponse
+namespace Aquifer.API.Modules.Bibles;
+
+public class BasicBibleResponse
 {
     public int Id { get; set; }
     public required string Name { get; set; }
     public required string Abbreviation { get; set; }
 
+    public object? LicenseInfo =>
+        SerializedLicenseInfo == null ? null : JsonUtilities.DefaultDeserialize(SerializedLicenseInfo);
+
+    [JsonIgnore]
+    public string? SerializedLicenseInfo { get; init; }
+}
+
+public class BibleResponse : BasicBibleResponse
+{
     public required IEnumerable<BibleResponseBook> Books { get; set; }
 }
 
