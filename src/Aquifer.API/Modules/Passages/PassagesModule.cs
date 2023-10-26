@@ -65,54 +65,92 @@ public class PassagesModule : IModule
             return TypedResults.NotFound();
         }
 
+        int englishLanguageId = (await dbContext.Languages.Where(language => language.ISO6393Code.ToLower() == "eng")
+            .FirstOrDefaultAsync(cancellationToken))?.Id ?? -1;
+
         var passageResourceContent = await dbContext.PassageResources
             // find all passages that overlap with the current passage
             .Where(pr => (pr.Passage.StartVerseId >= passage.StartVerseId &&
                           pr.Passage.StartVerseId <= passage.EndVerseId) ||
                          (pr.Passage.EndVerseId >= passage.StartVerseId &&
                           pr.Passage.EndVerseId <= passage.EndVerseId))
-            .SelectMany(pr => pr.Resource.ResourceContents.Where(rc => rc.LanguageId == languageId).Select(rc =>
-                new PassageDetailsResponseContent
-                {
-                    ContentId = rc.Id,
-                    ContentSize = rc.ContentSize,
-                    MediaTypeName = rc.MediaType,
-                    TypeName = pr.Resource.Type.ShortName
-                }))
+            .SelectMany(pr => pr.Resource.ResourceContents
+                .Where(rc => rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
+                                                             Constants.FallbackToEnglishForMediaTypes.Contains(
+                                                                 rc.MediaType)))
+                .Select(rc =>
+                    new
+                    {
+                        ContentId = rc.Id,
+                        rc.ContentSize,
+                        MediaTypeName = rc.MediaType,
+                        rc.LanguageId,
+                        pr.ResourceId,
+                        TypeName = pr.Resource.Type.ShortName
+                    }))
             .ToListAsync(cancellationToken);
 
         var verseResourceContent = await dbContext.VerseResources
             // find all verses contained within the current passage
             .Where(vr => vr.VerseId >= passage.StartVerseId && vr.VerseId <= passage.EndVerseId)
-            .SelectMany(vr => vr.Resource.ResourceContents.Where(rc => rc.LanguageId == languageId).Select(rc =>
-                new PassageDetailsResponseContent
-                {
-                    ContentId = rc.Id,
-                    ContentSize = rc.ContentSize,
-                    MediaTypeName = rc.MediaType,
-                    TypeName = vr.Resource.Type.ShortName
-                }))
-            .ToListAsync(cancellationToken);
-
-        var supportingResourceContent = await dbContext.PassageResources.Where(pr => pr.PassageId == passageId)
-            .SelectMany(pr => pr.Resource.AssociatedResourceChildren
-                .SelectMany(sr => sr.ResourceContents.Where(rc => rc.LanguageId == languageId)
-                    .Select(rc => new PassageDetailsResponseContent
+            .SelectMany(vr => vr.Resource.ResourceContents
+                .Where(rc => rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
+                                                             Constants.FallbackToEnglishForMediaTypes.Contains(
+                                                                 rc.MediaType)))
+                .Select(rc =>
+                    new
                     {
                         ContentId = rc.Id,
-                        ContentSize = rc.ContentSize,
+                        rc.ContentSize,
                         MediaTypeName = rc.MediaType,
-                        TypeName = sr.Type.ShortName
-                    })))
+                        rc.LanguageId,
+                        vr.ResourceId,
+                        TypeName = vr.Resource.Type.ShortName
+                    })
+            )
             .ToListAsync(cancellationToken);
+
+        var associatedResourceContent = await dbContext.PassageResources.Where(pr => pr.PassageId == passageId)
+            .SelectMany(pr => pr.Resource.AssociatedResourceChildren
+                .SelectMany(sr => sr.ResourceContents
+                    .Where(rc => rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
+                                                                 Constants.FallbackToEnglishForMediaTypes.Contains(
+                                                                     rc.MediaType)))
+                    .Select(rc =>
+                        new
+                        {
+                            ContentId = rc.Id,
+                            rc.ContentSize,
+                            MediaTypeName = rc.MediaType,
+                            rc.LanguageId,
+                            ResourceId = sr.Id,
+                            TypeName = sr.Type.ShortName
+                        })))
+            .ToListAsync(cancellationToken);
+
+        // The above queries return resource contents in English + the current language (if available).
+        // This filters them by grouping appropriately and selecting the current language resource (if available) then falling back to English.
+        var filteredDownToOneLanguage = passageResourceContent.Concat(verseResourceContent)
+            .Concat(associatedResourceContent)
+            .GroupBy(rc => new { rc.MediaTypeName, rc.ResourceId })
+            .Select(grc =>
+            {
+                var first = grc.OrderBy(rc => rc.LanguageId == languageId ? 0 : 1).First();
+                return new PassageDetailsResponseContent
+                {
+                    ContentId = first.ContentId,
+                    ContentSize = first.ContentSize,
+                    MediaTypeName = first.MediaTypeName,
+                    TypeName = first.TypeName
+                };
+            });
 
         return TypedResults.Ok(new PassageDetailsResponse
         {
             Id = passage.Id,
             PassageStartDetails = BibleUtilities.TranslateVerseId(passage.StartVerseId),
             PassageEndDetails = BibleUtilities.TranslateVerseId(passage.EndVerseId),
-            Contents = passageResourceContent.Concat(verseResourceContent).Concat(supportingResourceContent)
-                .DistinctBy(rc => rc.ContentId)
+            Contents = filteredDownToOneLanguage.DistinctBy(rc => rc.ContentId)
         });
     }
 }
