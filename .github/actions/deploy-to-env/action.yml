@@ -1,0 +1,38 @@
+name: Deploy to env
+description: Deploys to a specific environment.
+
+inputs:
+    environment:
+        description: Environment to deploy to
+        required: true
+    connection-url:
+        description: DB connection URL
+        required: true
+    web-app-name:
+        description: Azure Web App name
+        required: true
+
+runs:
+    using: composite
+    steps:
+        - uses: actions/download-artifact@v3
+          with:
+              name: build
+              path: build
+        - name: Login to Azure
+          uses: azure/login@v1
+          with:
+              client-id: ${{ secrets.AZURE_CLIENT_ID }}
+              tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+              subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        - name: Make migration script executable
+          run: chmod +x ./build/Migrate
+          shell: bash
+        - name: Run migrations
+          run: ./build/Migrate --connection '${{ inputs.connection-url }}'
+          shell: bash
+        - name: Upload package
+          uses: azure/webapps-deploy@v2
+          with:
+              app-name: ${{ inputs.web-app-name }}
+              package: ./build/Aquifer.API.zip
