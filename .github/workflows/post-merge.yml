@@ -47,8 +47,7 @@ jobs:
                   path: build
 
     deploy_to_dev:
-        if: github.ref == 'disabled_for_now' || github.event.inputs.environment == 'dev'
-        # if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'dev'
+        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'dev'
         name: Deploy to dev
         runs-on: ubuntu-latest
         needs: build
@@ -64,8 +63,7 @@ jobs:
                   web-app-name: ${{ vars.AZURE_WEB_APP_NAME_DEV }}
 
     deploy_to_qa:
-        if: github.ref == 'disabled_for_now' || github.event.inputs.environment == 'qa'
-        # if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'qa'
+        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'qa'
         name: Deploy to qa
         runs-on: ubuntu-latest
         needs: build
@@ -81,8 +79,7 @@ jobs:
                   web-app-name: ${{ vars.AZURE_WEB_APP_NAME_QA }}
 
     deploy_to_prod:
-        if: github.ref == 'disabled_for_now' || github.event.inputs.environment == 'prod'
-        # if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'prod'
+        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'prod'
         name: Deploy to prod
         runs-on: ubuntu-latest
         needs: build
