@@ -8,6 +8,7 @@ public class BasicBibleResponse
     public int Id { get; set; }
     public required string Name { get; set; }
     public required string Abbreviation { get; set; }
+    public int LanguageId { get; set; }
 
     public object? LicenseInfo =>
         SerializedLicenseInfo == null ? null : JsonUtilities.DefaultDeserialize(SerializedLicenseInfo);
