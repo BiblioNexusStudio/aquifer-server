@@ -61,6 +61,9 @@ jobs:
                   environment: dev
                   connection-url: ${{ vars.DB_CONNECTION_URL_DEV }}
                   web-app-name: ${{ vars.AZURE_WEB_APP_NAME_DEV }}
+                  azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+                  azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+                  azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     deploy_to_qa:
         if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'qa'
@@ -79,6 +82,9 @@ jobs:
                   environment: qa
                   connection-url: ${{ vars.DB_CONNECTION_URL_QA }}
                   web-app-name: ${{ vars.AZURE_WEB_APP_NAME_QA }}
+                  azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+                  azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+                  azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     deploy_to_prod:
         if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'prod'
@@ -99,6 +105,9 @@ jobs:
                   environment: prod
                   connection-url: ${{ vars.DB_CONNECTION_URL_PROD }}
                   web-app-name: ${{ vars.AZURE_WEB_APP_NAME_PROD }}
+                  azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+                  azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+                  azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     create_release:
         name: Create release
