@@ -22,8 +22,6 @@ jobs:
         steps:
             - name: Checkout source code
               uses: actions/checkout@v3
-              with:
-                  ref: ${{ github.event.pull_request.head.sha }}
             - name: Setup .NET
               uses: actions/setup-dotnet@v3
               with:
@@ -55,6 +53,8 @@ jobs:
             name: dev
             url: ${{ vars.URL_DEV }}
         steps:
+            - name: Checkout source code
+              uses: actions/checkout@v3
             - uses: ./.github/actions/deploy-to-env
               id: deploy
               with:
@@ -71,6 +71,8 @@ jobs:
             name: qa
             url: ${{ vars.URL_QA }}
         steps:
+            - name: Checkout source code
+              uses: actions/checkout@v3
             - uses: ./.github/actions/deploy-to-env
               id: deploy
               with:
@@ -87,6 +89,10 @@ jobs:
             name: prod
             url: ${{ vars.URL_PROD }}
         steps:
+            - name: Checkout source code
+              uses: actions/checkout@v3
+              with:
+                  ref: ${{ github.event.pull_request.head.sha }}
             - uses: ./.github/actions/deploy-to-env
               id: deploy
               with:
