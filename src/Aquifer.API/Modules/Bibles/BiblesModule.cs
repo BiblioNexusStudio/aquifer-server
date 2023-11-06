@@ -26,7 +26,8 @@ public class BiblesModule : IModule
             Name = bible.Name,
             Abbreviation = bible.Abbreviation,
             Id = bible.Id,
-            SerializedLicenseInfo = bible.LicenseInfo
+            SerializedLicenseInfo = bible.LicenseInfo,
+            LanguageId = bible.LanguageId
         }).ToListAsync(cancellationToken);
 
         return TypedResults.Ok(bibles);
@@ -43,6 +44,7 @@ public class BiblesModule : IModule
                 Abbreviation = bible.Abbreviation,
                 SerializedLicenseInfo = bible.LicenseInfo,
                 Id = bible.Id,
+                LanguageId = bible.LanguageId,
                 Books = bible.BibleBookContents.OrderBy(book => book.BookId).Select(book =>
                     new BibleResponseBook
                     {
