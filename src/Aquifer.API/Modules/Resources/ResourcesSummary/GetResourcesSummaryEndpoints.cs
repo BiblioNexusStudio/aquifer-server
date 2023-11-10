@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Modules.Resources.ResourcesSummary;
 
-public static class ResourcesSummaryEndpoints
+public static class GetResourcesSummaryEndpoints
 {
     private const string GetResourcesByTypeQuery =
         """
@@ -83,6 +83,7 @@ public static class ResourcesSummaryEndpoints
             Type = r.Type.DisplayName,
             Resources = r.ResourceContents.Select(rc => new ResourcesSummaryContentById
             {
+                ResourceContentId = rc.Id,
                 Language = new ResourcesSummaryLanguageById
                 {
                     DisplayName = rc.Language.EnglishDisplay,

@@ -7,15 +7,15 @@ namespace Aquifer.API.Services;
 
 public static class AuthService
 {
-    public static IServiceCollection AddAuth(this IServiceCollection services, ConfigurationOptions configuration)
+    public static IServiceCollection AddAuth(this IServiceCollection services, JwtSettingOptions? jwtSettings)
     {
-        ArgumentNullException.ThrowIfNull(configuration?.JwtSettings);
+        ArgumentNullException.ThrowIfNull(jwtSettings);
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                options.Authority = configuration.JwtSettings.Authority;
-                options.Audience = configuration.JwtSettings.Audience;
+                options.Authority = jwtSettings.Authority;
+                options.Audience = jwtSettings.Audience;
                 options.TokenValidationParameters =
                     new TokenValidationParameters { NameClaimType = ClaimTypes.NameIdentifier };
             });

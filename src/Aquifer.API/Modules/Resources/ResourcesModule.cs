@@ -23,8 +23,8 @@ public class ResourcesModule : IModule
         group.MapGet("{contentId:int}/metadata", GetResourceMetadataById);
         group.MapGet("{contentId:int}/thumbnail", GetResourceThumbnailById);
         group.MapGet("language/{languageId:int}/book/{bookCode}", GetResourcesForBook);
-        group.MapGet("summary", ResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
-        group.MapGet("summary/{resourceId:int}", ResourcesSummaryEndpoints.GetByResourceId);
+        group.MapGet("summary", GetResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
+        group.MapGet("summary/{resourceId:int}", GetResourcesSummaryEndpoints.GetByResourceId);
         group.MapGet("types", ResourceTypesEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)));
         group.MapGet("list", ResourcesListEndpoints.Get);
         group.MapGet("list/count", ResourcesListEndpoints.GetCount);
@@ -53,7 +53,8 @@ public class ResourcesModule : IModule
         }
 
         int englishLanguageId = (await dbContext.Languages.Where(language => language.ISO6393Code.ToLower() == "eng")
-            .FirstOrDefaultAsync(cancellationToken))?.Id ?? -1;
+                                    .FirstOrDefaultAsync(cancellationToken))?.Id ??
+                                -1;
 
         var resourceTypeEntities = await dbContext.ResourceTypes.Where(rt => resourceTypes.Contains(rt.ShortName))
             .ToListAsync(cancellationToken);
@@ -66,9 +67,9 @@ public class ResourcesModule : IModule
                           (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
                            pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
             .SelectMany(pr => pr.Resource.ResourceContents
-                .Where(rc => rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
-                                                             Constants.FallbackToEnglishForMediaTypes.Contains(
-                                                                 rc.MediaType)))
+                .Where(rc => rc.LanguageId == languageId ||
+                             (rc.LanguageId == englishLanguageId &&
+                              Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
                 .Select(rc =>
                     new
                     {
@@ -89,9 +90,9 @@ public class ResourcesModule : IModule
                          vr.VerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
                          vr.VerseId < BibleUtilities.UpperBoundOfBook(bookId))
             .SelectMany(vr => vr.Resource.ResourceContents
-                .Where(rc => rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
-                                                             Constants.FallbackToEnglishForMediaTypes.Contains(
-                                                                 rc.MediaType)))
+                .Where(rc => rc.LanguageId == languageId ||
+                             (rc.LanguageId == englishLanguageId &&
+                              Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
                 .Select(rc =>
                     new
                     {
@@ -115,9 +116,9 @@ public class ResourcesModule : IModule
                           (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
                            pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
             .SelectMany(pr => pr.Resource.AssociatedResourceChildren.SelectMany(sr => sr.ResourceContents
-                .Where(rc => rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
-                                                             Constants.FallbackToEnglishForMediaTypes.Contains(
-                                                                 rc.MediaType)))
+                .Where(rc => rc.LanguageId == languageId ||
+                             (rc.LanguageId == englishLanguageId &&
+                              Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
                 .Select(rc =>
                     new
                     {
@@ -136,7 +137,13 @@ public class ResourcesModule : IModule
         // This filters them by grouping appropriately and selecting the current language resource (if available) then falling back to English.
         var filteredDownToOneLanguage = passageResourceContent.Concat(verseResourceContent)
             .Concat(associatedResourceContent)
-            .GroupBy(rc => new { rc.StartChapter, rc.EndChapter, rc.MediaType, rc.ResourceId })
+            .GroupBy(rc => new
+            {
+                rc.StartChapter,
+                rc.EndChapter,
+                rc.MediaType,
+                rc.ResourceId
+            })
             .Select(grc =>
             {
                 var first = grc.OrderBy(rc => rc.LanguageId == languageId ? 0 : 1).First();
