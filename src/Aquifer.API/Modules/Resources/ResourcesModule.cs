@@ -21,6 +21,8 @@ public class ResourcesModule : IModule
         var group = endpoints.MapGroup("resources");
         group.MapGet("{contentId:int}/content", GetResourceContentById);
         group.MapGet("{contentId:int}/metadata", GetResourceMetadataById);
+        group.MapGet("batch/metadata", GetResourceMetadataByIds);
+        group.MapGet("batch/content/text", GetResourceTextContentByIds);
         group.MapGet("{contentId:int}/thumbnail", GetResourceThumbnailById);
         group.MapGet("language/{languageId:int}/book/{bookCode}", GetResourcesForBook);
         group.MapGet("summary", ResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
@@ -178,7 +180,7 @@ public class ResourcesModule : IModule
         return TypedResults.Ok(new ResourceContentInfoForBookResponse { Chapters = groupedContent });
     }
 
-    private async Task<Results<Ok<object>, NotFound, ProblemHttpResult, RedirectHttpResult>> GetResourceContentById(
+    private async Task<Results<Ok<object>, NotFound, RedirectHttpResult>> GetResourceContentById(
         int contentId,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken,
@@ -227,6 +229,33 @@ public class ResourcesModule : IModule
         return TypedResults.NotFound();
     }
 
+    private async Task<Results<Ok<List<ResourceTextContentResponse>>, BadRequest<string>, NotFound<string>>>
+        GetResourceTextContentByIds(
+            [FromQuery] int[] ids,
+            AquiferDbContext dbContext,
+            CancellationToken cancellationToken
+        )
+    {
+        if (ids.Length > 10)
+        {
+            return TypedResults.BadRequest("A maximum of 10 ids may be passed.");
+        }
+
+        var contents = await dbContext.ResourceContents
+            .Where(rc => ids.Contains(rc.Id) && rc.MediaType == ResourceContentMediaType.Text)
+            .ToListAsync(cancellationToken);
+
+        if (contents.Count != ids.Length)
+        {
+            return TypedResults.NotFound("One or more couldn't be found. Were some IDs for non-text content?");
+        }
+
+        return TypedResults.Ok(contents.Select(content => new ResourceTextContentResponse
+        {
+            Id = content.Id, Content = JsonUtilities.DefaultDeserialize(content.Content)
+        }).ToList());
+    }
+
     private async Task<Results<Ok<ResourceContentMetadataResponse>, NotFound>> GetResourceMetadataById(
         int contentId,
         AquiferDbContext dbContext,
@@ -248,6 +277,39 @@ public class ResourcesModule : IModule
         };
 
         return TypedResults.Ok(response);
+    }
+
+    private async Task<Results<Ok<List<ResourceContentMetadataResponseWithId>>, BadRequest<string>, NotFound<string>>>
+        GetResourceMetadataByIds(
+            [FromQuery] int[] ids,
+            AquiferDbContext dbContext,
+            CancellationToken cancellationToken
+        )
+    {
+        if (ids.Length > 100)
+        {
+            return TypedResults.BadRequest("A maximum of 100 ids may be passed.");
+        }
+
+        var contents = await dbContext.ResourceContents
+            .Where(rc => ids.Contains(rc.Id))
+            .ToListAsync(cancellationToken);
+
+        if (contents.Count != ids.Length)
+        {
+            return TypedResults.NotFound("One or more couldn't be found");
+        }
+
+        var responses = contents.Select(content => new ResourceContentMetadataResponseWithId
+        {
+            Id = content.Id,
+            DisplayName = content.DisplayName,
+            Metadata = content.MediaType == ResourceContentMediaType.Text
+                ? null
+                : JsonUtilities.DefaultDeserialize(content.Content)
+        }).ToList();
+
+        return TypedResults.Ok(responses);
     }
 
     private async Task<Results<RedirectHttpResult, NotFound>> GetResourceThumbnailById(
