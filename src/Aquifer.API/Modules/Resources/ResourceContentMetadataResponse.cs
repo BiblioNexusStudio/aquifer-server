@@ -5,3 +5,8 @@ public class ResourceContentMetadataResponse
     public string? DisplayName { get; set; }
     public object? Metadata { get; set; }
 }
+
+public class ResourceContentMetadataResponseWithId : ResourceContentMetadataResponse
+{
+    public int Id { get; set; }
+}
