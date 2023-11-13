@@ -1,6 +1,7 @@
 ﻿using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 namespace Aquifer.API.Modules.Resources.ResourcesSummary;
@@ -12,18 +13,15 @@ public class UpdateResourcesSummaryEndpoints
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var entity = await dbContext.ResourceContents.FindAsync(contentId, cancellationToken);
+        var entity = await dbContext.ResourceContents.Where(x => x.Id == contentId)
+            .Include(x => x.Resource).SingleOrDefaultAsync(cancellationToken);
         if (entity == null)
         {
             return TypedResults.NotFound();
         }
 
-        var content = JsonUtilities.DefaultDeserialize<List<ResourcesSummaryTiptapContent>>(entity.Content);
-        content.Single(x => !(item.TiptapContent.StepNumber > 0) || x.StepNumber == item.TiptapContent.StepNumber)
-            .Tiptap = item.TiptapContent.Tiptap;
-
-        entity.Content = JsonUtilities.DefaultSerialize(content);
-        entity.DisplayName = item.Label;
+        entity.Content = JsonUtilities.DefaultSerialize(item.Content);
+        entity.Resource.EnglishLabel = item.Label;
         entity.Status = item.Status;
         entity.ContentSize = Encoding.UTF8.GetByteCount(entity.Content);
         entity.Updated = DateTime.UtcNow;

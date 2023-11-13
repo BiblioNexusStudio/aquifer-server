@@ -27,6 +27,7 @@ public class ResourcesModule : IModule
         group.MapGet("language/{languageId:int}/book/{bookCode}", GetResourcesForBook);
         group.MapGet("summary", GetResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
         group.MapGet("summary/{resourceId:int}", GetResourcesSummaryEndpoints.GetByResourceId);
+        group.MapPut("summary/{contentId:int}", UpdateResourcesSummaryEndpoints.UpdateResourcesSummaryItem);
         group.MapGet("types", ResourceTypesEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)));
         group.MapGet("list", ResourcesListEndpoints.Get);
         group.MapGet("list/count", ResourcesListEndpoints.GetCount);
@@ -253,13 +254,15 @@ public class ResourcesModule : IModule
             .Where(rc => ids.Contains(rc.Id) && rc.MediaType == ResourceContentMediaType.Text)
             .Select(content => new ResourceTextContentResponse
             {
-                Id = content.Id, Content = JsonUtilities.DefaultDeserialize(content.Content)
+                Id = content.Id,
+                Content = JsonUtilities.DefaultDeserialize(content.Content)
             })
             .ToListAsync(cancellationToken);
 
         if (contents.Count != ids.Length)
         {
-            telemetry.TrackTrace("IDs and content found have different lengths.", SeverityLevel.Error,
+            telemetry.TrackTrace("IDs and content found have different lengths.",
+                SeverityLevel.Error,
                 new Dictionary<string, string> { { "Ids", string.Join(", ", ids) } });
             return TypedResults.NotFound("One or more couldn't be found. Were some IDs for non-text content?");
         }
@@ -317,7 +320,8 @@ public class ResourcesModule : IModule
 
         if (metadata.Count != ids.Length)
         {
-            telemetry.TrackTrace("IDs and metadata found have different lengths.", SeverityLevel.Error,
+            telemetry.TrackTrace("IDs and metadata found have different lengths.",
+                SeverityLevel.Error,
                 new Dictionary<string, string> { { "Ids", string.Join(", ", ids) } });
             return TypedResults.NotFound("One or more couldn't be found");
         }

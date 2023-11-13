@@ -115,7 +115,7 @@ public record ResourcesSummaryLanguageById
 
 public record ResourcesSummaryItemUpdate
 {
-    public ResourcesSummaryTiptapContent TiptapContent { get; init; } = null!;
+    public List<ResourcesSummaryTiptapContent> Content { get; init; } = new();
     public ResourceContentStatus Status { get; init; }
     public string Label { get; init; } = null!;
 }
@@ -123,5 +123,5 @@ public record ResourcesSummaryItemUpdate
 public class ResourcesSummaryTiptapContent
 {
     public int? StepNumber { get; init; }
-    public string Tiptap { get; set; } = null!;
+    public object Tiptap { get; set; } = null!;
 }
