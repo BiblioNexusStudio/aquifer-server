@@ -7,7 +7,7 @@ using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
 using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -184,6 +184,7 @@ public class ResourcesModule : IModule
         int contentId,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken,
+        TelemetryClient telemetry,
         [FromQuery] string audioType = "webm"
     )
     {
@@ -223,9 +224,8 @@ public class ResourcesModule : IModule
             return TypedResults.Redirect(url);
         }
 
-        var telemetry = new TelemetryClient(TelemetryConfiguration.CreateDefault());
-        telemetry.TrackException(
-            new Exception($"Content with ID {contentId} exists but has unexpected `Content` JSON."));
+        telemetry.TrackTrace($"Content with ID {contentId} exists but has unexpected `Content` JSON.",
+            SeverityLevel.Error);
         return TypedResults.NotFound();
     }
 
@@ -233,7 +233,8 @@ public class ResourcesModule : IModule
         GetResourceTextContentByIds(
             [FromQuery] int[] ids,
             AquiferDbContext dbContext,
-            CancellationToken cancellationToken
+            CancellationToken cancellationToken,
+            TelemetryClient telemetry
         )
     {
         if (ids.Length > 10)
@@ -243,17 +244,20 @@ public class ResourcesModule : IModule
 
         var contents = await dbContext.ResourceContents
             .Where(rc => ids.Contains(rc.Id) && rc.MediaType == ResourceContentMediaType.Text)
+            .Select(content => new ResourceTextContentResponse
+            {
+                Id = content.Id, Content = JsonUtilities.DefaultDeserialize(content.Content)
+            })
             .ToListAsync(cancellationToken);
 
         if (contents.Count != ids.Length)
         {
+            telemetry.TrackTrace("IDs and content found have different lengths.", SeverityLevel.Error,
+                new Dictionary<string, string> { { "Ids", string.Join(", ", ids) } });
             return TypedResults.NotFound("One or more couldn't be found. Were some IDs for non-text content?");
         }
 
-        return TypedResults.Ok(contents.Select(content => new ResourceTextContentResponse
-        {
-            Id = content.Id, Content = JsonUtilities.DefaultDeserialize(content.Content)
-        }).ToList());
+        return TypedResults.Ok(contents);
     }
 
     private async Task<Results<Ok<ResourceContentMetadataResponse>, NotFound>> GetResourceMetadataById(
@@ -283,7 +287,8 @@ public class ResourcesModule : IModule
         GetResourceMetadataByIds(
             [FromQuery] int[] ids,
             AquiferDbContext dbContext,
-            CancellationToken cancellationToken
+            CancellationToken cancellationToken,
+            TelemetryClient telemetry
         )
     {
         if (ids.Length > 100)
@@ -291,25 +296,26 @@ public class ResourcesModule : IModule
             return TypedResults.BadRequest("A maximum of 100 ids may be passed.");
         }
 
-        var contents = await dbContext.ResourceContents
+        var metadata = await dbContext.ResourceContents
             .Where(rc => ids.Contains(rc.Id))
+            .Select(content => new ResourceContentMetadataResponseWithId
+            {
+                Id = content.Id,
+                DisplayName = content.DisplayName,
+                Metadata = content.MediaType == ResourceContentMediaType.Text
+                    ? null
+                    : JsonUtilities.DefaultDeserialize(content.Content)
+            })
             .ToListAsync(cancellationToken);
 
-        if (contents.Count != ids.Length)
+        if (metadata.Count != ids.Length)
         {
+            telemetry.TrackTrace("IDs and metadata found have different lengths.", SeverityLevel.Error,
+                new Dictionary<string, string> { { "Ids", string.Join(", ", ids) } });
             return TypedResults.NotFound("One or more couldn't be found");
         }
 
-        var responses = contents.Select(content => new ResourceContentMetadataResponseWithId
-        {
-            Id = content.Id,
-            DisplayName = content.DisplayName,
-            Metadata = content.MediaType == ResourceContentMediaType.Text
-                ? null
-                : JsonUtilities.DefaultDeserialize(content.Content)
-        }).ToList();
-
-        return TypedResults.Ok(responses);
+        return TypedResults.Ok(metadata);
     }
 
     private async Task<Results<RedirectHttpResult, NotFound>> GetResourceThumbnailById(
