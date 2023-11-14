@@ -2,6 +2,7 @@
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using System.Text;
 
 namespace Aquifer.API.Modules.Resources.ResourcesSummary;
@@ -11,11 +12,14 @@ public class UpdateResourcesSummaryEndpoints
     public static async Task<Results<NoContent, NotFound>> UpdateResourcesSummaryItem(int contentId,
         ResourcesSummaryItemUpdate item,
         AquiferDbContext dbContext,
+        ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken)
     {
+        string userClaim = claimsPrincipal.Claims.Single(x => x.Type == "user").Value;
+
         var entity = await dbContext.ResourceContents.Where(x => x.Id == contentId)
             .Include(x => x.Resource).SingleOrDefaultAsync(cancellationToken);
-        if (entity == null)
+        if (entity is null)
         {
             return TypedResults.NotFound();
         }

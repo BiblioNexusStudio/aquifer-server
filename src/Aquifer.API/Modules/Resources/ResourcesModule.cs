@@ -27,7 +27,8 @@ public class ResourcesModule : IModule
         group.MapGet("language/{languageId:int}/book/{bookCode}", GetResourcesForBook);
         group.MapGet("summary", GetResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
         group.MapGet("summary/{resourceId:int}", GetResourcesSummaryEndpoints.GetByResourceId);
-        group.MapPut("summary/{contentId:int}", UpdateResourcesSummaryEndpoints.UpdateResourcesSummaryItem);
+        group.MapPut("summary/{contentId:int}", UpdateResourcesSummaryEndpoints.UpdateResourcesSummaryItem)
+            .RequireAuthorization("write");
         group.MapGet("types", ResourceTypesEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)));
         group.MapGet("list", ResourcesListEndpoints.Get);
         group.MapGet("list/count", ResourcesListEndpoints.GetCount);

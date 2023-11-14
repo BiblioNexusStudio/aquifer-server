@@ -23,7 +23,7 @@ public static class AuthService
         // this is an example of how a policy can be added, where the permissions
         // are set in Auth0 for the given user
         services.AddAuthorization(options => options.AddPolicy("write",
-            p => p.RequireClaim("permissions", "write:values")));
+            p => p.RequireClaim("user").RequireClaim("permissions", "write:values")));
 
         return services;
     }
