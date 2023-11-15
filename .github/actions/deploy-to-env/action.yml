@@ -38,7 +38,7 @@ runs:
           run: chmod +x ./build/Migrate
           shell: bash
         - name: Run migrations
-          run: ./build/Migrate --connection '${{ inputs.connection-url }}'
+          run: cd build && ./Migrate --connection '${{ inputs.connection-url }}'
           shell: bash
         - name: Upload package
           uses: azure/webapps-deploy@v2
