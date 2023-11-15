@@ -2,7 +2,6 @@
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using System.Text;
 
 namespace Aquifer.API.Modules.Resources.ResourcesSummary;
