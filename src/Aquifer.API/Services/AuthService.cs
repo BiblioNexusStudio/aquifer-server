@@ -7,15 +7,15 @@ namespace Aquifer.API.Services;
 
 public static class AuthService
 {
-    public static IServiceCollection AddAuth(this IServiceCollection services, ConfigurationOptions configuration)
+    public static IServiceCollection AddAuth(this IServiceCollection services, JwtSettingOptions? jwtSettings)
     {
-        ArgumentNullException.ThrowIfNull(configuration?.JwtSettings);
+        ArgumentNullException.ThrowIfNull(jwtSettings);
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                options.Authority = configuration.JwtSettings.Authority;
-                options.Audience = configuration.JwtSettings.Audience;
+                options.Authority = jwtSettings.Authority;
+                options.Audience = jwtSettings.Audience;
                 options.TokenValidationParameters =
                     new TokenValidationParameters { NameClaimType = ClaimTypes.NameIdentifier };
             });
@@ -23,7 +23,7 @@ public static class AuthService
         // this is an example of how a policy can be added, where the permissions
         // are set in Auth0 for the given user
         services.AddAuthorization(options => options.AddPolicy("write",
-            p => p.RequireClaim("permissions", "write:values")));
+            p => p.RequireClaim("user").RequireClaim("permissions", "write:values")));
 
         return services;
     }

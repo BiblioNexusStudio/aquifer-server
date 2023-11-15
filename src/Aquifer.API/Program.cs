@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration.Get<ConfigurationOptions>();
 
 builder.Services
-    //.AddAuth(configuration)
+    .AddAuth(configuration?.JwtSettings)
     .AddSwagger()
     .AddCors()
     .AddOutputCache()
@@ -25,7 +25,7 @@ builder.Services
 
 var app = builder.Build();
 
-//app.UseAuth();
+app.UseAuth();
 app.UseSwaggerWithUi();
 app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()); // need to expand on this
 app.UseOutputCache();

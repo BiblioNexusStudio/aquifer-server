@@ -69,6 +69,7 @@ public record ResourcesSummaryAssociatedContentById : ResourcesSummaryDetailsByI
 
 public record ResourcesSummaryContentById
 {
+    public int ResourceContentId { get; set; }
     public string DisplayName { get; init; } = null!;
     public ResourceContentMediaType MediaType { get; init; }
     public ResourceContentStatus Status { get; init; }
@@ -110,4 +111,11 @@ public record ResourcesSummaryLanguageById
 {
     public int Id { get; init; }
     public string DisplayName { get; init; } = null!;
+}
+
+public record ResourcesSummaryItemUpdate
+{
+    public List<object> Content { get; init; } = new();
+    public ResourceContentStatus Status { get; init; }
+    public string Label { get; init; } = null!;
 }
