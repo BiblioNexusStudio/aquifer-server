@@ -12,10 +12,10 @@ public class UpdateResourcesSummaryEndpoints
     public static async Task<Results<NoContent, NotFound>> UpdateResourcesSummaryItem(int contentId,
         ResourcesSummaryItemUpdate item,
         AquiferDbContext dbContext,
-        ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken)
     {
-        string userClaim = claimsPrincipal.Claims.Single(x => x.Type == "user").Value;
+        // When needed, inject ClaimsPrincipal claimsPrincipal to get the user information
+        // string userClaim = claimsPrincipal.Claims.Single(x => x.Type == "user").Value;
 
         var entity = await dbContext.ResourceContents.Where(x => x.Id == contentId)
             .Include(x => x.Resource).SingleOrDefaultAsync(cancellationToken);
