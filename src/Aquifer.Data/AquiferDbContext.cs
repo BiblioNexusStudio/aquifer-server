@@ -1,4 +1,4 @@
-﻿using Aquifer.Data.Entities;
+using Aquifer.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data;
@@ -19,7 +19,7 @@ public class AquiferDbContext : DbContext
     public DbSet<PassageResourceEntity> PassageResources { get; set; }
     public DbSet<LanguageEntity> Languages { get; set; }
     public DbSet<ResourceContentEntity> ResourceContents { get; set; }
-    public DbSet<ResourceTypeEntity> ResourceTypes { get; set; }
+    public DbSet<ParentResourceEntity> ParentResources { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -1,11 +1,11 @@
-﻿using Aquifer.API.Utilities;
+using Aquifer.API.Utilities;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
 using System.Text.Json.Serialization;
 
 namespace Aquifer.API.Modules.Resources.ResourcesSummary;
 
-public class ResourcesSummaryByTypeDto : ResourcesSummaryDtoCommon
+public class ResourcesSummaryByParentResourceDto : ResourcesSummaryDtoCommon
 {
 }
 
@@ -16,23 +16,23 @@ public class ResourcesSummaryByLanguageDto : ResourcesSummaryDtoCommon
 
 public class ResourcesSummaryDtoCommon
 {
-    public string ResourceType { get; set; } = null!;
+    public string ParentResourceName { get; set; } = null!;
     public DateTime Date { get; set; }
     public int ResourceCount { get; set; }
 }
 
 public record ResourcesSummaryResponse(
-    List<ResourcesSummaryByType> ResourcesByType,
+    List<ResourcesSummaryByParentResource> ResourcesByParentResource,
     List<ResourcesSummaryByLanguage> ResourcesByLanguage,
-    List<ResourcesSummaryTypeTotalsByMonth> TotalsByMonth,
+    List<ResourcesSummaryParentResourceTotalsByMonth> TotalsByMonth,
     int AllResourcesCount,
     int MultiLanguageResourcesCount,
     List<string> Languages,
-    List<string> ResourceTypes
+    List<string> ParentResourceNames
 );
 
-public record ResourcesSummaryByType(int ResourceCount,
-    string ResourceType,
+public record ResourcesSummaryByParentResource(int ResourceCount,
+    string ParentResourceName,
     [property: JsonIgnore]
     DateTime FullDateTime)
 {
@@ -42,11 +42,11 @@ public record ResourcesSummaryByType(int ResourceCount,
 
 public record ResourcesSummaryByLanguage(string Language,
         int ResourceCount,
-        string ResourceType,
+        string ParentResourceName,
         DateTime FullDateTime)
-    : ResourcesSummaryByType(ResourceCount, ResourceType, FullDateTime);
+    : ResourcesSummaryByParentResource(ResourceCount, ParentResourceName, FullDateTime);
 
-public record ResourcesSummaryTypeTotalsByMonth(DateOnly Date, string MonthAbbreviation, int ResourceCount);
+public record ResourcesSummaryParentResourceTotalsByMonth(DateOnly Date, string MonthAbbreviation, int ResourceCount);
 
 public record ResourcesSummaryById : ResourcesSummaryDetailsById
 {
@@ -58,7 +58,7 @@ public record ResourcesSummaryById : ResourcesSummaryDetailsById
 
 public record ResourcesSummaryDetailsById
 {
-    public string Type { get; set; } = null!;
+    public string ParentResourceName { get; set; } = null!;
     public string Label { get; set; } = null!;
 }
 

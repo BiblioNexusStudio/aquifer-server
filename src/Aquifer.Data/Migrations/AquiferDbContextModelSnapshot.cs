@@ -265,7 +265,8 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("TypeId")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("ParentResourceId");
 
                     b.Property<DateTime>("Updated")
                         .ValueGeneratedOnAdd()
@@ -315,7 +316,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ResourceTypes");
+                    b.ToTable("ParentResources");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.VerseEntity", b =>

@@ -1,17 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
-[Index(nameof(TypeId),
+[Index(nameof(ParentResourceId),
     nameof(ExternalId),
     IsUnique = true)]
 [EntityTypeConfiguration(typeof(ResourceEntityConfiguration))]
 public class ResourceEntity
 {
     public int Id { get; set; }
-    public int TypeId { get; set; }
-    public ResourceTypeEntity Type { get; set; } = null!;
+    public int ParentResourceId { get; set; }
+    public ParentResourceEntity ParentResource { get; set; } = null!;
     public string EnglishLabel { get; set; } = null!;
     public string? ExternalId { get; set; }
 
