@@ -111,10 +111,11 @@ public class ResourcesModule : IModule
                     }))
             .ToListAsync(cancellationToken);
 
-        // for resource types that are used as the "root", we want to be sure to grab their supporting resources
+        // for resource types that are used as the "root", we want to be sure to grab their associated resources
         var associatedResourceContent = await dbContext.PassageResources
             // find all passages that overlap with the current book
             .Where(pr => Constants.RootResourceTypes.Contains(pr.Resource.Type.ShortName) &&
+                         resourceTypeEntities.Contains(pr.Resource.Type) &&
                          ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
                            pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookId)) ||
                           (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
