@@ -1,4 +1,4 @@
-﻿using Aquifer.API.Common;
+using Aquifer.API.Common;
 using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -11,29 +11,29 @@ public class PassagesModule : IModule
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("passages");
-        group.MapGet("language/{languageId:int}/resource/{resourceTypeName}", GetPassagesByLanguageAndResource);
+        group.MapGet("language/{languageId:int}/resource/{parentResourceName}", GetPassagesByLanguageAndResource);
         group.MapGet("{passageId:int}/language/{languageId:int}", GetPassageDetailsForLanguage);
         return endpoints;
     }
 
     private async Task<Results<Ok<List<PassagesBookResponse>>, NotFound>> GetPassagesByLanguageAndResource(
         int languageId,
-        string resourceTypeName,
+        string parentResourceName,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        if (!Constants.RootResourceTypes.Contains(resourceTypeName))
+        if (!Constants.RootParentResourceNames.Contains(parentResourceName))
         {
             return TypedResults.NotFound();
         }
 
-        var resourceType =
-            await dbContext.ResourceTypes.SingleOrDefaultAsync(rt => rt.ShortName == resourceTypeName,
+        var parentResource =
+            await dbContext.ParentResources.SingleOrDefaultAsync(rt => rt.ShortName == parentResourceName,
                 cancellationToken);
 
         var passagesByBook = (await dbContext.Passages
                 .Where(p => p.PassageResources.Any(pr =>
-                    pr.Resource.Type == resourceType &&
+                    pr.Resource.ParentResource == parentResource &&
                     pr.Resource.ResourceContents.Any(rc => rc.LanguageId == languageId)))
                 .Select(passage =>
                     new PassagesResponsePassage
@@ -46,7 +46,8 @@ public class PassagesModule : IModule
             .GroupBy(passage => passage.BookId)
             .Select(grouped => new PassagesBookResponse
             {
-                BookId = grouped.Key, Passages = grouped.OrderBy(p => p.StartChapter).ThenBy(p => p.StartVerse)
+                BookId = grouped.Key,
+                Passages = grouped.OrderBy(p => p.StartChapter).ThenBy(p => p.StartVerse)
             })
             .OrderBy(book => book.BookId).ToList();
 
@@ -86,7 +87,7 @@ public class PassagesModule : IModule
                         MediaTypeName = rc.MediaType,
                         rc.LanguageId,
                         pr.ResourceId,
-                        TypeName = pr.Resource.Type.ShortName
+                        ParentResourceName = pr.Resource.ParentResource.ShortName
                     }))
             .ToListAsync(cancellationToken);
 
@@ -105,7 +106,7 @@ public class PassagesModule : IModule
                         MediaTypeName = rc.MediaType,
                         rc.LanguageId,
                         vr.ResourceId,
-                        TypeName = vr.Resource.Type.ShortName
+                        ParentResourceName = vr.Resource.ParentResource.ShortName
                     })
             )
             .ToListAsync(cancellationToken);
@@ -124,7 +125,7 @@ public class PassagesModule : IModule
                             MediaTypeName = rc.MediaType,
                             rc.LanguageId,
                             ResourceId = sr.Id,
-                            TypeName = sr.Type.ShortName
+                            ParentResourceName = sr.ParentResource.ShortName
                         })))
             .ToListAsync(cancellationToken);
 
@@ -141,7 +142,7 @@ public class PassagesModule : IModule
                     ContentId = first.ContentId,
                     ContentSize = first.ContentSize,
                     MediaTypeName = first.MediaTypeName,
-                    TypeName = first.TypeName
+                    ParentResourceName = first.ParentResourceName
                 };
             });
 

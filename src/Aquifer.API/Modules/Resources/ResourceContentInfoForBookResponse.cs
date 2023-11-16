@@ -18,5 +18,5 @@ public class ResourceContentInfo
     public int ContentId { get; set; }
     public int ContentSize { get; set; }
     public ResourceContentMediaType MediaTypeName { get; set; }
-    public string TypeName { get; set; } = null!;
+    public string ParentResourceName { get; set; } = null!;
 }

@@ -17,10 +17,10 @@ SELECT @PassageId = @@IDENTITY;
 END
 
 SELECT @ResourceId = NULL;
-SELECT @ResourceId = Id FROM Resources WHERE [TypeId] = 1 AND [EnglishLabel] = N'CBBT-ER Luke 11:14-32';
+SELECT @ResourceId = Id FROM Resources WHERE [ParentResourceId] = 1 AND [EnglishLabel] = N'CBBT-ER Luke 11:14-32';
 IF @ResourceId IS NULL
 BEGIN
-INSERT INTO Resources([TypeId], [EnglishLabel]) VALUES (1, N'CBBT-ER Luke 11:14-32');
+INSERT INTO Resources([ParentResourceId], [EnglishLabel]) VALUES (1, N'CBBT-ER Luke 11:14-32');
 SELECT @ResourceId = @@IDENTITY;
 END
 
@@ -58,10 +58,10 @@ SELECT @PassageId = @@IDENTITY;
 END
 
 SELECT @ResourceId = NULL;
-SELECT @ResourceId = Id FROM Resources WHERE [TypeId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 1:1-13';
+SELECT @ResourceId = Id FROM Resources WHERE [ParentResourceId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 1:1-13';
 IF @ResourceId IS NULL
 BEGIN
-INSERT INTO Resources([TypeId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 1:1-13');
+INSERT INTO Resources([ParentResourceId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 1:1-13');
 SELECT @ResourceId = @@IDENTITY;
 END
 
@@ -99,10 +99,10 @@ SELECT @PassageId = @@IDENTITY;
 END
 
 SELECT @ResourceId = NULL;
-SELECT @ResourceId = Id FROM Resources WHERE [TypeId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 2:23-3:6';
+SELECT @ResourceId = Id FROM Resources WHERE [ParentResourceId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 2:23-3:6';
 IF @ResourceId IS NULL
 BEGIN
-INSERT INTO Resources([TypeId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 2:23-3:6');
+INSERT INTO Resources([ParentResourceId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 2:23-3:6');
 SELECT @ResourceId = @@IDENTITY;
 END
 
@@ -140,10 +140,10 @@ SELECT @PassageId = @@IDENTITY;
 END
 
 SELECT @ResourceId = NULL;
-SELECT @ResourceId = Id FROM Resources WHERE [TypeId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 1:14-20';
+SELECT @ResourceId = Id FROM Resources WHERE [ParentResourceId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 1:14-20';
 IF @ResourceId IS NULL
 BEGIN
-INSERT INTO Resources([TypeId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 1:14-20');
+INSERT INTO Resources([ParentResourceId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 1:14-20');
 SELECT @ResourceId = @@IDENTITY;
 END
 
@@ -181,10 +181,10 @@ SELECT @PassageId = @@IDENTITY;
 END
 
 SELECT @ResourceId = NULL;
-SELECT @ResourceId = Id FROM Resources WHERE [TypeId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 1:21-28';
+SELECT @ResourceId = Id FROM Resources WHERE [ParentResourceId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 1:21-28';
 IF @ResourceId IS NULL
 BEGIN
-INSERT INTO Resources([TypeId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 1:21-28');
+INSERT INTO Resources([ParentResourceId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 1:21-28');
 SELECT @ResourceId = @@IDENTITY;
 END
 
@@ -222,10 +222,10 @@ SELECT @PassageId = @@IDENTITY;
 END
 
 SELECT @ResourceId = NULL;
-SELECT @ResourceId = Id FROM Resources WHERE [TypeId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 1:29-34';
+SELECT @ResourceId = Id FROM Resources WHERE [ParentResourceId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 1:29-34';
 IF @ResourceId IS NULL
 BEGIN
-INSERT INTO Resources([TypeId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 1:29-34');
+INSERT INTO Resources([ParentResourceId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 1:29-34');
 SELECT @ResourceId = @@IDENTITY;
 END
 
@@ -263,10 +263,10 @@ SELECT @PassageId = @@IDENTITY;
 END
 
 SELECT @ResourceId = NULL;
-SELECT @ResourceId = Id FROM Resources WHERE [TypeId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 1:35-39';
+SELECT @ResourceId = Id FROM Resources WHERE [ParentResourceId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 1:35-39';
 IF @ResourceId IS NULL
 BEGIN
-INSERT INTO Resources([TypeId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 1:35-39');
+INSERT INTO Resources([ParentResourceId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 1:35-39');
 SELECT @ResourceId = @@IDENTITY;
 END
 
@@ -304,10 +304,10 @@ SELECT @PassageId = @@IDENTITY;
 END
 
 SELECT @ResourceId = NULL;
-SELECT @ResourceId = Id FROM Resources WHERE [TypeId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 1:40-45';
+SELECT @ResourceId = Id FROM Resources WHERE [ParentResourceId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 1:40-45';
 IF @ResourceId IS NULL
 BEGIN
-INSERT INTO Resources([TypeId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 1:40-45');
+INSERT INTO Resources([ParentResourceId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 1:40-45');
 SELECT @ResourceId = @@IDENTITY;
 END
 
@@ -345,10 +345,10 @@ SELECT @PassageId = @@IDENTITY;
 END
 
 SELECT @ResourceId = NULL;
-SELECT @ResourceId = Id FROM Resources WHERE [TypeId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 2:1-12';
+SELECT @ResourceId = Id FROM Resources WHERE [ParentResourceId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 2:1-12';
 IF @ResourceId IS NULL
 BEGIN
-INSERT INTO Resources([TypeId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 2:1-12');
+INSERT INTO Resources([ParentResourceId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 2:1-12');
 SELECT @ResourceId = @@IDENTITY;
 END
 
@@ -386,10 +386,10 @@ SELECT @PassageId = @@IDENTITY;
 END
 
 SELECT @ResourceId = NULL;
-SELECT @ResourceId = Id FROM Resources WHERE [TypeId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 2:13-17';
+SELECT @ResourceId = Id FROM Resources WHERE [ParentResourceId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 2:13-17';
 IF @ResourceId IS NULL
 BEGIN
-INSERT INTO Resources([TypeId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 2:13-17');
+INSERT INTO Resources([ParentResourceId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 2:13-17');
 SELECT @ResourceId = @@IDENTITY;
 END
 
@@ -427,10 +427,10 @@ SELECT @PassageId = @@IDENTITY;
 END
 
 SELECT @ResourceId = NULL;
-SELECT @ResourceId = Id FROM Resources WHERE [TypeId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 2:18-22';
+SELECT @ResourceId = Id FROM Resources WHERE [ParentResourceId] = 1 AND [EnglishLabel] = N'CBBT-ER Mark 2:18-22';
 IF @ResourceId IS NULL
 BEGIN
-INSERT INTO Resources([TypeId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 2:18-22');
+INSERT INTO Resources([ParentResourceId], [EnglishLabel]) VALUES (1, N'CBBT-ER Mark 2:18-22');
 SELECT @ResourceId = @@IDENTITY;
 END
 

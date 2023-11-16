@@ -1,4 +1,4 @@
-﻿using Aquifer.Data;
+using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -23,17 +23,17 @@ public static class ResourcesListEndpoints
         }
 
         var resourceFilter = CreateResourceFilterExpression(request);
-        var resourceTypes = await dbContext.Resources.Where(resourceFilter)
+        var parentResources = await dbContext.Resources.Where(resourceFilter)
             .OrderBy(x => x.EnglishLabel)
             .Skip(request.Skip).Take(request.Take)
             .Select(x => new ResourceListItemResponse(x.Id,
                 x.EnglishLabel,
-                x.Type.DisplayName,
+                x.ParentResource.DisplayName,
                 x.ResourceContents.Select(rc => rc.Status)
                     .OrderBy(status => (int)status)
                     .First())).ToListAsync(cancellationToken);
 
-        return TypedResults.Ok(resourceTypes);
+        return TypedResults.Ok(parentResources);
     }
 
     public static async Task<Ok<int>> GetCount([AsParameters] ResourceListCountRequest request,
@@ -52,7 +52,7 @@ public static class ResourcesListEndpoints
         string query = request.Query ?? string.Empty;
         return x =>
             x.EnglishLabel.Contains(query) &&
-            (request.ResourceTypeId == default || x.TypeId == request.ResourceTypeId) &&
+            (request.ParentResourceId == default || x.ParentResourceId == request.ParentResourceId) &&
             (request.LanguageId == default || x.ResourceContents.Any(rc => rc.LanguageId == request.LanguageId));
     }
 }

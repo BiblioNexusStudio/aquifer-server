@@ -132,6 +132,46 @@ namespace Aquifer.Data.Migrations
                     b.ToTable("Languages");
                 });
 
+            modelBuilder.Entity("Aquifer.Data.Entities.ParentResourceEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ComplexityLevel")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Created")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LicenseInfo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ResourceType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ShortName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Updated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ParentResources");
+                });
+
             modelBuilder.Entity("Aquifer.Data.Entities.PassageEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -264,7 +304,7 @@ namespace Aquifer.Data.Migrations
                     b.Property<string>("ExternalId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("TypeId")
+                    b.Property<int>("ParentResourceId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Updated")
@@ -274,48 +314,11 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TypeId", "ExternalId")
+                    b.HasIndex("ParentResourceId", "ExternalId")
                         .IsUnique()
                         .HasFilter("[ExternalId] IS NOT NULL");
 
                     b.ToTable("Resources");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.ResourceTypeEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ComplexityLevel")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Created")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.Property<string>("DisplayName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LicenseInfo")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ShortName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Updated")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ResourceTypes");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.VerseEntity", b =>
@@ -428,13 +431,13 @@ namespace Aquifer.Data.Migrations
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceEntity", b =>
                 {
-                    b.HasOne("Aquifer.Data.Entities.ResourceTypeEntity", "Type")
+                    b.HasOne("Aquifer.Data.Entities.ParentResourceEntity", "ParentResource")
                         .WithMany()
-                        .HasForeignKey("TypeId")
+                        .HasForeignKey("ParentResourceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Type");
+                    b.Navigation("ParentResource");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.VerseResourceEntity", b =>
