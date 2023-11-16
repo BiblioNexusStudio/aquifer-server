@@ -24,8 +24,9 @@ public enum ResourceTypeComplexityLevel
 public enum ResourceType
 {
     None = 0,
-    Dictionary = 1,
-    StudyNotes = 2,
-    Images = 3,
-    Videos = 4
+    Guide = 1,
+    Dictionary = 2,
+    StudyNotes = 3,
+    Images = 4,
+    Videos = 5
 }
