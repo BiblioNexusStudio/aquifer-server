@@ -4,7 +4,7 @@ Aquifer Server is the back-end server allowing access to data in the Aquifer.
 
 ## Setup
 
-- Make sure you have the [.NET 7 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/7.0) installed
+- Make sure you have the [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) installed
 
 ## Installation
 
