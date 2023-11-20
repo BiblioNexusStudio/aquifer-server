@@ -1,7 +1,6 @@
 using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Modules.Resources.ResourcesSummary;
@@ -228,68 +227,16 @@ public static class GetResourcesSummaryEndpoints
             int multiLanguageResourcesCount)>
         GetDataAsync(AquiferDbContext dbContext, CancellationToken cancellationToken)
     {
-        var resourcesByParentResource = new List<ResourcesSummaryByParentResourceDto>();
-        var resourcesByLanguage = new List<ResourcesSummaryByLanguageDto>();
-        int multiLanguageResourcesCount = 0;
+        var resourcesByParentResource = await dbContext.Database
+            .SqlQuery<ResourcesSummaryByParentResourceDto>($"exec ({GetResourcesByParentResourceQuery})")
+            .ToListAsync(cancellationToken);
 
-        await using (var sqlConnection = new SqlConnection(dbContext.Database.GetConnectionString()))
-        {
-            await sqlConnection.OpenAsync(cancellationToken);
-            await using (var command = new SqlCommand(GetResourcesByParentResourceQuery, sqlConnection))
-            {
-                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-                while (await reader.ReadAsync(cancellationToken))
-                {
-                    resourcesByParentResource.Add(new ResourcesSummaryByParentResourceDto
-                    {
-                        ParentResourceName = reader.GetString(0),
-                        Date = reader.GetDateTime(1),
-                        ResourceCount = reader.GetInt32(2)
-                    });
-                }
-            }
+        var resourcesByLanguage = await dbContext.Database
+            .SqlQuery<ResourcesSummaryByLanguageDto>($"exec ({GetResourcesByLanguageQuery})")
+            .ToListAsync(cancellationToken);
 
-            await using (var command = new SqlCommand(GetResourcesByLanguageQuery, sqlConnection))
-            {
-                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-                while (await reader.ReadAsync(cancellationToken))
-                {
-                    resourcesByLanguage.Add(new ResourcesSummaryByLanguageDto
-                    {
-                        LanguageName = reader.GetString(0),
-                        ParentResourceName = reader.GetString(1),
-                        Date = reader.GetDateTime(2),
-                        ResourceCount = reader.GetInt32(3)
-                    });
-                }
-            }
-
-            await using (var command = new SqlCommand(GetMultiLanguageResourcesCountQuery, sqlConnection))
-            {
-                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-                while (await reader.ReadAsync(cancellationToken))
-                {
-                    multiLanguageResourcesCount = reader.GetInt32(0);
-                }
-            }
-        }
-
-        // Apparently, without jumping over hurdles, Entity Framework no longer supports
-        // mapping to types not in the DbSet. It will support it again with EF8 which
-        // should release in November. So once we upgrade to .NET 8 we can replace the
-        // above with the below.
-
-        // var resourcesByParentResource = await dbContext.Database
-        //     .SqlQuery<ResourcesSummaryByParentResourceDto>($"{GetResourcesByParentResourceQuery}")
-        //     .ToListAsync(cancellationToken);
-
-        // var resourcesByLanguage = await dbContext.Database
-        //     .SqlQuery<ResourcesSummaryByLanguageDto>($"{GetResourcesByLanguageQuery}")
-        //     .ToListAsync(cancellationToken);
-
-        // var multiLanguageResourcesCount = await dbContext.Database
-        //     .SqlQuery<int>($"{GetMultiLanguageResourcesCountQuery}")
-        //     .SingleAsync(cancellationToken);
+        int multiLanguageResourcesCount = (await dbContext.Database
+            .SqlQuery<int>($"exec ({GetMultiLanguageResourcesCountQuery})").ToListAsync(cancellationToken)).Single();
 
         return (resourcesByParentResource, resourcesByLanguage, multiLanguageResourcesCount);
     }
