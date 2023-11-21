@@ -24,7 +24,7 @@ builder.Services
         options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
     })
     .AddHealthChecks()
-    .AddDbContextCheck<AquiferDbContext>(nameof(AquiferDbContext), HealthStatus.Unhealthy);
+    .AddDbContextCheck<AquiferDbContext>();
 var app = builder.Build();
 
 app.UseAuth();
