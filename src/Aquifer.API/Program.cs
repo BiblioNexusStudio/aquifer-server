@@ -5,7 +5,6 @@ using Aquifer.Data;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration.Get<ConfigurationOptions>();
@@ -17,7 +16,8 @@ builder.Services
     .AddOutputCache()
     .AddApplicationInsightsTelemetry()
     .AddDbContext<AquiferDbContext>(options =>
-        options.UseSqlServer(configuration?.ConnectionStrings?.BiblioNexusDb))
+        options.UseSqlServer(configuration?.ConnectionStrings?.BiblioNexusDb,
+            providerOptions => providerOptions.EnableRetryOnFailure(3)))
     .RegisterModules()
     .Configure<JsonOptions>(options =>
     {
@@ -25,6 +25,7 @@ builder.Services
     })
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
+
 var app = builder.Build();
 
 app.UseAuth();
