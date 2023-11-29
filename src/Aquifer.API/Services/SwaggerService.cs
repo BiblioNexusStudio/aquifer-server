@@ -18,6 +18,15 @@ public static class SwaggerService
                     Type = SecuritySchemeType.ApiKey
                 });
 
+            x.AddSecurityDefinition("ApiKey",
+                new OpenApiSecurityScheme
+                {
+                    Description = "API Key header",
+                    Name = "api-key",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey
+                });
+
             x.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
                 {
@@ -27,6 +36,17 @@ public static class SwaggerService
                         {
                             Type = ReferenceType.SecurityScheme,
                             Id = "Bearer"
+                        }
+                    },
+                    new List<string>()
+                },
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "ApiKey"
                         }
                     },
                     new List<string>()
