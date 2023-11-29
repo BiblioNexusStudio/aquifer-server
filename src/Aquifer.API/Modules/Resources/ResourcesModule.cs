@@ -71,9 +71,9 @@ public class ResourcesModule : IModule
                           (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
                            pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
             .SelectMany(pr => pr.Resource.ResourceContents
-                .Where(rc => rc.LanguageId == languageId ||
+                .Where(rc => rc.Published && (rc.LanguageId == languageId ||
                              (rc.LanguageId == englishLanguageId &&
-                              Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
+                              Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType))))
                 .Select(rc =>
                     new
                     {
@@ -94,9 +94,9 @@ public class ResourcesModule : IModule
                          vr.VerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
                          vr.VerseId < BibleUtilities.UpperBoundOfBook(bookId))
             .SelectMany(vr => vr.Resource.ResourceContents
-                .Where(rc => rc.LanguageId == languageId ||
+                .Where(rc => rc.Published && (rc.LanguageId == languageId ||
                              (rc.LanguageId == englishLanguageId &&
-                              Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
+                              Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType))))
                 .Select(rc =>
                     new
                     {
@@ -122,9 +122,9 @@ public class ResourcesModule : IModule
             .SelectMany(pr => pr.Resource.AssociatedResourceChildren
                 .Where(ar => parentResourceEntities.Contains(ar.ParentResource))
                 .SelectMany(sr => sr.ResourceContents
-                    .Where(rc => rc.LanguageId == languageId ||
+                    .Where(rc => rc.Published && (rc.LanguageId == languageId ||
                                  (rc.LanguageId == englishLanguageId &&
-                                  Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
+                                  Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType))))
                     .Select(rc =>
                         new
                         {
@@ -194,7 +194,7 @@ public class ResourcesModule : IModule
     )
     {
         var content = await dbContext.ResourceContents.FindAsync(contentId, cancellationToken);
-        if (content == null)
+        if (content == null || !content.Published)
         {
             return TypedResults.NotFound();
         }
@@ -248,7 +248,7 @@ public class ResourcesModule : IModule
         }
 
         var contents = await dbContext.ResourceContents
-            .Where(rc => ids.Contains(rc.Id) && rc.MediaType == ResourceContentMediaType.Text)
+            .Where(rc => rc.Published && ids.Contains(rc.Id) && rc.MediaType == ResourceContentMediaType.Text)
             .Select(content => new ResourceTextContentResponse
             {
                 Id = content.Id,
@@ -274,7 +274,7 @@ public class ResourcesModule : IModule
     )
     {
         var content = await dbContext.ResourceContents.FindAsync(contentId, cancellationToken);
-        if (content == null)
+        if (content == null || !content.Published)
         {
             return TypedResults.NotFound();
         }
@@ -304,7 +304,7 @@ public class ResourcesModule : IModule
         }
 
         var metadata = await dbContext.ResourceContents
-            .Where(rc => ids.Contains(rc.Id))
+            .Where(rc => rc.Published && ids.Contains(rc.Id))
             .Select(content => new ResourceContentMetadataResponseWithId
             {
                 Id = content.Id,
@@ -334,7 +334,12 @@ public class ResourcesModule : IModule
     {
         var content = await dbContext.ResourceContents.FindAsync(contentId, cancellationToken);
 
-        if (content?.MediaType == ResourceContentMediaType.Video)
+        if (content == null || !content.Published)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (content.MediaType == ResourceContentMediaType.Video)
         {
             var deserialized = JsonUtilities.DefaultDeserialize<ResourceContentVideoJsonSchema>(content.Content);
             if (deserialized.ThumbnailUrl != null)
