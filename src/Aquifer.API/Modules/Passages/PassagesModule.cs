@@ -34,7 +34,7 @@ public class PassagesModule : IModule
         var passagesByBook = (await dbContext.Passages
                 .Where(p => p.PassageResources.Any(pr =>
                     pr.Resource.ParentResource == parentResource &&
-                    pr.Resource.ResourceContents.Any(rc => rc.LanguageId == languageId)))
+                    pr.Resource.ResourceContents.Any(rc => rc.Published && rc.LanguageId == languageId)))
                 .Select(passage =>
                     new PassagesResponsePassage
                     {
@@ -76,9 +76,9 @@ public class PassagesModule : IModule
                          (pr.Passage.EndVerseId >= passage.StartVerseId &&
                           pr.Passage.EndVerseId <= passage.EndVerseId))
             .SelectMany(pr => pr.Resource.ResourceContents
-                .Where(rc => rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
+                .Where(rc => rc.Published && (rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
                                                              Constants.FallbackToEnglishForMediaTypes.Contains(
-                                                                 rc.MediaType)))
+                                                                 rc.MediaType))))
                 .Select(rc =>
                     new
                     {
@@ -95,9 +95,9 @@ public class PassagesModule : IModule
             // find all verses contained within the current passage
             .Where(vr => vr.VerseId >= passage.StartVerseId && vr.VerseId <= passage.EndVerseId)
             .SelectMany(vr => vr.Resource.ResourceContents
-                .Where(rc => rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
+                .Where(rc => rc.Published && (rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
                                                              Constants.FallbackToEnglishForMediaTypes.Contains(
-                                                                 rc.MediaType)))
+                                                                 rc.MediaType))))
                 .Select(rc =>
                     new
                     {
@@ -114,9 +114,9 @@ public class PassagesModule : IModule
         var associatedResourceContent = await dbContext.PassageResources.Where(pr => pr.PassageId == passageId)
             .SelectMany(pr => pr.Resource.AssociatedResourceChildren
                 .SelectMany(sr => sr.ResourceContents
-                    .Where(rc => rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
+                    .Where(rc => rc.Published && (rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
                                                                  Constants.FallbackToEnglishForMediaTypes.Contains(
-                                                                     rc.MediaType)))
+                                                                     rc.MediaType))))
                     .Select(rc =>
                         new
                         {

@@ -14,6 +14,7 @@ public class ResourceContentEntity
     public ResourceContentStatus Status { get; set; }
     public bool Enabled { get; set; }
     public bool Trusted { get; set; }
+    public bool Published { get; set; }
     public string Content { get; set; } = null!; // JSON
     public int ContentSize { get; set; }
     public ResourceContentMediaType MediaType { get; set; }
