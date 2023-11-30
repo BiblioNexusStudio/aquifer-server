@@ -1,10 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
-[EntityTypeConfiguration(typeof(UserResourceContentAssignmentEntityConfiguration))]
-public class UserResourceContentAssignmentEntity
+[EntityTypeConfiguration(typeof(ResourceContentUserAssignmentEntityConfiguration))]
+public class ResourceContentUserAssignmentEntity
 {
     public int Id { get; set; }
 
@@ -23,14 +24,14 @@ public class UserResourceContentAssignmentEntity
     public DateTime? Completed { get; set; }
 }
 
-public class UserResourceContentAssignmentEntityConfiguration
-    : IEntityTypeConfiguration<UserResourceContentAssignmentEntity>
+public class ResourceContentUserAssignmentEntityConfiguration
+    : IEntityTypeConfiguration<ResourceContentUserAssignmentEntity>
 {
-    public void Configure(EntityTypeBuilder<UserResourceContentAssignmentEntity> builder)
+    public void Configure(EntityTypeBuilder<ResourceContentUserAssignmentEntity> builder)
     {
         builder
             .HasIndex(x => x.ResourceContentId)
-            .HasFilter($"{nameof(UserResourceContentAssignmentEntity.Completed)} IS NOT NULL")
+            .HasFilter($"{nameof(ResourceContentUserAssignmentEntity.Completed)} IS NOT NULL")
             .IsUnique();
 
         builder

@@ -19,6 +19,9 @@ public class ResourceContentEntity
     public int ContentSize { get; set; }
     public ResourceContentMediaType MediaType { get; set; }
 
+    public int? AssignedUserId { get; set; }
+    public UserEntity? AssignedUser { get; set; }
+
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 

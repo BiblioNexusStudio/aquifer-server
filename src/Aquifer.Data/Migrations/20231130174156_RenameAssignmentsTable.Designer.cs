@@ -4,6 +4,7 @@ using Aquifer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    partial class AquiferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231130174156_RenameAssignmentsTable")]
+    partial class RenameAssignmentsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -326,44 +329,6 @@ namespace Aquifer.Data.Migrations
                     b.ToTable("ResourceContentStatusChanges");
                 });
 
-            modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentUserAssignmentEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AssignedByUserId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AssignedUserId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("Completed")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("Created")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.Property<int>("ResourceContentId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssignedByUserId");
-
-                    b.HasIndex("AssignedUserId");
-
-                    b.HasIndex("ResourceContentId")
-                        .IsUnique()
-                        .HasFilter("Completed IS NOT NULL");
-
-                    b.ToTable("ResourceContentUserAssignments");
-                });
-
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -444,6 +409,44 @@ namespace Aquifer.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Aquifer.Data.Entities.UserResourceContentAssignmentEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AssignedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AssignedUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("Completed")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Created")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.Property<int>("ResourceContentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedByUserId");
+
+                    b.HasIndex("AssignedUserId");
+
+                    b.HasIndex("ResourceContentId")
+                        .IsUnique()
+                        .HasFilter("Completed IS NOT NULL");
+
+                    b.ToTable("ResourceContentUserAssignments");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.VerseEntity", b =>
@@ -579,7 +582,18 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentUserAssignmentEntity", b =>
+            modelBuilder.Entity("Aquifer.Data.Entities.ResourceEntity", b =>
+                {
+                    b.HasOne("Aquifer.Data.Entities.ParentResourceEntity", "ParentResource")
+                        .WithMany()
+                        .HasForeignKey("ParentResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ParentResource");
+                });
+
+            modelBuilder.Entity("Aquifer.Data.Entities.UserResourceContentAssignmentEntity", b =>
                 {
                     b.HasOne("Aquifer.Data.Entities.UserEntity", "AssignedByUser")
                         .WithMany()
@@ -604,17 +618,6 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("AssignedUser");
 
                     b.Navigation("ResourceContent");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.ResourceEntity", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.ParentResourceEntity", "ParentResource")
-                        .WithMany()
-                        .HasForeignKey("ParentResourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ParentResource");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.VerseResourceEntity", b =>
