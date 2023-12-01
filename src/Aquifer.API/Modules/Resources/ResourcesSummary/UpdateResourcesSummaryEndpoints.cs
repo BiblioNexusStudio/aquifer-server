@@ -1,15 +1,15 @@
-﻿using Aquifer.API.Utilities;
+using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
-namespace Aquifer.API.Modules.Resources.ResourcesSummary;
+namespace Aquifer.API.Modules.Resources.ResourceContentSummary;
 
 public class UpdateResourcesSummaryEndpoints
 {
-    public static async Task<Results<NoContent, NotFound>> UpdateResourcesSummaryItem(int contentId,
-        ResourcesSummaryItemUpdate item,
+    public static async Task<Results<NoContent, NotFound>> UpdateResourceContentSummaryItem(int resourceContentId,
+        ResourceContentSummaryItemUpdate item,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -18,7 +18,7 @@ public class UpdateResourcesSummaryEndpoints
 
         var entity = await dbContext.ResourceContentVersions
             .Where(x => x.IsPublished) // TODO: swap this with IsDraft once we can create drafts
-            .Where(x => x.ResourceContentId == contentId)
+            .Where(x => x.ResourceContentId == resourceContentId)
             .Include(x => x.ResourceContent.Resource)
             .SingleOrDefaultAsync(cancellationToken);
         if (entity is null)
@@ -27,7 +27,7 @@ public class UpdateResourcesSummaryEndpoints
         }
 
         entity.Content = JsonUtilities.DefaultSerialize(item.Content);
-        entity.ResourceContent.Resource.EnglishLabel = item.Label;
+        entity.DisplayName = item.DisplayName;
         entity.ResourceContent.Status = item.Status;
         entity.ContentSize = Encoding.UTF8.GetByteCount(entity.Content);
         entity.ResourceContent.Updated = DateTime.UtcNow;

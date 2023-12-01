@@ -2,16 +2,16 @@ using Aquifer.API.Common;
 using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 
-namespace Aquifer.API.Modules.Resources.ResourceContents;
+namespace Aquifer.API.Modules.Resources.ResourceContent;
 
-public static class ResourceContentsStatusEndpoints
+public static class ResourceContentStatusEndpoints
 {
-    public static Ok<List<ResourceContentsStatusResponse>> GetList()
+    public static Ok<List<ResourceContentStatusResponse>> GetList()
     {
         var statuses = Enum.GetValues(typeof(ResourceContentStatus))
             .Cast<ResourceContentStatus>()
             .Where(s => s != ResourceContentStatus.None)
-            .Select(x => new ResourceContentsStatusResponse
+            .Select(x => new ResourceContentStatusResponse
             {
                 DisplayName = x.GetDisplayName(),
                 Status = x

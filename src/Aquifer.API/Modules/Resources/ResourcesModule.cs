@@ -1,6 +1,7 @@
 using Aquifer.API.Common;
 using Aquifer.API.Modules.Resources.ParentResources;
-using Aquifer.API.Modules.Resources.ResourceContents;
+using Aquifer.API.Modules.Resources.ResourceContent;
+using Aquifer.API.Modules.Resources.ResourceContentSummary;
 using Aquifer.API.Modules.Resources.ResourcesList;
 using Aquifer.API.Modules.Resources.ResourcesSummary;
 using Aquifer.API.Utilities;
@@ -27,11 +28,11 @@ public class ResourcesModule : IModule
         group.MapGet("{contentId:int}/thumbnail", GetResourceThumbnailById);
         group.MapGet("language/{languageId:int}/book/{bookCode}", GetResourcesForBook);
         group.MapGet("summary", GetResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
-        group.MapGet("summary/{resourceId:int}", GetResourcesSummaryEndpoints.GetByResourceId);
-        group.MapPut("summary/{contentId:int}", UpdateResourcesSummaryEndpoints.UpdateResourcesSummaryItem)
+        group.MapGet("content/summary/{resourceContentId:int}", GetResourceContentSummaryEndpoints.GetByResourceContentId);
+        group.MapPut("content/summary/{resourceContentId:int}", UpdateResourcesSummaryEndpoints.UpdateResourceContentSummaryItem)
             .RequireAuthorization("write");
         group.MapGet("parent-resources", ParentResourcesEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)));
-        group.MapGet("content/statuses", ResourceContentsStatusEndpoints.GetList).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
+        group.MapGet("content/statuses", ResourceContentStatusEndpoints.GetList).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
         group.MapGet("list", ResourcesListEndpoints.Get);
         group.MapGet("list/count", ResourcesListEndpoints.GetCount);
 

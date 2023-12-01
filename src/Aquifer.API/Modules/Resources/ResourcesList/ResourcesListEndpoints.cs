@@ -23,17 +23,23 @@ public static class ResourcesListEndpoints
         }
 
         var resourceFilter = CreateResourceFilterExpression(request);
-        var parentResources = await dbContext.Resources.Where(resourceFilter)
+        var resources = await dbContext.Resources.Where(resourceFilter)
             .OrderBy(x => x.EnglishLabel)
             .Skip(request.Skip).Take(request.Take)
-            .Select(x => new ResourceListItemResponse(x.Id,
-                x.EnglishLabel,
-                x.ParentResource.DisplayName,
-                x.ResourceContents.Select(rc => rc.Status)
-                    .OrderBy(status => (int)status)
-                    .First())).ToListAsync(cancellationToken);
+            .Select(x => new ResourceListItemResponse
+            {
+                EnglishLabel = x.EnglishLabel,
+                ParentResourceName = x.ParentResource.DisplayName,
+                Status = x.ResourceContents.Select(rc => rc.Status).OrderBy(status => (int)status).First(),
+                ContentIdsWithLanguageIds = x.ResourceContents
+                    .Select(rc => new ResourceListItemContentIdWithLanguageId
+                    {
+                        ContentId = rc.Id,
+                        LanguageId = rc.LanguageId
+                    })
+            }).ToListAsync(cancellationToken);
 
-        return TypedResults.Ok(parentResources);
+        return TypedResults.Ok(resources);
     }
 
     public static async Task<Ok<int>> GetCount([AsParameters] ResourceListCountRequest request,
