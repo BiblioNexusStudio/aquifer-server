@@ -1,7 +1,8 @@
 using Aquifer.API.Common;
+using Aquifer.API.Modules.Resources.ParentResources;
+using Aquifer.API.Modules.Resources.ResourceContents;
 using Aquifer.API.Modules.Resources.ResourcesList;
 using Aquifer.API.Modules.Resources.ResourcesSummary;
-using Aquifer.API.Modules.Resources.ParentResources;
 using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -30,6 +31,7 @@ public class ResourcesModule : IModule
         group.MapPut("summary/{contentId:int}", UpdateResourcesSummaryEndpoints.UpdateResourcesSummaryItem)
             .RequireAuthorization("write");
         group.MapGet("parent-resources", ParentResourcesEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)));
+        group.MapGet("content/statuses", ResourceContentsStatusEndpoints.GetList).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
         group.MapGet("list", ResourcesListEndpoints.Get);
         group.MapGet("list/count", ResourcesListEndpoints.GetCount);
 

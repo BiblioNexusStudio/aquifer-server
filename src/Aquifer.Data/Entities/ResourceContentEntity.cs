@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
 
@@ -32,6 +33,7 @@ public class ResourceContentEntity
     public ResourceEntity Resource { get; set; } = null!;
 }
 
+[JsonConverter(typeof(JsonConverter))]
 public enum ResourceContentMediaType
 {
     None = 0,
@@ -44,7 +46,13 @@ public enum ResourceContentMediaType
 public enum ResourceContentStatus
 {
     None = 0,
-    NotStarted = 1,
-    InProgress = 2,
-    Completed = 3
+    AquiferizeNotStarted = 1,
+    AquiferizeInProgress = 2,
+    Complete = 3,
+    AquiferizeInReview = 4,
+    TranslateNotStarted = 5,
+    TranslateDrafting = 6,
+    TranslateEditing = 7,
+    TranslateReviewing = 8,
+    OnHold = 9
 }
