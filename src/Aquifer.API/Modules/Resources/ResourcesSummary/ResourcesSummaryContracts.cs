@@ -76,6 +76,7 @@ public record ResourcesSummaryContentById
     public int ContentSize { get; init; }
     public ResourcesSummaryLanguageById Language { get; init; } = null!;
     public object Content { get; init; } = null!;
+    public bool IsPublished { get; init; }
 }
 
 public record ResourcesSummaryVerseById

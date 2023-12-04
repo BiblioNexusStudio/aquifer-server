@@ -92,7 +92,8 @@ public static class GetResourcesSummaryEndpoints
                 Status = rc.Status,
                 ContentSize = rc.ContentSize,
                 Content = JsonUtilities.DefaultDeserialize(rc.Content),
-                MediaType = rc.MediaType
+                MediaType = rc.MediaType,
+                IsPublished = rc.Published
             }),
             AssociatedResources =
                 r.AssociatedResourceChildren.Select(ar => new ResourcesSummaryAssociatedContentById
