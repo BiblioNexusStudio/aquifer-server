@@ -25,6 +25,9 @@ public static class AuthService
         services.AddAuthorization(options => options.AddPolicy("write",
             p => p.RequireClaim("user").RequireClaim("permissions", "write:values")));
 
+        services.AddAuthorization(options => options.AddPolicy("read",
+            p => p.RequireClaim("user").RequireClaim("permissions", "read:values")));
+
         return services;
     }
 

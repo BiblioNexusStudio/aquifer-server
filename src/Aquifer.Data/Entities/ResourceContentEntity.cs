@@ -1,8 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
 
-[Index(nameof(ResourceId), nameof(LanguageId), nameof(MediaType), IsUnique = true)]
+[Index(nameof(ResourceId),
+    nameof(LanguageId),
+    nameof(MediaType),
+    IsUnique = true)]
 public class ResourceContentEntity
 {
     public int Id { get; set; }
@@ -32,6 +37,7 @@ public class ResourceContentEntity
     public ResourceEntity Resource { get; set; } = null!;
 }
 
+[JsonConverter(typeof(JsonConverter))]
 public enum ResourceContentMediaType
 {
     None = 0,
@@ -44,7 +50,29 @@ public enum ResourceContentMediaType
 public enum ResourceContentStatus
 {
     None = 0,
-    NotStarted = 1,
-    InProgress = 2,
-    Completed = 3
+
+    [Display(Name = "Aquiferize - Not Started")]
+    AquiferizeNotStarted = 1,
+
+    [Display(Name = "Aquiferize - In Progress")]
+    AquiferizeInProgress = 2,
+
+    [Display(Name = "Complete")] Complete = 3,
+
+    [Display(Name = "Aquiferize - In Review")]
+    AquiferizeInReview = 4,
+
+    [Display(Name = "Translate - Not Started")]
+    TranslateNotStarted = 5,
+
+    [Display(Name = "Translate - Drafting")]
+    TranslateDrafting = 6,
+
+    [Display(Name = "Translate - Editing")]
+    TranslateEditing = 7,
+
+    [Display(Name = "Translate - Reviewing")]
+    TranslateReviewing = 8,
+
+    [Display(Name = "On Hold")] OnHold = 9
 }
