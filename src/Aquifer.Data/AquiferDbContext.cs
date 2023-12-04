@@ -17,8 +17,9 @@ public class AquiferDbContext : DbContext
     public DbSet<PassageEntity> Passages { get; set; }
     public DbSet<PassageResourceEntity> PassageResources { get; set; }
     public DbSet<ResourceContentEntity> ResourceContents { get; set; }
-    public DbSet<ResourceContentStatusChangeEntity> ResourceContentStatusChanges { get; set; }
-    public DbSet<ResourceContentUserAssignmentEntity> ResourceContentUserAssignments { get; set; }
+    public DbSet<ResourceContentVersionStatusHistoryEntity> ResourceContentVersionStatusHistory { get; set; }
+    public DbSet<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistory { get; set; }
+    public DbSet<ResourceContentVersionEntity> ResourceContentVersions { get; set; }
     public DbSet<ResourceEntity> Resources { get; set; }
     public DbSet<UserEntity> Users { get; set; }
     public DbSet<VerseEntity> Verses { get; set; }

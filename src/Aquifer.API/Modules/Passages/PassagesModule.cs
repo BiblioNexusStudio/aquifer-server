@@ -34,7 +34,7 @@ public class PassagesModule : IModule
         var passagesByBook = (await dbContext.Passages
                 .Where(p => p.PassageResources.Any(pr =>
                     pr.Resource.ParentResource == parentResource &&
-                    pr.Resource.ResourceContents.Any(rc => rc.Published && rc.LanguageId == languageId)))
+                    pr.Resource.ResourceContents.Any(rc => rc.Versions.Any(rcv => rcv.IsPublished) && rc.LanguageId == languageId)))
                 .Select(passage =>
                     new PassagesResponsePassage
                     {
@@ -76,57 +76,60 @@ public class PassagesModule : IModule
                          (pr.Passage.EndVerseId >= passage.StartVerseId &&
                           pr.Passage.EndVerseId <= passage.EndVerseId))
             .SelectMany(pr => pr.Resource.ResourceContents
-                .Where(rc => rc.Published && (rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
+                .Where(rc => rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
                                                              Constants.FallbackToEnglishForMediaTypes.Contains(
-                                                                 rc.MediaType))))
-                .Select(rc =>
-                    new
-                    {
-                        ContentId = rc.Id,
-                        rc.ContentSize,
-                        MediaTypeName = rc.MediaType,
-                        rc.LanguageId,
-                        pr.ResourceId,
-                        ParentResourceName = pr.Resource.ParentResource.ShortName
-                    }))
+                                                                 rc.MediaType)))
+                .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
+                    .Select(rcv =>
+                        new
+                        {
+                            ContentId = rc.Id,
+                            rcv.ContentSize,
+                            MediaTypeName = rc.MediaType,
+                            rc.LanguageId,
+                            pr.ResourceId,
+                            ParentResourceName = pr.Resource.ParentResource.ShortName
+                        })))
             .ToListAsync(cancellationToken);
 
         var verseResourceContent = await dbContext.VerseResources
             // find all verses contained within the current passage
             .Where(vr => vr.VerseId >= passage.StartVerseId && vr.VerseId <= passage.EndVerseId)
             .SelectMany(vr => vr.Resource.ResourceContents
-                .Where(rc => rc.Published && (rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
+                .Where(rc => rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
                                                              Constants.FallbackToEnglishForMediaTypes.Contains(
-                                                                 rc.MediaType))))
-                .Select(rc =>
-                    new
-                    {
-                        ContentId = rc.Id,
-                        rc.ContentSize,
-                        MediaTypeName = rc.MediaType,
-                        rc.LanguageId,
-                        vr.ResourceId,
-                        ParentResourceName = vr.Resource.ParentResource.ShortName
-                    })
+                                                                 rc.MediaType)))
+                .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
+                    .Select(rcv =>
+                        new
+                        {
+                            ContentId = rc.Id,
+                            rcv.ContentSize,
+                            MediaTypeName = rc.MediaType,
+                            rc.LanguageId,
+                            vr.ResourceId,
+                            ParentResourceName = vr.Resource.ParentResource.ShortName
+                        }))
             )
             .ToListAsync(cancellationToken);
 
         var associatedResourceContent = await dbContext.PassageResources.Where(pr => pr.PassageId == passageId)
             .SelectMany(pr => pr.Resource.AssociatedResourceChildren
                 .SelectMany(sr => sr.ResourceContents
-                    .Where(rc => rc.Published && (rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
+                    .Where(rc => rc.LanguageId == languageId || (rc.LanguageId == englishLanguageId &&
                                                                  Constants.FallbackToEnglishForMediaTypes.Contains(
-                                                                     rc.MediaType))))
-                    .Select(rc =>
-                        new
-                        {
-                            ContentId = rc.Id,
-                            rc.ContentSize,
-                            MediaTypeName = rc.MediaType,
-                            rc.LanguageId,
-                            ResourceId = sr.Id,
-                            ParentResourceName = sr.ParentResource.ShortName
-                        })))
+                                                                     rc.MediaType)))
+                    .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
+                        .Select(rcv =>
+                            new
+                            {
+                                ContentId = rc.Id,
+                                rcv.ContentSize,
+                                MediaTypeName = rc.MediaType,
+                                rc.LanguageId,
+                                ResourceId = sr.Id,
+                                ParentResourceName = sr.ParentResource.ShortName
+                            }))))
             .ToListAsync(cancellationToken);
 
         // The above queries return resource contents in English + the current language (if available).

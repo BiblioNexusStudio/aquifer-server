@@ -4,6 +4,7 @@ using Aquifer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    partial class AquiferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231204195203_DropOldResourceContentColumnsAndOldStatusAssignmentTables")]
+    partial class DropOldResourceContentColumnsAndOldStatusAssignmentTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -264,39 +267,6 @@ namespace Aquifer.Data.Migrations
                     b.ToTable("ResourceContents");
                 });
 
-            modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionAssignedUserHistoryEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AssignedUserId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ChangedByUserId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Created")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.Property<int>("ResourceContentVersionId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssignedUserId");
-
-                    b.HasIndex("ChangedByUserId");
-
-                    b.HasIndex("ResourceContentVersionId");
-
-                    b.ToTable("ResourceContentVersionAssignedUserHistory");
-                });
-
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -354,37 +324,6 @@ namespace Aquifer.Data.Migrations
                         {
                             t.HasCheckConstraint("CK_ResourceContentVersions_IsPublishedOrIsDraftNotBoth", "IsPublished = 0 OR IsDraft = 0");
                         });
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionStatusHistoryEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ChangedByUserId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Created")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.Property<int>("ResourceContentVersionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChangedByUserId");
-
-                    b.HasIndex("ResourceContentVersionId");
-
-                    b.ToTable("ResourceContentVersionStatusHistory");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceEntity", b =>
@@ -577,33 +516,6 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("Resource");
                 });
 
-            modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionAssignedUserHistoryEntity", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.UserEntity", "AssignedUser")
-                        .WithMany()
-                        .HasForeignKey("AssignedUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("Aquifer.Data.Entities.UserEntity", "ChangedByUser")
-                        .WithMany()
-                        .HasForeignKey("ChangedByUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("Aquifer.Data.Entities.ResourceContentVersionEntity", "ResourceContentVersion")
-                        .WithMany()
-                        .HasForeignKey("ResourceContentVersionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AssignedUser");
-
-                    b.Navigation("ChangedByUser");
-
-                    b.Navigation("ResourceContentVersion");
-                });
-
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionEntity", b =>
                 {
                     b.HasOne("Aquifer.Data.Entities.UserEntity", "AssignedUser")
@@ -619,25 +531,6 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("AssignedUser");
 
                     b.Navigation("ResourceContent");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionStatusHistoryEntity", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.UserEntity", "ChangedByUser")
-                        .WithMany()
-                        .HasForeignKey("ChangedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Aquifer.Data.Entities.ResourceContentVersionEntity", "ResourceContentVersion")
-                        .WithMany()
-                        .HasForeignKey("ResourceContentVersionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ChangedByUser");
-
-                    b.Navigation("ResourceContentVersion");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceEntity", b =>

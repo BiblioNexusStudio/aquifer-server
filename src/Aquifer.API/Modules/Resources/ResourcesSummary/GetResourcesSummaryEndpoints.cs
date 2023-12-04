@@ -80,21 +80,23 @@ public static class GetResourcesSummaryEndpoints
         {
             Label = r.EnglishLabel,
             ParentResourceName = r.ParentResource.DisplayName,
-            Resources = r.ResourceContents.Select(rc => new ResourcesSummaryContentById
-            {
-                ResourceContentId = rc.Id,
-                Language = new ResourcesSummaryLanguageById
+            Resources = r.ResourceContents
+                .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished) // TODO: swap this to IsDraft when we can create drafts
+                .Select(rcv => new ResourcesSummaryContentById
                 {
-                    DisplayName = rc.Language.EnglishDisplay,
-                    Id = rc.LanguageId
-                },
-                DisplayName = rc.DisplayName,
-                Status = rc.Status,
-                ContentSize = rc.ContentSize,
-                Content = JsonUtilities.DefaultDeserialize(rc.Content),
-                MediaType = rc.MediaType,
-                IsPublished = rc.Published
-            }),
+                    ResourceContentId = rc.Id,
+                    Language = new ResourcesSummaryLanguageById
+                    {
+                        DisplayName = rc.Language.EnglishDisplay,
+                        Id = rc.LanguageId
+                    },
+                    DisplayName = rcv.DisplayName,
+                    Status = rc.Status,
+                    ContentSize = rcv.ContentSize,
+                    Content = JsonUtilities.DefaultDeserialize(rcv.Content),
+                    MediaType = rc.MediaType,
+                    IsPublished = rcv.IsPublished
+                })),
             AssociatedResources =
                 r.AssociatedResourceChildren.Select(ar => new ResourcesSummaryAssociatedContentById
                 {

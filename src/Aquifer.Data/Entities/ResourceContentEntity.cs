@@ -13,19 +13,12 @@ public class ResourceContentEntity
     public int Id { get; set; }
     public int ResourceId { get; set; }
     public int LanguageId { get; set; }
-    public string DisplayName { get; set; } = null!;
-    public string? Summary { get; set; }
-    public int Version { get; set; }
     public ResourceContentStatus Status { get; set; }
-    public bool Enabled { get; set; }
     public bool Trusted { get; set; }
-    public bool Published { get; set; }
-    public string Content { get; set; } = null!; // JSON
-    public int ContentSize { get; set; }
     public ResourceContentMediaType MediaType { get; set; }
 
-    public int? AssignedUserId { get; set; }
-    public UserEntity? AssignedUser { get; set; }
+    public ICollection<ResourceContentVersionEntity> Versions { get; set; } =
+        new List<ResourceContentVersionEntity>();
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
