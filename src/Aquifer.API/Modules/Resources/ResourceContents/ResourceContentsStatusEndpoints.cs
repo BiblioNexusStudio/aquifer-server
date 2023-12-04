@@ -8,8 +8,10 @@ public static class ResourceContentsStatusEndpoints
 {
     public static Ok<List<ResourceContentsStatusResponse>> GetList()
     {
-        var statuses = Enumerable.Range(1, Enum.GetValues(typeof(ResourceContentStatus)).Length - 1)
-            .Cast<ResourceContentStatus>().Select(x => new ResourceContentsStatusResponse
+        var statuses = Enum.GetValues(typeof(ResourceContentStatus))
+            .Cast<ResourceContentStatus>()
+            .Where(s => s != ResourceContentStatus.None)
+            .Select(x => new ResourceContentsStatusResponse
             {
                 DisplayName = x.GetDisplayName(),
                 Status = x

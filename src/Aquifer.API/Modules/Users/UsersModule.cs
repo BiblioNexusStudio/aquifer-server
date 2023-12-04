@@ -20,7 +20,7 @@ public class UsersModule : IModule
         var users = await dbContext.Users.Select(user => new BasicUserResponse
         {
             Id = user.Id,
-            Name = user.FirstName + " " + user.LastName
+            Name = "${user.FirstName} ${user.LastName}"
         }).ToListAsync(cancellationToken);
 
         return TypedResults.Ok(users);
