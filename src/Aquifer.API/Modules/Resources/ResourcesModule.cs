@@ -71,21 +71,22 @@ public class ResourcesModule : IModule
                           (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
                            pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
             .SelectMany(pr => pr.Resource.ResourceContents
-                .Where(rc => rc.Published && (rc.LanguageId == languageId ||
+                .Where(rc => rc.LanguageId == languageId ||
                              (rc.LanguageId == englishLanguageId &&
-                              Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType))))
-                .Select(rc =>
-                    new
-                    {
-                        StartChapter = pr.Passage.StartVerseId / 1000 % 1000,
-                        EndChapter = pr.Passage.EndVerseId / 1000 % 1000,
-                        ContentId = rc.Id,
-                        rc.ContentSize,
-                        rc.MediaType,
-                        rc.LanguageId,
-                        pr.ResourceId,
-                        pr.Resource.ParentResource
-                    }))
+                              Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
+                .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
+                    .Select(rcv =>
+                        new
+                        {
+                            StartChapter = pr.Passage.StartVerseId / 1000 % 1000,
+                            EndChapter = pr.Passage.EndVerseId / 1000 % 1000,
+                            ContentId = rc.Id,
+                            rcv.ContentSize,
+                            rc.MediaType,
+                            rc.LanguageId,
+                            pr.ResourceId,
+                            pr.Resource.ParentResource
+                        })))
             .ToListAsync(cancellationToken);
 
         var verseResourceContent = await dbContext.VerseResources
@@ -94,21 +95,22 @@ public class ResourcesModule : IModule
                          vr.VerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
                          vr.VerseId < BibleUtilities.UpperBoundOfBook(bookId))
             .SelectMany(vr => vr.Resource.ResourceContents
-                .Where(rc => rc.Published && (rc.LanguageId == languageId ||
+                .Where(rc => rc.LanguageId == languageId ||
                              (rc.LanguageId == englishLanguageId &&
-                              Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType))))
-                .Select(rc =>
-                    new
-                    {
-                        StartChapter = vr.VerseId / 1000 % 1000,
-                        EndChapter = vr.VerseId / 1000 % 1000,
-                        ContentId = rc.Id,
-                        rc.ContentSize,
-                        rc.MediaType,
-                        rc.LanguageId,
-                        vr.ResourceId,
-                        vr.Resource.ParentResource
-                    }))
+                              Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
+                .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
+                    .Select(rcv =>
+                        new
+                        {
+                            StartChapter = vr.VerseId / 1000 % 1000,
+                            EndChapter = vr.VerseId / 1000 % 1000,
+                            ContentId = rc.Id,
+                            rcv.ContentSize,
+                            rc.MediaType,
+                            rc.LanguageId,
+                            vr.ResourceId,
+                            vr.Resource.ParentResource
+                        })))
             .ToListAsync(cancellationToken);
 
         // for resource types that are used as the "root", we want to be sure to grab their associated resources
@@ -122,21 +124,22 @@ public class ResourcesModule : IModule
             .SelectMany(pr => pr.Resource.AssociatedResourceChildren
                 .Where(ar => parentResourceEntities.Contains(ar.ParentResource))
                 .SelectMany(sr => sr.ResourceContents
-                    .Where(rc => rc.Published && (rc.LanguageId == languageId ||
+                    .Where(rc => rc.LanguageId == languageId ||
                                  (rc.LanguageId == englishLanguageId &&
-                                  Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType))))
-                    .Select(rc =>
-                        new
-                        {
-                            StartChapter = pr.Passage.StartVerseId / 1000 % 1000,
-                            EndChapter = pr.Passage.EndVerseId / 1000 % 1000,
-                            ContentId = rc.Id,
-                            rc.ContentSize,
-                            rc.MediaType,
-                            rc.LanguageId,
-                            ResourceId = sr.Id,
-                            sr.ParentResource
-                        })))
+                                  Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
+                    .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
+                        .Select(rcv =>
+                            new
+                            {
+                                StartChapter = pr.Passage.StartVerseId / 1000 % 1000,
+                                EndChapter = pr.Passage.EndVerseId / 1000 % 1000,
+                                ContentId = rc.Id,
+                                rcv.ContentSize,
+                                rc.MediaType,
+                                rc.LanguageId,
+                                ResourceId = sr.Id,
+                                sr.ParentResource
+                            }))))
             .ToListAsync(cancellationToken);
 
         // The above queries return resource contents in English + the current language (if available).
@@ -193,22 +196,26 @@ public class ResourcesModule : IModule
         [FromQuery] string audioType = "webm"
     )
     {
-        var content = await dbContext.ResourceContents.FindAsync(contentId, cancellationToken);
-        if (content == null || !content.Published)
+        var contentVersion = await dbContext.ResourceContentVersions
+            .Where(rcv => rcv.ResourceContentId == contentId && rcv.IsPublished)
+            .Include(rcv => rcv.ResourceContent)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (contentVersion == null)
         {
             return TypedResults.NotFound();
         }
 
-        if (content.MediaType == ResourceContentMediaType.Text)
+        if (contentVersion.ResourceContent.MediaType == ResourceContentMediaType.Text)
         {
-            return TypedResults.Ok(JsonUtilities.DefaultDeserialize(content.Content));
+            return TypedResults.Ok(JsonUtilities.DefaultDeserialize(contentVersion.Content));
         }
 
         string? url = null;
 
-        if (content.MediaType == ResourceContentMediaType.Audio)
+        if (contentVersion.ResourceContent.MediaType == ResourceContentMediaType.Audio)
         {
-            var deserialized = JsonUtilities.DefaultDeserialize<ResourceContentAudioJsonSchema>(content.Content);
+            var deserialized = JsonUtilities.DefaultDeserialize<ResourceContentAudioJsonSchema>(contentVersion.Content);
             if (audioType == "webm" && deserialized.Webm != null)
             {
                 url = deserialized.Webm.Url;
@@ -220,7 +227,7 @@ public class ResourcesModule : IModule
         }
         else
         {
-            var deserialized = JsonUtilities.DefaultDeserialize<ResourceContentUrlJsonSchema>(content.Content);
+            var deserialized = JsonUtilities.DefaultDeserialize<ResourceContentUrlJsonSchema>(contentVersion.Content);
             url = deserialized.Url;
         }
 
@@ -247,12 +254,13 @@ public class ResourcesModule : IModule
             return TypedResults.BadRequest("A maximum of 10 ids may be passed.");
         }
 
-        var contents = await dbContext.ResourceContents
-            .Where(rc => rc.Published && ids.Contains(rc.Id) && rc.MediaType == ResourceContentMediaType.Text)
-            .Select(content => new ResourceTextContentResponse
+        var contents = await dbContext.ResourceContentVersions
+            .Where(rcv => ids.Contains(rcv.ResourceContentId) && rcv.IsPublished
+                    && rcv.ResourceContent.MediaType == ResourceContentMediaType.Text)
+            .Select(contentVersion => new ResourceTextContentResponse
             {
-                Id = content.Id,
-                Content = JsonUtilities.DefaultDeserialize(content.Content)
+                Id = contentVersion.ResourceContentId,
+                Content = JsonUtilities.DefaultDeserialize(contentVersion.Content)
             })
             .ToListAsync(cancellationToken);
 
@@ -273,18 +281,22 @@ public class ResourcesModule : IModule
         CancellationToken cancellationToken
     )
     {
-        var content = await dbContext.ResourceContents.FindAsync(contentId, cancellationToken);
-        if (content == null || !content.Published)
+        var contentVersion = await dbContext.ResourceContentVersions
+            .Where(rcv => rcv.ResourceContentId == contentId && rcv.IsPublished)
+            .Include(rcv => rcv.ResourceContent)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (contentVersion == null)
         {
             return TypedResults.NotFound();
         }
 
         var response = new ResourceContentMetadataResponse
         {
-            DisplayName = content.DisplayName,
-            Metadata = content.MediaType == ResourceContentMediaType.Text
+            DisplayName = contentVersion.DisplayName,
+            Metadata = contentVersion.ResourceContent.MediaType == ResourceContentMediaType.Text
                 ? null
-                : JsonUtilities.DefaultDeserialize(content.Content)
+                : JsonUtilities.DefaultDeserialize(contentVersion.Content)
         };
 
         return TypedResults.Ok(response);
@@ -303,15 +315,16 @@ public class ResourcesModule : IModule
             return TypedResults.BadRequest("A maximum of 100 ids may be passed.");
         }
 
-        var metadata = await dbContext.ResourceContents
-            .Where(rc => rc.Published && ids.Contains(rc.Id))
-            .Select(content => new ResourceContentMetadataResponseWithId
+        var metadata = await dbContext.ResourceContentVersions
+            .Where(rcv => ids.Contains(rcv.ResourceContentId) && rcv.IsPublished
+                    && rcv.ResourceContent.MediaType == ResourceContentMediaType.Text)
+            .Select(contentVersion => new ResourceContentMetadataResponseWithId
             {
-                Id = content.Id,
-                DisplayName = content.DisplayName,
-                Metadata = content.MediaType == ResourceContentMediaType.Text
+                Id = contentVersion.ResourceContentId,
+                DisplayName = contentVersion.DisplayName,
+                Metadata = contentVersion.ResourceContent.MediaType == ResourceContentMediaType.Text
                     ? null
-                    : JsonUtilities.DefaultDeserialize(content.Content)
+                    : JsonUtilities.DefaultDeserialize(contentVersion.Content)
             })
             .ToListAsync(cancellationToken);
 
@@ -332,16 +345,19 @@ public class ResourcesModule : IModule
         CancellationToken cancellationToken
     )
     {
-        var content = await dbContext.ResourceContents.FindAsync(contentId, cancellationToken);
+        var contentVersion = await dbContext.ResourceContentVersions
+            .Where(rcv => rcv.ResourceContentId == contentId && rcv.IsPublished)
+            .Include(rcv => rcv.ResourceContent)
+            .SingleOrDefaultAsync(cancellationToken);
 
-        if (content == null || !content.Published)
+        if (contentVersion == null)
         {
             return TypedResults.NotFound();
         }
 
-        if (content.MediaType == ResourceContentMediaType.Video)
+        if (contentVersion.ResourceContent.MediaType == ResourceContentMediaType.Video)
         {
-            var deserialized = JsonUtilities.DefaultDeserialize<ResourceContentVideoJsonSchema>(content.Content);
+            var deserialized = JsonUtilities.DefaultDeserialize<ResourceContentVideoJsonSchema>(contentVersion.Content);
             if (deserialized.ThumbnailUrl != null)
             {
                 return TypedResults.Redirect(deserialized.ThumbnailUrl);

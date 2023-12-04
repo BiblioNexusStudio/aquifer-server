@@ -12,9 +12,6 @@ public class UserEntity
     public string FirstName { get; set; } = null!;
     public string LastName { get; set; } = null!;
 
-    public ICollection<ResourceContentUserAssignmentEntity> ResourceContentAssignments { get; set; } =
-        new List<ResourceContentUserAssignmentEntity>();
-
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
