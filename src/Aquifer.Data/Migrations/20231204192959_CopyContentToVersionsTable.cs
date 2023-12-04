@@ -10,6 +10,8 @@ namespace Aquifer.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql("SET COMMAND_TIMEOUT = 300"); // 5 minutes
+
             migrationBuilder.Sql(@"
                 INSERT INTO [dbo].[ResourceContentVersions] (
                     [ResourceContentId],
