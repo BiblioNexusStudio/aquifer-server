@@ -319,8 +319,7 @@ public class ResourcesModule : IModule
         }
 
         var metadata = await dbContext.ResourceContentVersions
-            .Where(rcv => ids.Contains(rcv.ResourceContentId) && rcv.IsPublished
-                    && rcv.ResourceContent.MediaType == ResourceContentMediaType.Text)
+            .Where(rcv => ids.Contains(rcv.ResourceContentId) && rcv.IsPublished)
             .Select(contentVersion => new ResourceContentMetadataResponseWithId
             {
                 Id = contentVersion.ResourceContentId,
