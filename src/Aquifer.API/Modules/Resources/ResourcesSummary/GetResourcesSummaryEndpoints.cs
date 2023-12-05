@@ -1,4 +1,3 @@
-using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -70,50 +69,6 @@ public static class GetResourcesSummaryEndpoints
             multiLanguageResourcesCount,
             languages,
             parentResources));
-    }
-
-    public static async Task<Ok<ResourcesSummaryById>> GetByResourceId(int resourceId,
-        AquiferDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        var resource = await dbContext.Resources.Where(x => x.Id == resourceId).Select(r => new ResourcesSummaryById
-        {
-            Label = r.EnglishLabel,
-            ParentResourceName = r.ParentResource.DisplayName,
-            Resources = r.ResourceContents
-                .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished) // TODO: swap this to IsDraft when we can create drafts
-                .Select(rcv => new ResourcesSummaryContentById
-                {
-                    ResourceContentId = rc.Id,
-                    Language = new ResourcesSummaryLanguageById
-                    {
-                        DisplayName = rc.Language.EnglishDisplay,
-                        Id = rc.LanguageId
-                    },
-                    DisplayName = rcv.DisplayName,
-                    Status = rc.Status,
-                    ContentSize = rcv.ContentSize,
-                    Content = JsonUtilities.DefaultDeserialize(rcv.Content),
-                    MediaType = rc.MediaType,
-                    IsPublished = rcv.IsPublished
-                })),
-            AssociatedResources =
-                r.AssociatedResourceChildren.Select(ar => new ResourcesSummaryAssociatedContentById
-                {
-                    Label = ar.EnglishLabel,
-                    ParentResourceName = ar.ParentResource.DisplayName,
-                    MediaTypes = ar.ResourceContents.Select(arrc => arrc.MediaType)
-                }),
-            PassageReferences =
-                r.PassageResources.Select(pr => new ResourcesSummaryPassageById
-                {
-                    StartVerseId = pr.Passage.StartVerseId,
-                    EndVerseId = pr.Passage.EndVerseId
-                }),
-            VerseReferences = r.VerseResources.Select(vr => new ResourcesSummaryVerseById { VerseId = vr.VerseId })
-        }).FirstOrDefaultAsync(cancellationToken);
-
-        return TypedResults.Ok(resource);
     }
 
     private static List<DateTime> GetMonthsForSummary()
