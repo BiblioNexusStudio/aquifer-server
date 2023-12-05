@@ -34,12 +34,10 @@ jobs:
               run: mkdir ./build
             - name: Build API
               run: dotnet publish src/Aquifer.API --output ./Aquifer.API --configuration Release --runtime win-x64 --self-contained
-            - name: Copy appsettings (for use in migration)
-              run: cp src/Aquifer.API/appsettings.json build/appsettings.json
             - name: Zip API
               run: cd ./Aquifer.API && zip ../build/Aquifer.API.zip *
             - name: Bundle migrations
-              run: dotnet ef migrations bundle --startup-project src/Aquifer.API --project src/Aquifer.Data --output build/Migrate --self-contained
+              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --output build/Migrate --self-contained
             - name: Publish artifact
               uses: actions/upload-artifact@v3
               with:
