@@ -33,7 +33,7 @@ public static class GetResourceContentSummaryEndpoints
                 HasAudio = rc.Resource.ResourceContents.Any(orc => orc.LanguageId == rc.LanguageId
                         && orc.MediaType == Data.Entities.ResourceContentMediaType.Audio),
                 OtherLanguageContentIds = rc.Resource.ResourceContents
-                    .Where(orc => orc.LanguageId != rc.LanguageId)
+                    .Where(orc => orc.LanguageId != rc.LanguageId && orc.MediaType == rc.MediaType)
                     .Select(orc => new ResourceContentSummaryContentIdWithLanguageId
                     {
                         ContentId = orc.Id,
