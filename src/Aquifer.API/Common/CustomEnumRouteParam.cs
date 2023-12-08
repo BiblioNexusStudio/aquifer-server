@@ -4,6 +4,9 @@ using System.Runtime.Serialization;
 
 namespace Aquifer.API.Common;
 
+// This allows us to parse an enum using its `EnumMember` attribute.
+// It's useful in cases where the underlying enum value is not able to match what we want displayed in the API.
+//     e.g. BookCode is an enum that can't have a `1CO` value because enums can't start with digits.
 public class CustomEnumRouteParam<TEnum> where TEnum : struct, Enum
 {
     private static readonly ConcurrentDictionary<string, TEnum> EnumMemberCache =

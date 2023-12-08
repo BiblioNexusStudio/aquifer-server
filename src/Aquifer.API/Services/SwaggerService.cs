@@ -57,6 +57,7 @@ public static class SwaggerService
                 }
             });
 
+            // Hide all endpoints beginning with `/admin`
             x.DocInclusionPredicate((docName, apiDesc) =>
             {
                 var routeTemplate = apiDesc.RelativePath;
@@ -65,8 +66,10 @@ public static class SwaggerService
                 return true;
             });
 
+            // Remove `Dto` from the end of the schema names
             x.CustomSchemaIds(type => type.Name.EndsWith("Dto") ? type.Name.Replace("Dto", string.Empty) : type.Name);
 
+            // Show the string value for all enums
             x.SchemaFilter<EnumSchemaFilter>();
         });
 
