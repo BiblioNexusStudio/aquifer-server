@@ -38,10 +38,10 @@ public record ResourceContentSummaryVerseById
 {
     public int VerseId { get; init; }
 
-    private (BookId BookId, int Chapter, int Verse) TranslatedVerse =>
+    private (BookCode BookId, int Chapter, int Verse) TranslatedVerse =>
         BibleUtilities.TranslateVerseId(VerseId);
 
-    public string Book => TranslatedVerse.BookId.ToCode();
+    public BookCode Book => TranslatedVerse.BookId;
     public int Chapter => TranslatedVerse.Chapter;
     public int Verse => TranslatedVerse.Verse;
 }
@@ -50,15 +50,15 @@ public record ResourceContentSummaryPassageById
 {
     public int StartVerseId { get; init; }
 
-    private (BookId BookId, int Chapter, int Verse) StartTranslatedVerse =>
+    private (BookCode BookId, int Chapter, int Verse) StartTranslatedVerse =>
         BibleUtilities.TranslateVerseId(StartVerseId);
 
-    public string StartBook => StartTranslatedVerse.BookId.ToCode();
+    public BookCode StartBook => StartTranslatedVerse.BookId;
     public int StartChapter => StartTranslatedVerse.Chapter;
     public int StartVerse => StartTranslatedVerse.Verse;
     public int EndVerseId { get; init; }
-    private (BookId BookId, int Chapter, int Verse) EndTranslatedVerse => BibleUtilities.TranslateVerseId(EndVerseId);
-    public string EndBook => EndTranslatedVerse.BookId.ToCode();
+    private (BookCode BookId, int Chapter, int Verse) EndTranslatedVerse => BibleUtilities.TranslateVerseId(EndVerseId);
+    public BookCode EndBook => EndTranslatedVerse.BookId;
     public int EndChapter => EndTranslatedVerse.Chapter;
     public int EndVerse => EndTranslatedVerse.Verse;
 }

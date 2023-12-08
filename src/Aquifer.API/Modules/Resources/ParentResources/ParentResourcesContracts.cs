@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Aquifer.API.Modules.Resources.ParentResources;
 
-public class ParentResourceResponse
+public class ParentResourceDto
 {
     public int Id { get; init; }
     public string DisplayName { get; init; } = null!;

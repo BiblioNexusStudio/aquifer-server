@@ -7,7 +7,7 @@ namespace Aquifer.Data.Entities;
 public class BibleBookContentEntity
 {
     public int BibleId { get; set; }
-    public BookId BookId { get; set; }
+    public BookCode BookId { get; set; }
     public string DisplayName { get; set; } = null!;
     public string TextUrl { get; set; } = null!;
     public string AudioUrls { get; set; } = null!; // JSON

@@ -1,4 +1,8 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace Aquifer.API.Services;
 
@@ -52,6 +56,18 @@ public static class SwaggerService
                     new List<string>()
                 }
             });
+
+            x.DocInclusionPredicate((docName, apiDesc) =>
+            {
+                var routeTemplate = apiDesc.RelativePath;
+                if (routeTemplate?.StartsWith("admin") == true)
+                    return false;
+                return true;
+            });
+
+            x.CustomSchemaIds(type => type.Name.EndsWith("Dto") ? type.Name.Replace("Dto", string.Empty) : type.Name);
+
+            x.SchemaFilter<EnumSchemaFilter>();
         });
 
         return services;
@@ -61,5 +77,24 @@ public static class SwaggerService
     {
         app.UseSwagger();
         app.UseSwaggerUI();
+    }
+
+    private class EnumSchemaFilter : ISchemaFilter
+    {
+        public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+        {
+            if (context.Type.IsEnum)
+            {
+                schema.Enum.Clear();
+                var enumType = context.Type;
+                foreach (var name in Enum.GetNames(enumType))
+                {
+                    var member = enumType.GetMember(name).First();
+                    var enumMemberAttribute = member.GetCustomAttribute<EnumMemberAttribute>();
+                    var value = enumMemberAttribute?.Value ?? name;
+                    schema.Enum.Add(new OpenApiString($"{value}"));
+                }
+            }
+        }
     }
 }

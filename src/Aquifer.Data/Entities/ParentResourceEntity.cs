@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Aquifer.Data.Entities;
 
 public class ParentResourceEntity
@@ -16,11 +18,13 @@ public class ParentResourceEntity
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ResourceTypeComplexityLevel
 {
     None = 0
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ResourceType
 {
     None = 0,

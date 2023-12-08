@@ -2,15 +2,15 @@ using Aquifer.Data.Entities;
 
 namespace Aquifer.API.Modules.Resources.ResourcesList;
 
-public record ResourceListItemResponse
+public record ResourceListItemDto
 {
     public string EnglishLabel { get; set; } = null!;
     public string ParentResourceName { get; set; } = null!;
     public ResourceContentStatus Status { get; set; }
-    public IEnumerable<ResourceListItemContentIdWithLanguageId> ContentIdsWithLanguageIds { get; set; } = null!;
+    public IEnumerable<ResourceListItemForLanguageDto> ContentIdsWithLanguageIds { get; set; } = null!;
 }
 
-public record ResourceListItemContentIdWithLanguageId
+public record ResourceListItemForLanguageDto
 {
     public int ContentId { get; set; }
     public int LanguageId { get; set; }

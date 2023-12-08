@@ -30,6 +30,7 @@ public class ResourceContentEntity
     public ResourceEntity Resource { get; set; } = null!;
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ResourceContentMediaType
 {
     None = 0,
@@ -39,6 +40,7 @@ public enum ResourceContentMediaType
     Image = 4
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ResourceContentStatus
 {
     None = 0,

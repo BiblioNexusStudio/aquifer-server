@@ -8,7 +8,7 @@ namespace Aquifer.API.Modules.Resources.ResourcesList;
 
 public static class ResourcesListEndpoints
 {
-    public static async Task<Results<Ok<List<ResourceListItemResponse>>, ValidationProblem>> Get(
+    public static async Task<Results<Ok<List<ResourceListItemDto>>, ValidationProblem>> Get(
         [AsParameters] ResourceListRequest request,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
@@ -26,13 +26,13 @@ public static class ResourcesListEndpoints
         var resources = await dbContext.Resources.Where(resourceFilter)
             .OrderBy(x => x.EnglishLabel)
             .Skip(request.Skip).Take(request.Take)
-            .Select(x => new ResourceListItemResponse
+            .Select(x => new ResourceListItemDto
             {
                 EnglishLabel = x.EnglishLabel,
                 ParentResourceName = x.ParentResource.DisplayName,
                 Status = x.ResourceContents.Select(rc => rc.Status).OrderBy(status => (int)status).First(),
                 ContentIdsWithLanguageIds = x.ResourceContents
-                    .Select(rc => new ResourceListItemContentIdWithLanguageId
+                    .Select(rc => new ResourceListItemForLanguageDto
                     {
                         ContentId = rc.Id,
                         LanguageId = rc.LanguageId

@@ -6,11 +6,11 @@ namespace Aquifer.API.Modules.Resources.ParentResources;
 
 public static class ParentResourcesEndpoints
 {
-    public static async Task<Ok<List<ParentResourceResponse>>> Get(AquiferDbContext dbContext,
+    public static async Task<Ok<List<ParentResourceDto>>> Get(AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var parentResources = await dbContext.ParentResources
-            .Select(x => new ParentResourceResponse
+            .Select(x => new ParentResourceDto
             {
                 Id = x.Id,
                 DisplayName = x.DisplayName,
