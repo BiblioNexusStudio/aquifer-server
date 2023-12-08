@@ -20,7 +20,7 @@ public class ResourcesModule : IModule
 {
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        var adminGroup = endpoints.MapGroup("admin").MapGroup("resources").RequireAuthorization("read");
+        var adminGroup = endpoints.MapGroup("admin/resources").WithTags("Resources (Admin)").RequireAuthorization("read");
         adminGroup.MapGet("summary", GetResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
         adminGroup.MapGet("content/summary/{resourceContentId:int}", GetResourceContentSummaryEndpoints.GetByResourceContentId);
         adminGroup.MapPut("content/summary/{resourceContentId:int}", UpdateResourcesSummaryEndpoints.UpdateResourceContentSummaryItem);
@@ -40,17 +40,17 @@ public class ResourcesModule : IModule
         return endpoints;
     }
 
-    private async Task<Results<Ok<ResourceItemsByChapterDto>, NotFound, BadRequest<string>>>
+    private async Task<Results<Ok<ResourceItemsByChapterResponse>, NotFound, BadRequest<string>>>
         GetResourcesForBook(
             int languageId,
-            CustomEnumRouteParam<BookCode> bookCode,
+            string bookCode,
             AquiferDbContext dbContext,
             CancellationToken cancellationToken,
             [FromQuery] string[]? parentResourceNames = null
         )
     {
-        var bookCodeEnum = bookCode.EnumValue;
-        if (bookCodeEnum == BookCode.None)
+        var bookId = BookCodes.EnumFromString(bookCode);
+        if (bookId == BookId.None)
         {
             return TypedResults.NotFound();
         }
@@ -70,10 +70,10 @@ public class ResourcesModule : IModule
         var passageResourceContent = await dbContext.PassageResources
             // find all passages that overlap with the current book
             .Where(pr => parentResourceEntities.Contains(pr.Resource.ParentResource) &&
-                         ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookCodeEnum) &&
-                           pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookCodeEnum)) ||
-                          (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookCodeEnum) &&
-                           pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookCodeEnum))))
+                         ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                           pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookId)) ||
+                          (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                           pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
             .SelectMany(pr => pr.Resource.ResourceContents
                 .Where(rc => rc.LanguageId == languageId ||
                              (rc.LanguageId == englishLanguageId &&
@@ -96,8 +96,8 @@ public class ResourcesModule : IModule
         var verseResourceContent = await dbContext.VerseResources
             // find all verses contained in the current book
             .Where(vr => parentResourceEntities.Contains(vr.Resource.ParentResource) &&
-                         vr.VerseId > BibleUtilities.LowerBoundOfBook(bookCodeEnum) &&
-                         vr.VerseId < BibleUtilities.UpperBoundOfBook(bookCodeEnum))
+                         vr.VerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                         vr.VerseId < BibleUtilities.UpperBoundOfBook(bookId))
             .SelectMany(vr => vr.Resource.ResourceContents
                 .Where(rc => rc.LanguageId == languageId ||
                              (rc.LanguageId == englishLanguageId &&
@@ -121,10 +121,10 @@ public class ResourcesModule : IModule
         var associatedResourceContent = await dbContext.PassageResources
             // find all passages that overlap with the current book
             .Where(pr => Constants.RootParentResourceNames.Contains(pr.Resource.ParentResource.ShortName) &&
-                         ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookCodeEnum) &&
-                           pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookCodeEnum)) ||
-                          (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookCodeEnum) &&
-                           pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookCodeEnum))))
+                         ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                           pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookId)) ||
+                          (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                           pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
             .SelectMany(pr => pr.Resource.AssociatedResourceChildren
                 .Where(ar => parentResourceEntities.Contains(ar.ParentResource))
                 .SelectMany(sr => sr.ResourceContents
@@ -170,7 +170,7 @@ public class ResourcesModule : IModule
                 .Select(chapter => new
                 {
                     ChapterNumber = chapter,
-                    Content = new ResourceItemDto
+                    Content = new ResourceItemResponse
                     {
                         ContentId = content.ContentId,
                         ContentSize = content.ContentSize,
@@ -179,7 +179,7 @@ public class ResourcesModule : IModule
                     }
                 }))
             .GroupBy(item => item.ChapterNumber)
-            .Select(g => new ResourceItemsWithChapterNumberDto
+            .Select(g => new ResourceItemsWithChapterNumberResponse
             {
                 ChapterNumber = g.Key,
                 Contents = g
@@ -189,7 +189,7 @@ public class ResourcesModule : IModule
             .OrderBy(item => item.ChapterNumber)
             .ToList();
 
-        return TypedResults.Ok(new ResourceItemsByChapterDto { Chapters = groupedContent });
+        return TypedResults.Ok(new ResourceItemsByChapterResponse { Chapters = groupedContent });
     }
 
     private async Task<Results<Ok<object>, NotFound, RedirectHttpResult>> GetResourceContentById(
@@ -245,7 +245,7 @@ public class ResourcesModule : IModule
         return TypedResults.NotFound();
     }
 
-    private async Task<Results<Ok<List<ResourceItemTextContentDto>>, BadRequest<string>, NotFound<string>>>
+    private async Task<Results<Ok<List<ResourceItemTextContentResponse>>, BadRequest<string>, NotFound<string>>>
         GetResourceTextContentByIds(
             [FromQuery] int[] ids,
             AquiferDbContext dbContext,
@@ -261,7 +261,7 @@ public class ResourcesModule : IModule
         var contents = await dbContext.ResourceContentVersions
             .Where(rcv => ids.Contains(rcv.ResourceContentId) && rcv.IsPublished
                     && rcv.ResourceContent.MediaType == ResourceContentMediaType.Text)
-            .Select(contentVersion => new ResourceItemTextContentDto
+            .Select(contentVersion => new ResourceItemTextContentResponse
             {
                 Id = contentVersion.ResourceContentId,
                 Content = JsonUtilities.DefaultDeserialize(contentVersion.Content)
@@ -279,7 +279,7 @@ public class ResourcesModule : IModule
         return TypedResults.Ok(contents);
     }
 
-    private async Task<Results<Ok<ResourceItemMetadataDto>, NotFound>> GetResourceMetadataById(
+    private async Task<Results<Ok<ResourceItemMetadataResponse>, NotFound>> GetResourceMetadataById(
         int contentId,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken
@@ -295,7 +295,7 @@ public class ResourcesModule : IModule
             return TypedResults.NotFound();
         }
 
-        var response = new ResourceItemMetadataDto
+        var response = new ResourceItemMetadataResponse
         {
             DisplayName = contentVersion.DisplayName,
             Metadata = contentVersion.ResourceContent.MediaType == ResourceContentMediaType.Text
@@ -306,7 +306,7 @@ public class ResourcesModule : IModule
         return TypedResults.Ok(response);
     }
 
-    private async Task<Results<Ok<List<ResourceItemMetadataWithIdDto>>, BadRequest<string>, NotFound<string>>>
+    private async Task<Results<Ok<List<ResourceItemMetadataWithIdResponse>>, BadRequest<string>, NotFound<string>>>
         GetResourceMetadataByIds(
             [FromQuery] int[] ids,
             AquiferDbContext dbContext,
@@ -321,7 +321,7 @@ public class ResourcesModule : IModule
 
         var metadata = await dbContext.ResourceContentVersions
             .Where(rcv => ids.Contains(rcv.ResourceContentId) && rcv.IsPublished)
-            .Select(contentVersion => new ResourceItemMetadataWithIdDto
+            .Select(contentVersion => new ResourceItemMetadataWithIdResponse
             {
                 Id = contentVersion.ResourceContentId,
                 DisplayName = contentVersion.DisplayName,

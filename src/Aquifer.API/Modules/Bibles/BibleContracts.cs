@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Aquifer.API.Modules.Bibles;
 
-public class BibleDto
+public class BibleResponse
 {
     public int Id { get; set; }
     public required string Name { get; set; }
@@ -18,21 +18,21 @@ public class BibleDto
     public string? SerializedLicenseInfo { get; init; }
 }
 
-public class BibleWithBooksMetadataDto : BibleDto
+public class BibleWithBooksMetadataResponse : BibleResponse
 {
-    public required IEnumerable<BibleBookMetadataDto> Books { get; set; }
+    public required IEnumerable<BibleBookMetadataResponse> Books { get; set; }
 }
 
-public class BibleBookMetadataDto
+public class BibleBookMetadataResponse
 {
-    public BookCode BookCode { get; set; }
+    public required string BookCode { get; set; }
     public required string DisplayName { get; set; }
     public int TextSize { get; set; }
     public int AudioSize { get; set; }
     public int ChapterCount { get; set; }
 }
 
-public class BibleBookDto : BibleBookMetadataDto
+public class BibleBookResponse : BibleBookMetadataResponse
 {
     public string TextUrl { get; set; } = null!;
     public object? AudioUrls { get; set; }

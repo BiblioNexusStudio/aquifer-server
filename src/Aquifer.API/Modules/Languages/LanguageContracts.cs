@@ -1,3 +1,3 @@
 namespace Aquifer.API.Modules.Languages;
 
-public record LanguageDto(int Id, string Iso6393Code, string EnglishDisplay);
+public record LanguageResponse(int Id, string Iso6393Code, string EnglishDisplay);

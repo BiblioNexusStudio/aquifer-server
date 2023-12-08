@@ -1,8 +1,6 @@
-﻿using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Reflection;
-using System.Runtime.Serialization;
 
 namespace Aquifer.API.Services;
 
@@ -57,18 +55,6 @@ public static class SwaggerService
                 }
             });
 
-            // Hide all endpoints beginning with `/admin`
-            x.DocInclusionPredicate((docName, apiDesc) =>
-            {
-                var routeTemplate = apiDesc.RelativePath;
-                if (routeTemplate?.StartsWith("admin") == true)
-                    return false;
-                return true;
-            });
-
-            // Remove `Dto` from the end of the schema names
-            x.CustomSchemaIds(type => type.Name.EndsWith("Dto") ? type.Name.Replace("Dto", string.Empty) : type.Name);
-
             // Show the string value for all enums
             x.SchemaFilter<EnumSchemaFilter>();
         });
@@ -89,14 +75,11 @@ public static class SwaggerService
             if (context.Type.IsEnum)
             {
                 schema.Enum.Clear();
-                var enumType = context.Type;
-                foreach (var name in Enum.GetNames(enumType))
-                {
-                    var member = enumType.GetMember(name).First();
-                    var enumMemberAttribute = member.GetCustomAttribute<EnumMemberAttribute>();
-                    var value = enumMemberAttribute?.Value ?? name;
-                    schema.Enum.Add(new OpenApiString($"{value}"));
-                }
+                schema.Type = "string";
+                schema.Format = null;
+                Enum.GetNames(context.Type)
+                    .ToList()
+                    .ForEach(name => schema.Enum.Add(new OpenApiString($"{name}")));
             }
         }
     }

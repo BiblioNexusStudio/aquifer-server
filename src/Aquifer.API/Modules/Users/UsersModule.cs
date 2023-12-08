@@ -9,17 +9,17 @@ public class UsersModule : IModule
 {
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        var adminGroup = endpoints.MapGroup("admin").MapGroup("users");
+        var adminGroup = endpoints.MapGroup("admin/users").WithTags("Users (Admin)");
         adminGroup.MapGet("/", GetAllUsers).RequireAuthorization("read");
         adminGroup.MapGet("/self", GetCurrentUser).RequireAuthorization("read");
 
         return endpoints;
     }
 
-    private async Task<Ok<List<UserDto>>> GetAllUsers(AquiferDbContext dbContext,
+    private async Task<Ok<List<UserResponse>>> GetAllUsers(AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var users = await dbContext.Users.Select(user => new UserDto
+        var users = await dbContext.Users.Select(user => new UserResponse
         {
             Id = user.Id,
             Name = $"{user.FirstName} {user.LastName}"
@@ -28,7 +28,7 @@ public class UsersModule : IModule
         return TypedResults.Ok(users);
     }
 
-    private async Task<Results<Ok<UserDto>, NotFound>> GetCurrentUser(AquiferDbContext dbContext,
+    private async Task<Results<Ok<UserResponse>, NotFound>> GetCurrentUser(AquiferDbContext dbContext,
             ClaimsPrincipal claimsPrincipal,
             CancellationToken cancellationToken)
     {
@@ -40,7 +40,7 @@ public class UsersModule : IModule
             return TypedResults.NotFound();
         }
 
-        return TypedResults.Ok(new UserDto
+        return TypedResults.Ok(new UserResponse
         {
             Id = user.Id,
             Name = $"{user.FirstName} {user.LastName}"

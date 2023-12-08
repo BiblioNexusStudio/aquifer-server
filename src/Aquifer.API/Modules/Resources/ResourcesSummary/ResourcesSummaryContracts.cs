@@ -2,17 +2,17 @@ using System.Text.Json.Serialization;
 
 namespace Aquifer.API.Modules.Resources.ResourcesSummary;
 
-public record ResourcesSummaryDto(
-    List<ResourcesSummaryByParentResourceDto> ResourcesByParentResource,
-    List<ResourcesSummaryByLanguageDto> ResourcesByLanguage,
-    List<ResourcesSummaryParentResourceTotalsByMonthDto> TotalsByMonth,
+public record ResourcesSummaryResponse(
+    List<ResourcesSummaryByParentResourceResponse> ResourcesByParentResource,
+    List<ResourcesSummaryByLanguageResponse> ResourcesByLanguage,
+    List<ResourcesSummaryParentResourceTotalsByMonthResponse> TotalsByMonth,
     int AllResourcesCount,
     int MultiLanguageResourcesCount,
     List<string> Languages,
     List<string> ParentResourceNames
 );
 
-public record ResourcesSummaryByParentResourceDto(int ResourceCount,
+public record ResourcesSummaryByParentResourceResponse(int ResourceCount,
     string ParentResourceName,
     [property: JsonIgnore]
     DateTime FullDateTime)
@@ -21,10 +21,10 @@ public record ResourcesSummaryByParentResourceDto(int ResourceCount,
     public string MonthAbbreviation { get; init; } = FullDateTime.ToString("MMM");
 }
 
-public record ResourcesSummaryByLanguageDto(string Language,
+public record ResourcesSummaryByLanguageResponse(string Language,
         int ResourceCount,
         string ParentResourceName,
         DateTime FullDateTime)
-    : ResourcesSummaryByParentResourceDto(ResourceCount, ParentResourceName, FullDateTime);
+    : ResourcesSummaryByParentResourceResponse(ResourceCount, ParentResourceName, FullDateTime);
 
-public record ResourcesSummaryParentResourceTotalsByMonthDto(DateOnly Date, string MonthAbbreviation, int ResourceCount);
+public record ResourcesSummaryParentResourceTotalsByMonthResponse(DateOnly Date, string MonthAbbreviation, int ResourceCount);

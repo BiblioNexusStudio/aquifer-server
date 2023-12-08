@@ -1,6 +1,7 @@
 using Aquifer.API.Common;
 using Aquifer.API.Utilities;
 using Aquifer.Data;
+using Aquifer.Data.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Aquifer.API.Modules.Resources;
@@ -17,7 +18,7 @@ public class PassagesModule : IModule
         return endpoints;
     }
 
-    private async Task<Results<Ok<List<PassagesByBookDto>>, NotFound>> GetPassagesByLanguageAndResource(
+    private async Task<Results<Ok<List<PassagesByBookResponse>>, NotFound>> GetPassagesByLanguageAndResource(
         int languageId,
         string parentResourceName,
         AquiferDbContext dbContext,
@@ -37,25 +38,33 @@ public class PassagesModule : IModule
                     pr.Resource.ParentResource == parentResource &&
                     pr.Resource.ResourceContents.Any(rc => rc.Versions.Any(rcv => rcv.IsPublished) && rc.LanguageId == languageId)))
                 .Select(passage =>
-                    new PassageDto
+                    new
                     {
                         Id = passage.Id,
                         PassageStartDetails = BibleUtilities.TranslateVerseId(passage.StartVerseId),
                         PassageEndDetails = BibleUtilities.TranslateVerseId(passage.EndVerseId)
                     }
                 ).ToListAsync(cancellationToken))
-            .GroupBy(passage => passage.BookCode)
-            .Select(grouped => new PassagesByBookDto
+            .GroupBy(passage => passage.PassageStartDetails.bookId)
+            .OrderBy(grouped => grouped.Key)
+            .Select(grouped => new PassagesByBookResponse
             {
-                BookCode = grouped.Key,
-                Passages = grouped.OrderBy(p => p.StartChapter).ThenBy(p => p.StartVerse)
+                BookCode = BookCodes.StringFromEnum(grouped.Key),
+                Passages = grouped.OrderBy(p => p.PassageStartDetails.chapter).ThenBy(p => p.PassageStartDetails.verse)
+                    .Select(p =>
+                        new PassageResponse
+                        {
+                            Id = p.Id,
+                            PassageStartDetails = p.PassageStartDetails,
+                            PassageEndDetails = p.PassageEndDetails
+                        })
             })
-            .OrderBy(book => book.BookCode).ToList();
+            .ToList();
 
         return TypedResults.Ok(passagesByBook);
     }
 
-    private async Task<Results<Ok<PassageWithResourcesMetadataDto>, NotFound>> GetPassageDetailsForLanguage(
+    private async Task<Results<Ok<PassageWithResourceItemsResponse>, NotFound>> GetPassageDetailsForLanguage(
         int passageId,
         int languageId,
         AquiferDbContext dbContext,
@@ -141,7 +150,7 @@ public class PassagesModule : IModule
             .Select(grc =>
             {
                 var first = grc.OrderBy(rc => rc.LanguageId == languageId ? 0 : 1).First();
-                return new ResourceItemDto
+                return new ResourceItemResponse
                 {
                     ContentId = first.ContentId,
                     ContentSize = first.ContentSize,
@@ -150,7 +159,7 @@ public class PassagesModule : IModule
                 };
             });
 
-        return TypedResults.Ok(new PassageWithResourcesMetadataDto
+        return TypedResults.Ok(new PassageWithResourceItemsResponse
         {
             Id = passage.Id,
             PassageStartDetails = BibleUtilities.TranslateVerseId(passage.StartVerseId),

@@ -2,18 +2,18 @@ using Aquifer.Data.Entities;
 
 namespace Aquifer.API.Modules.Resources;
 
-public class ResourceItemsByChapterDto
+public class ResourceItemsByChapterResponse
 {
-    public required IEnumerable<ResourceItemsWithChapterNumberDto> Chapters { get; set; }
+    public required IEnumerable<ResourceItemsWithChapterNumberResponse> Chapters { get; set; }
 }
 
-public class ResourceItemsWithChapterNumberDto
+public class ResourceItemsWithChapterNumberResponse
 {
     public int ChapterNumber { get; set; }
-    public required IEnumerable<ResourceItemDto> Contents { get; set; }
+    public required IEnumerable<ResourceItemResponse> Contents { get; set; }
 }
 
-public class ResourceItemDto
+public class ResourceItemResponse
 {
     public int ContentId { get; set; }
     public string ParentResourceName { get; set; } = null!;
@@ -21,19 +21,19 @@ public class ResourceItemDto
     public int ContentSize { get; set; }
 }
 
-public class ResourceItemTextContentDto
+public class ResourceItemTextContentResponse
 {
     public int Id { get; set; }
     public object? Content { get; set; }
 }
 
-public class ResourceItemMetadataDto
+public class ResourceItemMetadataResponse
 {
     public string? DisplayName { get; set; }
     public object? Metadata { get; set; }
 }
 
-public class ResourceItemMetadataWithIdDto : ResourceItemMetadataDto
+public class ResourceItemMetadataWithIdResponse : ResourceItemMetadataResponse
 {
     public int Id { get; set; }
 }

@@ -6,12 +6,12 @@ namespace Aquifer.API.Modules.Resources.ResourceContent;
 
 public static class ResourceContentStatusEndpoints
 {
-    public static Ok<List<ResourceContentStatusDto>> GetList()
+    public static Ok<List<ResourceContentStatusResponse>> GetList()
     {
         var statuses = Enum.GetValues(typeof(ResourceContentStatus))
             .Cast<ResourceContentStatus>()
             .Where(s => s != ResourceContentStatus.None)
-            .Select(x => new ResourceContentStatusDto
+            .Select(x => new ResourceContentStatusResponse
             {
                 DisplayName = x.GetDisplayName(),
                 Status = x
