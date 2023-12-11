@@ -11,8 +11,8 @@ public class ResourceContentVersionAssignedUserHistoryEntity
     public int ResourceContentVersionId { get; set; }
     public ResourceContentVersionEntity ResourceContentVersion { get; set; } = null!;
 
-    public int AssignedUserId { get; set; }
-    public UserEntity AssignedUser { get; set; } = null!;
+    public int? AssignedUserId { get; set; }
+    public UserEntity? AssignedUser { get; set; }
 
     public int ChangedByUserId { get; set; }
     public UserEntity ChangedByUser { get; set; } = null!;
