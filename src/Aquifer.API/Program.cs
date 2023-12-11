@@ -28,9 +28,9 @@ builder.Services
 
 var app = builder.Build();
 
+app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()); // need to expand on this
 app.UseAuth();
 app.UseSwaggerWithUi();
-app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()); // need to expand on this
 app.UseOutputCache();
 app.UseHealthChecks("/_health");
 app.MapEndpoints();
