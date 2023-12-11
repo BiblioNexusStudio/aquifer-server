@@ -25,7 +25,7 @@ public static class GetResourceContentSummaryEndpoints
                 AssignedUser = rcv.AssignedUser == null ? null : new ResourceContentSummaryAssignedUser
                 {
                     Id = rcv.AssignedUser.Id,
-                    Name = "${rcv.AssignedUser.FirstName} ${rc.AssignedUser.LastName}"
+                    Name = $"{rcv.AssignedUser.FirstName} {rcv.AssignedUser.LastName}"
                 },
                 ContentSize = rcv.ContentSize,
                 Content = JsonUtilities.DefaultDeserialize(rcv.Content),
