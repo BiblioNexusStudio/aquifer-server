@@ -2,6 +2,9 @@ using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Update.Internal;
+using Microsoft.Extensions.ObjectPool;
+using System.Collections.Specialized;
 
 namespace Aquifer.API.Modules.Resources.ResourceContentSummary;
 
@@ -51,10 +54,9 @@ public static class GetResourceContentSummaryEndpoints
                     {
                         StartVerseId = pr.Passage.StartVerseId,
                         EndVerseId = pr.Passage.EndVerseId
-                    }),
+                    }).OrderBy(pr => pr.StartVerseId),
                 VerseReferences = rc.Resource.VerseResources.Select(vr => new ResourceContentSummaryVerseById { VerseId = vr.VerseId })
             })).FirstOrDefaultAsync(cancellationToken);
-
         return TypedResults.Ok(resource);
     }
 }

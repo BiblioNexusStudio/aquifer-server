@@ -1,3 +1,4 @@
+using Aquifer.API.Common;
 using Aquifer.API.Utilities;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
@@ -61,6 +62,13 @@ public record ResourceContentSummaryPassageById
     public string EndBook => EndTranslatedVerse.BookId.ToCode();
     public int EndChapter => EndTranslatedVerse.Chapter;
     public int EndVerse => EndTranslatedVerse.Verse;
+    public string Label => 
+                    StartTranslatedVerse.BookId == EndTranslatedVerse.BookId 
+                        ? StartChapter == EndChapter 
+                            ? string.Format("{0} {1}:{2}-{3}", StartTranslatedVerse.BookId.GetDisplayName(), StartChapter, StartVerse, EndVerse)
+                            : string.Format("{0} {1}:{2}-{3}:{4}", StartTranslatedVerse.BookId.GetDisplayName(), StartChapter, StartVerse, EndChapter, EndVerse)
+                        : string.Format("{0} {1}:{2} - ${3} {4}:{5}", StartTranslatedVerse.BookId.GetDisplayName(), StartChapter, StartVerse, EndTranslatedVerse.BookId.GetDisplayName(), EndChapter, EndVerse);
+                        
 }
 
 public record ResourceContentSummaryAssignedUser
