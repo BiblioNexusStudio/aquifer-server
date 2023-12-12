@@ -27,6 +27,12 @@ public static class AuthService
 
         services.AddAuthorization(options => options.AddPolicy("read",
             p => p.RequireClaim("user").RequireClaim("permissions", "read:values")));
+        
+        services.AddAuthorization(options => options.AddPolicy("aquiferize",
+            p => p.RequireClaim("user").RequireClaim("permissions", "aquiferize:content")));
+        
+        services.AddAuthorization(options => options.AddPolicy("publish",
+            p => p.RequireClaim("user").RequireClaim("permissions", "publish:content")));
 
         return services;
     }
