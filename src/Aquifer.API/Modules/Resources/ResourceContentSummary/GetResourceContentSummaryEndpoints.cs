@@ -2,9 +2,6 @@ using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Update.Internal;
-using Microsoft.Extensions.ObjectPool;
-using System.Collections.Specialized;
 
 namespace Aquifer.API.Modules.Resources.ResourceContentSummary;
 
