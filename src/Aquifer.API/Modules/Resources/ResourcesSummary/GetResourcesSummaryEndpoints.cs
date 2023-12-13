@@ -79,7 +79,7 @@ public static class GetResourcesSummaryEndpoints
     }
 
     private static List<ResourcesSummaryByParentResourceResponse> GetResourcesByParentResourceResponse(
-        List<ResourcesSummaryByParentResource> resourcesByParentResource,
+        List<ResourcesSummaryCommon> resourcesByParentResource,
         List<DateTime> lastFiveMonths)
     {
         // Must iterate twice with current setup (i.e. don't call ToList)
@@ -91,7 +91,7 @@ public static class GetResourcesSummaryEndpoints
             {
                 if (resourceGroup.SingleOrDefault(x => x.Date == date) == null)
                 {
-                    resourcesByParentResource.Add(new ResourcesSummaryByParentResource
+                    resourcesByParentResource.Add(new ResourcesSummaryCommon
                     {
                         ParentResourceName = resourceGroup.Key,
                         Date = date,
@@ -180,13 +180,13 @@ public static class GetResourcesSummaryEndpoints
     }
 
     private static async
-        Task<(List<ResourcesSummaryByParentResource> resourcesByParentResource,
+        Task<(List<ResourcesSummaryCommon> resourcesByParentResource,
             List<ResourcesSummaryByLanguage> resourcesByLanguage,
             int multiLanguageResourcesCount)>
         GetDataAsync(AquiferDbContext dbContext, CancellationToken cancellationToken)
     {
         var resourcesByParentResource = await dbContext.Database
-            .SqlQuery<ResourcesSummaryByParentResource>($"exec ({GetResourcesByParentResourceQuery})")
+            .SqlQuery<ResourcesSummaryCommon>($"exec ({GetResourcesByParentResourceQuery})")
             .ToListAsync(cancellationToken);
 
         var resourcesByLanguage = await dbContext.Database
@@ -197,10 +197,6 @@ public static class GetResourcesSummaryEndpoints
             .SqlQuery<int>($"exec ({GetMultiLanguageResourcesCountQuery})").ToListAsync(cancellationToken)).Single();
 
         return (resourcesByParentResource, resourcesByLanguage, multiLanguageResourcesCount);
-    }
-
-    private class ResourcesSummaryByParentResource : ResourcesSummaryCommon
-    {
     }
 
     private class ResourcesSummaryByLanguage : ResourcesSummaryCommon

@@ -79,7 +79,7 @@ public static class SwaggerService
                 schema.Format = null;
                 Enum.GetNames(context.Type)
                     .ToList()
-                    .ForEach(name => schema.Enum.Add(new OpenApiString($"{name}")));
+                    .ForEach(name => schema.Enum.Add(new OpenApiString(name)));
             }
         }
     }

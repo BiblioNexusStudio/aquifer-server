@@ -49,7 +49,7 @@ public class BiblesModule : IModule
                 Books = bible.BibleBookContents.OrderBy(book => book.BookId).Select(book =>
                     new BibleBookMetadataResponse
                     {
-                        BookCode = BookCodes.StringFromEnum(book.BookId),
+                        BookCode = BookCodes.CodeFromEnum(book.BookId),
                         DisplayName = book.DisplayName,
                         TextSize = book.TextSize,
                         AudioSize = book.AudioSize,
@@ -66,7 +66,7 @@ public class BiblesModule : IModule
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var bookCodeEnum = BookCodes.EnumFromString(bookCode);
+        var bookCodeEnum = BookCodes.EnumFromCode(bookCode);
         if (bookCodeEnum == BookId.None)
         {
             return TypedResults.NotFound();
@@ -84,7 +84,7 @@ public class BiblesModule : IModule
         {
             AudioSize = book.AudioSize,
             AudioUrls = JsonUtilities.DefaultDeserialize(book.AudioUrls),
-            BookCode = BookCodes.StringFromEnum(book.BookId),
+            BookCode = BookCodes.CodeFromEnum(book.BookId),
             ChapterCount = book.ChapterCount,
             DisplayName = book.DisplayName,
             TextSize = book.TextSize,

@@ -1,3 +1,4 @@
+using Aquifer.API.Common;
 using Aquifer.Data.Enums;
 using System.Text.Json.Serialization;
 using Aquifer.API.Modules.Resources;
@@ -13,7 +14,7 @@ public class PassagesByBookResponse
 public class PassageResponse
 {
     public int Id { get; set; }
-    public string BookCode => BookCodes.StringFromEnum(PassageStartDetails.BookId);
+    public string BookCode => BookCodes.CodeFromEnum(PassageStartDetails.BookId);
     public int StartChapter => PassageStartDetails.Chapter;
     public int EndChapter => PassageEndDetails.Chapter;
     public int StartVerse => PassageStartDetails.Verse;

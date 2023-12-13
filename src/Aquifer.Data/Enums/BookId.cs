@@ -70,25 +70,3 @@ public enum BookId
     BookJUD = 66,
     BookREV = 67
 }
-
-public static class BookCodes
-{
-    private static readonly Dictionary<string, BookId> BookCodesDictionary;
-
-    static BookCodes()
-    {
-        BookCodesDictionary = Enum.GetValues(typeof(BookId))
-            .Cast<BookId>()
-            .ToDictionary(bc => bc.ToString().Replace("Book", ""), bc => bc);
-    }
-
-    public static string StringFromEnum(BookId bookId)
-    {
-        return BookCodesDictionary.FirstOrDefault(x => x.Value == bookId).Key;
-    }
-
-    public static BookId EnumFromString(string stringValue)
-    {
-        return BookCodesDictionary.TryGetValue(stringValue, out var enumValue) ? enumValue : BookId.None;
-    }
-}

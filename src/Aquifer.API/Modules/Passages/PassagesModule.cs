@@ -49,7 +49,7 @@ public class PassagesModule : IModule
             .OrderBy(grouped => grouped.Key)
             .Select(grouped => new PassagesByBookResponse
             {
-                BookCode = BookCodes.StringFromEnum(grouped.Key),
+                BookCode = BookCodes.CodeFromEnum(grouped.Key),
                 Passages = grouped.OrderBy(p => p.PassageStartDetails.chapter).ThenBy(p => p.PassageStartDetails.verse)
                     .Select(p =>
                         new PassageResponse
