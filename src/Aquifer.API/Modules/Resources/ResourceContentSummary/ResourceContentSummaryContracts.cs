@@ -2,7 +2,7 @@ using Aquifer.API.Common;
 using Aquifer.API.Utilities;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
-using System.Text.Json.Serialization;
+using Aquifer.API.Common;
 
 namespace Aquifer.API.Modules.Resources.ResourceContentSummary;
 
@@ -42,7 +42,7 @@ public record ResourceContentSummaryVerseById
     private (BookId BookId, int Chapter, int Verse) TranslatedVerse =>
         BibleUtilities.TranslateVerseId(VerseId);
 
-    public string Book => TranslatedVerse.BookId.ToCode();
+    public string Book => BookCodes.CodeFromEnum(TranslatedVerse.BookId);
     public int Chapter => TranslatedVerse.Chapter;
     public int Verse => TranslatedVerse.Verse;
 }
@@ -54,12 +54,12 @@ public record ResourceContentSummaryPassageById
     private (BookId BookId, int Chapter, int Verse) StartTranslatedVerse =>
         BibleUtilities.TranslateVerseId(StartVerseId);
 
-    public string StartBook => StartTranslatedVerse.BookId.ToCode();
+    public string StartBook => BookCodes.CodeFromEnum(StartTranslatedVerse.BookId);
     public int StartChapter => StartTranslatedVerse.Chapter;
     public int StartVerse => StartTranslatedVerse.Verse;
     public int EndVerseId { get; init; }
     private (BookId BookId, int Chapter, int Verse) EndTranslatedVerse => BibleUtilities.TranslateVerseId(EndVerseId);
-    public string EndBook => EndTranslatedVerse.BookId.ToCode();
+    public string EndBook => BookCodes.CodeFromEnum(EndTranslatedVerse.BookId);
     public int EndChapter => EndTranslatedVerse.Chapter;
     public int EndVerse => EndTranslatedVerse.Verse;
     public string Label => 

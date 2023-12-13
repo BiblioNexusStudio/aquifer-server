@@ -32,7 +32,7 @@ public static class ResourcesListEndpoints
                 ParentResourceName = x.ParentResource.DisplayName,
                 Status = x.ResourceContents.Select(rc => rc.Status).OrderBy(status => (int)status).First(),
                 ContentIdsWithLanguageIds = x.ResourceContents
-                    .Select(rc => new ResourceListItemContentIdWithLanguageId
+                    .Select(rc => new ResourceListItemForLanguageResponse
                     {
                         ContentId = rc.Id,
                         LanguageId = rc.LanguageId

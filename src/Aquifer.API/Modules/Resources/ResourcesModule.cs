@@ -20,26 +20,27 @@ public class ResourcesModule : IModule
 {
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("resources");
+        var adminGroup = endpoints.MapGroup("admin/resources").WithTags("Resources (Admin)").RequireAuthorization("read");
+        adminGroup.MapGet("summary", GetResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
+        adminGroup.MapGet("content/summary/{resourceContentId:int}", GetResourceContentSummaryEndpoints.GetByResourceContentId);
+        adminGroup.MapPut("content/summary/{resourceContentId:int}", UpdateResourcesSummaryEndpoints.UpdateResourceContentSummaryItem);
+        adminGroup.MapGet("content/statuses", ResourceContentStatusEndpoints.GetList).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
+        adminGroup.MapGet("list", ResourcesListEndpoints.Get);
+        adminGroup.MapGet("list/count", ResourcesListEndpoints.GetCount);
+
+        var group = endpoints.MapGroup("resources").WithTags("Resources");
         group.MapGet("{contentId:int}/content", GetResourceContentById);
         group.MapGet("{contentId:int}/metadata", GetResourceMetadataById);
         group.MapGet("batch/metadata", GetResourceMetadataByIds);
         group.MapGet("batch/content/text", GetResourceTextContentByIds);
         group.MapGet("{contentId:int}/thumbnail", GetResourceThumbnailById);
         group.MapGet("language/{languageId:int}/book/{bookCode}", GetResourcesForBook);
-        group.MapGet("summary", GetResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
-        group.MapGet("content/summary/{resourceContentId:int}", GetResourceContentSummaryEndpoints.GetByResourceContentId);
-        group.MapPut("content/summary/{resourceContentId:int}", UpdateResourcesSummaryEndpoints.UpdateResourceContentSummaryItem)
-            .RequireAuthorization("write");
         group.MapGet("parent-resources", ParentResourcesEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)));
-        group.MapGet("content/statuses", ResourceContentStatusEndpoints.GetList).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
-        group.MapGet("list", ResourcesListEndpoints.Get);
-        group.MapGet("list/count", ResourcesListEndpoints.GetCount);
 
         return endpoints;
     }
 
-    private async Task<Results<Ok<ResourceContentInfoForBookResponse>, NotFound, BadRequest<string>>>
+    private async Task<Results<Ok<ResourceItemsByChapterResponse>, NotFound, BadRequest<string>>>
         GetResourcesForBook(
             int languageId,
             string bookCode,
@@ -48,7 +49,7 @@ public class ResourcesModule : IModule
             [FromQuery] string[]? parentResourceNames = null
         )
     {
-        var bookId = BookIdSerializer.FromCode(bookCode);
+        var bookId = BookCodes.EnumFromCode(bookCode);
         if (bookId == BookId.None)
         {
             return TypedResults.NotFound();
@@ -169,7 +170,7 @@ public class ResourcesModule : IModule
                 .Select(chapter => new
                 {
                     ChapterNumber = chapter,
-                    Content = new ResourceContentInfo
+                    Content = new ResourceItemResponse
                     {
                         ContentId = content.ContentId,
                         ContentSize = content.ContentSize,
@@ -178,7 +179,7 @@ public class ResourcesModule : IModule
                     }
                 }))
             .GroupBy(item => item.ChapterNumber)
-            .Select(g => new ResourceContentInfoForChapter
+            .Select(g => new ResourceItemsWithChapterNumberResponse
             {
                 ChapterNumber = g.Key,
                 Contents = g
@@ -188,7 +189,7 @@ public class ResourcesModule : IModule
             .OrderBy(item => item.ChapterNumber)
             .ToList();
 
-        return TypedResults.Ok(new ResourceContentInfoForBookResponse { Chapters = groupedContent });
+        return TypedResults.Ok(new ResourceItemsByChapterResponse { Chapters = groupedContent });
     }
 
     private async Task<Results<Ok<object>, NotFound, RedirectHttpResult>> GetResourceContentById(
@@ -244,7 +245,7 @@ public class ResourcesModule : IModule
         return TypedResults.NotFound();
     }
 
-    private async Task<Results<Ok<List<ResourceTextContentResponse>>, BadRequest<string>, NotFound<string>>>
+    private async Task<Results<Ok<List<ResourceItemTextContentResponse>>, BadRequest<string>, NotFound<string>>>
         GetResourceTextContentByIds(
             [FromQuery] int[] ids,
             AquiferDbContext dbContext,
@@ -260,7 +261,7 @@ public class ResourcesModule : IModule
         var contents = await dbContext.ResourceContentVersions
             .Where(rcv => ids.Contains(rcv.ResourceContentId) && rcv.IsPublished
                     && rcv.ResourceContent.MediaType == ResourceContentMediaType.Text)
-            .Select(contentVersion => new ResourceTextContentResponse
+            .Select(contentVersion => new ResourceItemTextContentResponse
             {
                 Id = contentVersion.ResourceContentId,
                 Content = JsonUtilities.DefaultDeserialize(contentVersion.Content)
@@ -278,7 +279,7 @@ public class ResourcesModule : IModule
         return TypedResults.Ok(contents);
     }
 
-    private async Task<Results<Ok<ResourceContentMetadataResponse>, NotFound>> GetResourceMetadataById(
+    private async Task<Results<Ok<ResourceItemMetadataResponse>, NotFound>> GetResourceMetadataById(
         int contentId,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken
@@ -294,7 +295,7 @@ public class ResourcesModule : IModule
             return TypedResults.NotFound();
         }
 
-        var response = new ResourceContentMetadataResponse
+        var response = new ResourceItemMetadataResponse
         {
             DisplayName = contentVersion.DisplayName,
             Metadata = contentVersion.ResourceContent.MediaType == ResourceContentMediaType.Text
@@ -305,7 +306,7 @@ public class ResourcesModule : IModule
         return TypedResults.Ok(response);
     }
 
-    private async Task<Results<Ok<List<ResourceContentMetadataResponseWithId>>, BadRequest<string>, NotFound<string>>>
+    private async Task<Results<Ok<List<ResourceItemMetadataWithIdResponse>>, BadRequest<string>, NotFound<string>>>
         GetResourceMetadataByIds(
             [FromQuery] int[] ids,
             AquiferDbContext dbContext,
@@ -320,7 +321,7 @@ public class ResourcesModule : IModule
 
         var metadata = await dbContext.ResourceContentVersions
             .Where(rcv => ids.Contains(rcv.ResourceContentId) && rcv.IsPublished)
-            .Select(contentVersion => new ResourceContentMetadataResponseWithId
+            .Select(contentVersion => new ResourceItemMetadataWithIdResponse
             {
                 Id = contentVersion.ResourceContentId,
                 DisplayName = contentVersion.DisplayName,
