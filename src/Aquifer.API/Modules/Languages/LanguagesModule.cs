@@ -1,4 +1,4 @@
-﻿using Aquifer.Data;
+using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +8,7 @@ public class LanguagesModule : IModule
 {
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("languages");
+        var group = endpoints.MapGroup("languages").WithTags("Languages");
         group.MapGet("/", GetLanguages).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
 
         return endpoints;

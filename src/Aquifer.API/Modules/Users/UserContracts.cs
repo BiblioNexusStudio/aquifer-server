@@ -1,6 +1,6 @@
-﻿namespace Aquifer.API.Modules.Users;
+namespace Aquifer.API.Modules.Users;
 
-public class BasicUserResponse
+public class UserResponse
 {
     public int Id { get; set; }
     public required string Name { get; set; }

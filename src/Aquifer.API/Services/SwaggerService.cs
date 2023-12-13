@@ -1,4 +1,6 @@
-﻿using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Aquifer.API.Services;
 
@@ -52,6 +54,9 @@ public static class SwaggerService
                     new List<string>()
                 }
             });
+
+            // Show the string value for all enums
+            x.SchemaFilter<EnumSchemaFilter>();
         });
 
         return services;
@@ -61,5 +66,21 @@ public static class SwaggerService
     {
         app.UseSwagger();
         app.UseSwaggerUI();
+    }
+
+    private class EnumSchemaFilter : ISchemaFilter
+    {
+        public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+        {
+            if (context.Type.IsEnum)
+            {
+                schema.Enum.Clear();
+                schema.Type = "string";
+                schema.Format = null;
+                Enum.GetNames(context.Type)
+                    .ToList()
+                    .ForEach(name => schema.Enum.Add(new OpenApiString(name)));
+            }
+        }
     }
 }

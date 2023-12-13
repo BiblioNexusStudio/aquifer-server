@@ -7,10 +7,10 @@ public record ResourceListItemResponse
     public string EnglishLabel { get; set; } = null!;
     public string ParentResourceName { get; set; } = null!;
     public ResourceContentStatus Status { get; set; }
-    public IEnumerable<ResourceListItemContentIdWithLanguageId> ContentIdsWithLanguageIds { get; set; } = null!;
+    public IEnumerable<ResourceListItemForLanguageResponse> ContentIdsWithLanguageIds { get; set; } = null!;
 }
 
-public record ResourceListItemContentIdWithLanguageId
+public record ResourceListItemForLanguageResponse
 {
     public int ContentId { get; set; }
     public int LanguageId { get; set; }
