@@ -9,6 +9,8 @@ public class AdminModule : IModule
         var group = endpoints.MapGroup("admin");
         group.MapPost("resources/content/{contentId:int}/aquiferize", AquiferizationEndpoints.Aquiferize)
             .RequireAuthorization("aquiferize");
+        group.MapPost("resources/content/{contentId:int}/publish", AquiferizationEndpoints.Publish)
+            .RequireAuthorization("aquiferize");
 
         return endpoints;
     }
