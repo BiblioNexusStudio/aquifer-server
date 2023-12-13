@@ -7,9 +7,8 @@ public class AdminModule : IModule
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("admin");
-        group.MapGet("/", () => "Hello from admin");
         group.MapPost("resources/content/{contentId:int}/aquiferize", AquiferizationEndpoints.Aquiferize)
-            .RequireAuthorization("publish");
+            .RequireAuthorization("aquiferize");
 
         return endpoints;
     }
