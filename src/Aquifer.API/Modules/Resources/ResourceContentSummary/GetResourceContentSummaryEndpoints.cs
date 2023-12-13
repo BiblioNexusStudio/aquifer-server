@@ -54,6 +54,7 @@ public static class GetResourceContentSummaryEndpoints
                     }).OrderBy(pr => pr.StartVerseId),
                 VerseReferences = rc.Resource.VerseResources.Select(vr => new ResourceContentSummaryVerseById { VerseId = vr.VerseId })
             })).FirstOrDefaultAsync(cancellationToken);
+            
         return TypedResults.Ok(resource);
     }
 }
