@@ -2,7 +2,6 @@ using Aquifer.API.Common;
 using Aquifer.API.Utilities;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
-using Aquifer.API.Common;
 
 namespace Aquifer.API.Modules.Resources.ResourceContentSummary;
 
@@ -54,20 +53,14 @@ public record ResourceContentSummaryPassageById
     private (BookId BookId, int Chapter, int Verse) StartTranslatedVerse =>
         BibleUtilities.TranslateVerseId(StartVerseId);
 
-    public string StartBook => BookCodes.CodeFromEnum(StartTranslatedVerse.BookId);
+    public string StartBook => BookCodes.FullNameFromEnum(StartTranslatedVerse.BookId);
     public int StartChapter => StartTranslatedVerse.Chapter;
     public int StartVerse => StartTranslatedVerse.Verse;
     public int EndVerseId { get; init; }
     private (BookId BookId, int Chapter, int Verse) EndTranslatedVerse => BibleUtilities.TranslateVerseId(EndVerseId);
-    public string EndBook => BookCodes.CodeFromEnum(EndTranslatedVerse.BookId);
+    public string EndBook => BookCodes.FullNameFromEnum(EndTranslatedVerse.BookId);
     public int EndChapter => EndTranslatedVerse.Chapter;
     public int EndVerse => EndTranslatedVerse.Verse;
-    public string Label => 
-                    StartTranslatedVerse.BookId == EndTranslatedVerse.BookId 
-                        ? StartChapter == EndChapter 
-                            ? string.Format("{0} {1}:{2}-{3}", StartTranslatedVerse.BookId.GetDisplayName(), StartChapter, StartVerse, EndVerse)
-                            : string.Format("{0} {1}:{2}-{3}:{4}", StartTranslatedVerse.BookId.GetDisplayName(), StartChapter, StartVerse, EndChapter, EndVerse)
-                        : string.Format("{0} {1}:{2} - ${3} {4}:{5}", StartTranslatedVerse.BookId.GetDisplayName(), StartChapter, StartVerse, EndTranslatedVerse.BookId.GetDisplayName(), EndChapter, EndVerse);
                         
 }
 
