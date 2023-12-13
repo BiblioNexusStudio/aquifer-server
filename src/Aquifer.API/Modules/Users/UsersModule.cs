@@ -12,7 +12,7 @@ public class UsersModule : IModule
     {
         var adminGroup = endpoints.MapGroup("admin/users").WithTags("Users (Admin)");
         adminGroup.MapGet("/", GetAllUsers).RequireAuthorization(PermissionName.Read);
-        adminGroup.MapGet("/self", GetCurrentUser).RequireAuthorization(PermissionName.Read);
+        adminGroup.MapGet("/self", GetCurrentUser).RequireAuthorization();
 
         return endpoints;
     }
