@@ -20,11 +20,16 @@ public class ResourcesModule : IModule
 {
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        var adminGroup = endpoints.MapGroup("admin/resources").WithTags("Resources (Admin)").RequireAuthorization("read");
-        adminGroup.MapGet("summary", GetResourcesSummaryEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
-        adminGroup.MapGet("content/summary/{resourceContentId:int}", GetResourceContentSummaryEndpoints.GetByResourceContentId);
-        adminGroup.MapPut("content/summary/{resourceContentId:int}", UpdateResourcesSummaryEndpoints.UpdateResourceContentSummaryItem);
-        adminGroup.MapGet("content/statuses", ResourceContentStatusEndpoints.GetList).CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
+        var adminGroup = endpoints.MapGroup("admin/resources").WithTags("Resources (Admin)");
+        adminGroup.MapGet("summary", GetResourcesSummaryEndpoints.Get)
+            .CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
+        adminGroup.MapGet("content/summary/{resourceContentId:int}",
+            GetResourceContentSummaryEndpoints.GetByResourceContentId);
+        adminGroup.MapPut("content/summary/{resourceContentId:int}",
+                UpdateResourcesSummaryEndpoints.UpdateResourceContentSummaryItem)
+            .RequireAuthorization(PermissionName.Write);
+        adminGroup.MapGet("content/statuses", ResourceContentStatusEndpoints.GetList)
+            .CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
         adminGroup.MapGet("list", ResourcesListEndpoints.Get);
         adminGroup.MapGet("list/count", ResourcesListEndpoints.GetCount);
 
@@ -35,7 +40,8 @@ public class ResourcesModule : IModule
         group.MapGet("batch/content/text", GetResourceTextContentByIds);
         group.MapGet("{contentId:int}/thumbnail", GetResourceThumbnailById);
         group.MapGet("language/{languageId:int}/book/{bookCode}", GetResourcesForBook);
-        group.MapGet("parent-resources", ParentResourcesEndpoints.Get).CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)));
+        group.MapGet("parent-resources", ParentResourcesEndpoints.Get)
+            .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)));
 
         return endpoints;
     }
@@ -64,7 +70,8 @@ public class ResourcesModule : IModule
                                     .FirstOrDefaultAsync(cancellationToken))?.Id ??
                                 -1;
 
-        var parentResourceEntities = await dbContext.ParentResources.Where(rt => parentResourceNames.Contains(rt.ShortName))
+        var parentResourceEntities = await dbContext.ParentResources
+            .Where(rt => parentResourceNames.Contains(rt.ShortName))
             .ToListAsync(cancellationToken);
 
         var passageResourceContent = await dbContext.PassageResources
@@ -150,7 +157,13 @@ public class ResourcesModule : IModule
         // This filters them by grouping appropriately and selecting the current language resource (if available) then falling back to English.
         var filteredDownToOneLanguage = passageResourceContent.Concat(verseResourceContent)
             .Concat(associatedResourceContent)
-            .GroupBy(rc => new { rc.StartChapter, rc.EndChapter, rc.MediaType, rc.ResourceId })
+            .GroupBy(rc => new
+            {
+                rc.StartChapter,
+                rc.EndChapter,
+                rc.MediaType,
+                rc.ResourceId
+            })
             .Select(grc =>
             {
                 var first = grc.OrderBy(rc => rc.LanguageId == languageId ? 0 : 1).First();
@@ -259,8 +272,10 @@ public class ResourcesModule : IModule
         }
 
         var contents = await dbContext.ResourceContentVersions
-            .Where(rcv => ids.Contains(rcv.ResourceContentId) && rcv.IsPublished
-                    && rcv.ResourceContent.MediaType == ResourceContentMediaType.Text)
+            .Where(rcv =>
+                ids.Contains(rcv.ResourceContentId) &&
+                rcv.IsPublished &&
+                rcv.ResourceContent.MediaType == ResourceContentMediaType.Text)
             .Select(contentVersion => new ResourceItemTextContentResponse
             {
                 Id = contentVersion.ResourceContentId,
