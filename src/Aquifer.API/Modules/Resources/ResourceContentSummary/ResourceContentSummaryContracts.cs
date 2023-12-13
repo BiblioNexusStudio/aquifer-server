@@ -1,7 +1,6 @@
+using Aquifer.API.Common;
 using Aquifer.API.Utilities;
 using Aquifer.Data.Entities;
-using Aquifer.Data.Enums;
-using Aquifer.API.Common;
 
 namespace Aquifer.API.Modules.Resources.ResourceContentSummary;
 
@@ -11,15 +10,15 @@ public record ResourceContentSummaryById : ResourceContentSummaryDetailsById
     public IEnumerable<ResourceContentSummaryPassageById> PassageReferences { get; set; } = null!;
     public IEnumerable<ResourceContentSummaryAssociatedContentById> AssociatedResources { get; set; } = null!;
     public int ResourceContentId { get; set; }
-    public string DisplayName { get; init; } = null!;
-    public bool HasAudio { get; init; }
-    public ResourceContentMediaType MediaType { get; init; }
-    public ResourceContentStatus Status { get; init; }
-    public int ContentSize { get; init; }
-    public string Language { get; init; } = null!;
-    public bool IsPublished { get; init; }
-    public ResourceContentSummaryAssignedUser? AssignedUser { get; init; }
-    public object Content { get; init; } = null!;
+    public string DisplayName { get; set; } = null!;
+    public bool HasAudio { get; set; }
+    public ResourceContentMediaType MediaType { get; set; }
+    public ResourceContentStatus Status { get; set; }
+    public int ContentSize { get; set; }
+    public string Language { get; set; } = null!;
+    public bool IsPublished { get; set; }
+    public ResourceContentSummaryAssignedUser? AssignedUser { get; set; }
+    public object Content { get; set; } = null!;
     public IEnumerable<ResourceContentSummaryContentIdWithLanguageId> OtherLanguageContentIds { get; set; } = null!;
 }
 
@@ -38,7 +37,7 @@ public record ResourceContentSummaryVerseById
 {
     public int VerseId { get; init; }
 
-    private (BookId BookId, int Chapter, int Verse) TranslatedVerse =>
+    private (Data.Enums.BookId BookId, int Chapter, int Verse) TranslatedVerse =>
         BibleUtilities.TranslateVerseId(VerseId);
 
     public string Book => BookCodes.CodeFromEnum(TranslatedVerse.BookId);
@@ -50,14 +49,17 @@ public record ResourceContentSummaryPassageById
 {
     public int StartVerseId { get; init; }
 
-    private (BookId BookId, int Chapter, int Verse) StartTranslatedVerse =>
+    private (Data.Enums.BookId BookId, int Chapter, int Verse) StartTranslatedVerse =>
         BibleUtilities.TranslateVerseId(StartVerseId);
 
     public string StartBook => BookCodes.CodeFromEnum(StartTranslatedVerse.BookId);
     public int StartChapter => StartTranslatedVerse.Chapter;
     public int StartVerse => StartTranslatedVerse.Verse;
     public int EndVerseId { get; init; }
-    private (BookId BookId, int Chapter, int Verse) EndTranslatedVerse => BibleUtilities.TranslateVerseId(EndVerseId);
+
+    private (Data.Enums.BookId BookId, int Chapter, int Verse) EndTranslatedVerse =>
+        BibleUtilities.TranslateVerseId(EndVerseId);
+
     public string EndBook => BookCodes.CodeFromEnum(EndTranslatedVerse.BookId);
     public int EndChapter => EndTranslatedVerse.Chapter;
     public int EndVerse => EndTranslatedVerse.Verse;

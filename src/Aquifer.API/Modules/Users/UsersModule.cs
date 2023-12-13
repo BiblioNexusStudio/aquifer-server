@@ -1,3 +1,4 @@
+using Aquifer.API.Common;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -10,8 +11,8 @@ public class UsersModule : IModule
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         var adminGroup = endpoints.MapGroup("admin/users").WithTags("Users (Admin)");
-        adminGroup.MapGet("/", GetAllUsers).RequireAuthorization("read");
-        adminGroup.MapGet("/self", GetCurrentUser).RequireAuthorization("read");
+        adminGroup.MapGet("/", GetAllUsers).RequireAuthorization(PermissionName.Read);
+        adminGroup.MapGet("/self", GetCurrentUser).RequireAuthorization(PermissionName.Read);
 
         return endpoints;
     }
@@ -29,10 +30,10 @@ public class UsersModule : IModule
     }
 
     private async Task<Results<Ok<UserResponse>, NotFound>> GetCurrentUser(AquiferDbContext dbContext,
-            ClaimsPrincipal claimsPrincipal,
-            CancellationToken cancellationToken)
+        ClaimsPrincipal claimsPrincipal,
+        CancellationToken cancellationToken)
     {
-        var providerId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        string? providerId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ProviderId == providerId, cancellationToken);
 
         if (user == null)
