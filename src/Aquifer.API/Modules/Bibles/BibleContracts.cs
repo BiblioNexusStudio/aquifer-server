@@ -1,9 +1,10 @@
-﻿using Aquifer.API.Utilities;
+using Aquifer.API.Utilities;
+using Aquifer.Data.Enums;
 using System.Text.Json.Serialization;
 
 namespace Aquifer.API.Modules.Bibles;
 
-public class BasicBibleResponse
+public class BibleResponse
 {
     public int Id { get; set; }
     public required string Name { get; set; }
@@ -17,12 +18,12 @@ public class BasicBibleResponse
     public string? SerializedLicenseInfo { get; init; }
 }
 
-public class BibleResponse : BasicBibleResponse
+public class BibleWithBooksMetadataResponse : BibleResponse
 {
-    public required IEnumerable<BibleResponseBook> Books { get; set; }
+    public required IEnumerable<BibleBookMetadataResponse> Books { get; set; }
 }
 
-public class BibleResponseBook
+public class BibleBookMetadataResponse
 {
     public required string BookCode { get; set; }
     public required string DisplayName { get; set; }
@@ -31,7 +32,7 @@ public class BibleResponseBook
     public int ChapterCount { get; set; }
 }
 
-public class BibleBookDetailsResponse : BibleResponseBook
+public class BibleBookResponse : BibleBookMetadataResponse
 {
     public string TextUrl { get; set; } = null!;
     public object? AudioUrls { get; set; }

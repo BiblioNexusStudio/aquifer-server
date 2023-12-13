@@ -70,16 +70,3 @@ public enum BookId
     BookJUD = 66,
     BookREV = 67
 }
-
-public static class BookIdSerializer
-{
-    public static string ToCode(this BookId id)
-    {
-        return id.ToString().Replace("Book", "");
-    }
-
-    public static BookId FromCode(string code)
-    {
-        return Enum.TryParse($"Book{code}", out BookId result) ? result : BookId.None;
-    }
-}

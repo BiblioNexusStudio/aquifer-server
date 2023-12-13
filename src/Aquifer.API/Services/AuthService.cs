@@ -1,4 +1,5 @@
-﻿using Aquifer.API.Configuration;
+﻿using Aquifer.API.Common;
+using Aquifer.API.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
@@ -22,10 +23,10 @@ public static class AuthService
 
         // this is an example of how a policy can be added, where the permissions
         // are set in Auth0 for the given user
-        services.AddAuthorization(options => options.AddPolicy("write",
+        services.AddAuthorization(options => options.AddPolicy(PermissionName.Write,
             p => p.RequireClaim("user").RequireClaim("permissions", "write:values")));
 
-        services.AddAuthorization(options => options.AddPolicy("read",
+        services.AddAuthorization(options => options.AddPolicy(PermissionName.Read,
             p => p.RequireClaim("user").RequireClaim("permissions", "read:values")));
         
         services.AddAuthorization(options => options.AddPolicy("aquiferize",

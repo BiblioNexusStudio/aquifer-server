@@ -58,7 +58,7 @@ public static class GetResourcesSummaryEndpoints
 
         var typeTotalsByMonth = resourcesByParentResourceResponse.GroupBy(x => x.Date)
             .Select(x =>
-                new ResourcesSummaryParentResourceTotalsByMonth(x.Key,
+                new ResourcesSummaryParentResourceTotalsByMonthResponse(x.Key,
                     x.First().MonthAbbreviation,
                     x.Sum(rc => rc.ResourceCount))).ToList();
 
@@ -78,8 +78,8 @@ public static class GetResourcesSummaryEndpoints
             .ToList();
     }
 
-    private static List<ResourcesSummaryByParentResource> GetResourcesByParentResourceResponse(
-        List<ResourcesSummaryByParentResourceDto> resourcesByParentResource,
+    private static List<ResourcesSummaryByParentResourceResponse> GetResourcesByParentResourceResponse(
+        List<ResourcesSummaryCommon> resourcesByParentResource,
         List<DateTime> lastFiveMonths)
     {
         // Must iterate twice with current setup (i.e. don't call ToList)
@@ -91,7 +91,7 @@ public static class GetResourcesSummaryEndpoints
             {
                 if (resourceGroup.SingleOrDefault(x => x.Date == date) == null)
                 {
-                    resourcesByParentResource.Add(new ResourcesSummaryByParentResourceDto
+                    resourcesByParentResource.Add(new ResourcesSummaryCommon
                     {
                         ParentResourceName = resourceGroup.Key,
                         Date = date,
@@ -115,12 +115,12 @@ public static class GetResourcesSummaryEndpoints
         }
 
         return resourcesByParentResource.Where(x => x.Date >= lastFiveMonths.Last()).OrderBy(x => x.Date)
-            .Select(x => new ResourcesSummaryByParentResource(x.ResourceCount, x.ParentResourceName, x.Date))
+            .Select(x => new ResourcesSummaryByParentResourceResponse(x.ResourceCount, x.ParentResourceName, x.Date))
             .ToList();
     }
 
-    private static List<ResourcesSummaryByLanguage> GetResourcesByLanguageResponse(
-        List<ResourcesSummaryByLanguageDto> resourcesByLanguage,
+    private static List<ResourcesSummaryByLanguageResponse> GetResourcesByLanguageResponse(
+        List<ResourcesSummaryByLanguage> resourcesByLanguage,
         List<DateTime> lastFiveMonths,
         List<string> languages,
         List<string> resources)
@@ -134,7 +134,7 @@ public static class GetResourcesSummaryEndpoints
             {
                 if (!resourcesByLanguage.Any(x => x.ParentResourceName == resource && x.LanguageName == language))
                 {
-                    resourcesByLanguage.Add(new ResourcesSummaryByLanguageDto
+                    resourcesByLanguage.Add(new ResourcesSummaryByLanguage
                     {
                         Date = lastFiveMonths.Last(),
                         LanguageName = language,
@@ -151,7 +151,7 @@ public static class GetResourcesSummaryEndpoints
             {
                 if (resourceGroup.SingleOrDefault(x => x.Date == date) == null)
                 {
-                    resourcesByLanguage.Add(new ResourcesSummaryByLanguageDto
+                    resourcesByLanguage.Add(new ResourcesSummaryByLanguage
                     {
                         LanguageName = resourceGroup.Key.LanguageName,
                         ParentResourceName = resourceGroup.Key.ParentResourceName,
@@ -172,7 +172,7 @@ public static class GetResourcesSummaryEndpoints
         }
 
         return resourcesByLanguage.Where(x => x.Date >= lastFiveMonths.Last()).OrderBy(x => x.Date)
-            .Select(x => new ResourcesSummaryByLanguage(x.LanguageName,
+            .Select(x => new ResourcesSummaryByLanguageResponse(x.LanguageName,
                 x.ResourceCount,
                 x.ParentResourceName,
                 x.Date))
@@ -180,17 +180,17 @@ public static class GetResourcesSummaryEndpoints
     }
 
     private static async
-        Task<(List<ResourcesSummaryByParentResourceDto> resourcesByParentResource,
-            List<ResourcesSummaryByLanguageDto> resourcesByLanguage,
+        Task<(List<ResourcesSummaryCommon> resourcesByParentResource,
+            List<ResourcesSummaryByLanguage> resourcesByLanguage,
             int multiLanguageResourcesCount)>
         GetDataAsync(AquiferDbContext dbContext, CancellationToken cancellationToken)
     {
         var resourcesByParentResource = await dbContext.Database
-            .SqlQuery<ResourcesSummaryByParentResourceDto>($"exec ({GetResourcesByParentResourceQuery})")
+            .SqlQuery<ResourcesSummaryCommon>($"exec ({GetResourcesByParentResourceQuery})")
             .ToListAsync(cancellationToken);
 
         var resourcesByLanguage = await dbContext.Database
-            .SqlQuery<ResourcesSummaryByLanguageDto>($"exec ({GetResourcesByLanguageQuery})")
+            .SqlQuery<ResourcesSummaryByLanguage>($"exec ({GetResourcesByLanguageQuery})")
             .ToListAsync(cancellationToken);
 
         int multiLanguageResourcesCount = (await dbContext.Database
@@ -198,4 +198,17 @@ public static class GetResourcesSummaryEndpoints
 
         return (resourcesByParentResource, resourcesByLanguage, multiLanguageResourcesCount);
     }
+
+    private class ResourcesSummaryByLanguage : ResourcesSummaryCommon
+    {
+        public string LanguageName { get; set; } = null!;
+    }
+
+    private class ResourcesSummaryCommon
+    {
+        public string ParentResourceName { get; set; } = null!;
+        public DateTime Date { get; set; }
+        public int ResourceCount { get; set; }
+    }
+
 }

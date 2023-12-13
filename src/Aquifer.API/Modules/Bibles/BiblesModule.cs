@@ -1,4 +1,5 @@
-﻿using Aquifer.API.Utilities;
+using Aquifer.API.Common;
+using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -10,7 +11,7 @@ public class BiblesModule : IModule
 {
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("bibles");
+        var group = endpoints.MapGroup("bibles").WithTags("Bibles");
         group.MapGet("/", GetAllBibles);
         group.MapGet("language/{languageId:int}", GetBiblesByLanguage);
         group.MapGet("{bibleId:int}/book/{bookCode}", GetBibleBookDetails);
@@ -18,10 +19,10 @@ public class BiblesModule : IModule
         return endpoints;
     }
 
-    private async Task<Ok<List<BasicBibleResponse>>> GetAllBibles(AquiferDbContext dbContext,
+    private async Task<Ok<List<BibleResponse>>> GetAllBibles(AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var bibles = await dbContext.Bibles.Select(bible => new BasicBibleResponse
+        var bibles = await dbContext.Bibles.Select(bible => new BibleResponse
         {
             Name = bible.Name,
             Abbreviation = bible.Abbreviation,
@@ -33,12 +34,12 @@ public class BiblesModule : IModule
         return TypedResults.Ok(bibles);
     }
 
-    private async Task<Ok<List<BibleResponse>>> GetBiblesByLanguage(int languageId,
+    private async Task<Ok<List<BibleWithBooksMetadataResponse>>> GetBiblesByLanguage(int languageId,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var bibles = await dbContext.Bibles.Where(x => x.LanguageId == languageId)
-            .Select(bible => new BibleResponse
+            .Select(bible => new BibleWithBooksMetadataResponse
             {
                 Name = bible.Name,
                 Abbreviation = bible.Abbreviation,
@@ -46,9 +47,9 @@ public class BiblesModule : IModule
                 Id = bible.Id,
                 LanguageId = bible.LanguageId,
                 Books = bible.BibleBookContents.OrderBy(book => book.BookId).Select(book =>
-                    new BibleResponseBook
+                    new BibleBookMetadataResponse
                     {
-                        BookCode = book.BookId.ToCode(),
+                        BookCode = BookCodes.CodeFromEnum(book.BookId),
                         DisplayName = book.DisplayName,
                         TextSize = book.TextSize,
                         AudioSize = book.AudioSize,
@@ -59,31 +60,31 @@ public class BiblesModule : IModule
         return TypedResults.Ok(bibles);
     }
 
-    private async Task<Results<Ok<BibleBookDetailsResponse>, NotFound>> GetBibleBookDetails(
+    private async Task<Results<Ok<BibleBookResponse>, NotFound>> GetBibleBookDetails(
         int bibleId,
         string bookCode,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var bookId = BookIdSerializer.FromCode(bookCode);
-        if (bookId == BookId.None)
+        var bookCodeEnum = BookCodes.EnumFromCode(bookCode);
+        if (bookCodeEnum == BookId.None)
         {
             return TypedResults.NotFound();
         }
 
         var book = await dbContext.BibleBookContents
-            .SingleOrDefaultAsync(b => b.BibleId == bibleId && b.BookId == bookId, cancellationToken);
+            .SingleOrDefaultAsync(b => b.BibleId == bibleId && b.BookId == bookCodeEnum, cancellationToken);
 
         if (book == null)
         {
             return TypedResults.NotFound();
         }
 
-        var response = new BibleBookDetailsResponse
+        var response = new BibleBookResponse
         {
             AudioSize = book.AudioSize,
             AudioUrls = JsonUtilities.DefaultDeserialize(book.AudioUrls),
-            BookCode = book.BookId.ToCode(),
+            BookCode = BookCodes.CodeFromEnum(book.BookId),
             ChapterCount = book.ChapterCount,
             DisplayName = book.DisplayName,
             TextSize = book.TextSize,
