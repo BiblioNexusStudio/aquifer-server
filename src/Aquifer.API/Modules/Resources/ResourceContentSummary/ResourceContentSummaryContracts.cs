@@ -52,7 +52,7 @@ public record ResourceContentSummaryPassageById
     private (Data.Enums.BookId BookId, int Chapter, int Verse) StartTranslatedVerse =>
         BibleUtilities.TranslateVerseId(StartVerseId);
 
-    public string StartBook => BookCodes.CodeFromEnum(StartTranslatedVerse.BookId);
+    public string StartBook => BookCodes.FullNameFromEnum(StartTranslatedVerse.BookId);
     public int StartChapter => StartTranslatedVerse.Chapter;
     public int StartVerse => StartTranslatedVerse.Verse;
     public int EndVerseId { get; init; }
@@ -60,9 +60,10 @@ public record ResourceContentSummaryPassageById
     private (Data.Enums.BookId BookId, int Chapter, int Verse) EndTranslatedVerse =>
         BibleUtilities.TranslateVerseId(EndVerseId);
 
-    public string EndBook => BookCodes.CodeFromEnum(EndTranslatedVerse.BookId);
+    public string EndBook => BookCodes.FullNameFromEnum(EndTranslatedVerse.BookId);
     public int EndChapter => EndTranslatedVerse.Chapter;
     public int EndVerse => EndTranslatedVerse.Verse;
+                        
 }
 
 public record ResourceContentSummaryAssignedUser

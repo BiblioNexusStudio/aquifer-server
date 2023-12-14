@@ -8,6 +8,7 @@ public static class BookCodes
     {
         public BookId BookId { get; set; }
         public string BookCode { get; set; } = null!;
+        public string BookFullName { get; set; } = null!;
     }
 
     private static readonly Dictionary<string, BookMetadata> BookCodeToMetadata;
@@ -19,12 +20,14 @@ public static class BookCodes
         BookCodeToMetadata = bookIdEnums.ToDictionary(bc => bc.ToString().Replace("Book", ""), bc => new BookMetadata
         {
             BookId = bc,
-            BookCode = bc.ToString().Replace("Book", "")
+            BookCode = bc.ToString().Replace("Book", ""),
+            BookFullName = bc.GetDisplayName()
         });
         BookEnumToMetadata = bookIdEnums.ToDictionary(bc => bc, bc => new BookMetadata
         {
             BookId = bc,
-            BookCode = bc.ToString().Replace("Book", "")
+            BookCode = bc.ToString().Replace("Book", ""),
+            BookFullName = bc.GetDisplayName()
         });
     }
 
@@ -36,5 +39,9 @@ public static class BookCodes
     public static BookId EnumFromCode(string stringValue)
     {
         return BookCodeToMetadata.TryGetValue(stringValue, out var obj) ? obj.BookId : BookId.None;
+    }
+
+    public static string FullNameFromEnum(BookId bookId) {
+        return BookEnumToMetadata.TryGetValue(bookId, out var obj) ? obj.BookFullName : "";
     }
 }
