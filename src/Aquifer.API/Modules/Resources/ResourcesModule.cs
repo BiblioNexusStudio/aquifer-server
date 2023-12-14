@@ -55,7 +55,7 @@ public class ResourcesModule : IModule
             [FromQuery] string[]? parentResourceNames = null
         )
     {
-        var bookId = BookCodes.EnumFromCode(bookCode);
+        var bookId = BookCodes.IdFromCode(bookCode);
         if (bookId == BookId.None)
         {
             return TypedResults.NotFound();
