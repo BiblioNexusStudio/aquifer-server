@@ -1,4 +1,4 @@
-namespace Aquifer.API.Modules.Admin;
+namespace Aquifer.API.Modules.Admin.Aquiferization;
 
 public class AquiferizationRequest
 {
@@ -7,6 +7,6 @@ public class AquiferizationRequest
 
 public class PublishRequest
 {
-    public bool? CreateDraft { get; set; }
+    public bool CreateDraft { get; set; } = false;
     public int? AssignedUserId { get; set; }
 }
