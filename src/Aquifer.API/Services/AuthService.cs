@@ -35,6 +35,12 @@ public static class AuthService
         services.AddAuthorization(options => options.AddPolicy(PermissionName.Publish,
             p => p.RequireClaim("user").RequireClaim("permissions", "publish:content")));
 
+        services.AddAuthorization(options => options.AddPolicy(PermissionName.AssignContent,
+            p => p.RequireClaim("user").RequireClaim("permissions", "assign:content")));
+
+        services.AddAuthorization(options => options.AddPolicy(PermissionName.AssignOverride,
+            p => p.RequireClaim("user").RequireClaim("permissions", "assign:override")));
+
         return services;
     }
 
