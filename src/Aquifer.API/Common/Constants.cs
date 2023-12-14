@@ -22,5 +22,7 @@ public static class Constants
 public static class PermissionName
 {
     public const string Read = "read",
-        Write = "write";
+        Write = "write",
+        Publish = "publish",
+        Aquiferize = "aquiferize";
 }
