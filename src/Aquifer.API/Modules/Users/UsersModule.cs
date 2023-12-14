@@ -29,7 +29,7 @@ public class UsersModule : IModule
         return TypedResults.Ok(users);
     }
 
-    private async Task<Results<Ok<UserResponse>, NotFound>> GetCurrentUser(AquiferDbContext dbContext,
+    private async Task<Results<Ok<CurrentUserResponse>, NotFound>> GetCurrentUser(AquiferDbContext dbContext,
         ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken)
     {
@@ -41,10 +41,13 @@ public class UsersModule : IModule
             return TypedResults.NotFound();
         }
 
-        return TypedResults.Ok(new UserResponse
+        var permissions = claimsPrincipal.FindAll("permissions").Select(c => c.Value).ToList();
+
+        return TypedResults.Ok(new CurrentUserResponse
         {
             Id = user.Id,
-            Name = $"{user.FirstName} {user.LastName}"
+            Name = $"{user.FirstName} {user.LastName}",
+            Permissions = permissions
         });
     }
 }
