@@ -40,7 +40,7 @@ public record ResourceContentSummaryVerseById
     private (Data.Enums.BookId BookId, int Chapter, int Verse) TranslatedVerse =>
         BibleUtilities.TranslateVerseId(VerseId);
 
-    public string Book => BookCodes.CodeFromEnum(TranslatedVerse.BookId);
+    public string Book => BookCodes.FullNameFromEnum(TranslatedVerse.BookId);
     public int Chapter => TranslatedVerse.Chapter;
     public int Verse => TranslatedVerse.Verse;
 }
