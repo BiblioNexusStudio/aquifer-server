@@ -1,3 +1,4 @@
+using Aquifer.API.Common;
 using Aquifer.API.Modules.Admin.Aquiferization;
 
 namespace Aquifer.API.Modules.Admin;
@@ -8,7 +9,9 @@ public class AdminModule : IModule
     {
         var group = endpoints.MapGroup("admin");
         group.MapPost("resources/content/{contentId:int}/aquiferize", AquiferizationEndpoints.Aquiferize)
-            .RequireAuthorization("aquiferize");
+            .RequireAuthorization(PermissionName.Aquiferize);
+        group.MapPost("resources/content/{contentId:int}/publish", AquiferizationEndpoints.Publish)
+            .RequireAuthorization(PermissionName.Publish);
 
         return endpoints;
     }
