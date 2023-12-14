@@ -11,37 +11,36 @@ public static class BookCodes
         public string BookFullName { get; set; } = null!;
     }
 
-    private static readonly Dictionary<string, BookMetadata> BookCodeToMetadata;
-    private static readonly Dictionary<BookId, BookMetadata> BookEnumToMetadata;
+    private static readonly Dictionary<string, BookMetadata> BookCodeToMetadata = [];
+    private static readonly Dictionary<BookId, BookMetadata> BookIdToMetadata = [];
 
     static BookCodes()
     {
-        var bookIdEnums = Enum.GetValues(typeof(BookId)).Cast<BookId>();
-        BookCodeToMetadata = bookIdEnums.ToDictionary(bc => bc.ToString().Replace("Book", ""), bc => new BookMetadata
+        var bookIds = Enum.GetValues(typeof(BookId)).Cast<BookId>();
+
+        foreach(var bookId in bookIds) {
+            var metadata = new BookMetadata
         {
-            BookId = bc,
-            BookCode = bc.ToString().Replace("Book", ""),
-            BookFullName = bc.GetDisplayName()
-        });
-        BookEnumToMetadata = bookIdEnums.ToDictionary(bc => bc, bc => new BookMetadata
-        {
-            BookId = bc,
-            BookCode = bc.ToString().Replace("Book", ""),
-            BookFullName = bc.GetDisplayName()
-        });
+            BookId = bookId,
+            BookCode = bookId.ToString().Replace("Book", ""),
+            BookFullName = bookId.GetDisplayName()
+        };
+            BookCodeToMetadata.Add(bookId.ToString().Replace("Book", ""), metadata);
+            BookIdToMetadata.Add(bookId, metadata);
+        }
     }
 
-    public static string CodeFromEnum(BookId bookId)
+    public static string CodeFromId(BookId bookId)
     {
-        return BookEnumToMetadata.TryGetValue(bookId, out var obj) ? obj.BookCode : "";
+        return BookIdToMetadata.TryGetValue(bookId, out var obj) ? obj.BookCode : "";
     }
 
-    public static BookId EnumFromCode(string stringValue)
+    public static BookId IdFromCode(string stringValue)
     {
         return BookCodeToMetadata.TryGetValue(stringValue, out var obj) ? obj.BookId : BookId.None;
     }
 
-    public static string FullNameFromEnum(BookId bookId) {
-        return BookEnumToMetadata.TryGetValue(bookId, out var obj) ? obj.BookFullName : "";
+    public static string FullNameFromId(BookId bookId) {
+        return BookIdToMetadata.TryGetValue(bookId, out var obj) ? obj.BookFullName : "";
     }
 }

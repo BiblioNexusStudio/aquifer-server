@@ -14,7 +14,7 @@ public class PassagesByBookResponse
 public class PassageResponse
 {
     public int Id { get; set; }
-    public string BookCode => BookCodes.CodeFromEnum(PassageStartDetails.BookId);
+    public string BookCode => BookCodes.CodeFromId(PassageStartDetails.BookId);
     public int StartChapter => PassageStartDetails.Chapter;
     public int EndChapter => PassageEndDetails.Chapter;
     public int StartVerse => PassageStartDetails.Verse;
