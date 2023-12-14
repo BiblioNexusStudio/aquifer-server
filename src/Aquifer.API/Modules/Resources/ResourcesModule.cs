@@ -27,7 +27,7 @@ public class ResourcesModule : IModule
             GetResourceContentSummaryEndpoints.GetByResourceContentId);
         adminGroup.MapPut("content/summary/{resourceContentId:int}",
                 UpdateResourcesSummaryEndpoints.UpdateResourceContentSummaryItem)
-            .RequireAuthorization(PermissionName.Write);
+            .RequireAuthorization(PermissionName.EditContent);
         adminGroup.MapGet("content/statuses", ResourceContentStatusEndpoints.GetList)
             .CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
         adminGroup.MapGet("list", ResourcesListEndpoints.Get);

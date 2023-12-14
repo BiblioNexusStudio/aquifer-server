@@ -42,7 +42,7 @@ public class AssignmentEndpoints
             return TypedResults.BadRequest("Assigned user not found");
         }
 
-        // get the requesting user from User table using the provider id from the claims principal 
+        // get the requesting user from User table using the provider id from the claims principal
         string providerId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
         var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ProviderId == providerId, cancellationToken) ??
                    throw new ArgumentNullException();
@@ -60,7 +60,7 @@ public class AssignmentEndpoints
         // check to see if claimsPrincipal user has override permissions
         bool claimsPrincipalHasAssignOverridePermission =
             claimsPrincipal.HasClaim(c =>
-                c.Type == PermissionName.Permissions && c.Value == PermissionName.AssignOverride);
+                c.Type == Constants.PermissionsClaim && c.Value == PermissionName.AssignOverride);
 
         // if the user has the assign override permission, then assign the resource to the given user
         if (claimsPrincipalHasAssignOverridePermission)

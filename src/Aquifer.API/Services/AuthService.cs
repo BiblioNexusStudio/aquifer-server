@@ -21,25 +21,12 @@ public static class AuthService
                     new TokenValidationParameters { NameClaimType = ClaimTypes.NameIdentifier };
             });
 
-        // this is an example of how a policy can be added, where the permissions
-        // are set in Auth0 for the given user
-        services.AddAuthorization(options => options.AddPolicy(PermissionName.Write,
-            p => p.RequireClaim("user").RequireClaim("permissions", "write:values")));
-
-        services.AddAuthorization(options => options.AddPolicy(PermissionName.Read,
-            p => p.RequireClaim("user").RequireClaim("permissions", "read:values")));
-
-        services.AddAuthorization(options => options.AddPolicy(PermissionName.Aquiferize,
-            p => p.RequireClaim("user").RequireClaim("permissions", "aquiferize:content")));
-
-        services.AddAuthorization(options => options.AddPolicy(PermissionName.Publish,
-            p => p.RequireClaim("user").RequireClaim("permissions", "publish:content")));
-
-        services.AddAuthorization(options => options.AddPolicy(PermissionName.AssignContent,
-            p => p.RequireClaim("user").RequireClaim("permissions", "assign:content")));
-
-        services.AddAuthorization(options => options.AddPolicy(PermissionName.AssignOverride,
-            p => p.RequireClaim("user").RequireClaim("permissions", "assign:override")));
+        foreach (var permissionName in Constants.AllPermissions)
+        {
+            services.AddAuthorization(options =>
+                    options.AddPolicy(permissionName,
+                        policy => policy.RequireClaim("user").RequireClaim("permissions", permissionName)));
+        }
 
         return services;
     }

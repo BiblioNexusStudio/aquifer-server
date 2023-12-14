@@ -63,7 +63,7 @@ public record ResourceContentSummaryPassageById
     public string EndBook => BookCodes.FullNameFromId(EndTranslatedVerse.BookId);
     public int EndChapter => EndTranslatedVerse.Chapter;
     public int EndVerse => EndTranslatedVerse.Verse;
-                        
+
 }
 
 public record ResourceContentSummaryAssignedUser
@@ -81,6 +81,5 @@ public record ResourceContentSummaryContentIdWithLanguageId
 public record ResourceContentSummaryItemUpdate
 {
     public List<object> Content { get; init; } = new();
-    public ResourceContentStatus Status { get; init; }
     public string DisplayName { get; init; } = null!;
 }

@@ -13,15 +13,26 @@ public static class Constants
     public static readonly ReadOnlyCollection<ResourceContentMediaType> FallbackToEnglishForMediaTypes =
         new List<ResourceContentMediaType> { ResourceContentMediaType.Image, ResourceContentMediaType.Video }
             .AsReadOnly();
+
+    public static readonly string PermissionsClaim = "permissions";
+
+    public static readonly ReadOnlyCollection<string> AllPermissions =
+        new List<string> {
+            PermissionName.ReadUsers,
+            PermissionName.EditContent,
+            PermissionName.PublishContent,
+            PermissionName.AssignContent,
+            PermissionName.AssignOverride,
+            PermissionName.AquiferizeContent
+        }.AsReadOnly();
 }
 
 public static class PermissionName
 {
-    public const string Read = "read",
-        Write = "write",
-        Publish = "publish",
-        Aquiferize = "aquiferize",
+    public const string ReadUsers = "read:users",
+        EditContent = "edit:content",
+        PublishContent = "publish:content",
+        AquiferizeContent = "aquiferize:content",
         AssignContent = "assign:content",
-        AssignOverride = "assign:override",
-        Permissions = "permissions";
+        AssignOverride = "assign:override";
 }
