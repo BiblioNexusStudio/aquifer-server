@@ -18,6 +18,8 @@ public class AdminModule : IModule
             .RequireAuthorization(PermissionName.PublishContent);
         group.MapPost("resources/content/{contentId:int}/assign-editor", AssignmentEndpoints.AssignEditor)
             .RequireAuthorization([PermissionName.AssignOverride, PermissionName.AssignContent]);
+        group.MapPost("resources/content/{contentId:int}/send-review", AquiferizationEndpoints.SendReview)
+            .RequireAuthorization([PermissionName.SendReviewOverride, PermissionName.SendReviewContent]);
         group.MapPost("resources/content/{contentId:int}/review", ResourceReviewEndpoints.Review).RequireAuthorization(PermissionName.ReviewContent);
 
         return endpoints;
