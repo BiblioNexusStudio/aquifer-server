@@ -98,6 +98,62 @@ public static class AquiferizationEndpoints
         return TypedResults.Ok("Success");
     }
 
+    public static async Task<Results<Ok<string>, BadRequest<string>>> UnPublish(
+        int contentId,
+        AquiferDbContext dbContext,
+        ClaimsPrincipal claimsPrincipal,
+        CancellationToken cancellationToken)
+    {
+        //First check that a ResourceContentVersion exists with the given contentId and IsPublished = 1. If none does, return a 400.
+        var resourceContentVersions = await dbContext.ResourceContentVersions
+            .Where(x => x.ResourceContentId == contentId).ToListAsync(cancellationToken);
+
+        if (resourceContentVersions.Count == 0)
+        {
+            return TypedResults.BadRequest("There are no Resources with the given contentId.");
+        }
+
+        // find the published resource Content Version using resourceContentVersions
+        var publishedResourceContentVersion = resourceContentVersions.Find(rcv => rcv.IsPublished);
+
+        if (publishedResourceContentVersion is null)
+        {
+            return TypedResults.BadRequest("There is no published ResourceContentVersion with the given contentId.");
+        }
+
+        // set the published ResourceContentVersion.IsPublished = 0
+        publishedResourceContentVersion.IsPublished = false;
+        publishedResourceContentVersion.Updated = DateTime.UtcNow;
+
+        // If there is a draft existing for the contentId, then we're done
+        var draftResourceContentVersion = resourceContentVersions.Find(rcv => rcv.IsDraft);
+        if (draftResourceContentVersion is null)
+        {
+            // If there is not a draft existing for the contentId, then set the ResourceContent.Status to New
+            var resourceContent =
+                await dbContext.ResourceContents.FindAsync(contentId, cancellationToken) ??
+                throw new ArgumentNullException();
+
+            resourceContent.Status = ResourceContentStatus.New;
+
+            // Insert into ResourceContentVersionStatusHistory with published version id, status, and the user id who made the request
+            string providerId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+            var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ProviderId == providerId, cancellationToken) ??
+                       throw new ArgumentNullException();
+            var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
+            {
+                ResourceContentVersionId = publishedResourceContentVersion.Id,
+                Status = ResourceContentStatus.New,
+                ChangedByUserId = user.Id,
+                Created = DateTime.UtcNow
+            };
+            dbContext.ResourceContentVersionStatusHistory.Add(resourceContentVersionStatusHistory);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return TypedResults.Ok("Success");
+    }
+
     private static async Task CreateNewDraft(AquiferDbContext dbContext,
         int contentId,
         int? assignedUserId,
