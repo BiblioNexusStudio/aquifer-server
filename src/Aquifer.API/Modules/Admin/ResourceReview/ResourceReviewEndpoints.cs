@@ -17,12 +17,12 @@ public static class ResourceReviewEndpoints
         ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken)
     {
-        (var mostRecentResourceContentVersion, var resourceContent, string badRequestResponse) =
+        (var contentVersionDraft, var resourceContent, string badRequestResponse) =
             await GetResourceContentVersionValidation(contentId,
                 dbContext,
                 cancellationToken);
 
-        if (mostRecentResourceContentVersion is null || resourceContent is null)
+        if (contentVersionDraft is null || resourceContent is null)
         {
             return TypedResults.BadRequest(badRequestResponse);
         }
@@ -31,15 +31,15 @@ public static class ResourceReviewEndpoints
         var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ProviderId == providerId, cancellationToken) ??
                        throw new ArgumentNullException();
 
-        mostRecentResourceContentVersion.Updated = DateTime.UtcNow;
-        mostRecentResourceContentVersion.AssignedUserId = user.Id;
+        contentVersionDraft.Updated = DateTime.UtcNow;
+        contentVersionDraft.AssignedUserId = user.Id;
         
         resourceContent.Status = ResourceContentStatus.AquiferizeInReview;
 
         // update version status history
         var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
         {
-            ResourceContentVersionId = mostRecentResourceContentVersion.Id,
+            ResourceContentVersionId = contentVersionDraft.Id,
             Status = ResourceContentStatus.AquiferizeInReview,
             ChangedByUserId = user.Id,
             Created = DateTime.UtcNow
@@ -49,7 +49,7 @@ public static class ResourceReviewEndpoints
         // update version assigned user history
         var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
             {
-                ResourceContentVersion = mostRecentResourceContentVersion,
+                ResourceContentVersion = contentVersionDraft,
                 AssignedUserId = user.Id,
                 ChangedByUserId = user.Id,
                 Created = DateTime.UtcNow
@@ -66,11 +66,11 @@ public static class ResourceReviewEndpoints
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var resourceContentVersions = await dbContext.ResourceContentVersions
-            .Where(x => x.ResourceContentId == contentId && x.IsDraft == true).ToListAsync(cancellationToken);
+        var resourceContentVersionDraft = await dbContext.ResourceContentVersions
+            .Where(x => x.ResourceContentId == contentId && x.IsDraft == true).SingleOrDefaultAsync(cancellationToken);
 
         // First check that a ResourceContentVersion exists with the given contentId and IsDraft = 1
-        if (resourceContentVersions.Count == 0)
+        if (resourceContentVersionDraft == null)
         {
             return (null, null, "This resource does not have a draft");
         }
@@ -83,14 +83,6 @@ public static class ResourceReviewEndpoints
             return (null, null, "This resource is not in AquiferizeReviewPending status");
         }
 
-        // Grab the most recent ResourceContentVersion with given contentId and IsDraft = 1
-        var mostRecentResourceContentVersion = resourceContentVersions
-            .Where(x => x.ResourceContentId == contentId && x.IsDraft).MaxBy(x => x.Version);
-
-        if (mostRecentResourceContentVersion is null)
-        {
-            return (null, null, "Draft with the given contentId does not exist.");
-        }
-        return (mostRecentResourceContentVersion, resourceContent, string.Empty);
+        return (resourceContentVersionDraft, resourceContent, string.Empty);
     }
 }
