@@ -23,7 +23,8 @@ public static class Constants
             PermissionName.PublishContent,
             PermissionName.AssignContent,
             PermissionName.AssignOverride,
-            PermissionName.AquiferizeContent
+            PermissionName.AquiferizeContent,
+            PermissionName.ReviewContent
         }.AsReadOnly();
 }
 
