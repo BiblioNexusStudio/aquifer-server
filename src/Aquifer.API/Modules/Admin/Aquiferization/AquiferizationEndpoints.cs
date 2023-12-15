@@ -16,8 +16,8 @@ public static class AquiferizationEndpoints
         ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken)
     {
-        (var mostRecentContentVersion, string badRequestResponse) =
-            await GetResourceContentVersionValidation(contentId,
+        (var mostRecentContentVersion, _, string badRequestResponse) =
+            await GetResourceContentVersionsValidation(contentId,
                 postBody.AssignedUserId,
                 true,
                 dbContext,
@@ -32,6 +32,7 @@ public static class AquiferizationEndpoints
             contentId,
             postBody.AssignedUserId,
             mostRecentContentVersion,
+            false,
             claimsPrincipal,
             cancellationToken);
 
@@ -44,8 +45,8 @@ public static class AquiferizationEndpoints
         ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken)
     {
-        (var mostRecentResourceContentVersion, string badRequestResponse) =
-            await GetResourceContentVersionValidation(contentId,
+        (var mostRecentResourceContentVersion, var currentlyPublishedVersion, string badRequestResponse) =
+            await GetResourceContentVersionsValidation(contentId,
                 postBody.AssignedUserId,
                 postBody.CreateDraft,
                 dbContext,
@@ -56,11 +57,33 @@ public static class AquiferizationEndpoints
             return TypedResults.BadRequest(badRequestResponse);
         }
 
+        string providerId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ProviderId == providerId, cancellationToken) ??
+            throw new ArgumentNullException();
+
+        // If there is currently a published version, then unpublish so this new one can become published
+        if (currentlyPublishedVersion is not null && currentlyPublishedVersion.Id != mostRecentResourceContentVersion.Id)
+        {
+            currentlyPublishedVersion.IsPublished = false;
+        }
+
         mostRecentResourceContentVersion.IsDraft = false;
         mostRecentResourceContentVersion.IsPublished = true;
         mostRecentResourceContentVersion.Updated = DateTime.UtcNow;
-        mostRecentResourceContentVersion.AssignedUserId = null;
-        //dbContext.ResourceContentVersions.Update(mostRecentResourceContentVersion);
+
+        if (mostRecentResourceContentVersion.AssignedUserId is not null)
+        {
+            mostRecentResourceContentVersion.AssignedUserId = null;
+            var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
+            {
+                ResourceContentVersion = mostRecentResourceContentVersion,
+                AssignedUserId = null,
+                ChangedByUserId = user.Id,
+                Created = DateTime.UtcNow
+            };
+            dbContext.ResourceContentVersionAssignedUserHistory.Add(resourceContentVersionAssignedUserHistory);
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         if (postBody.CreateDraft)
@@ -70,19 +93,17 @@ public static class AquiferizationEndpoints
                 contentId,
                 postBody.AssignedUserId,
                 mostRecentResourceContentVersion,
+                true,
                 claimsPrincipal,
                 cancellationToken);
         }
         else
         {
-            string providerId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
-            var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ProviderId == providerId, cancellationToken) ??
-                       throw new ArgumentNullException();
-
             var resourceContent =
                 await dbContext.ResourceContents.FirstOrDefaultAsync(x => x.Id == contentId, cancellationToken) ??
                 throw new ArgumentNullException();
             resourceContent.Status = ResourceContentStatus.Complete;
+            resourceContent.Updated = DateTime.UtcNow;
 
             var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
             {
@@ -136,6 +157,7 @@ public static class AquiferizationEndpoints
                 throw new ArgumentNullException();
 
             resourceContent.Status = ResourceContentStatus.New;
+            resourceContent.Updated = DateTime.UtcNow;
 
             // Insert into ResourceContentVersionStatusHistory with published version id, status, and the user id who made the request
             string providerId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
@@ -159,6 +181,7 @@ public static class AquiferizationEndpoints
         int contentId,
         int? assignedUserId,
         ResourceContentVersionEntity mostRecentResourceContentVersion,
+        bool resourceContentIsUpdating,
         ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken)
     {
@@ -206,6 +229,10 @@ public static class AquiferizationEndpoints
             await dbContext.ResourceContents.FindAsync(contentId, cancellationToken) ??
             throw new ArgumentNullException();
         resourceContent.Status = ResourceContentStatus.AquiferizeInProgress;
+        if (resourceContentIsUpdating)
+        {
+            resourceContent.Updated = DateTime.UtcNow;
+        }
         //await dbContext.SaveChangesAsync(cancellationToken);
 
         // Insert into ResourceContentVersionStatusHistory with the new version id, status, and the user id who made the request
@@ -309,7 +336,7 @@ public static class AquiferizationEndpoints
         return TypedResults.BadRequest("Unable to change status of resource content");
     }
 
-    private static async Task<(ResourceContentVersionEntity?, string)> GetResourceContentVersionValidation(
+    private static async Task<(ResourceContentVersionEntity?, ResourceContentVersionEntity?, string)> GetResourceContentVersionsValidation(
         int contentId,
         int? assignedUserId,
         bool shouldCreateDraft,
@@ -326,7 +353,7 @@ public static class AquiferizationEndpoints
 
         if (hasResourceContentDraft)
         {
-            return (null, "This resource is already being aquiferized.");
+            return (null, null, "This resource is already being aquiferized.");
         }
 
         // Check that if AssignedUserId was passed, it is a valid id in the Users table. If not, return a 400.
@@ -337,7 +364,7 @@ public static class AquiferizationEndpoints
 
             if (!isAssignedUserIdValid)
             {
-                return (null, "The AssignedUserId was not valid.");
+                return (null, null, "The AssignedUserId was not valid.");
             }
         }
 
@@ -347,9 +374,11 @@ public static class AquiferizationEndpoints
 
         if (mostRecentResourceContentVersion is null)
         {
-            return (null, "There is no ResourceContentVersion with the given contentId.");
+            return (null, null, "There is no ResourceContentVersion with the given contentId.");
         }
 
-        return (mostRecentResourceContentVersion, string.Empty);
+        var currentlyPublishedVersion = resourceContentVersions.SingleOrDefault(x => x.IsPublished);
+
+        return (mostRecentResourceContentVersion, currentlyPublishedVersion, string.Empty);
     }
 }

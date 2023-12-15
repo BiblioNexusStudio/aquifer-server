@@ -61,6 +61,7 @@ public static class GetResourceContentSummaryEndpoints
         var resourceContentVersion = await dbContext.ResourceContentVersions
             .Where(x => x.ResourceContentId == resourceContentId)
             .OrderBy(x => x.IsDraft ? 0 : x.IsPublished ? 1 : 2) // TODO: make request specific to draft vs published. for now, return the draft first if it exists
+            .OrderByDescending(x => x.Version)
             .Include(x => x.AssignedUser).FirstOrDefaultAsync(cancellationToken);
 
         if (resourceContentVersion is null)
