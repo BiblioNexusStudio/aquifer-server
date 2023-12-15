@@ -11,7 +11,7 @@ public class UsersModule : IModule
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         var adminGroup = endpoints.MapGroup("admin/users").WithTags("Users (Admin)");
-        adminGroup.MapGet("/", GetAllUsers).RequireAuthorization(PermissionName.Read);
+        adminGroup.MapGet("/", GetAllUsers).RequireAuthorization(PermissionName.ReadUsers);
         adminGroup.MapGet("/self", GetCurrentUser).RequireAuthorization();
 
         return endpoints;

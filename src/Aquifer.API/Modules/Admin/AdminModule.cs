@@ -10,11 +10,11 @@ public class AdminModule : IModule
     {
         var group = endpoints.MapGroup("admin");
         group.MapPost("resources/content/{contentId:int}/aquiferize", AquiferizationEndpoints.Aquiferize)
-            .RequireAuthorization(PermissionName.Aquiferize);
+            .RequireAuthorization(PermissionName.AquiferizeContent);
         group.MapPost("resources/content/{contentId:int}/publish", AquiferizationEndpoints.Publish)
-            .RequireAuthorization(PermissionName.Publish);
+            .RequireAuthorization(PermissionName.PublishContent);
         group.MapPost("resources/content/{contentId:int}/unpublish", AquiferizationEndpoints.UnPublish)
-            .RequireAuthorization(PermissionName.Publish);        
+            .RequireAuthorization(PermissionName.PublishContent);
         group.MapPost("resources/content/{contentId:int}/assign-editor", AssignmentEndpoints.AssignEditor)
             .RequireAuthorization([PermissionName.AssignOverride, PermissionName.AssignContent]);
 
