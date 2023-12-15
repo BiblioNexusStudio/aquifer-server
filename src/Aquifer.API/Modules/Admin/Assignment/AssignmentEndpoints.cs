@@ -47,11 +47,6 @@ public class AssignmentEndpoints
         var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ProviderId == providerId, cancellationToken) ??
                    throw new ArgumentNullException();
 
-        if (user.Id == postBody.AssignedUserId)
-        {
-            return TypedResults.BadRequest("Cannot assign to self");
-        }
-
         // get the most recent draft resource content version from the list
         var mostRecentResourceContentVersion = resourceContentVersions
             .Where(rvc => rvc.IsDraft)
@@ -70,14 +65,18 @@ public class AssignmentEndpoints
         // if the user has the assign override permission, then assign the resource to the given user
         if (claimsPrincipalHasAssignOverridePermission)
         {
-            mostRecentResourceContentVersion.AssignedUserId = postBody.AssignedUserId;
-            mostRecentResourceContentVersion.Updated = DateTime.UtcNow;
-            wasUserAssigned = true;
+            if (mostRecentResourceContentVersion.AssignedUserId != postBody.AssignedUserId)
+            {
+                mostRecentResourceContentVersion.AssignedUserId = postBody.AssignedUserId;
+                mostRecentResourceContentVersion.Updated = DateTime.UtcNow;
+                wasUserAssigned = true;
+            }
         }
         else
         {
             // if the user is the author of the resource, then assign the resource to the given user
-            if (mostRecentResourceContentVersion.AssignedUserId == user.Id)
+            if (mostRecentResourceContentVersion.AssignedUserId == user.Id &&
+                mostRecentResourceContentVersion.AssignedUserId != postBody.AssignedUserId)
             {
                 mostRecentResourceContentVersion.AssignedUserId = postBody.AssignedUserId;
                 mostRecentResourceContentVersion.Updated = DateTime.UtcNow;
@@ -104,7 +103,18 @@ public class AssignmentEndpoints
                 return TypedResults.BadRequest("Resource contents not found");
             }
 
-            resourceContent.Status = ResourceContentStatus.AquiferizeInProgress;
+            if (resourceContent.Status != ResourceContentStatus.AquiferizeInProgress)
+            {
+                resourceContent.Status = ResourceContentStatus.AquiferizeInProgress;
+                var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
+                {
+                    ResourceContentVersionId = mostRecentResourceContentVersion.Id,
+                    Status = ResourceContentStatus.AquiferizeInProgress,
+                    ChangedByUserId = user.Id,
+                    Created = DateTime.UtcNow
+                };
+                dbContext.ResourceContentVersionStatusHistory.Add(resourceContentVersionStatusHistory);
+            }
 
             await dbContext.SaveChangesAsync(cancellationToken);
 
