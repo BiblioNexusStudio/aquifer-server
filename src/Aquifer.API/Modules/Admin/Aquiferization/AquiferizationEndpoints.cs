@@ -1,3 +1,4 @@
+using Aquifer.API.Common;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -218,6 +219,94 @@ public static class AquiferizationEndpoints
         };
         dbContext.ResourceContentVersionStatusHistory.Add(resourceContentVersionStatusHistory);
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public static async Task<Results<Ok<string>, BadRequest<string>>> SendReview(
+        AquiferDbContext dbContext,
+        int contentId,
+        ClaimsPrincipal claimsPrincipal,
+        CancellationToken cancellationToken)
+    {
+        //At a high level, this endpoint should take a draft resource in AquiferizationInProgress and change its status to AquiferizationPendingReview
+
+        bool statusChanged = false;
+
+        // get all the resource content versions from database
+        var resourceContentVersions = await dbContext.ResourceContentVersions
+            .Where(rcv => rcv.ResourceContentId == contentId)
+            .ToListAsync(cancellationToken);
+
+        var mostRecentResourceContentVersionForReview = resourceContentVersions
+            .Where(rvc => rvc.IsDraft)
+            .MaxBy(rcv => rcv.Version);
+
+        // get ResourceContent of given contentId
+        var resourceContent =
+            await dbContext.ResourceContents.FindAsync(contentId, cancellationToken) ??
+            throw new ArgumentNullException();
+
+        // null check and status check. If status is not AquiferizeInProgress, return a 400.
+        if (mostRecentResourceContentVersionForReview is null ||
+            resourceContent.Status != ResourceContentStatus.AquiferizeInProgress)
+        {
+            return TypedResults.BadRequest("Resource content not found or not in draft status");
+        }
+
+        // get the user from the claims principal
+        string providerId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ProviderId == providerId, cancellationToken) ??
+                   throw new ArgumentNullException();
+
+        // check to see if claimsPrincipal user has send-review:override permissions
+        bool claimsPrincipalHasSendReviewOverridePermission =
+            claimsPrincipal.HasClaim(c =>
+                c.Type == Constants.PermissionsClaim && c.Value == PermissionName.SendReviewOverride);
+
+        // if the user has the send-review:override permission, change the status of the resource content to AquiferizePendingReview
+        if (claimsPrincipalHasSendReviewOverridePermission)
+        {
+            resourceContent.Status = ResourceContentStatus.AquiferizeReviewPending;
+            mostRecentResourceContentVersionForReview.AssignedUserId = null;
+            statusChanged = true;
+        }
+        else
+        {
+            // if the user does not have the send-review:override permission, check to see if the user is assigned to the resource
+            if (user.Id == mostRecentResourceContentVersionForReview.AssignedUserId)
+            {
+                resourceContent.Status = ResourceContentStatus.AquiferizeReviewPending;
+                mostRecentResourceContentVersionForReview.AssignedUserId = null;
+                statusChanged = true;
+            }
+        }
+
+        // if the status was changed, then update the resource content version status history and user history tables
+        if (statusChanged)
+        {
+            var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
+            {
+                ResourceContentVersionId = mostRecentResourceContentVersionForReview.Id,
+                Status = ResourceContentStatus.AquiferizeReviewPending,
+                ChangedByUserId = user.Id,
+                Created = DateTime.UtcNow
+            };
+            dbContext.ResourceContentVersionStatusHistory.Add(resourceContentVersionStatusHistory);
+
+            // update user history
+            var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
+            {
+                ResourceContentVersionId = mostRecentResourceContentVersionForReview.Id,
+                AssignedUserId = null,
+                ChangedByUserId = user.Id,
+                Created = DateTime.UtcNow
+            };
+            dbContext.ResourceContentVersionAssignedUserHistory.Add(resourceContentVersionAssignedUserHistory);
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return TypedResults.Ok("Success");
+        }
+
+        return TypedResults.BadRequest("Unable to change status of resource content");
     }
 
     private static async Task<(ResourceContentVersionEntity?, string)> GetResourceContentVersionValidation(

@@ -23,7 +23,9 @@ public static class Constants
             PermissionName.PublishContent,
             PermissionName.AssignContent,
             PermissionName.AssignOverride,
-            PermissionName.AquiferizeContent
+            PermissionName.AquiferizeContent,
+            PermissionName.SendReviewContent,
+            PermissionName.SendReviewOverride
         }.AsReadOnly();
 }
 
@@ -34,5 +36,7 @@ public static class PermissionName
         PublishContent = "publish:content",
         AquiferizeContent = "aquiferize:content",
         AssignContent = "assign:content",
-        AssignOverride = "assign:override";
+        AssignOverride = "assign:override",
+        SendReviewContent = "send-review:content",
+        SendReviewOverride = "send-review:override";
 }
