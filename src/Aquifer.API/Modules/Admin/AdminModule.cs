@@ -12,7 +12,8 @@ public class AdminModule : IModule
             .RequireAuthorization(PermissionName.Aquiferize);
         group.MapPost("resources/content/{contentId:int}/publish", AquiferizationEndpoints.Publish)
             .RequireAuthorization(PermissionName.Publish);
-
+        group.MapPost("resources/content/{contentId:int}/unpublish", AquiferizationEndpoints.UnPublish)
+            .RequireAuthorization(PermissionName.Publish);
         return endpoints;
     }
 }
