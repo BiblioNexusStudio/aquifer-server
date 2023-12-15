@@ -19,7 +19,6 @@ public class UpdateResourcesSummaryEndpoints
         var entity = await dbContext.ResourceContentVersions
             .Where(x => x.IsDraft)
             .Where(x => x.ResourceContentId == resourceContentId)
-            .Include(x => x.ResourceContent.Resource)
             .SingleOrDefaultAsync(cancellationToken);
         if (entity is null)
         {
@@ -38,7 +37,6 @@ public class UpdateResourcesSummaryEndpoints
         entity.Content = JsonUtilities.DefaultSerialize(item.Content);
         entity.DisplayName = item.DisplayName;
         entity.ContentSize = Encoding.UTF8.GetByteCount(entity.Content);
-        entity.ResourceContent.Updated = DateTime.UtcNow;
         entity.Updated = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
