@@ -210,5 +210,4 @@ public static class GetResourcesSummaryEndpoints
         public DateTime Date { get; set; }
         public int ResourceCount { get; set; }
     }
-
 }
