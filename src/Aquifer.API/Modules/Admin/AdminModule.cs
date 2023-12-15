@@ -1,6 +1,7 @@
 using Aquifer.API.Common;
 using Aquifer.API.Modules.Admin.Aquiferization;
 using Aquifer.API.Modules.Admin.Assignment;
+using Aquifer.API.Modules.Admin.ResourceReview;
 
 namespace Aquifer.API.Modules.Admin;
 
@@ -17,6 +18,7 @@ public class AdminModule : IModule
             .RequireAuthorization(PermissionName.PublishContent);
         group.MapPost("resources/content/{contentId:int}/assign-editor", AssignmentEndpoints.AssignEditor)
             .RequireAuthorization([PermissionName.AssignOverride, PermissionName.AssignContent]);
+        group.MapPost("resources/content/{contentId:int}/review", ResourceReviewEndpoints.Review).RequireAuthorization(PermissionName.ReviewContent);
 
         return endpoints;
     }

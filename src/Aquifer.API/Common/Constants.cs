@@ -34,5 +34,6 @@ public static class PermissionName
         PublishContent = "publish:content",
         AquiferizeContent = "aquiferize:content",
         AssignContent = "assign:content",
-        AssignOverride = "assign:override";
+        AssignOverride = "assign:override",
+        ReviewContent = "review:content";
 }
