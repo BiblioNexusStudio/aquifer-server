@@ -11,11 +11,7 @@ public static class Constants
 
     // this represents the media types that we default to English for
     public static readonly ReadOnlyCollection<ResourceContentMediaType> FallbackToEnglishForMediaTypes =
-        new List<ResourceContentMediaType>
-            {
-                ResourceContentMediaType.Image,
-                ResourceContentMediaType.Video
-            }
+        new List<ResourceContentMediaType> { ResourceContentMediaType.Image, ResourceContentMediaType.Video }
             .AsReadOnly();
 }
 
@@ -24,5 +20,8 @@ public static class PermissionName
     public const string Read = "read",
         Write = "write",
         Publish = "publish",
-        Aquiferize = "aquiferize";
+        Aquiferize = "aquiferize",
+        AssignContent = "assign:content",
+        AssignOverride = "assign:override",
+        Permissions = "permissions";
 }
