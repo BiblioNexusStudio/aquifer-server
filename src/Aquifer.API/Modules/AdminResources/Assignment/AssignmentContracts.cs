@@ -1,4 +1,4 @@
-namespace Aquifer.API.Modules.Admin.Assignment;
+namespace Aquifer.API.Modules.AdminResources.Assignment;
 
 public class AssignEditorRequest
 {

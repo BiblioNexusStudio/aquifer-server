@@ -1,12 +1,12 @@
 using Aquifer.API.Common;
+using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
-namespace Aquifer.API.Modules.Admin.Assignment;
+namespace Aquifer.API.Modules.AdminResources.Assignment;
 
 public class AssignmentEndpoints
 {
@@ -14,26 +14,21 @@ public class AssignmentEndpoints
         int contentId,
         [FromBody] AssignEditorRequest postBody,
         AquiferDbContext dbContext,
-        ClaimsPrincipal claimsPrincipal,
+        IUserService userService,
         CancellationToken cancellationToken)
     {
         //At a high level, this endpoint should take a draft resource and assign the given user to it and set the status to AquiferizeInProgress
         // using the content id, get all the resource content versions from database
 
-        // wasUserAssigned bool
-        bool wasUserAssigned = false;
-
         var resourceContentVersions = await dbContext.ResourceContentVersions
             .Where(rcv => rcv.ResourceContentId == contentId)
             .ToListAsync(cancellationToken);
 
-        // if the resource content count is 0, then return a bad request
         if (resourceContentVersions.Count == 0)
         {
             return TypedResults.BadRequest("Resource content not found");
         }
 
-        // Check the AssignedUserId is a valid id in the Users table and that it is different than the current AssignedUserId for the version. If not, return a 400.
         bool isAssignedUserValid = await dbContext.Users
             .AnyAsync(u => u.Id == postBody.AssignedUserId, cancellationToken);
 
@@ -42,12 +37,8 @@ public class AssignmentEndpoints
             return TypedResults.BadRequest("Assigned user not found");
         }
 
-        // get the requesting user from User table using the provider id from the claims principal
-        string providerId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
-        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ProviderId == providerId, cancellationToken) ??
-                   throw new ArgumentNullException();
+        var user = await userService.GetUserFromJwtAsync(cancellationToken);
 
-        // get the most recent draft resource content version from the list
         var mostRecentResourceContentVersion = resourceContentVersions
             .Where(rvc => rvc.IsDraft)
             .MaxBy(rcv => rcv.Version);
@@ -57,31 +48,16 @@ public class AssignmentEndpoints
             return TypedResults.BadRequest("Resource content not found or not in draft status");
         }
 
-        // check to see if claimsPrincipal user has override permissions
-        bool claimsPrincipalHasAssignOverridePermission =
-            claimsPrincipal.HasClaim(c =>
-                c.Type == Constants.PermissionsClaim && c.Value == PermissionName.AssignOverride);
+        bool claimsPrincipalHasAssignOverridePermission = userService.HasClaim(PermissionName.AssignOverride);
+        bool wasUserAssigned = false;
 
-        // if the user has the assign override permission, then assign the resource to the given user
-        if (claimsPrincipalHasAssignOverridePermission)
+        if ((claimsPrincipalHasAssignOverridePermission ||
+             mostRecentResourceContentVersion.AssignedUserId == user.Id) &&
+            mostRecentResourceContentVersion.AssignedUserId != postBody.AssignedUserId)
         {
-            if (mostRecentResourceContentVersion.AssignedUserId != postBody.AssignedUserId)
-            {
-                mostRecentResourceContentVersion.AssignedUserId = postBody.AssignedUserId;
-                mostRecentResourceContentVersion.Updated = DateTime.UtcNow;
-                wasUserAssigned = true;
-            }
-        }
-        else
-        {
-            // if the user is the author of the resource, then assign the resource to the given user
-            if (mostRecentResourceContentVersion.AssignedUserId == user.Id &&
-                mostRecentResourceContentVersion.AssignedUserId != postBody.AssignedUserId)
-            {
-                mostRecentResourceContentVersion.AssignedUserId = postBody.AssignedUserId;
-                mostRecentResourceContentVersion.Updated = DateTime.UtcNow;
-                wasUserAssigned = true;
-            }
+            mostRecentResourceContentVersion.AssignedUserId = postBody.AssignedUserId;
+            mostRecentResourceContentVersion.Updated = DateTime.UtcNow;
+            wasUserAssigned = true;
         }
 
         if (wasUserAssigned)

@@ -23,6 +23,7 @@ builder.Services
     {
         options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
     })
+    .AddScoped<IUserService, UserService>()
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 

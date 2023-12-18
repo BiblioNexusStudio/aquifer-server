@@ -1,8 +1,8 @@
 using Aquifer.API.Common;
+using Aquifer.API.Services;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace Aquifer.API.Modules.Users;
 
@@ -30,18 +30,11 @@ public class UsersModule : IModule
     }
 
     private async Task<Results<Ok<CurrentUserResponse>, NotFound>> GetCurrentUser(AquiferDbContext dbContext,
-        ClaimsPrincipal claimsPrincipal,
+        IUserService userService,
         CancellationToken cancellationToken)
     {
-        string? providerId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ProviderId == providerId, cancellationToken);
-
-        if (user == null)
-        {
-            return TypedResults.NotFound();
-        }
-
-        var permissions = claimsPrincipal.FindAll("permissions").Select(c => c.Value).ToList();
+        var user = await userService.GetUserFromJwtAsync(cancellationToken);
+        var permissions = userService.GetAllPermissions();
 
         return TypedResults.Ok(new CurrentUserResponse
         {

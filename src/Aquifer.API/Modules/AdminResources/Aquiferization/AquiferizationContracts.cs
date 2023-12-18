@@ -1,4 +1,4 @@
-namespace Aquifer.API.Modules.Admin.Aquiferization;
+namespace Aquifer.API.Modules.AdminResources.Aquiferization;
 
 public class AquiferizationRequest
 {
