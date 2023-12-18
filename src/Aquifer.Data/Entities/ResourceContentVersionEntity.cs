@@ -36,6 +36,10 @@ public class ResourceContentVersionEntityConfiguration : IEntityTypeConfiguratio
             .ToTable(b => b.HasCheckConstraint("CK_ResourceContentVersions_IsPublishedOrIsDraftNotBoth", "IsPublished = 0 OR IsDraft = 0"));
 
         builder
+            .HasIndex(x => new { x.ResourceContentId, x.Version })
+            .IsUnique();
+
+        builder
             .HasIndex(x => x.ResourceContentId)
             .HasFilter($"{nameof(ResourceContentVersionEntity.IsDraft)} = 1")
             .HasDatabaseName("IX_ResourceContentVersions_ResourceContentId_IsDraft")
