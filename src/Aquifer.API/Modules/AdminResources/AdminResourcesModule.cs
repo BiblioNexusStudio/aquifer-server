@@ -9,7 +9,7 @@ using Aquifer.API.Modules.AdminResources.ResourcesSummary;
 
 namespace Aquifer.API.Modules.AdminResources;
 
-public class AdminModule : IModule
+public class AdminResourcesModule : IModule
 {
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
@@ -21,13 +21,13 @@ public class AdminModule : IModule
         group.MapPost("content/{contentId:int}/publish", AquiferizationEndpoints.Publish)
             .RequireAuthorization(PermissionName.PublishContent);
 
-        group.MapPost("content/{contentId:int}/unpublish", AquiferizationEndpoints.UnPublish)
+        group.MapPost("content/{contentId:int}/unpublish", AquiferizationEndpoints.Unpublish)
             .RequireAuthorization(PermissionName.PublishContent);
 
         group.MapPost("content/{contentId:int}/assign-editor", AssignmentEndpoints.AssignEditor)
             .RequireAuthorization([PermissionName.AssignOverride, PermissionName.AssignContent]);
 
-        group.MapPost("content/{contentId:int}/send-review", AquiferizationEndpoints.SendReview)
+        group.MapPost("content/{contentId:int}/send-review", ResourceReviewEndpoints.SendToReview)
             .RequireAuthorization([PermissionName.SendReviewOverride, PermissionName.SendReviewContent]);
 
         group.MapPost("content/{contentId:int}/review", ResourceReviewEndpoints.Review)
@@ -51,5 +51,10 @@ public class AdminModule : IModule
         group.MapGet("list/count", ResourcesListEndpoints.GetCount).RequireAuthorization();
 
         return endpoints;
+    }
+
+    public IServiceCollection RegisterModule(IServiceCollection services)
+    {
+        return services.AddScoped<IAdminResourceHistoryService, AdminResourceHistoryService>();
     }
 }

@@ -37,8 +37,6 @@ public class AssignmentEndpoints
             return TypedResults.BadRequest("Assigned user not found");
         }
 
-        var user = await userService.GetUserFromJwtAsync(cancellationToken);
-
         var mostRecentResourceContentVersion = resourceContentVersions
             .Where(rvc => rvc.IsDraft)
             .MaxBy(rcv => rcv.Version);
@@ -51,6 +49,7 @@ public class AssignmentEndpoints
         bool claimsPrincipalHasAssignOverridePermission = userService.HasClaim(PermissionName.AssignOverride);
         bool wasUserAssigned = false;
 
+        var user = await userService.GetUserFromJwtAsync(cancellationToken);
         if ((claimsPrincipalHasAssignOverridePermission ||
              mostRecentResourceContentVersion.AssignedUserId == user.Id) &&
             mostRecentResourceContentVersion.AssignedUserId != postBody.AssignedUserId)

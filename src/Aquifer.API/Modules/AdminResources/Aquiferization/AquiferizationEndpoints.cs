@@ -1,4 +1,3 @@
-using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -10,22 +9,31 @@ namespace Aquifer.API.Modules.AdminResources.Aquiferization;
 
 public static class AquiferizationEndpoints
 {
-    public static async Task<Results<Ok<string>, BadRequest<string>>> Aquiferize(int contentId,
+    public static async Task<Results<Ok, BadRequest<string>>> Aquiferize(int contentId,
         [FromBody] AquiferizationRequest postBody,
         AquiferDbContext dbContext,
+        IAdminResourceHistoryService historyService,
         IUserService userService,
         CancellationToken cancellationToken)
     {
-        (var mostRecentContentVersion, _, string badRequestResponse) =
-            await GetResourceContentVersionsValidation(contentId,
-                postBody.AssignedUserId,
-                true,
+        if (await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, cancellationToken))
+        {
+            return TypedResults.BadRequest(AdminResourcesHelpers.InvalidUserIdResponse);
+        }
+
+        var (mostRecentContentVersion, _, currentDraftVersion) =
+            await AdminResourcesHelpers.GetResourceContentVersions(contentId,
                 dbContext,
                 cancellationToken);
 
         if (mostRecentContentVersion is null)
         {
-            return TypedResults.BadRequest(badRequestResponse);
+            return TypedResults.BadRequest(AdminResourcesHelpers.NoResourceFoundForContentIdResponse);
+        }
+
+        if (currentDraftVersion is not null)
+        {
+            return TypedResults.BadRequest(AdminResourcesHelpers.DraftAlreadyExistsResponse);
         }
 
         await CreateNewDraft(dbContext,
@@ -34,56 +42,58 @@ public static class AquiferizationEndpoints
             mostRecentContentVersion,
             false,
             userService,
+            null,
+            historyService,
             cancellationToken);
 
-        return TypedResults.Ok("Success");
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return TypedResults.Ok();
     }
 
-    public static async Task<Results<Ok<string>, BadRequest<string>>> Publish(int contentId,
+    public static async Task<Results<Ok, BadRequest<string>>> Publish(int contentId,
         [FromBody] PublishRequest postBody,
         AquiferDbContext dbContext,
+        IAdminResourceHistoryService historyService,
         IUserService userService,
         CancellationToken cancellationToken)
     {
-        (var mostRecentResourceContentVersion, var currentlyPublishedVersion, string badRequestResponse) =
-            await GetResourceContentVersionsValidation(contentId,
-                postBody.AssignedUserId,
-                postBody.CreateDraft,
+        if (await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, cancellationToken))
+        {
+            return TypedResults.BadRequest(AdminResourcesHelpers.InvalidUserIdResponse);
+        }
+
+        var (mostRecentContentVersion, currentlyPublishedVersion, currentDraftVersion) =
+            await AdminResourcesHelpers.GetResourceContentVersions(contentId,
                 dbContext,
                 cancellationToken);
 
-        if (mostRecentResourceContentVersion is null)
+        if (mostRecentContentVersion is null)
         {
-            return TypedResults.BadRequest(badRequestResponse);
+            return TypedResults.BadRequest(AdminResourcesHelpers.NoResourceFoundForContentIdResponse);
         }
 
-        var user = await userService.GetUserFromJwtAsync(cancellationToken);
+        if (postBody.CreateDraft && currentDraftVersion is not null)
+        {
+            return TypedResults.BadRequest(AdminResourcesHelpers.DraftAlreadyExistsResponse);
+        }
 
         // If there is currently a published version, then unpublish so this new one can become published
         if (currentlyPublishedVersion is not null &&
-            currentlyPublishedVersion.Id != mostRecentResourceContentVersion.Id)
+            currentlyPublishedVersion.Id != mostRecentContentVersion.Id)
         {
             currentlyPublishedVersion.IsPublished = false;
         }
 
-        mostRecentResourceContentVersion.IsDraft = false;
-        mostRecentResourceContentVersion.IsPublished = true;
-        mostRecentResourceContentVersion.Updated = DateTime.UtcNow;
+        mostRecentContentVersion.IsDraft = false;
+        mostRecentContentVersion.IsPublished = true;
+        mostRecentContentVersion.Updated = DateTime.UtcNow;
 
-        if (mostRecentResourceContentVersion.AssignedUserId is not null)
+        var user = await userService.GetUserFromJwtAsync(cancellationToken);
+        if (mostRecentContentVersion.AssignedUserId is not null)
         {
-            mostRecentResourceContentVersion.AssignedUserId = null;
-            var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
-            {
-                ResourceContentVersion = mostRecentResourceContentVersion,
-                AssignedUserId = null,
-                ChangedByUserId = user.Id,
-                Created = DateTime.UtcNow
-            };
-            dbContext.ResourceContentVersionAssignedUserHistory.Add(resourceContentVersionAssignedUserHistory);
+            mostRecentContentVersion.AssignedUserId = null;
+            await historyService.AddAssignedUserHistoryAsync(mostRecentContentVersion, null, user.Id);
         }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
 
         if (postBody.CreateDraft)
         {
@@ -91,9 +101,11 @@ public static class AquiferizationEndpoints
             await CreateNewDraft(dbContext,
                 contentId,
                 postBody.AssignedUserId,
-                mostRecentResourceContentVersion,
+                mostRecentContentVersion,
                 true,
                 userService,
+                user,
+                historyService,
                 cancellationToken);
         }
         else
@@ -104,53 +116,42 @@ public static class AquiferizationEndpoints
             resourceContent.Status = ResourceContentStatus.Complete;
             resourceContent.Updated = DateTime.UtcNow;
 
-            var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
-            {
-                ResourceContentVersionId = mostRecentResourceContentVersion.Id,
-                Status = ResourceContentStatus.Complete,
-                ChangedByUserId = user.Id,
-                Created = DateTime.UtcNow
-            };
-            dbContext.ResourceContentVersionStatusHistory.Add(resourceContentVersionStatusHistory);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await historyService.AddStatusHistoryAsync(mostRecentContentVersion.Id,
+                ResourceContentStatus.Complete,
+                user.Id);
         }
 
-        // return a 200
-        return TypedResults.Ok("Success");
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return TypedResults.Ok();
     }
 
-    public static async Task<Results<Ok<string>, BadRequest<string>>> UnPublish(
+    public static async Task<Results<Ok, BadRequest<string>>> Unpublish(
         int contentId,
         AquiferDbContext dbContext,
+        IAdminResourceHistoryService historyService,
         IUserService userService,
         CancellationToken cancellationToken)
     {
-        //First check that a ResourceContentVersion exists with the given contentId and IsPublished = 1. If none does, return a 400.
-        var resourceContentVersions = await dbContext.ResourceContentVersions
-            .Where(x => x.ResourceContentId == contentId).ToListAsync(cancellationToken);
+        var (mostRecentResourceContentVersion, currentlyPublishedVersion, currentDraftVersion) =
+            await AdminResourcesHelpers.GetResourceContentVersions(contentId,
+                dbContext,
+                cancellationToken);
 
-        if (resourceContentVersions.Count == 0)
+        if (mostRecentResourceContentVersion is null)
         {
-            return TypedResults.BadRequest("There are no Resources with the given contentId.");
+            return TypedResults.BadRequest(AdminResourcesHelpers.NoResourceFoundForContentIdResponse);
         }
 
-        // find the published resource Content Version using resourceContentVersions
-        var publishedResourceContentVersion = resourceContentVersions.Find(rcv => rcv.IsPublished);
-
-        if (publishedResourceContentVersion is null)
+        if (currentlyPublishedVersion is null)
         {
             return TypedResults.BadRequest("There is no published ResourceContentVersion with the given contentId.");
         }
 
-        // set the published ResourceContentVersion.IsPublished = 0
-        publishedResourceContentVersion.IsPublished = false;
-        publishedResourceContentVersion.Updated = DateTime.UtcNow;
+        currentlyPublishedVersion.IsPublished = false;
+        currentlyPublishedVersion.Updated = DateTime.UtcNow;
 
-        // If there is a draft existing for the contentId, then we're done
-        var draftResourceContentVersion = resourceContentVersions.Find(rcv => rcv.IsDraft);
-        if (draftResourceContentVersion is null)
+        if (currentDraftVersion is null)
         {
-            // If there is not a draft existing for the contentId, then set the ResourceContent.Status to New
             var resourceContent =
                 await dbContext.ResourceContents.FindAsync(contentId, cancellationToken) ??
                 throw new ArgumentNullException();
@@ -158,20 +159,14 @@ public static class AquiferizationEndpoints
             resourceContent.Status = ResourceContentStatus.New;
             resourceContent.Updated = DateTime.UtcNow;
 
-            // Insert into ResourceContentVersionStatusHistory with published version id, status, and the user id who made the request
             var user = await userService.GetUserFromJwtAsync(cancellationToken);
-            var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
-            {
-                ResourceContentVersionId = publishedResourceContentVersion.Id,
-                Status = ResourceContentStatus.New,
-                ChangedByUserId = user.Id,
-                Created = DateTime.UtcNow
-            };
-            dbContext.ResourceContentVersionStatusHistory.Add(resourceContentVersionStatusHistory);
+            await historyService.AddStatusHistoryAsync(currentlyPublishedVersion.Id,
+                ResourceContentStatus.New,
+                user.Id);
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        return TypedResults.Ok("Success");
+        return TypedResults.Ok();
     }
 
     private static async Task CreateNewDraft(AquiferDbContext dbContext,
@@ -180,6 +175,8 @@ public static class AquiferizationEndpoints
         ResourceContentVersionEntity mostRecentResourceContentVersion,
         bool resourceContentIsUpdating,
         IUserService userService,
+        UserEntity? user,
+        IAdminResourceHistoryService historyService,
         CancellationToken cancellationToken)
     {
         // Create a duplicate of the most recent ResourceContentVersion with the given contentId, incrementing the Version and setting IsDraft = 1.
@@ -197,169 +194,26 @@ public static class AquiferizationEndpoints
             Updated = DateTime.UtcNow
         };
 
-        // Save the new ResourceContentVersion to the database.
         dbContext.ResourceContentVersions.Add(newResourceContentVersion);
-        // await dbContext.SaveChangesAsync(cancellationToken);
 
-        // get requester user info
-        var user = await userService.GetUserFromJwtAsync(cancellationToken);
-
+        user ??= await userService.GetUserFromJwtAsync(cancellationToken);
         if (assignedUserId is not null)
         {
-            // Insert into ResourceContentVersionAssignedUserHistory with the appropriate version id, the assigned user id, and the user id who made the request
-            var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
-            {
-                //ResourceContentVersionId = newResourceContentVersion.Id,
-                ResourceContentVersion = newResourceContentVersion,
-                AssignedUserId = assignedUserId,
-                ChangedByUserId = user.Id,
-                Created = DateTime.UtcNow
-            };
-            dbContext.ResourceContentVersionAssignedUserHistory.Add(resourceContentVersionAssignedUserHistory);
-            //await dbContext.SaveChangesAsync(cancellationToken);
+            await historyService.AddAssignedUserHistoryAsync(newResourceContentVersion, assignedUserId, user.Id);
         }
 
-        // Set the ResourceContent.Status to AquiferizeInProgress
         var resourceContent =
             await dbContext.ResourceContents.FindAsync(contentId, cancellationToken) ??
             throw new ArgumentNullException();
+
         resourceContent.Status = ResourceContentStatus.AquiferizeInProgress;
         if (resourceContentIsUpdating)
         {
             resourceContent.Updated = DateTime.UtcNow;
         }
-        //await dbContext.SaveChangesAsync(cancellationToken);
 
-        // Insert into ResourceContentVersionStatusHistory with the new version id, status, and the user id who made the request
-        var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
-        {
-            //ResourceContentVersionId = newResourceContentVersion.Id,
-            ResourceContentVersion = newResourceContentVersion,
-            Status = ResourceContentStatus.AquiferizeInProgress,
-            ChangedByUserId = user.Id,
-            Created = DateTime.UtcNow
-        };
-        dbContext.ResourceContentVersionStatusHistory.Add(resourceContentVersionStatusHistory);
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    public static async Task<Results<Ok<string>, BadRequest<string>>> SendReview(
-        AquiferDbContext dbContext,
-        int contentId,
-        IUserService userService,
-        CancellationToken cancellationToken)
-    {
-        bool statusChanged = false;
-
-        var resourceContentVersions = await dbContext.ResourceContentVersions
-            .Where(rcv => rcv.ResourceContentId == contentId)
-            .ToListAsync(cancellationToken);
-
-        var mostRecentResourceContentVersionForReview = resourceContentVersions
-            .Where(rvc => rvc.IsDraft)
-            .MaxBy(rcv => rcv.Version);
-
-        var resourceContent =
-            await dbContext.ResourceContents.FindAsync(contentId, cancellationToken) ??
-            throw new ArgumentNullException();
-
-        if (mostRecentResourceContentVersionForReview is null ||
-            resourceContent.Status != ResourceContentStatus.AquiferizeInProgress)
-        {
-            return TypedResults.BadRequest("Resource content not found or not in draft status");
-        }
-
-        var user = userService.GetUserFromJwtAsync(cancellationToken);
-        bool claimsPrincipalHasSendReviewOverridePermission = userService.HasClaim(PermissionName.SendReviewOverride);
-
-        if (claimsPrincipalHasSendReviewOverridePermission)
-        {
-            resourceContent.Status = ResourceContentStatus.AquiferizeReviewPending;
-            mostRecentResourceContentVersionForReview.AssignedUserId = null;
-            statusChanged = true;
-        }
-        else
-        {
-            if (user.Id == mostRecentResourceContentVersionForReview.AssignedUserId)
-            {
-                resourceContent.Status = ResourceContentStatus.AquiferizeReviewPending;
-                mostRecentResourceContentVersionForReview.AssignedUserId = null;
-                statusChanged = true;
-            }
-        }
-
-        // if the status was changed, then update the resource content version status history and user history tables
-        if (statusChanged)
-        {
-            var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
-            {
-                ResourceContentVersionId = mostRecentResourceContentVersionForReview.Id,
-                Status = ResourceContentStatus.AquiferizeReviewPending,
-                ChangedByUserId = user.Id,
-                Created = DateTime.UtcNow
-            };
-            dbContext.ResourceContentVersionStatusHistory.Add(resourceContentVersionStatusHistory);
-
-            var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
-            {
-                ResourceContentVersionId = mostRecentResourceContentVersionForReview.Id,
-                AssignedUserId = null,
-                ChangedByUserId = user.Id,
-                Created = DateTime.UtcNow
-            };
-            dbContext.ResourceContentVersionAssignedUserHistory.Add(resourceContentVersionAssignedUserHistory);
-
-            await dbContext.SaveChangesAsync(cancellationToken);
-            return TypedResults.Ok("Success");
-        }
-
-        return TypedResults.BadRequest("Unable to change status of resource content");
-    }
-
-    private static async Task<(ResourceContentVersionEntity?, ResourceContentVersionEntity?, string)>
-        GetResourceContentVersionsValidation(
-            int contentId,
-            int? assignedUserId,
-            bool shouldCreateDraft,
-            AquiferDbContext dbContext,
-            CancellationToken cancellationToken)
-    {
-        var resourceContentVersions = await dbContext.ResourceContentVersions
-            .Where(x => x.ResourceContentId == contentId).ToListAsync(cancellationToken);
-
-        // First check that NO ResourceContentVersion exists with the given contentId and IsDraft = 1. If one does, return a 400.
-        bool hasResourceContentDraft = shouldCreateDraft &&
-                                       resourceContentVersions
-                                           .Any(x => x.ResourceContentId == contentId && x.IsDraft);
-
-        if (hasResourceContentDraft)
-        {
-            return (null, null, "This resource is already being aquiferized.");
-        }
-
-        // Check that if AssignedUserId was passed, it is a valid id in the Users table. If not, return a 400.
-        if (assignedUserId is not null)
-        {
-            bool isAssignedUserIdValid = await dbContext.Users
-                .FindAsync(assignedUserId, cancellationToken) is not null;
-
-            if (!isAssignedUserIdValid)
-            {
-                return (null, null, "The AssignedUserId was not valid.");
-            }
-        }
-
-        // Grab the most recent ResourceContentVersion with the given contentId and create a new row duplicating its information (not the timestamps), and incrementing the Version and setting IsDraft = 1.
-        var mostRecentResourceContentVersion = resourceContentVersions
-            .Where(x => x.ResourceContentId == contentId).MaxBy(x => x.Version);
-
-        if (mostRecentResourceContentVersion is null)
-        {
-            return (null, null, "There is no ResourceContentVersion with the given contentId.");
-        }
-
-        var currentlyPublishedVersion = resourceContentVersions.SingleOrDefault(x => x.IsPublished);
-
-        return (mostRecentResourceContentVersion, currentlyPublishedVersion, string.Empty);
+        await historyService.AddStatusHistoryAsync(newResourceContentVersion,
+            ResourceContentStatus.AquiferizeInProgress,
+            user.Id);
     }
 }

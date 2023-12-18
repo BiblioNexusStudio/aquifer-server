@@ -11,6 +11,7 @@ public interface IUserService
     Task<UserEntity> GetUserFromJwtAsync(CancellationToken cancellationToken);
     List<string> GetAllPermissions();
     bool HasClaim(string permission);
+    Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken);
 }
 
 public class UserService(AquiferDbContext _dbContext, IHttpContextAccessor _httpContextAccessor) : IUserService
@@ -32,5 +33,10 @@ public class UserService(AquiferDbContext _dbContext, IHttpContextAccessor _http
         return _httpContextAccessor.HttpContext?.User.HasClaim(c =>
                    c.Type == Constants.PermissionsClaim && c.Value == permission) ??
                false;
+    }
+
+    public async Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken)
+    {
+        return userId is null || await _dbContext.Users.FindAsync(userId, cancellationToken) is not null;
     }
 }
