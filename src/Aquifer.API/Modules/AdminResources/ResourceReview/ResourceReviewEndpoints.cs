@@ -48,24 +48,14 @@ public static class ResourceReviewEndpoints
         AquiferDbContext dbContext,
         int contentId,
         IUserService userService,
+        IAdminResourceHistoryService historyService,
         CancellationToken cancellationToken)
     {
-        bool statusChanged = false;
+        var draftVersion = await dbContext.ResourceContentVersions
+            .Where(x => x.ResourceContentId == contentId && x.IsDraft).Include(x => x.ResourceContent)
+            .SingleOrDefaultAsync(cancellationToken);
 
-        var resourceContentVersions = await dbContext.ResourceContentVersions
-            .Where(rcv => rcv.ResourceContentId == contentId)
-            .ToListAsync(cancellationToken);
-
-        var mostRecentResourceContentVersionForReview = resourceContentVersions
-            .Where(rvc => rvc.IsDraft)
-            .MaxBy(rcv => rcv.Version);
-
-        var resourceContent =
-            await dbContext.ResourceContents.FindAsync(contentId, cancellationToken) ??
-            throw new ArgumentNullException();
-
-        if (mostRecentResourceContentVersionForReview is null ||
-            resourceContent.Status != ResourceContentStatus.AquiferizeInProgress)
+        if (draftVersion is null || draftVersion.ResourceContent.Status != ResourceContentStatus.AquiferizeInProgress)
         {
             return TypedResults.BadRequest("Resource content not found or not in draft status");
         }
@@ -73,73 +63,20 @@ public static class ResourceReviewEndpoints
         var user = userService.GetUserFromJwtAsync(cancellationToken);
         bool claimsPrincipalHasSendReviewOverridePermission = userService.HasClaim(PermissionName.SendReviewOverride);
 
-        if (claimsPrincipalHasSendReviewOverridePermission)
+        if (!claimsPrincipalHasSendReviewOverridePermission && user.Id != draftVersion.AssignedUserId)
         {
-            resourceContent.Status = ResourceContentStatus.AquiferizeReviewPending;
-            mostRecentResourceContentVersionForReview.AssignedUserId = null;
-            statusChanged = true;
-        }
-        else
-        {
-            if (user.Id == mostRecentResourceContentVersionForReview.AssignedUserId)
-            {
-                resourceContent.Status = ResourceContentStatus.AquiferizeReviewPending;
-                mostRecentResourceContentVersionForReview.AssignedUserId = null;
-                statusChanged = true;
-            }
+            return TypedResults.BadRequest("Unable to change status of resource content");
         }
 
-        // if the status was changed, then update the resource content version status history and user history tables
-        if (statusChanged)
-        {
-            var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
-            {
-                ResourceContentVersionId = mostRecentResourceContentVersionForReview.Id,
-                Status = ResourceContentStatus.AquiferizeReviewPending,
-                ChangedByUserId = user.Id,
-                Created = DateTime.UtcNow
-            };
-            dbContext.ResourceContentVersionStatusHistory.Add(resourceContentVersionStatusHistory);
+        draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeReviewPending;
+        draftVersion.AssignedUserId = null;
 
-            var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
-            {
-                ResourceContentVersionId = mostRecentResourceContentVersionForReview.Id,
-                AssignedUserId = null,
-                ChangedByUserId = user.Id,
-                Created = DateTime.UtcNow
-            };
-            dbContext.ResourceContentVersionAssignedUserHistory.Add(resourceContentVersionAssignedUserHistory);
+        await historyService.AddAssignedUserHistoryAsync(draftVersion.Id, null, user.Id);
+        await historyService.AddStatusHistoryAsync(draftVersion.Id,
+            ResourceContentStatus.AquiferizeReviewPending,
+            user.Id);
 
-            await dbContext.SaveChangesAsync(cancellationToken);
-            return TypedResults.Ok();
-        }
-
-        return TypedResults.BadRequest("Unable to change status of resource content");
-    }
-
-    private static async Task<(ResourceContentVersionEntity?, ResourceContentEntity?, string)>
-        GetResourceContentVersionValidation(
-            int contentId,
-            AquiferDbContext dbContext,
-            CancellationToken cancellationToken)
-    {
-        var resourceContentVersionDraft = await dbContext.ResourceContentVersions
-            .Where(x => x.ResourceContentId == contentId && x.IsDraft == true).SingleOrDefaultAsync(cancellationToken);
-
-        if (resourceContentVersionDraft == null)
-        {
-            return (null, null, "This resource does not have a draft");
-        }
-
-        var resourceContent =
-            await dbContext.ResourceContents.FirstOrDefaultAsync(x => x.Id == contentId, cancellationToken) ??
-            throw new ArgumentNullException();
-
-        if (resourceContent.Status != ResourceContentStatus.AquiferizeReviewPending)
-        {
-            return (null, null, "This resource is not in AquiferizeReviewPending status");
-        }
-
-        return (resourceContentVersionDraft, resourceContent, string.Empty);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return TypedResults.Ok();
     }
 }

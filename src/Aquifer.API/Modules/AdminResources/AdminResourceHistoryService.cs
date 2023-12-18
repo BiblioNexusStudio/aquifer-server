@@ -14,6 +14,10 @@ public interface IAdminResourceHistoryService
     Task AddStatusHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
         ResourceContentStatus status,
         int changedByUserId);
+
+    Task AddAssignedUserHistoryAsync(int resourceContentVersionId,
+        int? assignedUserId,
+        int changedByUserId);
 }
 
 public class AdminResourceHistoryService(AquiferDbContext _dbContext) : IAdminResourceHistoryService
@@ -55,6 +59,21 @@ public class AdminResourceHistoryService(AquiferDbContext _dbContext) : IAdminRe
         var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
         {
             ResourceContentVersion = contentVersionEntity,
+            AssignedUserId = assignedUserId,
+            ChangedByUserId = changedByUserId,
+            Created = DateTime.UtcNow
+        };
+
+        await _dbContext.ResourceContentVersionAssignedUserHistory.AddAsync(resourceContentVersionAssignedUserHistory);
+    }
+
+    public async Task AddAssignedUserHistoryAsync(int resourceContentVersionId,
+        int? assignedUserId,
+        int changedByUserId)
+    {
+        var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
+        {
+            ResourceContentVersionId = resourceContentVersionId,
             AssignedUserId = assignedUserId,
             ChangedByUserId = changedByUserId,
             Created = DateTime.UtcNow
