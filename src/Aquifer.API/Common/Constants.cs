@@ -5,19 +5,17 @@ namespace Aquifer.API.Common;
 
 public static class Constants
 {
+    public const string PermissionsClaim = "permissions";
+
     // this represents the resource types that we allow to be accessed as the starting point when viewing content
-    public static readonly ReadOnlyCollection<string> RootParentResourceNames =
-        new List<string> { "CBBTER" }.AsReadOnly();
+    public static readonly ReadOnlyCollection<string> RootParentResourceNames = new(["CBBTER"]);
 
     // this represents the media types that we default to English for
     public static readonly ReadOnlyCollection<ResourceContentMediaType> FallbackToEnglishForMediaTypes =
-        new List<ResourceContentMediaType> { ResourceContentMediaType.Image, ResourceContentMediaType.Video }
-            .AsReadOnly();
-
-    public const string PermissionsClaim = "permissions";
+        new([ResourceContentMediaType.Image, ResourceContentMediaType.Video]);
 
     public static readonly ReadOnlyCollection<string> AllPermissions =
-        new List<string> {
+        new([
             PermissionName.ReadUsers,
             PermissionName.EditContent,
             PermissionName.PublishContent,
@@ -27,7 +25,7 @@ public static class Constants
             PermissionName.SendReviewContent,
             PermissionName.SendReviewOverride,
             PermissionName.ReviewContent
-        }.AsReadOnly();
+        ]);
 }
 
 public static class PermissionName
