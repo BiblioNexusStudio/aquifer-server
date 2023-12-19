@@ -24,7 +24,7 @@ public class UserService(AquiferDbContext _dbContext, IHttpContextAccessor _http
 
     public List<string> GetAllPermissions()
     {
-        return _httpContextAccessor.HttpContext?.User.FindAll("permissions").Select(c => c.Value).ToList() ??
+        return _httpContextAccessor.HttpContext?.User.FindAll(Constants.PermissionsClaim).Select(c => c.Value).ToList() ??
                new List<string>();
     }
 

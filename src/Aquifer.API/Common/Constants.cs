@@ -14,7 +14,7 @@ public static class Constants
         new List<ResourceContentMediaType> { ResourceContentMediaType.Image, ResourceContentMediaType.Video }
             .AsReadOnly();
 
-    public static readonly string PermissionsClaim = "permissions";
+    public const string PermissionsClaim = "permissions";
 
     public static readonly ReadOnlyCollection<string> AllPermissions =
         new List<string> {
