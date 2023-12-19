@@ -1,4 +1,3 @@
-using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -10,92 +9,53 @@ namespace Aquifer.API.Modules.AdminResources.Assignment;
 
 public class AssignmentEndpoints
 {
-    public static async Task<Results<Ok<string>, BadRequest<string>>> AssignEditor(
+    public static async Task<Results<Ok, BadRequest<string>>> AssignEditor(
         int contentId,
         [FromBody] AssignEditorRequest postBody,
         AquiferDbContext dbContext,
         IUserService userService,
+        IAdminResourceHistoryService historyService,
         CancellationToken cancellationToken)
     {
         //At a high level, this endpoint should take a draft resource and assign the given user to it and set the status to AquiferizeInProgress
         // using the content id, get all the resource content versions from database
 
-        var resourceContentVersions = await dbContext.ResourceContentVersions
-            .Where(rcv => rcv.ResourceContentId == contentId)
-            .ToListAsync(cancellationToken);
+        var draftVersion = await dbContext.ResourceContentVersions
+            .Where(rcv => rcv.ResourceContentId == contentId && rcv.IsDraft).Include(rcv => rcv.ResourceContent)
+            .SingleOrDefaultAsync(cancellationToken);
 
-        if (resourceContentVersions.Count == 0)
+        if (draftVersion?.ResourceContent is null)
         {
-            return TypedResults.BadRequest("Resource content not found");
+            return TypedResults.BadRequest("Resource content not found or not in draft status");
         }
 
-        bool isAssignedUserValid = await dbContext.Users
-            .AnyAsync(u => u.Id == postBody.AssignedUserId, cancellationToken);
-
+        bool isAssignedUserValid =
+            await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, cancellationToken);
         if (!isAssignedUserValid)
         {
             return TypedResults.BadRequest("Assigned user not found");
         }
 
-        var mostRecentResourceContentVersion = resourceContentVersions
-            .Where(rvc => rvc.IsDraft)
-            .MaxBy(rcv => rcv.Version);
-
-        if (mostRecentResourceContentVersion is null)
-        {
-            return TypedResults.BadRequest("Resource content not found or not in draft status");
-        }
-
-        bool claimsPrincipalHasAssignOverridePermission = userService.HasClaim(PermissionName.AssignOverride);
-        bool wasUserAssigned = false;
-
         var user = await userService.GetUserFromJwtAsync(cancellationToken);
-        if ((claimsPrincipalHasAssignOverridePermission ||
-             mostRecentResourceContentVersion.AssignedUserId == user.Id) &&
-            mostRecentResourceContentVersion.AssignedUserId != postBody.AssignedUserId)
+        if (draftVersion.AssignedUserId != user.Id ||
+            draftVersion.AssignedUserId == postBody.AssignedUserId)
         {
-            mostRecentResourceContentVersion.AssignedUserId = postBody.AssignedUserId;
-            mostRecentResourceContentVersion.Updated = DateTime.UtcNow;
-            wasUserAssigned = true;
+            return TypedResults.BadRequest("Unable to assign user");
         }
 
-        if (wasUserAssigned)
+        draftVersion.AssignedUserId = postBody.AssignedUserId;
+        draftVersion.Updated = DateTime.UtcNow;
+
+        await historyService.AddAssignedUserHistoryAsync(draftVersion.Id, postBody.AssignedUserId, user.Id);
+        if (draftVersion.ResourceContent.Status != ResourceContentStatus.AquiferizeInProgress)
         {
-            var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
-            {
-                ResourceContentVersionId = mostRecentResourceContentVersion.Id,
-                AssignedUserId = postBody.AssignedUserId,
-                ChangedByUserId = user.Id,
-                Created = DateTime.UtcNow
-            };
-            dbContext.ResourceContentVersionAssignedUserHistory.Add(resourceContentVersionAssignedUserHistory);
-
-            var resourceContent = await dbContext.ResourceContents
-                .FirstOrDefaultAsync(rc => rc.Id == contentId, cancellationToken);
-
-            if (resourceContent is null)
-            {
-                return TypedResults.BadRequest("Resource contents not found");
-            }
-
-            if (resourceContent.Status != ResourceContentStatus.AquiferizeInProgress)
-            {
-                resourceContent.Status = ResourceContentStatus.AquiferizeInProgress;
-                var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
-                {
-                    ResourceContentVersionId = mostRecentResourceContentVersion.Id,
-                    Status = ResourceContentStatus.AquiferizeInProgress,
-                    ChangedByUserId = user.Id,
-                    Created = DateTime.UtcNow
-                };
-                dbContext.ResourceContentVersionStatusHistory.Add(resourceContentVersionStatusHistory);
-            }
-
-            await dbContext.SaveChangesAsync(cancellationToken);
-
-            return TypedResults.Ok("Success");
+            draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeInProgress;
+            await historyService.AddStatusHistoryAsync(draftVersion.Id,
+                ResourceContentStatus.AquiferizeInProgress,
+                user.Id);
         }
 
-        return TypedResults.BadRequest("Unable to assign user");
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return TypedResults.Ok();
     }
 }

@@ -1,12 +1,5 @@
 namespace Aquifer.API.Modules.AdminResources.Aquiferization;
 
-public class AquiferizationRequest
-{
-    public int? AssignedUserId { get; set; }
-}
+public record AquiferizationRequest(int? AssignedUserId);
 
-public class PublishRequest
-{
-    public bool CreateDraft { get; set; } = false;
-    public int? AssignedUserId { get; set; }
-}
+public record PublishRequest(int? AssignedUserId, bool CreateDraft = false);
