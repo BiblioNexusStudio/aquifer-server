@@ -33,22 +33,23 @@ public class AdminResourcesModule : IModule
         group.MapPost("content/{contentId:int}/review", ResourceReviewEndpoints.Review)
             .RequireAuthorization(PermissionName.ReviewContent);
 
+        // could add RequireAuthorization() with no policy on these to force a JWT for at least readonly.
         group.MapGet("summary", GetResourcesSummaryEndpoints.Get)
-            .CacheOutput(x => x.Expire(TimeSpan.FromHours(1))).RequireAuthorization();
+            .CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
 
         group.MapGet("content/summary/{resourceContentId:int}",
-            GetResourceContentSummaryEndpoints.GetByResourceContentId).RequireAuthorization();
+            GetResourceContentSummaryEndpoints.GetByResourceContentId);
 
         group.MapPut("content/summary/{resourceContentId:int}",
                 UpdateResourcesSummaryEndpoints.UpdateResourceContentSummaryItem)
             .RequireAuthorization(PermissionName.EditContent);
 
         group.MapGet("content/statuses", ResourceContentStatusEndpoints.GetList)
-            .CacheOutput(x => x.Expire(TimeSpan.FromHours(1))).RequireAuthorization();
+            .CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
 
-        group.MapGet("list", ResourcesListEndpoints.Get).RequireAuthorization();
+        group.MapGet("list", ResourcesListEndpoints.Get);
 
-        group.MapGet("list/count", ResourcesListEndpoints.GetCount).RequireAuthorization();
+        group.MapGet("list/count", ResourcesListEndpoints.GetCount);
 
         return endpoints;
     }
