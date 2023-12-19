@@ -9,8 +9,8 @@ namespace Aquifer.API.Services;
 public interface IUserService
 {
     Task<UserEntity> GetUserFromJwtAsync(CancellationToken cancellationToken);
-    List<string> GetAllPermissions();
-    bool HasClaim(string permission);
+    List<string> GetAllJwtPermissions();
+    bool HasJwtClaim(string permission);
     Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken);
 }
 
@@ -22,14 +22,14 @@ public class UserService(AquiferDbContext _dbContext, IHttpContextAccessor _http
         return await _dbContext.Users.SingleAsync(u => u.ProviderId == providerId, cancellationToken);
     }
 
-    public List<string> GetAllPermissions()
+    public List<string> GetAllJwtPermissions()
     {
         return _httpContextAccessor.HttpContext?.User.FindAll(Constants.PermissionsClaim).Select(c => c.Value)
                    .ToList() ??
                new List<string>();
     }
 
-    public bool HasClaim(string permission)
+    public bool HasJwtClaim(string permission)
     {
         return _httpContextAccessor.HttpContext?.User.HasClaim(c =>
                    c.Type == Constants.PermissionsClaim && c.Value == permission) ??

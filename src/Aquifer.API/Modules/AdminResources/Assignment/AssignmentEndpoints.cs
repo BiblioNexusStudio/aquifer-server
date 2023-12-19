@@ -36,7 +36,7 @@ public class AssignmentEndpoints
         }
 
         var user = await userService.GetUserFromJwtAsync(cancellationToken);
-        var hasAssignOverridePermission = userService.HasClaim(PermissionName.AssignOverride);
+        var hasAssignOverridePermission = userService.HasJwtClaim(PermissionName.AssignOverride);
         if ((!hasAssignOverridePermission && draftVersion.AssignedUserId != user.Id) ||
             draftVersion.AssignedUserId == postBody.AssignedUserId)
         {

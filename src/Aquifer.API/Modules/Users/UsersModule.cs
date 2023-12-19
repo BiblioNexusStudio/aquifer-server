@@ -34,7 +34,7 @@ public class UsersModule : IModule
         CancellationToken cancellationToken)
     {
         var user = await userService.GetUserFromJwtAsync(cancellationToken);
-        var permissions = userService.GetAllPermissions();
+        var permissions = userService.GetAllJwtPermissions();
 
         return TypedResults.Ok(new CurrentUserResponse
         {
