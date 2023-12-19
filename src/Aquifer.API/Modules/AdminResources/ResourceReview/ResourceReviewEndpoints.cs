@@ -1,4 +1,3 @@
-using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -61,9 +60,7 @@ public static class ResourceReviewEndpoints
         }
 
         var user = userService.GetUserFromJwtAsync(cancellationToken);
-        bool claimsPrincipalHasSendReviewOverridePermission = userService.HasClaim(PermissionName.SendReviewOverride);
-
-        if (!claimsPrincipalHasSendReviewOverridePermission && user.Id != draftVersion.AssignedUserId)
+        if (user.Id != draftVersion.AssignedUserId)
         {
             return TypedResults.BadRequest("Unable to change status of resource content");
         }

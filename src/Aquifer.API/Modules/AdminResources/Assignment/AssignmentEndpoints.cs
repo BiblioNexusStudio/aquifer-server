@@ -1,3 +1,4 @@
+using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -35,7 +36,8 @@ public class AssignmentEndpoints
         }
 
         var user = await userService.GetUserFromJwtAsync(cancellationToken);
-        if (draftVersion.AssignedUserId != user.Id ||
+        var hasAssignOverridePermission = userService.HasClaim(PermissionName.AssignOverride);
+        if ((!hasAssignOverridePermission && draftVersion.AssignedUserId != user.Id) ||
             draftVersion.AssignedUserId == postBody.AssignedUserId)
         {
             return TypedResults.BadRequest("Unable to assign user");

@@ -28,7 +28,7 @@ public class AdminResourcesModule : IModule
             .RequireAuthorization([PermissionName.AssignOverride, PermissionName.AssignContent]);
 
         group.MapPost("content/{contentId:int}/send-review", ResourceReviewEndpoints.SendToReview)
-            .RequireAuthorization([PermissionName.SendReviewOverride, PermissionName.SendReviewContent]);
+            .RequireAuthorization(PermissionName.SendReviewContent);
 
         group.MapPost("content/{contentId:int}/review", ResourceReviewEndpoints.Review)
             .RequireAuthorization(PermissionName.ReviewContent);
