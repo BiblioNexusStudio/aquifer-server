@@ -35,3 +35,8 @@ app.UseOutputCache();
 app.UseHealthChecks("/_health");
 app.MapEndpoints();
 app.Run();
+
+// This allows the test to access program.cs
+public partial class Program
+{
+}
