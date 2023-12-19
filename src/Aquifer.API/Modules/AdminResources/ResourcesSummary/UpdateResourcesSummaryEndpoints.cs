@@ -26,7 +26,7 @@ public class UpdateResourcesSummaryEndpoints
             return TypedResults.NotFound();
         }
 
-        var user = userService.GetUserFromJwtAsync(cancellationToken);
+        var user = await userService.GetUserFromJwtAsync(cancellationToken);
 
         if (user.Id != entity.AssignedUserId)
         {

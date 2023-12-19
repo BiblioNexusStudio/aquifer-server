@@ -28,7 +28,7 @@ public static class ResourceReviewEndpoints
             return TypedResults.BadRequest(AdminResourcesHelpers.NotInReviewPendingResponse);
         }
 
-        var user = userService.GetUserFromJwtAsync(cancellationToken);
+        var user = await userService.GetUserFromJwtAsync(cancellationToken);
 
         contentVersionDraft.Updated = DateTime.UtcNow;
         contentVersionDraft.AssignedUserId = user.Id;
@@ -59,7 +59,7 @@ public static class ResourceReviewEndpoints
             return TypedResults.BadRequest("Resource content not found or not in draft status");
         }
 
-        var user = userService.GetUserFromJwtAsync(cancellationToken);
+        var user = await userService.GetUserFromJwtAsync(cancellationToken);
         if (user.Id != draftVersion.AssignedUserId)
         {
             return TypedResults.BadRequest("Unable to change status of resource content");
