@@ -16,7 +16,7 @@ public static class AquiferizationEndpoints
         IUserService userService,
         CancellationToken cancellationToken)
     {
-        if (await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, cancellationToken))
+        if (!await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, cancellationToken))
         {
             return TypedResults.BadRequest(AdminResourcesHelpers.InvalidUserIdResponse);
         }
@@ -57,7 +57,7 @@ public static class AquiferizationEndpoints
         IUserService userService,
         CancellationToken cancellationToken)
     {
-        if (await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, cancellationToken))
+        if (!await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, cancellationToken))
         {
             return TypedResults.BadRequest(AdminResourcesHelpers.InvalidUserIdResponse);
         }

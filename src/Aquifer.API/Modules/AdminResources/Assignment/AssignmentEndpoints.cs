@@ -29,9 +29,7 @@ public class AssignmentEndpoints
             return TypedResults.BadRequest("Resource content not found or not in draft status");
         }
 
-        bool isAssignedUserValid =
-            await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, cancellationToken);
-        if (!isAssignedUserValid)
+        if (!await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, cancellationToken))
         {
             return TypedResults.BadRequest("Assigned user not found");
         }
