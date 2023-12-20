@@ -1,19 +1,20 @@
-using Aquifer.API.Common;
+using Aquifer.API.Modules.AdminResources.ResourceContentSummary;
+using Aquifer.API.Services;
 using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using System.Text;
 
-namespace Aquifer.API.Modules.Resources.ResourceContentSummary;
+namespace Aquifer.API.Modules.AdminResources.ResourcesSummary;
 
 public class UpdateResourcesSummaryEndpoints
 {
-    public static async Task<Results<NoContent, BadRequest<string>, NotFound>> UpdateResourceContentSummaryItem(int resourceContentId,
+    public static async Task<Results<NoContent, BadRequest<string>, NotFound>> UpdateResourceContentSummaryItem(
+        int resourceContentId,
         ResourceContentSummaryItemUpdate item,
         AquiferDbContext dbContext,
-        ClaimsPrincipal claimsPrincipal,
+        IUserService userService,
         CancellationToken cancellationToken)
     {
         var entity = await dbContext.ResourceContentVersions
@@ -25,9 +26,7 @@ public class UpdateResourcesSummaryEndpoints
             return TypedResults.NotFound();
         }
 
-        string providerId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
-        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.ProviderId == providerId, cancellationToken) ??
-            throw new ArgumentNullException();
+        var user = await userService.GetUserFromJwtAsync(cancellationToken);
 
         if (user.Id != entity.AssignedUserId)
         {

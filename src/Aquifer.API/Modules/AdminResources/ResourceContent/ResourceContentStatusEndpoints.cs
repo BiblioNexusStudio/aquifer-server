@@ -2,7 +2,7 @@ using Aquifer.API.Common;
 using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 
-namespace Aquifer.API.Modules.Resources.ResourceContent;
+namespace Aquifer.API.Modules.AdminResources.ResourceContent;
 
 public static class ResourceContentStatusEndpoints
 {

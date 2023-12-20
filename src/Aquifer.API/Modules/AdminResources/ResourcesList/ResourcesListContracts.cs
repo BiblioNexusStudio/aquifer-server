@@ -1,6 +1,6 @@
 using Aquifer.Data.Entities;
 
-namespace Aquifer.API.Modules.Resources.ResourcesList;
+namespace Aquifer.API.Modules.AdminResources.ResourcesList;
 
 public record ResourceListItemResponse
 {
