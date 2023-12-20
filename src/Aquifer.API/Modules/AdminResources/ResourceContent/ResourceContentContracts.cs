@@ -1,6 +1,6 @@
 using Aquifer.Data.Entities;
 
-namespace Aquifer.API.Modules.Resources.ResourceContent;
+namespace Aquifer.API.Modules.AdminResources.ResourceContent;
 
 public class ResourceContentStatusResponse
 {

@@ -2,7 +2,7 @@ using Aquifer.API.Common;
 using Aquifer.API.Utilities;
 using Aquifer.Data.Entities;
 
-namespace Aquifer.API.Modules.Resources.ResourceContentSummary;
+namespace Aquifer.API.Modules.AdminResources.ResourceContentSummary;
 
 public record ResourceContentSummaryById : ResourceContentSummaryDetailsById
 {
@@ -63,7 +63,6 @@ public record ResourceContentSummaryPassageById
     public string EndBook => BookCodes.FullNameFromId(EndTranslatedVerse.BookId);
     public int EndChapter => EndTranslatedVerse.Chapter;
     public int EndVerse => EndTranslatedVerse.Verse;
-
 }
 
 public record ResourceContentSummaryAssignedUser

@@ -2,7 +2,7 @@ using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Modules.Resources.ResourcesSummary;
+namespace Aquifer.API.Modules.AdminResources.ResourcesSummary;
 
 public static class GetResourcesSummaryEndpoints
 {

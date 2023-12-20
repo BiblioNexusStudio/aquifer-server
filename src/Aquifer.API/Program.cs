@@ -3,6 +3,7 @@ using Aquifer.API.Modules;
 using Aquifer.API.Services;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -23,6 +24,13 @@ builder.Services
     {
         options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
     })
+    .AddHttpLogging(logging =>
+    {
+        logging.LoggingFields = HttpLoggingFields.Response;
+        logging.RequestBodyLogLimit = 4096;
+        logging.ResponseBodyLogLimit = 4096;
+    })
+    .AddScoped<IUserService, UserService>()
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 
@@ -33,5 +41,10 @@ app.UseAuth();
 app.UseSwaggerWithUi();
 app.UseOutputCache();
 app.UseHealthChecks("/_health");
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpLogging();
+}
+
 app.MapEndpoints();
 app.Run();

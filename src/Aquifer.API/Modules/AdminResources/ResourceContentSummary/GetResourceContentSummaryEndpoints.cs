@@ -4,7 +4,7 @@ using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Modules.Resources.ResourceContentSummary;
+namespace Aquifer.API.Modules.AdminResources.ResourceContentSummary;
 
 public static class GetResourceContentSummaryEndpoints
 {
@@ -60,7 +60,10 @@ public static class GetResourceContentSummaryEndpoints
 
         var resourceContentVersion = await dbContext.ResourceContentVersions
             .Where(x => x.ResourceContentId == resourceContentId)
-            .OrderBy(x => x.IsDraft ? 0 : x.IsPublished ? 1 : 2) // TODO: make request specific to draft vs published. for now, return the draft first if it exists
+            .OrderBy(x =>
+                x.IsDraft ? 0 :
+                x.IsPublished ? 1 :
+                2) // TODO: make request specific to draft vs published. for now, return the draft first if it exists
             .OrderByDescending(x => x.Version)
             .Include(x => x.AssignedUser).FirstOrDefaultAsync(cancellationToken);
 
