@@ -43,6 +43,11 @@ public class AssignmentEndpoints
             return TypedResults.BadRequest("Unable to assign user");
         }
 
+        if (draftVersion.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview && draftVersion.AssignedUserId != user.Id)
+        {
+            return TypedResults.BadRequest("Must be assigned the in-review content in order to assign to another user");
+        }
+
         draftVersion.AssignedUserId = postBody.AssignedUserId;
         draftVersion.Updated = DateTime.UtcNow;
 
