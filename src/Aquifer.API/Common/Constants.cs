@@ -38,3 +38,8 @@ public static class PermissionName
         ReviewContent = "review:content",
         SendReviewContent = "send-review:content";
 }
+
+public static class KeyVaultSecretName
+{
+    public const string Auth0ClientSecret = "Auth0ClientSecret";
+}
