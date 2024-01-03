@@ -1,7 +1,9 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Modules.Users;
@@ -13,6 +15,7 @@ public class UsersModule : IModule
         var adminGroup = endpoints.MapGroup("admin/users").WithTags("Users (Admin)");
         adminGroup.MapGet("/", GetAllUsers).RequireAuthorization(PermissionName.ReadUsers);
         adminGroup.MapGet("/self", GetCurrentUser).RequireAuthorization();
+        adminGroup.MapPost("/create", CreateUser);
 
         return endpoints;
     }
@@ -22,8 +25,7 @@ public class UsersModule : IModule
     {
         var users = await dbContext.Users.Select(user => new UserResponse
         {
-            Id = user.Id,
-            Name = $"{user.FirstName} {user.LastName}"
+            Id = user.Id, Name = $"{user.FirstName} {user.LastName}"
         }).ToListAsync(cancellationToken);
 
         return TypedResults.Ok(users);
@@ -38,9 +40,22 @@ public class UsersModule : IModule
 
         return TypedResults.Ok(new CurrentUserResponse
         {
-            Id = user.Id,
-            Name = $"{user.FirstName} {user.LastName}",
-            Permissions = permissions
+            Id = user.Id, Name = $"{user.FirstName} {user.LastName}", Permissions = permissions
         });
+    }
+
+    private async Task<Ok> CreateUser(AquiferDbContext dbContext, [FromBody] UserRequest user,
+        IAuthProviderHttpService authProviderService, CancellationToken cancellationToken)
+    {
+        string providerId = await authProviderService.CreateUser(user, cancellationToken);
+
+        await dbContext.Users.AddAsync(
+            new UserEntity
+            {
+                Email = user.Email, FirstName = user.FirstName, LastName = user.LastName, ProviderId = providerId
+            }, cancellationToken);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return TypedResults.Ok();
     }
 }

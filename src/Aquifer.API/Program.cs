@@ -31,6 +31,7 @@ builder.Services
         logging.ResponseBodyLogLimit = 4096;
     })
     .AddScoped<IUserService, UserService>()
+    .AddScoped<IAuthProviderHttpService, AuthProviderHttpService>()
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 
