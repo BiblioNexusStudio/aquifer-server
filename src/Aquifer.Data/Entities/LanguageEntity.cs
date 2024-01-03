@@ -17,3 +17,10 @@ public class LanguageEntity
 
     public ScriptDirection ScriptDirection { get; set; }
 }
+
+public enum ScriptDirection
+{
+    None = 0,
+    LTR = 1,
+    RTL = 2,
+}
