@@ -123,7 +123,7 @@ namespace Aquifer.Data.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("nvarchar(3)");
 
-                    b.Property<int>("direction")
+                    b.Property<int>("ScriptDirection")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

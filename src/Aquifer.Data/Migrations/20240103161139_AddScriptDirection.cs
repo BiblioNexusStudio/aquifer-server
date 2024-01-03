@@ -5,13 +5,13 @@
 namespace Aquifer.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTextDirection : Migration
+    public partial class AddScriptDirection : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<int>(
-                name: "direction",
+                name: "ScriptDirection",
                 table: "Languages",
                 type: "int",
                 nullable: false,
@@ -22,7 +22,7 @@ namespace Aquifer.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "direction",
+                name: "ScriptDirection",
                 table: "Languages");
         }
     }

@@ -15,5 +15,5 @@ public class LanguageEntity
     [MaxLength(255)]
     public string EnglishDisplay { get; set; } = null!;
 
-    public TextDirection direction { get; set; } = TextDirection.Unknown;
+    public ScriptDirection ScriptDirection { get; set; }
 }

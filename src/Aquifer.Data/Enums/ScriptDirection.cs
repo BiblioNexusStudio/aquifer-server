@@ -2,9 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Aquifer.Data.Enums;
 
-public enum TextDirection
+public enum ScriptDirection
 {
-    Unknown = 0,
+    None = 0,
     LTR = 1,
     RTL = 2,
 }

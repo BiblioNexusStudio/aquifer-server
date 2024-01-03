@@ -10,7 +10,7 @@ public class BibleBookContentEntity
     public BookId BookId { get; set; }
     public string DisplayName { get; set; } = null!;
     public string TextUrl { get; set; } = null!;
-    public string? AudioUrls { get; set; } = null; // JSON
+    public string? AudioUrls { get; set; } // JSON
     public int TextSize { get; set; }
     public int AudioSize { get; set; }
     public int ChapterCount { get; set; }

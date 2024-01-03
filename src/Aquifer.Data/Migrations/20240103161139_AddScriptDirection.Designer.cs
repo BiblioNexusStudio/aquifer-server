@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    [Migration("20240103154636_AddTextDirection")]
-    partial class AddTextDirection
+    [Migration("20240103161139_AddScriptDirection")]
+    partial class AddScriptDirection
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -127,7 +127,7 @@ namespace Aquifer.Data.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("nvarchar(3)");
 
-                    b.Property<int>("direction")
+                    b.Property<int>("ScriptDirection")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    [Migration("20240103154838_ChangeAudioUrlsToNullable")]
+    [Migration("20240103161636_ChangeAudioUrlsToNullable")]
     partial class ChangeAudioUrlsToNullable
     {
         /// <inheritdoc />
@@ -126,7 +126,7 @@ namespace Aquifer.Data.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("nvarchar(3)");
 
-                    b.Property<int>("direction")
+                    b.Property<int>("ScriptDirection")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
