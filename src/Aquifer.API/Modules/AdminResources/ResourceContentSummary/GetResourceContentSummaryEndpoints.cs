@@ -50,24 +50,12 @@ public static class GetResourceContentSummaryEndpoints
                     }),
                 VerseReferences =
                     rc.Resource.VerseResources.Select(vr =>
-                        new ResourceContentSummaryVerseById { VerseId = vr.VerseId })
+                        new ResourceContentSummaryVerseById { VerseId = vr.VerseId }),
+                DraftContentValue = rc.Versions.Where(v => v.IsDraft).Select(v => v.Content).SingleOrDefault(),
+                PublishedContentValue = rc.Versions.Where(v => v.IsPublished).Select(v => v.Content).SingleOrDefault()
             }).FirstOrDefaultAsync(cancellationToken);
 
-        if (resourceContent is null)
-        {
-            return TypedResults.NotFound();
-        }
-
-        var resourceContentVersion = await dbContext.ResourceContentVersions
-            .Where(x => x.ResourceContentId == resourceContentId)
-            .OrderBy(x =>
-                x.IsDraft ? 0 :
-                x.IsPublished ? 1 :
-                2) // TODO: make request specific to draft vs published. for now, return the draft first if it exists
-            .OrderByDescending(x => x.Version)
-            .Include(x => x.AssignedUser).FirstOrDefaultAsync(cancellationToken);
-
-        if (resourceContentVersion is null)
+        if (resourceContent?.DraftContentValue is null && resourceContent?.PublishedContentValue is null)
         {
             return TypedResults.NotFound();
         }
