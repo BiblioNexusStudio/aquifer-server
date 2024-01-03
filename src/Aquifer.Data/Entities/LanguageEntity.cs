@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Aquifer.Data.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
@@ -13,4 +14,6 @@ public class LanguageEntity
 
     [MaxLength(255)]
     public string EnglishDisplay { get; set; } = null!;
+
+    public TextDirection direction { get; set; } = TextDirection.Unknown;
 }
