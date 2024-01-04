@@ -1,5 +1,6 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
+using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -18,6 +19,12 @@ public class UsersModule : IModule
         adminGroup.MapPost("/create", CreateUser);
 
         return endpoints;
+    }
+
+    public IServiceCollection RegisterModule(IServiceCollection builder)
+    {
+        builder.AddHttpClient<IAuthProviderHttpService, AuthProviderHttpService>();
+        return builder;
     }
 
     private async Task<Ok<List<UserResponse>>> GetAllUsers(AquiferDbContext dbContext,
@@ -44,21 +51,37 @@ public class UsersModule : IModule
         });
     }
 
-    private async Task<Ok> CreateUser(AquiferDbContext dbContext,
+    private async Task<Results<Created, BadRequest<string>>> CreateUser(AquiferDbContext dbContext,
         [FromBody] UserRequest user,
         IAuthProviderHttpService authProviderService,
         CancellationToken cancellationToken)
     {
-        string providerId = await authProviderService.CreateUser(user, cancellationToken);
+        var tokenResponse = await authProviderService.GetAuth0Token(cancellationToken);
+        var tokenResponseContent = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
+        if (!tokenResponse.IsSuccessStatusCode)
+        {
+            return TypedResults.BadRequest($"Error getting Auth0 token: {tokenResponse.StatusCode} - {tokenResponseContent}");
+        }
+
+        var token = JsonUtilities.DefaultDeserialize<TokenResponse>(tokenResponseContent);
+
+        var createUserResponse = await authProviderService.CreateUser(user, token.AccessToken, cancellationToken);
+        string createUserResponseContent = await createUserResponse.Content.ReadAsStringAsync(cancellationToken);
+        if (!createUserResponse.IsSuccessStatusCode)
+        {
+            return TypedResults.BadRequest("Auth0 threw error on user create");
+        }
+
+        var authUser = JsonUtilities.DefaultDeserialize<CreateUserResponse>(createUserResponseContent);
 
         await dbContext.Users.AddAsync(
             new UserEntity
             {
-                Email = user.Email, FirstName = user.FirstName, LastName = user.LastName, ProviderId = providerId
+                Email = user.Email, FirstName = user.FirstName, LastName = user.LastName, ProviderId = authUser.UserId
             },
             cancellationToken);
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        return TypedResults.Ok();
+        return TypedResults.Created();
     }
 }

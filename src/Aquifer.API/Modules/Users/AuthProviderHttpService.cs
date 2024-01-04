@@ -1,17 +1,18 @@
 using Aquifer.API.Common;
 using Aquifer.API.Configuration;
-using Aquifer.API.Modules.Users;
+using Aquifer.API.Services;
 using Aquifer.API.Utilities;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 
-namespace Aquifer.API.Services;
+namespace Aquifer.API.Modules.Users;
 
 public interface IAuthProviderHttpService
 {
-    Task<string> CreateUser(UserRequest userRequest, CancellationToken cancellationToken);
+    Task<HttpResponseMessage> CreateUser(UserRequest userRequest, string authToken, CancellationToken cancellationToken);
+    Task<HttpResponseMessage> GetAuth0Token(CancellationToken cancellationToken);
 }
 
 public class AuthProviderHttpService : IAuthProviderHttpService
@@ -20,7 +21,8 @@ public class AuthProviderHttpService : IAuthProviderHttpService
     private readonly HttpClient _httpClient;
     private readonly IAzureKeyVaultService _keyVaultService;
 
-    public AuthProviderHttpService(HttpClient httpClient, IOptions<ConfigurationOptions> options,
+    public AuthProviderHttpService(HttpClient httpClient,
+        IOptions<ConfigurationOptions> options,
         IAzureKeyVaultService keyVaultService)
     {
         _keyVaultService = keyVaultService;
@@ -29,16 +31,16 @@ public class AuthProviderHttpService : IAuthProviderHttpService
         _httpClient.BaseAddress = new Uri(_authSettings.BaseUri);
     }
 
-    public async Task<string> CreateUser(UserRequest user, CancellationToken cancellationToken)
+    public async Task<HttpResponseMessage> CreateUser(UserRequest user, string authToken, CancellationToken cancellationToken)
     {
-        string auth0Token = await GetAuth0Token(cancellationToken);
-
         _httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", auth0Token);
+            new AuthenticationHeaderValue("Bearer", authToken);
 
-        var roles = await GetUserRoles(auth0Token, cancellationToken);
+        //_httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"Bearer {authToken}");
 
-        var role = roles.FirstOrDefault(r => r.name == user.Role);
+        var roles = await GetUserRoles(authToken, cancellationToken);
+
+        //var role = roles.FirstOrDefault(r => r.name == user.Role);
 
         var createUserRequest = new CreateUserRequest
         {
@@ -51,29 +53,35 @@ public class AuthProviderHttpService : IAuthProviderHttpService
         var createUserHttpContent =
             new StringContent(createUserJsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
         var createUserResponse = await _httpClient.PostAsync("/api/v2/users", createUserHttpContent, cancellationToken);
-        string createUserResponseContent = await createUserResponse.Content.ReadAsStringAsync(cancellationToken);
-        var createUserResponseObject = JsonUtilities.DefaultDeserialize<CreateUserResponse>(createUserResponseContent);
 
-        await AssignUserToRole(role, createUserResponseObject.UserId, auth0Token,
-            cancellationToken);
+        return createUserResponse;
 
-        return createUserResponseObject.UserId;
+        // string createUserResponseContent = await createUserResponse.Content.ReadAsStringAsync(cancellationToken);
+        // var createUserResponseObject = JsonUtilities.DefaultDeserialize<CreateUserResponse>(createUserResponseContent);
+
+        // await AssignUserToRole(role, createUserResponseObject.UserId, auth0Token,
+        //     cancellationToken);
+        //
+        // return createUserResponseObject.UserId;
     }
 
-    private async Task<List<GetRolesResponse>> GetUserRoles(string auth0Token, CancellationToken cancellationToken)
+    public async Task<HttpResponseMessage> GetUserRoles(string auth0Token, CancellationToken cancellationToken)
     {
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth0Token);
 
         var response = await _httpClient.GetAsync("/api/v2/roles", cancellationToken);
+        return response;
 
-        string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-        var responseObject = JsonUtilities.DefaultDeserialize<List<GetRolesResponse>>(responseContent);
-
-        return responseObject;
+        // string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+        //
+        // var responseObject = JsonUtilities.DefaultDeserialize<List<GetRolesResponse>>(responseContent);
+        //
+        // return responseObject;
     }
 
-    private async Task AssignUserToRole(GetRolesResponse role, string userId, string auth0Token,
+    private async Task AssignUserToRole(GetRolesResponse role,
+        string userId,
+        string auth0Token,
         CancellationToken cancellationToken)
     {
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth0Token);
@@ -83,11 +91,13 @@ public class AuthProviderHttpService : IAuthProviderHttpService
         var requestBody = new PostRoleUsersRequest { users = { userId } };
 
         await _httpClient.PostAsync(postUri,
-            new StringContent(JsonUtilities.DefaultSerialize(requestBody), Encoding.UTF8,
-                MediaTypeNames.Application.Json), cancellationToken);
+            new StringContent(JsonUtilities.DefaultSerialize(requestBody),
+                Encoding.UTF8,
+                MediaTypeNames.Application.Json),
+            cancellationToken);
     }
 
-    private async Task<string> GetAuth0Token(CancellationToken cancellationToken)
+    public async Task<HttpResponseMessage> GetAuth0Token(CancellationToken cancellationToken)
     {
         var tokenRequest = new Auth0TokenRequest
         {
@@ -100,11 +110,6 @@ public class AuthProviderHttpService : IAuthProviderHttpService
         string jsonContent = JsonUtilities.DefaultSerialize(tokenRequest);
         var httpContent = new StringContent(jsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
 
-        var response = await _httpClient.PostAsync("/oauth/token", httpContent, cancellationToken);
-
-        string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-        var responseObject = JsonUtilities.DefaultDeserialize<TokenResponse>(responseContent);
-
-        return responseObject.AccessToken;
+        return await _httpClient.PostAsync("/oauth/token", httpContent, cancellationToken);
     }
 }

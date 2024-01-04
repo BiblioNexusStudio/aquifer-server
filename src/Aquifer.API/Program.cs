@@ -35,8 +35,6 @@ builder.Services
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 
-builder.Services.AddHttpClient<IAuthProviderHttpService, AuthProviderHttpService>();
-
 builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
 
 var app = builder.Build();
