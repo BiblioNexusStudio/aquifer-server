@@ -50,9 +50,11 @@ public static class GetResourceContentSummaryEndpoints
                 VerseReferences =
                     rc.Resource.VerseResources.Select(vr =>
                         new ResourceContentSummaryVerseById { VerseId = vr.VerseId }),
-                DraftVersion =
-                    rc.Versions.Where(v => v.IsDraft).Select(v => new ResourceContentSummaryVersion
+                ContentVersions =
+                    rc.Versions.Where(v => v.IsPublished || v.IsDraft).Select(v => new ResourceContentSummaryVersion
                     {
+                        IsPublished = v.IsPublished,
+                        IsDraft = v.IsDraft,
                         ContentValue = v.Content,
                         ContentSize = v.ContentSize,
                         DisplayName = v.DisplayName,
@@ -64,24 +66,10 @@ public static class GetResourceContentSummaryEndpoints
                                     Id = v.AssignedUser.Id,
                                     Name = $"{v.AssignedUser.FirstName} {v.AssignedUser.LastName}"
                                 }
-                    }).SingleOrDefault(),
-                PublishedVersion = rc.Versions.Where(v => v.IsPublished).Select(v => new ResourceContentSummaryVersion
-                {
-                    ContentValue = v.Content,
-                    ContentSize = v.ContentSize,
-                    DisplayName = v.DisplayName,
-                    AssignedUser =
-                        v.AssignedUser == null
-                            ? null
-                            : new ResourceContentSummaryAssignedUser
-                            {
-                                Id = v.AssignedUser.Id,
-                                Name = $"{v.AssignedUser.FirstName} {v.AssignedUser.LastName}"
-                            }
-                }).SingleOrDefault()
+                    })
             }).FirstOrDefaultAsync(cancellationToken);
 
-        if (resourceContent?.DraftVersion is null && resourceContent?.PublishedVersion is null)
+        if (resourceContent?.ContentVersions.Any() != true)
         {
             return TypedResults.NotFound();
         }

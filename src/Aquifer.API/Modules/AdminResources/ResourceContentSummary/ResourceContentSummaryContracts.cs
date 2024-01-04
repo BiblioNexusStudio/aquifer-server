@@ -15,8 +15,7 @@ public class ResourceContentSummaryById : ResourceContentSummaryDetailsById
     public ResourceContentMediaType MediaType { get; set; }
     public ResourceContentStatus Status { get; set; }
     public string Language { get; set; } = null!;
-    public ResourceContentSummaryVersion? DraftVersion { get; set; }
-    public ResourceContentSummaryVersion? PublishedVersion { get; set; }
+    public IEnumerable<ResourceContentSummaryVersion> ContentVersions { get; set; } = null!;
     public IEnumerable<ResourceContentSummaryContentIdWithLanguageId> OtherLanguageContentIds { get; set; } = null!;
 }
 
@@ -30,6 +29,8 @@ public class ResourceContentSummaryVersion
 
     public object Content => JsonUtilities.DefaultDeserialize(ContentValue);
     public int ContentSize { get; set; }
+    public bool IsDraft { get; set; }
+    public bool IsPublished { get; set; }
 }
 
 public class ResourceContentSummaryDetailsById
