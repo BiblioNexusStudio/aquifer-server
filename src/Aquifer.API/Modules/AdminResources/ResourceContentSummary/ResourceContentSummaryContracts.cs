@@ -11,29 +11,25 @@ public class ResourceContentSummaryById : ResourceContentSummaryDetailsById
     public IEnumerable<ResourceContentSummaryPassageById> PassageReferences { get; set; } = null!;
     public IEnumerable<ResourceContentSummaryAssociatedContentById> AssociatedResources { get; set; } = null!;
     public int ResourceContentId { get; set; }
-    public string DisplayName { get; set; } = null!;
     public bool HasAudio { get; set; }
     public ResourceContentMediaType MediaType { get; set; }
     public ResourceContentStatus Status { get; set; }
-    public int ContentSize { get; set; }
     public string Language { get; set; } = null!;
-    public bool HasPublished { get; set; }
-    public bool HasDraft { get; set; }
+    public ResourceContentSummaryVersion? DraftVersion { get; set; }
+    public ResourceContentSummaryVersion? PublishedVersion { get; set; }
+    public IEnumerable<ResourceContentSummaryContentIdWithLanguageId> OtherLanguageContentIds { get; set; } = null!;
+}
+
+public class ResourceContentSummaryVersion
+{
+    public string DisplayName { get; set; } = null!;
     public ResourceContentSummaryAssignedUser? AssignedUser { get; set; }
 
     [JsonIgnore]
-    public string? DraftContentValue { get; set; }
+    public string ContentValue { get; set; } = null!;
 
-    [JsonIgnore]
-    public string? PublishedContentValue { get; set; }
-
-    public object? DraftContent =>
-        DraftContentValue is null ? null : JsonUtilities.DefaultDeserialize(DraftContentValue);
-
-    public object? PublishedContent =>
-        PublishedContentValue is null ? null : JsonUtilities.DefaultDeserialize(PublishedContentValue);
-
-    public IEnumerable<ResourceContentSummaryContentIdWithLanguageId> OtherLanguageContentIds { get; set; } = null!;
+    public object Content => JsonUtilities.DefaultDeserialize(ContentValue);
+    public int ContentSize { get; set; }
 }
 
 public class ResourceContentSummaryDetailsById

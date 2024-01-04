@@ -1,4 +1,3 @@
-using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -51,28 +50,41 @@ public static class GetResourceContentSummaryEndpoints
                 VerseReferences =
                     rc.Resource.VerseResources.Select(vr =>
                         new ResourceContentSummaryVerseById { VerseId = vr.VerseId }),
-                DraftContentValue = rc.Versions.Where(v => v.IsDraft).Select(v => v.Content).SingleOrDefault(),
-                PublishedContentValue = rc.Versions.Where(v => v.IsPublished).Select(v => v.Content).SingleOrDefault()
+                DraftVersion =
+                    rc.Versions.Where(v => v.IsDraft).Select(v => new ResourceContentSummaryVersion
+                    {
+                        ContentValue = v.Content,
+                        ContentSize = v.ContentSize,
+                        DisplayName = v.DisplayName,
+                        AssignedUser =
+                            v.AssignedUser == null
+                                ? null
+                                : new ResourceContentSummaryAssignedUser
+                                {
+                                    Id = v.AssignedUser.Id,
+                                    Name = $"{v.AssignedUser.FirstName} {v.AssignedUser.LastName}"
+                                }
+                    }).SingleOrDefault(),
+                PublishedVersion = rc.Versions.Where(v => v.IsPublished).Select(v => new ResourceContentSummaryVersion
+                {
+                    ContentValue = v.Content,
+                    ContentSize = v.ContentSize,
+                    DisplayName = v.DisplayName,
+                    AssignedUser =
+                        v.AssignedUser == null
+                            ? null
+                            : new ResourceContentSummaryAssignedUser
+                            {
+                                Id = v.AssignedUser.Id,
+                                Name = $"{v.AssignedUser.FirstName} {v.AssignedUser.LastName}"
+                            }
+                }).SingleOrDefault()
             }).FirstOrDefaultAsync(cancellationToken);
 
-        if (resourceContent?.DraftContentValue is null && resourceContent?.PublishedContentValue is null)
+        if (resourceContent?.DraftVersion is null && resourceContent?.PublishedVersion is null)
         {
             return TypedResults.NotFound();
         }
-
-        resourceContent.DisplayName = resourceContentVersion.DisplayName;
-        resourceContent.IsPublished = resourceContentVersion.IsPublished;
-        resourceContent.AssignedUser =
-            resourceContentVersion.AssignedUser == null
-                ? null
-                : new ResourceContentSummaryAssignedUser
-                {
-                    Id = resourceContentVersion.AssignedUser.Id,
-                    Name =
-                        $"{resourceContentVersion.AssignedUser.FirstName} {resourceContentVersion.AssignedUser.LastName}"
-                };
-        resourceContent.ContentSize = resourceContentVersion.ContentSize;
-        resourceContent.Content = JsonUtilities.DefaultDeserialize(resourceContentVersion.Content);
 
         return TypedResults.Ok(resourceContent);
     }
