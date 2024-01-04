@@ -43,3 +43,9 @@ public static class KeyVaultSecretName
 {
     public const string Auth0ClientSecret = "Auth0ClientSecret";
 }
+
+public static class Auth0Constants
+{
+    public const string ClientCredentials = "client_credentials";
+    public const string Connection = "Username-Password-Authentication";
+}

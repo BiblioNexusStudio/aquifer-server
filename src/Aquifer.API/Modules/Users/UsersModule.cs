@@ -16,15 +16,8 @@ public class UsersModule : IModule
         adminGroup.MapGet("/", GetAllUsers).RequireAuthorization(PermissionName.ReadUsers);
         adminGroup.MapGet("/self", GetCurrentUser).RequireAuthorization();
         adminGroup.MapPost("/create", CreateUser);
-        adminGroup.MapGet("/test", Test);
 
         return endpoints;
-    }
-
-    private async Task<Ok<string>> Test(IAzureKeyVaultService keyVault)
-    {
-        string secret = await keyVault.GetSecretAsync(KeyVaultSecretName.Auth0ClientSecret);
-        return TypedResults.Ok(secret);
     }
 
     private async Task<Ok<List<UserResponse>>> GetAllUsers(AquiferDbContext dbContext,
@@ -32,8 +25,7 @@ public class UsersModule : IModule
     {
         var users = await dbContext.Users.Select(user => new UserResponse
         {
-            Id = user.Id,
-            Name = $"{user.FirstName} {user.LastName}"
+            Id = user.Id, Name = $"{user.FirstName} {user.LastName}"
         }).ToListAsync(cancellationToken);
 
         return TypedResults.Ok(users);
@@ -48,9 +40,7 @@ public class UsersModule : IModule
 
         return TypedResults.Ok(new CurrentUserResponse
         {
-            Id = user.Id,
-            Name = $"{user.FirstName} {user.LastName}",
-            Permissions = permissions
+            Id = user.Id, Name = $"{user.FirstName} {user.LastName}", Permissions = permissions
         });
     }
 
@@ -61,12 +51,10 @@ public class UsersModule : IModule
     {
         string providerId = await authProviderService.CreateUser(user, cancellationToken);
 
-        await dbContext.Users.AddAsync(new UserEntity
+        await dbContext.Users.AddAsync(
+            new UserEntity
             {
-                Email = user.Email,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                ProviderId = providerId
+                Email = user.Email, FirstName = user.FirstName, LastName = user.LastName, ProviderId = providerId
             },
             cancellationToken);
 
