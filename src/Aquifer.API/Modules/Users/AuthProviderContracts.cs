@@ -8,7 +8,7 @@ public class TokenResponse
     public string AccessToken { get; set; } = null!;
 }
 
-public class CreateUserRequest
+public class CreateOAuthUserRequest
 {
     public string Connection { get; set; } = null!;
     public string Email { get; set; } = null!;

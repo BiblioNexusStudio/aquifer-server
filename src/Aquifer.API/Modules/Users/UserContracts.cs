@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Aquifer.API.Modules.Users;
 
 public class UserResponse
@@ -13,7 +11,7 @@ public class CurrentUserResponse : UserResponse
     public required IEnumerable<string> Permissions { get; set; }
 }
 
-public class UserRequest
+public class CreateUserRequest
 {
     public string Email { get; set; } = null!;
     public string Password { get; set; } = null!;
@@ -21,4 +19,3 @@ public class UserRequest
     public string LastName { get; set; } = null!;
     public string Role { get; set; } = null!;
 }
-

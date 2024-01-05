@@ -52,18 +52,36 @@ public class UsersModule : IModule
     }
 
     private async Task<Results<Created, BadRequest<string>>> CreateUser(AquiferDbContext dbContext,
-        [FromBody] UserRequest user,
+        [FromBody] CreateUserRequest user,
         IAuthProviderHttpService authProviderService,
         CancellationToken cancellationToken)
     {
         var tokenResponse = await authProviderService.GetAuth0Token(cancellationToken);
-        var tokenResponseContent = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
+        string tokenResponseContent = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
         if (!tokenResponse.IsSuccessStatusCode)
         {
-            return TypedResults.BadRequest($"Error getting Auth0 token: {tokenResponse.StatusCode} - {tokenResponseContent}");
+            return TypedResults.BadRequest(
+                $"Error getting Auth0 token: {tokenResponse.StatusCode} - {tokenResponseContent}");
         }
 
         var token = JsonUtilities.DefaultDeserialize<TokenResponse>(tokenResponseContent);
+
+        var getRolesResponse = await authProviderService.GetUserRoles(token.AccessToken, cancellationToken);
+
+        if (!getRolesResponse.IsSuccessStatusCode)
+        {
+            return TypedResults.BadRequest(
+                $"Error getting Auth0 roles: {getRolesResponse.StatusCode} - {getRolesResponse.Content.ReadAsStringAsync(cancellationToken)}");
+        }
+
+        var roles = JsonUtilities.DefaultDeserialize<List<GetRolesResponse>>(
+            await getRolesResponse.Content.ReadAsStringAsync(cancellationToken));
+        var role = roles.FirstOrDefault(r => r.name == user.Role);
+
+        if (role == null)
+        {
+            return TypedResults.BadRequest($"Role {user.Role} does not exist");
+        }
 
         var createUserResponse = await authProviderService.CreateUser(user, token.AccessToken, cancellationToken);
         string createUserResponseContent = await createUserResponse.Content.ReadAsStringAsync(cancellationToken);
@@ -74,10 +92,22 @@ public class UsersModule : IModule
 
         var authUser = JsonUtilities.DefaultDeserialize<CreateUserResponse>(createUserResponseContent);
 
+        var assignUserToRoleResponse =
+            await authProviderService.AssignUserToRole(role, authUser.UserId, token.AccessToken, cancellationToken);
+
+        if (!assignUserToRoleResponse.IsSuccessStatusCode)
+        {
+            return TypedResults.BadRequest(
+                $"Auth0 threw error on user role assignment. Please note that the Auth0 user has been created and recalling this endpoint will result in different errors. {assignUserToRoleResponse.StatusCode} - {assignUserToRoleResponse.Content.ReadAsStringAsync(cancellationToken)}");
+        }
+
         await dbContext.Users.AddAsync(
             new UserEntity
             {
-                Email = user.Email, FirstName = user.FirstName, LastName = user.LastName, ProviderId = authUser.UserId
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                ProviderId = authUser.UserId
             },
             cancellationToken);
 

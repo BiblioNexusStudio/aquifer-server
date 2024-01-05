@@ -11,8 +11,16 @@ namespace Aquifer.API.Modules.Users;
 
 public interface IAuthProviderHttpService
 {
-    Task<HttpResponseMessage> CreateUser(UserRequest userRequest, string authToken, CancellationToken cancellationToken);
+    Task<HttpResponseMessage> CreateUser(CreateUserRequest userRequest, string authToken,
+        CancellationToken cancellationToken);
+
     Task<HttpResponseMessage> GetAuth0Token(CancellationToken cancellationToken);
+    Task<HttpResponseMessage> GetUserRoles(string auth0Token, CancellationToken cancellationToken);
+
+    Task<HttpResponseMessage> AssignUserToRole(GetRolesResponse role,
+        string userId,
+        string auth0Token,
+        CancellationToken cancellationToken);
 }
 
 public class AuthProviderHttpService : IAuthProviderHttpService
@@ -31,18 +39,15 @@ public class AuthProviderHttpService : IAuthProviderHttpService
         _httpClient.BaseAddress = new Uri(_authSettings.BaseUri);
     }
 
-    public async Task<HttpResponseMessage> CreateUser(UserRequest user, string authToken, CancellationToken cancellationToken)
+    public async Task<HttpResponseMessage> CreateUser(CreateUserRequest user, string authToken,
+        CancellationToken cancellationToken)
     {
         _httpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", authToken);
 
         //_httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"Bearer {authToken}");
 
-        var roles = await GetUserRoles(authToken, cancellationToken);
-
-        //var role = roles.FirstOrDefault(r => r.name == user.Role);
-
-        var createUserRequest = new CreateUserRequest
+        var createUserRequest = new CreateOAuthUserRequest
         {
             Connection = Auth0Constants.Connection,
             Email = user.Email,
@@ -52,49 +57,14 @@ public class AuthProviderHttpService : IAuthProviderHttpService
         string createUserJsonContent = JsonUtilities.DefaultSerialize(createUserRequest);
         var createUserHttpContent =
             new StringContent(createUserJsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
-        var createUserResponse = await _httpClient.PostAsync("/api/v2/users", createUserHttpContent, cancellationToken);
-
-        return createUserResponse;
-
-        // string createUserResponseContent = await createUserResponse.Content.ReadAsStringAsync(cancellationToken);
-        // var createUserResponseObject = JsonUtilities.DefaultDeserialize<CreateUserResponse>(createUserResponseContent);
-
-        // await AssignUserToRole(role, createUserResponseObject.UserId, auth0Token,
-        //     cancellationToken);
-        //
-        // return createUserResponseObject.UserId;
+        return await _httpClient.PostAsync("/api/v2/users", createUserHttpContent, cancellationToken);
     }
 
     public async Task<HttpResponseMessage> GetUserRoles(string auth0Token, CancellationToken cancellationToken)
     {
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth0Token);
 
-        var response = await _httpClient.GetAsync("/api/v2/roles", cancellationToken);
-        return response;
-
-        // string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-        //
-        // var responseObject = JsonUtilities.DefaultDeserialize<List<GetRolesResponse>>(responseContent);
-        //
-        // return responseObject;
-    }
-
-    private async Task AssignUserToRole(GetRolesResponse role,
-        string userId,
-        string auth0Token,
-        CancellationToken cancellationToken)
-    {
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth0Token);
-
-        string postUri = $"/api/v2/roles/{role.id}/users";
-
-        var requestBody = new PostRoleUsersRequest { users = { userId } };
-
-        await _httpClient.PostAsync(postUri,
-            new StringContent(JsonUtilities.DefaultSerialize(requestBody),
-                Encoding.UTF8,
-                MediaTypeNames.Application.Json),
-            cancellationToken);
+        return await _httpClient.GetAsync("/api/v2/roles", cancellationToken);
     }
 
     public async Task<HttpResponseMessage> GetAuth0Token(CancellationToken cancellationToken)
@@ -111,5 +81,21 @@ public class AuthProviderHttpService : IAuthProviderHttpService
         var httpContent = new StringContent(jsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
 
         return await _httpClient.PostAsync("/oauth/token", httpContent, cancellationToken);
+    }
+
+    public async Task<HttpResponseMessage> AssignUserToRole(GetRolesResponse role,
+        string userId,
+        string auth0Token,
+        CancellationToken cancellationToken)
+    {
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth0Token);
+
+        string postUri = $"/api/v2/roles/{role.id}/users";
+
+        var requestBody = new PostRoleUsersRequest { users = { userId } };
+        string jsonContent = JsonUtilities.DefaultSerialize(requestBody);
+        var httpContent = new StringContent(jsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
+
+        return await _httpClient.PostAsync(postUri, httpContent, cancellationToken);
     }
 }
