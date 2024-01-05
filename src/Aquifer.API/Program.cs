@@ -31,8 +31,11 @@ builder.Services
         logging.ResponseBodyLogLimit = 4096;
     })
     .AddScoped<IUserService, UserService>()
+    .AddScoped<IAzureKeyVaultService, AzureKeyVaultService>()
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
+
+builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
 
 var app = builder.Build();
 
