@@ -16,7 +16,7 @@ public class UsersModule : IModule
         var adminGroup = endpoints.MapGroup("admin/users").WithTags("Users (Admin)");
         adminGroup.MapGet("/", GetAllUsers).RequireAuthorization(PermissionName.ReadUsers);
         adminGroup.MapGet("/self", GetCurrentUser).RequireAuthorization();
-        adminGroup.MapPost("/create", CreateUser);
+        adminGroup.MapPost("/create", CreateUser).RequireAuthorization(PermissionName.CreateUsers);
 
         return endpoints;
     }
@@ -76,7 +76,7 @@ public class UsersModule : IModule
 
         var roles = JsonUtilities.DefaultDeserialize<List<GetRolesResponse>>(
             await getRolesResponse.Content.ReadAsStringAsync(cancellationToken));
-        var role = roles.FirstOrDefault(r => r.name == user.Role);
+        var role = roles.FirstOrDefault(r => r.Name == user.Role);
 
         if (role == null)
         {
@@ -93,7 +93,7 @@ public class UsersModule : IModule
         var authUser = JsonUtilities.DefaultDeserialize<CreateUserResponse>(createUserResponseContent);
 
         var assignUserToRoleResponse =
-            await authProviderService.AssignUserToRole(role, authUser.UserId, token.AccessToken, cancellationToken);
+            await authProviderService.AssignUserToRole(role.Id, authUser.UserId, token.AccessToken, cancellationToken);
 
         if (!assignUserToRoleResponse.IsSuccessStatusCode)
         {

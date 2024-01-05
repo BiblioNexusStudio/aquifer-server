@@ -17,7 +17,7 @@ public interface IAuthProviderHttpService
     Task<HttpResponseMessage> GetAuth0Token(CancellationToken cancellationToken);
     Task<HttpResponseMessage> GetUserRoles(string auth0Token, CancellationToken cancellationToken);
 
-    Task<HttpResponseMessage> AssignUserToRole(GetRolesResponse role,
+    Task<HttpResponseMessage> AssignUserToRole(string roleId,
         string userId,
         string auth0Token,
         CancellationToken cancellationToken);
@@ -83,16 +83,16 @@ public class AuthProviderHttpService : IAuthProviderHttpService
         return await _httpClient.PostAsync("/oauth/token", httpContent, cancellationToken);
     }
 
-    public async Task<HttpResponseMessage> AssignUserToRole(GetRolesResponse role,
+    public async Task<HttpResponseMessage> AssignUserToRole(string roleId,
         string userId,
         string auth0Token,
         CancellationToken cancellationToken)
     {
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth0Token);
 
-        string postUri = $"/api/v2/roles/{role.id}/users";
+        string postUri = $"/api/v2/roles/{roleId}/users";
 
-        var requestBody = new PostRoleUsersRequest { users = { userId } };
+        var requestBody = new PostRoleUsersRequest { Users = [userId] };
         string jsonContent = JsonUtilities.DefaultSerialize(requestBody);
         var httpContent = new StringContent(jsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
 

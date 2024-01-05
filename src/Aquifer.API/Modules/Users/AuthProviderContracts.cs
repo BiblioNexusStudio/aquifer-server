@@ -38,11 +38,11 @@ public class Auth0TokenRequest
 
 public class GetRolesResponse
 {
-    public string id { get; set; } = null!;
-    public string name { get; set; } = null!;
+    public string Id { get; set; } = null!;
+    public string Name { get; set; } = null!;
 }
 
 public class PostRoleUsersRequest
 {
-    public List<string> users { get; set; }
+    public List<string> Users { get; set; } = null!;
 }

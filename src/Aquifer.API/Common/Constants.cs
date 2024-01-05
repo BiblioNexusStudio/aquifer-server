@@ -23,7 +23,8 @@ public static class Constants
             PermissionName.AssignOverride,
             PermissionName.AquiferizeContent,
             PermissionName.SendReviewContent,
-            PermissionName.ReviewContent
+            PermissionName.ReviewContent,
+            PermissionName.CreateUsers
         ]);
 }
 
@@ -36,7 +37,8 @@ public static class PermissionName
         AssignContent = "assign:content",
         AssignOverride = "assign:override",
         ReviewContent = "review:content",
-        SendReviewContent = "send-review:content";
+        SendReviewContent = "send-review:content",
+        CreateUsers = "create:users";
 }
 
 public static class KeyVaultSecretName
