@@ -83,7 +83,7 @@ public class BiblesModule : IModule
         var response = new BibleBookResponse
         {
             AudioSize = book.AudioSize,
-            AudioUrls = JsonUtilities.DefaultDeserialize(book.AudioUrls),
+            AudioUrls = book.AudioUrls is not null ? JsonUtilities.DefaultDeserialize(book.AudioUrls) : null,
             BookCode = BookCodes.CodeFromId(book.BookId),
             ChapterCount = book.ChapterCount,
             DisplayName = book.DisplayName,
