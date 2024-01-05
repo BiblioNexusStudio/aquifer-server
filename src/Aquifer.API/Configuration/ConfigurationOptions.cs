@@ -5,7 +5,9 @@ namespace Aquifer.API.Configuration;
 public class ConfigurationOptions
 {
     public required ConnectionStringOptions ConnectionStrings { get; init; }
-    public JwtSettingOptions? JwtSettings { get; init; }
+    public required JwtSettingOptions JwtSettings { get; init; }
+    public required Auth0Settings Auth0Settings { get; init; }
+    public required string KeyVaultUri { get; init; }
 }
 
 public class ConnectionStringOptions
@@ -15,9 +17,17 @@ public class ConnectionStringOptions
 
 public class JwtSettingOptions
 {
-    // Auth isn't needed right now, make required as needed
     [Url]
     public required string Authority { get; init; }
 
     public required string Audience { get; init; }
+}
+
+public class Auth0Settings
+{
+    public required string ClientId { get; init; }
+    public required string Audience { get; init; }
+
+    [Url]
+    public required string BaseUri { get; init; }
 }
