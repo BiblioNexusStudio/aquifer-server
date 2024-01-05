@@ -32,7 +32,8 @@ public class UsersModule : IModule
     {
         var users = await dbContext.Users.Select(user => new UserResponse
         {
-            Id = user.Id, Name = $"{user.FirstName} {user.LastName}"
+            Id = user.Id,
+            Name = $"{user.FirstName} {user.LastName}"
         }).ToListAsync(cancellationToken);
 
         return TypedResults.Ok(users);
@@ -47,7 +48,9 @@ public class UsersModule : IModule
 
         return TypedResults.Ok(new CurrentUserResponse
         {
-            Id = user.Id, Name = $"{user.FirstName} {user.LastName}", Permissions = permissions
+            Id = user.Id,
+            Name = $"{user.FirstName} {user.LastName}",
+            Permissions = permissions
         });
     }
 
@@ -67,18 +70,16 @@ public class UsersModule : IModule
         var token = JsonUtilities.DefaultDeserialize<TokenResponse>(tokenResponseContent);
 
         var getRolesResponse = await authProviderService.GetUserRoles(token.AccessToken, cancellationToken);
-
+        string getRolesResponseContent = await getRolesResponse.Content.ReadAsStringAsync(cancellationToken);
         if (!getRolesResponse.IsSuccessStatusCode)
         {
             return TypedResults.BadRequest(
-                $"Error getting Auth0 roles: {getRolesResponse.StatusCode} - {getRolesResponse.Content.ReadAsStringAsync(cancellationToken)}");
+                $"Error getting Auth0 roles: {getRolesResponse.StatusCode} - {getRolesResponseContent}");
         }
 
-        var roles = JsonUtilities.DefaultDeserialize<List<GetRolesResponse>>(
-            await getRolesResponse.Content.ReadAsStringAsync(cancellationToken));
+        var roles = JsonUtilities.DefaultDeserialize<List<GetRolesResponse>>(getRolesResponseContent);
         var role = roles.FirstOrDefault(r => r.Name == user.Role);
-
-        if (role == null)
+        if (role is null)
         {
             return TypedResults.BadRequest($"Role {user.Role} does not exist");
         }
@@ -87,22 +88,31 @@ public class UsersModule : IModule
         string createUserResponseContent = await createUserResponse.Content.ReadAsStringAsync(cancellationToken);
         if (!createUserResponse.IsSuccessStatusCode)
         {
-            return TypedResults.BadRequest("Auth0 threw error on user create");
+            return TypedResults.BadRequest(
+                $"Auth0 threw error on user create: : {createUserResponse.StatusCode} - {createUserResponseContent}");
         }
 
         var authUser = JsonUtilities.DefaultDeserialize<CreateUserResponse>(createUserResponseContent);
 
         var assignUserToRoleResponse =
-            await authProviderService.AssignUserToRole(role.Id, authUser.UserId, token.AccessToken, cancellationToken);
+            await authProviderService.AssignUserToRole(role.Id,
+                authUser.UserId,
+                token.AccessToken,
+                cancellationToken);
 
+        string assignUserToRoleResponseContent =
+            await assignUserToRoleResponse.Content.ReadAsStringAsync(cancellationToken);
         if (!assignUserToRoleResponse.IsSuccessStatusCode)
         {
-            return TypedResults.BadRequest(
-                $"Auth0 threw error on user role assignment. Please note that the Auth0 user has been created and recalling this endpoint will result in different errors. {assignUserToRoleResponse.StatusCode} - {assignUserToRoleResponse.Content.ReadAsStringAsync(cancellationToken)}");
+            return TypedResults.BadRequest($"""
+                                            Auth0 threw error on user role assignment.
+                                            Please note that the Auth0 user has been created and recalling this
+                                            endpoint will result in different errors.
+                                            {assignUserToRoleResponse.StatusCode} - {assignUserToRoleResponseContent}
+                                            """);
         }
 
-        await dbContext.Users.AddAsync(
-            new UserEntity
+        await dbContext.Users.AddAsync(new UserEntity
             {
                 Email = user.Email,
                 FirstName = user.FirstName,
