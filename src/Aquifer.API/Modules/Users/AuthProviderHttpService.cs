@@ -44,9 +44,7 @@ public class AuthProviderHttpService : IAuthProviderHttpService
     {
         _httpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", authToken);
-
-        //_httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", $"Bearer {authToken}");
-
+        
         var createUserRequest = new CreateOAuthUserRequest
         {
             Connection = Auth0Constants.Connection,
