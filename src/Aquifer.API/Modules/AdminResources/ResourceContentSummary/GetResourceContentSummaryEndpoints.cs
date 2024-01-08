@@ -18,6 +18,7 @@ public static class GetResourceContentSummaryEndpoints
                 Label = rc.Resource.EnglishLabel,
                 ParentResourceName = rc.Resource.ParentResource.DisplayName,
                 ResourceContentId = rc.Id,
+                ResourceId = rc.ResourceId,
                 Language = rc.Language.EnglishDisplay,
                 Status = rc.Status,
                 MediaType = rc.MediaType,
@@ -41,20 +42,12 @@ public static class GetResourceContentSummaryEndpoints
                             ParentResourceName = ar.ParentResource.DisplayName,
                             MediaTypes = ar.ResourceContents.Select(arrc => arrc.MediaType)
                         }),
-                PassageReferences =
-                    rc.Resource.PassageResources.Select(pr => new ResourceContentSummaryPassageById
-                    {
-                        StartVerseId = pr.Passage.StartVerseId,
-                        EndVerseId = pr.Passage.EndVerseId
-                    }),
-                VerseReferences =
-                    rc.Resource.VerseResources.Select(vr =>
-                        new ResourceContentSummaryVerseById { VerseId = vr.VerseId }),
                 ContentVersions =
-                    rc.Versions.Where(v => v.IsPublished || v.IsDraft).Select(v => new ResourceContentSummaryVersion
+                    rc.Versions.Select(v => new ResourceContentSummaryVersion
                     {
                         IsPublished = v.IsPublished,
                         IsDraft = v.IsDraft,
+                        Version = v.Version,
                         ContentValue = v.Content,
                         ContentSize = v.ContentSize,
                         DisplayName = v.DisplayName,
@@ -73,6 +66,26 @@ public static class GetResourceContentSummaryEndpoints
         {
             return TypedResults.NotFound();
         }
+
+        resourceContent.VerseReferences = await dbContext.VerseResources
+            .Where(x => x.ResourceId == resourceContent.ResourceId)
+            .Select(vr => new ResourceContentSummaryVerseById { VerseId = vr.VerseId }).ToListAsync(cancellationToken);
+
+        resourceContent.PassageReferences = await dbContext.PassageResources
+            .Where(x => x.ResourceId == resourceContent.ResourceId)
+            .Select(pr => new ResourceContentSummaryPassageById
+            {
+                StartVerseId = pr.Passage.StartVerseId,
+                EndVerseId = pr.Passage.EndVerseId
+            }).ToListAsync(cancellationToken);
+
+        var contentVersions = resourceContent.ContentVersions.Where(x => x.IsPublished || x.IsDraft).ToList();
+        if (contentVersions.Count == 0)
+        {
+            contentVersions = resourceContent.ContentVersions.OrderByDescending(x => x.Version).Take(1).ToList();
+        }
+
+        resourceContent.ContentVersions = contentVersions;
 
         return TypedResults.Ok(resourceContent);
     }

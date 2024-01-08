@@ -17,6 +17,9 @@ public class ResourceContentSummaryById : ResourceContentSummaryDetailsById
     public string Language { get; set; } = null!;
     public IEnumerable<ResourceContentSummaryVersion> ContentVersions { get; set; } = null!;
     public IEnumerable<ResourceContentSummaryContentIdWithLanguageId> OtherLanguageContentIds { get; set; } = null!;
+
+    [JsonIgnore]
+    public int ResourceId { get; set; }
 }
 
 public class ResourceContentSummaryVersion
@@ -26,6 +29,9 @@ public class ResourceContentSummaryVersion
 
     [JsonIgnore]
     public string ContentValue { get; set; } = null!;
+
+    [JsonIgnore]
+    public int Version { get; set; }
 
     public object Content => JsonUtilities.DefaultDeserialize(ContentValue);
     public int ContentSize { get; set; }
