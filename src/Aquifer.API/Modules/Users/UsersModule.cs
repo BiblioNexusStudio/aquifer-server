@@ -32,7 +32,8 @@ public class UsersModule : IModule
     {
         var users = await dbContext.Users.Select(user => new UserResponse
         {
-            Id = user.Id, Name = $"{user.FirstName} {user.LastName}"
+            Id = user.Id,
+            Name = $"{user.FirstName} {user.LastName}"
         }).ToListAsync(cancellationToken);
 
         return TypedResults.Ok(users);
@@ -47,7 +48,9 @@ public class UsersModule : IModule
 
         return TypedResults.Ok(new CurrentUserResponse
         {
-            Id = user.Id, Name = $"{user.FirstName} {user.LastName}", Permissions = permissions
+            Id = user.Id,
+            Name = $"{user.FirstName} {user.LastName}",
+            Permissions = permissions
         });
     }
 
@@ -109,8 +112,7 @@ public class UsersModule : IModule
                                             """);
         }
 
-        await dbContext.Users.AddAsync(
-            new UserEntity
+        await dbContext.Users.AddAsync(new UserEntity
             {
                 Email = user.Email,
                 FirstName = user.FirstName,
