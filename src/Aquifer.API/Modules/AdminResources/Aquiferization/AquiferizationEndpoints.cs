@@ -188,6 +188,7 @@ public static class AquiferizationEndpoints
             IsPublished = false,
             DisplayName = mostRecentResourceContentVersion.DisplayName,
             Content = mostRecentResourceContentVersion.Content,
+            WordCount = mostRecentResourceContentVersion.WordCount,
             ContentSize = mostRecentResourceContentVersion.ContentSize,
             AssignedUserId = assignedUserId,
             Created = DateTime.UtcNow,

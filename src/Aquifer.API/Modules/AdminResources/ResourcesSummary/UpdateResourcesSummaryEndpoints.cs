@@ -34,6 +34,10 @@ public class UpdateResourcesSummaryEndpoints
         }
 
         entity.Content = JsonUtilities.DefaultSerialize(item.Content);
+        if (item.WordCount > 0)
+        {
+            entity.WordCount = item.WordCount;
+        }
         entity.DisplayName = item.DisplayName;
         entity.ContentSize = Encoding.UTF8.GetByteCount(entity.Content);
         entity.Updated = DateTime.UtcNow;

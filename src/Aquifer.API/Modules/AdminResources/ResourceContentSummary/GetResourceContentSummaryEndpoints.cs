@@ -49,6 +49,7 @@ public static class GetResourceContentSummaryEndpoints
                         Version = v.Version,
                         ContentValue = v.Content,
                         ContentSize = v.ContentSize,
+                        WordCount = v.WordCount,
                         DisplayName = v.DisplayName,
                         AssignedUser =
                             v.AssignedUser == null
