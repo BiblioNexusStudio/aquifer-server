@@ -6,6 +6,7 @@ using Aquifer.API.Modules.AdminResources.ResourceContentSummary;
 using Aquifer.API.Modules.AdminResources.ResourceReview;
 using Aquifer.API.Modules.AdminResources.ResourcesList;
 using Aquifer.API.Modules.AdminResources.ResourcesSummary;
+using Aquifer.API.Modules.AdminResources.Translation;
 
 namespace Aquifer.API.Modules.AdminResources;
 
@@ -48,8 +49,9 @@ public class AdminResourcesModule : IModule
             .CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
 
         group.MapGet("list", ResourcesListEndpoints.Get);
-
         group.MapGet("list/count", ResourcesListEndpoints.GetCount);
+
+        group.MapPost("translation/create", TranslationEndpoints.CreateTranslation);
 
         return endpoints;
     }

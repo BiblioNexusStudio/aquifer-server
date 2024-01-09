@@ -25,14 +25,13 @@ public static class GetResourceContentSummaryEndpoints
                 HasAudio = rc.Resource.ResourceContents.Any(orc =>
                     orc.LanguageId == rc.LanguageId &&
                     orc.MediaType == ResourceContentMediaType.Audio),
-                OtherLanguageContentIds = rc.Resource.ResourceContents
-                    .Where(orc =>
-                        orc.LanguageId != rc.LanguageId &&
-                        orc.MediaType == rc.MediaType)
-                    .Select(orc => new ResourceContentSummaryContentIdWithLanguageId
+                ContentTranslations = rc.Resource.ResourceContents
+                    .Where(orc => orc.MediaType == rc.MediaType)
+                    .Select(orc => new ResourceContentSummaryContentTranslations
                     {
                         ContentId = orc.Id,
-                        LanguageId = orc.LanguageId
+                        LanguageId = orc.LanguageId,
+                        Status = orc.Status
                     }),
                 AssociatedResources =
                     rc.Resource.AssociatedResourceChildren.Select(ar =>
