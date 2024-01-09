@@ -16,7 +16,7 @@ public class UsersModule : IModule
         var adminGroup = endpoints.MapGroup("admin/users").WithTags("Users (Admin)");
         adminGroup.MapGet("/", GetAllUsers).RequireAuthorization(PermissionName.ReadUsers);
         adminGroup.MapGet("/self", GetCurrentUser).RequireAuthorization();
-        adminGroup.MapPost("/create", CreateUser).RequireAuthorization(PermissionName.CreateUsers);
+        adminGroup.MapPost("/create", CreateUser).RequireAuthorization(PermissionName.CreateUser);
 
         return endpoints;
     }

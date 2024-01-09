@@ -1,4 +1,3 @@
-using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -19,6 +18,7 @@ public static class GetResourceContentSummaryEndpoints
                 Label = rc.Resource.EnglishLabel,
                 ParentResourceName = rc.Resource.ParentResource.DisplayName,
                 ResourceContentId = rc.Id,
+                ResourceId = rc.ResourceId,
                 Language = rc.Language.EnglishDisplay,
                 Status = rc.Status,
                 MediaType = rc.MediaType,
@@ -42,49 +42,50 @@ public static class GetResourceContentSummaryEndpoints
                             ParentResourceName = ar.ParentResource.DisplayName,
                             MediaTypes = ar.ResourceContents.Select(arrc => arrc.MediaType)
                         }),
-                PassageReferences =
-                    rc.Resource.PassageResources.Select(pr => new ResourceContentSummaryPassageById
+                ContentVersions =
+                    rc.Versions.Select(v => new ResourceContentSummaryVersion
                     {
-                        StartVerseId = pr.Passage.StartVerseId,
-                        EndVerseId = pr.Passage.EndVerseId
-                    }),
-                VerseReferences =
-                    rc.Resource.VerseResources.Select(vr =>
-                        new ResourceContentSummaryVerseById { VerseId = vr.VerseId })
+                        IsPublished = v.IsPublished,
+                        IsDraft = v.IsDraft,
+                        Version = v.Version,
+                        ContentValue = v.Content,
+                        ContentSize = v.ContentSize,
+                        DisplayName = v.DisplayName,
+                        AssignedUser =
+                            v.AssignedUser == null
+                                ? null
+                                : new ResourceContentSummaryAssignedUser
+                                {
+                                    Id = v.AssignedUser.Id,
+                                    Name = $"{v.AssignedUser.FirstName} {v.AssignedUser.LastName}"
+                                }
+                    })
             }).FirstOrDefaultAsync(cancellationToken);
 
-        if (resourceContent is null)
+        if (resourceContent?.ContentVersions.Any() != true)
         {
             return TypedResults.NotFound();
         }
 
-        var resourceContentVersion = await dbContext.ResourceContentVersions
-            .Where(x => x.ResourceContentId == resourceContentId)
-            .OrderBy(x =>
-                x.IsDraft ? 0 :
-                x.IsPublished ? 1 :
-                2) // TODO: make request specific to draft vs published. for now, return the draft first if it exists
-            .OrderByDescending(x => x.Version)
-            .Include(x => x.AssignedUser).FirstOrDefaultAsync(cancellationToken);
+        resourceContent.VerseReferences = await dbContext.VerseResources
+            .Where(x => x.ResourceId == resourceContent.ResourceId)
+            .Select(vr => new ResourceContentSummaryVerseById { VerseId = vr.VerseId }).ToListAsync(cancellationToken);
 
-        if (resourceContentVersion is null)
+        resourceContent.PassageReferences = await dbContext.PassageResources
+            .Where(x => x.ResourceId == resourceContent.ResourceId)
+            .Select(pr => new ResourceContentSummaryPassageById
+            {
+                StartVerseId = pr.Passage.StartVerseId,
+                EndVerseId = pr.Passage.EndVerseId
+            }).ToListAsync(cancellationToken);
+
+        var contentVersions = resourceContent.ContentVersions.Where(x => x.IsPublished || x.IsDraft).ToList();
+        if (contentVersions.Count == 0)
         {
-            return TypedResults.NotFound();
+            contentVersions = resourceContent.ContentVersions.OrderByDescending(x => x.Version).Take(1).ToList();
         }
 
-        resourceContent.DisplayName = resourceContentVersion.DisplayName;
-        resourceContent.IsPublished = resourceContentVersion.IsPublished;
-        resourceContent.AssignedUser =
-            resourceContentVersion.AssignedUser == null
-                ? null
-                : new ResourceContentSummaryAssignedUser
-                {
-                    Id = resourceContentVersion.AssignedUser.Id,
-                    Name =
-                        $"{resourceContentVersion.AssignedUser.FirstName} {resourceContentVersion.AssignedUser.LastName}"
-                };
-        resourceContent.ContentSize = resourceContentVersion.ContentSize;
-        resourceContent.Content = JsonUtilities.DefaultDeserialize(resourceContentVersion.Content);
+        resourceContent.ContentVersions = contentVersions;
 
         return TypedResults.Ok(resourceContent);
     }
