@@ -35,6 +35,7 @@ public class ResourceContentSummaryVersion
 
     public object Content => JsonUtilities.DefaultDeserialize(ContentValue);
     public int ContentSize { get; set; }
+    public int WordCount { get; set; }
     public bool IsDraft { get; set; }
     public bool IsPublished { get; set; }
 }
@@ -98,4 +99,5 @@ public class ResourceContentSummaryItemUpdate
 {
     public List<object> Content { get; init; } = new();
     public string DisplayName { get; init; } = null!;
+    public int WordCount { get; init; }
 }
