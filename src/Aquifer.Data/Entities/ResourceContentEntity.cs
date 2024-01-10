@@ -42,14 +42,12 @@ public enum ResourceContentStatus
 {
     None = 0,
 
-    [Display(Name = "New")]
-    New = 1,
+    [Display(Name = "New")] New = 1,
 
     [Display(Name = "Aquiferize - In Progress")]
     AquiferizeInProgress = 2,
 
-    [Display(Name = "Complete")]
-    Complete = 3,
+    [Display(Name = "Complete")] Complete = 3,
 
     [Display(Name = "Aquiferize - Review Pending")]
     AquiferizeReviewPending = 4,
@@ -63,12 +61,11 @@ public enum ResourceContentStatus
     [Display(Name = "Translate - Drafting")]
     TranslateDrafting = 7,
 
-    [Display(Name = "Translate - Editing")]
-    TranslateEditing = 8,
+    [Display(Name = "Translate - In Progress")]
+    TranslateInProgress = 8,
 
-    [Display(Name = "Translate - Reviewing")]
-    TranslateReviewing = 9,
+    [Display(Name = "Translate - In Review")]
+    TranslateInReview = 9,
 
-    [Display(Name = "On Hold")]
-    OnHold = 10
+    [Display(Name = "On Hold")] OnHold = 10
 }

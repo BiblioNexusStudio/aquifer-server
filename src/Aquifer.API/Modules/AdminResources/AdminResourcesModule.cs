@@ -51,8 +51,10 @@ public class AdminResourcesModule : IModule
         group.MapGet("list", ResourcesListEndpoints.Get);
         group.MapGet("list/count", ResourcesListEndpoints.GetCount);
 
-        group.MapPost("translation/create", TranslationEndpoints.CreateTranslation)
+        group.MapPost("content/create-translation", TranslationEndpoints.CreateTranslation)
             .RequireAuthorization(PermissionName.PublishContent);
+        group.MapPost("content/{contentId:int}/assign-translator", TranslationEndpoints.AssignTranslator)
+            .RequireAuthorization(PermissionName.AssignContent);
 
         return endpoints;
     }
