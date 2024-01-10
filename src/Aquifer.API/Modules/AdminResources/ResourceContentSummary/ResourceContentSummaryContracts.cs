@@ -93,7 +93,13 @@ public class ResourceContentSummaryContentTranslations
 {
     public int ContentId { get; init; }
     public int LanguageId { get; init; }
-    public ResourceContentStatus Status { get; set; }
+
+    [JsonIgnore]
+    public ResourceContentStatus StatusValue { get; set; }
+
+    public string Status => StatusValue.GetDisplayName();
+    public bool HasDraft { get; set; }
+    public bool HasPublished { get; set; }
 }
 
 public class ResourceContentSummaryItemUpdate

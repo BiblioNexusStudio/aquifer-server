@@ -31,7 +31,9 @@ public static class GetResourceContentSummaryEndpoints
                     {
                         ContentId = orc.Id,
                         LanguageId = orc.LanguageId,
-                        Status = orc.Status
+                        StatusValue = orc.Status,
+                        HasDraft = orc.Versions.Any(x => x.IsDraft),
+                        HasPublished = orc.Versions.Any(x => x.IsPublished)
                     }),
                 AssociatedResources =
                     rc.Resource.AssociatedResourceChildren.Select(ar =>
