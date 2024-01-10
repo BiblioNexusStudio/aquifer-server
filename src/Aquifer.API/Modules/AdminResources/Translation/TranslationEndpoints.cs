@@ -42,26 +42,27 @@ public class TranslationEndpoints
             : baseContent.Versions.Single(x => x.IsPublished);
 
         await dbContext.ResourceContents.AddAsync(new ResourceContentEntity
-        {
-            LanguageId = language.Id,
-            ResourceId = baseContent.ResourceId,
-            MediaType = baseContent.MediaType,
-            Status = ResourceContentStatus.TranslateNotStarted,
-            Trusted = true,
-            Versions =
-            [
-                new ResourceContentVersionEntity
-                {
-                    IsPublished = false,
-                    IsDraft = true,
-                    DisplayName = baseVersion.DisplayName,
-                    Content = baseVersion.Content,
-                    ContentSize = baseVersion.ContentSize,
-                    WordCount = baseVersion.WordCount,
-                    Version = 1
-                }
-            ]
-        });
+            {
+                LanguageId = language.Id,
+                ResourceId = baseContent.ResourceId,
+                MediaType = baseContent.MediaType,
+                Status = ResourceContentStatus.TranslateNotStarted,
+                Trusted = true,
+                Versions =
+                [
+                    new ResourceContentVersionEntity
+                    {
+                        IsPublished = false,
+                        IsDraft = true,
+                        DisplayName = baseVersion.DisplayName,
+                        Content = baseVersion.Content,
+                        ContentSize = baseVersion.ContentSize,
+                        WordCount = baseVersion.WordCount,
+                        Version = 1
+                    }
+                ]
+            },
+            cancellationToken);
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return TypedResults.Created();
