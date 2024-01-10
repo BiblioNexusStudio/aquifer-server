@@ -45,12 +45,14 @@ public class UsersModule : IModule
     {
         var user = await userService.GetUserFromJwtAsync(cancellationToken);
         var permissions = userService.GetAllJwtPermissions();
+        var roles = userService.GetAllJwtRoles();
 
         return TypedResults.Ok(new CurrentUserResponse
         {
             Id = user.Id,
             Name = $"{user.FirstName} {user.LastName}",
-            Permissions = permissions
+            Permissions = permissions,
+            Roles = roles
         });
     }
 
