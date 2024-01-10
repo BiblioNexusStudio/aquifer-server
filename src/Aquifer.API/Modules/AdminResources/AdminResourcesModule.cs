@@ -47,6 +47,9 @@ public class AdminResourcesModule : IModule
         group.MapGet("content/statuses", ResourceContentStatusEndpoints.GetList)
             .CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
 
+        group.MapGet("content/assigned-to-self", ResourcesListEndpoints.GetAssignedToSelf)
+            .RequireAuthorization();
+
         group.MapGet("list", ResourcesListEndpoints.Get);
 
         group.MapGet("list/count", ResourcesListEndpoints.GetCount);

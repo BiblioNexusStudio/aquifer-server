@@ -1,3 +1,4 @@
+using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -40,6 +41,28 @@ public static class ResourcesListEndpoints
             }).ToListAsync(cancellationToken);
 
         return TypedResults.Ok(resources);
+    }
+
+    public static async Task<Results<Ok<List<ResourceAssignedToSelfResponse>>, ValidationProblem>> GetAssignedToSelf(
+            [AsParameters] ResourceAssignedToSelfRequest request,
+            AquiferDbContext dbContext,
+            IUserService userService,
+            CancellationToken cancellationToken)
+    {
+        var user = await userService.GetUserFromJwtAsync(cancellationToken);
+        var resourceContents = (await dbContext.ResourceContentVersions
+            .Where(rcv => rcv.AssignedUserId == user.Id && rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInProgress)
+            .Select(x => new ResourceAssignedToSelfResponse
+            {
+                ContentId = x.ResourceContentId,
+                DisplayName = x.DisplayName,
+                ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
+                Created = x.ResourceContentVersionAssignedUserHistories.Where(auh => auh.AssignedUserId == user.Id).Max(auh => auh.Created),
+                WordCount = x.WordCount
+            }).ToListAsync(cancellationToken))
+            .OrderByDescending(x => x.Days).ThenBy(x => x.DisplayName).ToList();
+
+        return TypedResults.Ok(resourceContents);
     }
 
     public static async Task<Ok<int>> GetCount([AsParameters] ResourceListCountRequest request,
