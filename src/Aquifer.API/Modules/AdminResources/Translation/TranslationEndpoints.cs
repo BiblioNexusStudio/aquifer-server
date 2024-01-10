@@ -62,7 +62,7 @@ public class TranslationEndpoints
                 MediaType = baseContent.MediaType,
                 Status = ResourceContentStatus.TranslateNotStarted,
                 Trusted = true,
-                Versions =[ newResourceContentVersion ]
+                Versions = [newResourceContentVersion]
             },
             cancellationToken);
 
