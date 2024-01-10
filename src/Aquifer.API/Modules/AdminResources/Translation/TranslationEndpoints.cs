@@ -57,6 +57,7 @@ public class TranslationEndpoints
                     DisplayName = baseVersion.DisplayName,
                     Content = baseVersion.Content,
                     ContentSize = baseVersion.ContentSize,
+                    WordCount = baseVersion.WordCount,
                     Version = 1
                 }
             ]
