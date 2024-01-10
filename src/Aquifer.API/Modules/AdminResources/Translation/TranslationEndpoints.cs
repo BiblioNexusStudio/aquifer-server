@@ -1,4 +1,5 @@
-﻿using Aquifer.Data;
+﻿using Aquifer.API.Services;
+using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,8 @@ public class TranslationEndpoints
     public static async Task<Results<Created, BadRequest<string>>> CreateTranslation(
         [FromBody] CreateTranslationRequest request,
         AquiferDbContext dbContext,
+        IAdminResourceHistoryService historyService,
+        IUserService userService,
         CancellationToken cancellationToken)
     {
         var baseContent = await dbContext.ResourceContents.Where(x => x.Id == request.BaseContentId)
@@ -41,6 +44,17 @@ public class TranslationEndpoints
             ? baseContent.Versions.Single(x => x.IsDraft)
             : baseContent.Versions.Single(x => x.IsPublished);
 
+        var newResourceContentVersion = new ResourceContentVersionEntity
+        {
+            IsPublished = false,
+            IsDraft = true,
+            DisplayName = baseVersion.DisplayName,
+            Content = baseVersion.Content,
+            ContentSize = baseVersion.ContentSize,
+            WordCount = baseVersion.WordCount,
+            Version = 1
+        };
+
         await dbContext.ResourceContents.AddAsync(new ResourceContentEntity
             {
                 LanguageId = language.Id,
@@ -48,21 +62,14 @@ public class TranslationEndpoints
                 MediaType = baseContent.MediaType,
                 Status = ResourceContentStatus.TranslateNotStarted,
                 Trusted = true,
-                Versions =
-                [
-                    new ResourceContentVersionEntity
-                    {
-                        IsPublished = false,
-                        IsDraft = true,
-                        DisplayName = baseVersion.DisplayName,
-                        Content = baseVersion.Content,
-                        ContentSize = baseVersion.ContentSize,
-                        WordCount = baseVersion.WordCount,
-                        Version = 1
-                    }
-                ]
+                Versions =[ newResourceContentVersion ]
             },
             cancellationToken);
+
+        var user = await userService.GetUserFromJwtAsync(cancellationToken);
+        await historyService.AddStatusHistoryAsync(newResourceContentVersion,
+            ResourceContentStatus.TranslateNotStarted,
+            user.Id);
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return TypedResults.Created();
