@@ -53,7 +53,7 @@ public class TranslationEndpoints
                 new ResourceContentVersionEntity
                 {
                     IsPublished = false,
-                    IsDraft = false,
+                    IsDraft = true,
                     DisplayName = baseVersion.DisplayName,
                     Content = baseVersion.Content,
                     ContentSize = baseVersion.ContentSize,
