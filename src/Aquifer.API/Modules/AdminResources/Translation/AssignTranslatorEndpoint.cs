@@ -19,13 +19,23 @@ public static class AssignTranslatorEndpoint
         IUserService userService,
         CancellationToken cancellationToken)
     {
+        List<ResourceContentStatus> allowedStatuses =
+        [
+            ResourceContentStatus.TranslationInProgress,
+            ResourceContentStatus.TranslationInReview,
+            ResourceContentStatus.TranslationNotStarted,
+            ResourceContentStatus.TranslationReviewPending
+        ];
         var translationDraft = await dbContext.ResourceContentVersions
-            .Where(rcv => rcv.ResourceContentId == contentId && rcv.IsDraft).Include(rcv => rcv.ResourceContent)
+            .Where(rcv =>
+                rcv.ResourceContentId == contentId &&
+                rcv.IsDraft &&
+                allowedStatuses.Contains(rcv.ResourceContent.Status)).Include(rcv => rcv.ResourceContent)
             .SingleOrDefaultAsync(cancellationToken);
 
         if (translationDraft?.ResourceContent is null)
         {
-            return TypedResults.BadRequest("Resource content not found or not in draft status");
+            return TypedResults.BadRequest("Resource content in translation status not found or not in draft status");
         }
 
         if (!await userService.ValidateNonNullUserIdAsync(request.AssignedUserId, cancellationToken))
