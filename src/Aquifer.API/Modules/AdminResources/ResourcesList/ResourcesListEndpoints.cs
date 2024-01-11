@@ -60,7 +60,7 @@ public static class ResourcesListEndpoints
                 Created = x.ResourceContentVersionAssignedUserHistories.Where(auh => auh.AssignedUserId == user.Id).Max(auh => auh.Created),
                 WordCount = x.WordCount
             }).ToListAsync(cancellationToken))
-            .OrderByDescending(x => x.Days).ThenBy(x => x.DisplayName).ToList();
+            .OrderByDescending(x => x.DaysSinceAssignment).ThenBy(x => x.DisplayName).ToList();
 
         return TypedResults.Ok(resourceContents);
     }

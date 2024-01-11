@@ -26,7 +26,7 @@ public record ResourceAssignedToSelfResponse
     [JsonIgnore]
     public DateTime? Created { get; set; }
 
-    public int Days => Created is null ? 0 : (DateTime.UtcNow - Created.Value).Days;
+    public int DaysSinceAssignment => Created is null ? 0 : (DateTime.UtcNow - Created.Value).Days;
     public int WordCount { get; set; }
 }
 
