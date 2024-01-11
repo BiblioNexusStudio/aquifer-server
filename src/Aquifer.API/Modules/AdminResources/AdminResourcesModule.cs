@@ -50,6 +50,9 @@ public class AdminResourcesModule : IModule
         group.MapGet("content/assigned-to-self", ResourcesListEndpoints.GetAssignedToSelf)
             .RequireAuthorization();
 
+        group.MapGet("content/pending-review", ResourcesListEndpoints.GetPendingReview)
+            .RequireAuthorization(PermissionName.ReviewContent);
+
         group.MapGet("list", ResourcesListEndpoints.Get);
 
         group.MapGet("list/count", ResourcesListEndpoints.GetCount);
