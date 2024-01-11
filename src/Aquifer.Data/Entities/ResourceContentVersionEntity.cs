@@ -22,6 +22,9 @@ public class ResourceContentVersionEntity
     public int? AssignedUserId { get; set; }
     public UserEntity? AssignedUser { get; set; }
 
+    public IEnumerable<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistories { get; set; }
+        = new List<ResourceContentVersionAssignedUserHistoryEntity>();
+
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 

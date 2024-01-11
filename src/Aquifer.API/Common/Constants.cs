@@ -6,6 +6,7 @@ namespace Aquifer.API.Common;
 public static class Constants
 {
     public const string PermissionsClaim = "permissions";
+    public const string RolesClaim = "bnRoles";
 
     // this represents the resource types that we allow to be accessed as the starting point when viewing content
     public static readonly ReadOnlyCollection<string> RootParentResourceNames = new(["CBBTER"]);

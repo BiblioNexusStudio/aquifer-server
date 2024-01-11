@@ -9,6 +9,7 @@ public class UserResponse
 public class CurrentUserResponse : UserResponse
 {
     public required IEnumerable<string> Permissions { get; set; }
+    public required IEnumerable<string> Roles { get; set; }
 }
 
 public class CreateUserRequest
