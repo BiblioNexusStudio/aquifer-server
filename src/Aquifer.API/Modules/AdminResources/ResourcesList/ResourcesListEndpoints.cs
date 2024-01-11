@@ -44,7 +44,6 @@ public static class ResourcesListEndpoints
     }
 
     public static async Task<Results<Ok<List<ResourceAssignedToSelfResponse>>, ValidationProblem>> GetAssignedToSelf(
-            [AsParameters] ResourceAssignedToSelfRequest request,
             AquiferDbContext dbContext,
             IUserService userService,
             CancellationToken cancellationToken)
@@ -57,10 +56,31 @@ public static class ResourcesListEndpoints
                 ContentId = x.ResourceContentId,
                 DisplayName = x.DisplayName,
                 ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
-                Created = x.ResourceContentVersionAssignedUserHistories.Where(auh => auh.AssignedUserId == user.Id).Max(auh => auh.Created),
+                HistoryCreated = x.ResourceContentVersionAssignedUserHistories.Where(auh => auh.AssignedUserId == user.Id).Max(auh => auh.Created),
                 WordCount = x.WordCount
             }).ToListAsync(cancellationToken))
             .OrderByDescending(x => x.DaysSinceAssignment).ThenBy(x => x.DisplayName).ToList();
+
+        return TypedResults.Ok(resourceContents);
+    }
+
+    public static async Task<Results<Ok<List<ResourcePendingReviewResponse>>, ValidationProblem>> GetPendingReview(
+            AquiferDbContext dbContext,
+            IUserService userService,
+            CancellationToken cancellationToken)
+    {
+        var resourceContents = (await dbContext.ResourceContentVersions
+            .Where(rcv => rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending || rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview)
+            .Select(x => new ResourcePendingReviewResponse
+            {
+                ContentId = x.ResourceContentId,
+                DisplayName = x.DisplayName,
+                ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
+                AssignedUserName = x.AssignedUser == null ? null : $"{x.AssignedUser.FirstName} {x.AssignedUser.LastName}",
+                HistoryCreated = x.ResourceContentVersionStatusHistories.Max(auh => auh.Created),
+                WordCount = x.WordCount
+            }).ToListAsync(cancellationToken))
+            .OrderByDescending(x => x.DaysSinceStatusChange).ThenBy(x => x.DisplayName).ToList();
 
         return TypedResults.Ok(resourceContents);
     }
