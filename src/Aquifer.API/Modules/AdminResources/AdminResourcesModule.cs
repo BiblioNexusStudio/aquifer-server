@@ -51,10 +51,14 @@ public class AdminResourcesModule : IModule
         group.MapGet("list", ResourcesListEndpoints.Get);
         group.MapGet("list/count", ResourcesListEndpoints.GetCount);
 
-        group.MapPost("content/create-translation", TranslationEndpoints.CreateTranslation)
+        group.MapPost(CreateTranslationEndpoint.Path, CreateTranslationEndpoint.Handle)
             .RequireAuthorization(PermissionName.PublishContent);
-        group.MapPost("content/{contentId:int}/assign-translator", TranslationEndpoints.AssignTranslator)
+        group.MapPost(AssignTranslatorEndpoint.Path, AssignTranslatorEndpoint.Handle)
             .RequireAuthorization(PermissionName.AssignContent);
+        group.MapPost(SendTranslationReviewEndpoint.Path, SendTranslationReviewEndpoint.Handle)
+            .RequireAuthorization(PermissionName.SendReviewContent);
+        group.MapPost(ReviewTranslationEndpoint.Path, ReviewTranslationEndpoint.Handle)
+            .RequireAuthorization(PermissionName.ReviewContent);
 
         return endpoints;
     }

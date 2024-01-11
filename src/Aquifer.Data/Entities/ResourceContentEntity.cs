@@ -55,17 +55,17 @@ public enum ResourceContentStatus
     [Display(Name = "Aquiferize - In Review")]
     AquiferizeInReview = 5,
 
-    [Display(Name = "Translate - Not Started")]
-    TranslateNotStarted = 6,
+    [Display(Name = "Translation - Not Started")]
+    TranslationNotStarted = 6,
 
-    [Display(Name = "Translate - Drafting")]
-    TranslateDrafting = 7,
+    [Display(Name = "Translation - In Progress")]
+    TranslationInProgress = 7,
 
-    [Display(Name = "Translate - In Progress")]
-    TranslateInProgress = 8,
+    [Display(Name = "Translation - Review Pending")]
+    TranslationReviewPending = 8,
 
-    [Display(Name = "Translate - In Review")]
-    TranslateInReview = 9,
+    [Display(Name = "Translation - In Review")]
+    TranslationInReview = 9,
 
     [Display(Name = "On Hold")] OnHold = 10
 }

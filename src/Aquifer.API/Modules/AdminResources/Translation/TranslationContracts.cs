@@ -6,3 +6,8 @@ public class CreateTranslationRequest
     public int BaseContentId { get; set; }
     public bool UseDraft { get; set; }
 }
+
+public class AssignTranslatorRequest
+{
+    public int AssignedUserId { get; set; }
+}
