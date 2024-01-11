@@ -10,6 +10,7 @@ public interface IUserService
 {
     Task<UserEntity> GetUserFromJwtAsync(CancellationToken cancellationToken);
     List<string> GetAllJwtPermissions();
+    List<string> GetAllJwtRoles();
     bool HasJwtClaim(string permission);
     Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken);
 }
@@ -22,11 +23,16 @@ public class UserService(AquiferDbContext _dbContext, IHttpContextAccessor _http
         return await _dbContext.Users.SingleAsync(u => u.ProviderId == providerId, cancellationToken);
     }
 
+    public List<string> GetAllJwtRoles()
+    {
+        return _httpContextAccessor.HttpContext?.User.FindAll(Constants.RolesClaim).Select(c => c.Value)
+                   .ToList() ?? [];
+    }
+
     public List<string> GetAllJwtPermissions()
     {
         return _httpContextAccessor.HttpContext?.User.FindAll(Constants.PermissionsClaim).Select(c => c.Value)
-                   .ToList() ??
-               new List<string>();
+                   .ToList() ?? [];
     }
 
     public bool HasJwtClaim(string permission)
