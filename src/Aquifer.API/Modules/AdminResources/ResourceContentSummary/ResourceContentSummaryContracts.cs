@@ -16,7 +16,7 @@ public class ResourceContentSummaryById : ResourceContentSummaryDetailsById
     public ResourceContentStatus Status { get; set; }
     public string Language { get; set; } = null!;
     public IEnumerable<ResourceContentSummaryVersion> ContentVersions { get; set; } = null!;
-    public IEnumerable<ResourceContentSummaryContentIdWithLanguageId> OtherLanguageContentIds { get; set; } = null!;
+    public IEnumerable<ResourceContentSummaryContentTranslations> ContentTranslations { get; set; } = null!;
 
     [JsonIgnore]
     public int ResourceId { get; set; }
@@ -89,10 +89,17 @@ public class ResourceContentSummaryAssignedUser
     public string Name { get; init; } = null!;
 }
 
-public class ResourceContentSummaryContentIdWithLanguageId
+public class ResourceContentSummaryContentTranslations
 {
     public int ContentId { get; init; }
     public int LanguageId { get; init; }
+
+    [JsonIgnore]
+    public ResourceContentStatus StatusValue { get; set; }
+
+    public string Status => StatusValue.GetDisplayName();
+    public bool HasDraft { get; set; }
+    public bool HasPublished { get; set; }
 }
 
 public class ResourceContentSummaryItemUpdate

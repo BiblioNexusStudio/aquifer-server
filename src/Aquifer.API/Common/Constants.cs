@@ -22,7 +22,7 @@ public static class Constants
             PermissionName.PublishContent,
             PermissionName.AssignContent,
             PermissionName.AssignOverride,
-            PermissionName.AquiferizeContent,
+            PermissionName.CreateContent,
             PermissionName.SendReviewContent,
             PermissionName.ReviewContent,
             PermissionName.CreateUser
@@ -34,7 +34,7 @@ public static class PermissionName
     public const string ReadUsers = "read:users",
         EditContent = "edit:content",
         PublishContent = "publish:content",
-        AquiferizeContent = "aquiferize:content",
+        CreateContent = "create:content",
         AssignContent = "assign:content",
         AssignOverride = "assign:override",
         ReviewContent = "review:content",

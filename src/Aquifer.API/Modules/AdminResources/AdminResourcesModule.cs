@@ -6,6 +6,7 @@ using Aquifer.API.Modules.AdminResources.ResourceContentSummary;
 using Aquifer.API.Modules.AdminResources.ResourceReview;
 using Aquifer.API.Modules.AdminResources.ResourcesList;
 using Aquifer.API.Modules.AdminResources.ResourcesSummary;
+using Aquifer.API.Modules.AdminResources.Translation;
 
 namespace Aquifer.API.Modules.AdminResources;
 
@@ -16,7 +17,7 @@ public class AdminResourcesModule : IModule
         var group = endpoints.MapGroup("admin/resources").WithTags("Resources (Admin)");
 
         group.MapPost("content/{contentId:int}/aquiferize", AquiferizationEndpoints.Aquiferize)
-            .RequireAuthorization(PermissionName.AquiferizeContent);
+            .RequireAuthorization(PermissionName.CreateContent);
 
         group.MapPost("content/{contentId:int}/publish", AquiferizationEndpoints.Publish)
             .RequireAuthorization(PermissionName.PublishContent);
@@ -54,8 +55,16 @@ public class AdminResourcesModule : IModule
             .RequireAuthorization(PermissionName.ReviewContent);
 
         group.MapGet("list", ResourcesListEndpoints.Get);
-
         group.MapGet("list/count", ResourcesListEndpoints.GetCount);
+
+        group.MapPost(CreateTranslationEndpoint.Path, CreateTranslationEndpoint.Handle)
+            .RequireAuthorization(PermissionName.CreateContent);
+        group.MapPost(AssignTranslatorEndpoint.Path, AssignTranslatorEndpoint.Handle)
+            .RequireAuthorization(PermissionName.AssignContent);
+        group.MapPost(SendTranslationReviewEndpoint.Path, SendTranslationReviewEndpoint.Handle)
+            .RequireAuthorization(PermissionName.SendReviewContent);
+        group.MapPost(ReviewTranslationEndpoint.Path, ReviewTranslationEndpoint.Handle)
+            .RequireAuthorization(PermissionName.ReviewContent);
 
         return endpoints;
     }
