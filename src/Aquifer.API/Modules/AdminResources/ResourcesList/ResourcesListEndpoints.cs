@@ -70,7 +70,8 @@ public static class ResourcesListEndpoints
             CancellationToken cancellationToken)
     {
         var resourceContents = (await dbContext.ResourceContentVersions
-            .Where(rcv => rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending || rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview)
+            .Where(rcv => rcv.IsDraft &&
+                (rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending || rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview))
             .Select(x => new ResourcePendingReviewResponse
             {
                 ContentId = x.ResourceContentId,
