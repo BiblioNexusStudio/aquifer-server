@@ -17,7 +17,7 @@ public class AdminResourcesModule : IModule
         var group = endpoints.MapGroup("admin/resources").WithTags("Resources (Admin)");
 
         group.MapPost("content/{contentId:int}/aquiferize", AquiferizationEndpoints.Aquiferize)
-            .RequireAuthorization(PermissionName.AquiferizeContent);
+            .RequireAuthorization(PermissionName.CreateContent);
 
         group.MapPost("content/{contentId:int}/publish", AquiferizationEndpoints.Publish)
             .RequireAuthorization(PermissionName.PublishContent);
@@ -58,7 +58,7 @@ public class AdminResourcesModule : IModule
         group.MapGet("list/count", ResourcesListEndpoints.GetCount);
 
         group.MapPost(CreateTranslationEndpoint.Path, CreateTranslationEndpoint.Handle)
-            .RequireAuthorization(PermissionName.PublishContent);
+            .RequireAuthorization(PermissionName.CreateContent);
         group.MapPost(AssignTranslatorEndpoint.Path, AssignTranslatorEndpoint.Handle)
             .RequireAuthorization(PermissionName.AssignContent);
         group.MapPost(SendTranslationReviewEndpoint.Path, SendTranslationReviewEndpoint.Handle)
