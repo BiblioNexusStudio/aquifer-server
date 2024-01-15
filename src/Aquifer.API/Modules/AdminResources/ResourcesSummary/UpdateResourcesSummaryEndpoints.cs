@@ -33,8 +33,11 @@ public class UpdateResourcesSummaryEndpoints
             return TypedResults.BadRequest("Not allowed to edit this resource");
         }
 
-        entity.Content = JsonUtilities.DefaultSerialize(item.Content);
-        if (item.WordCount > 0)
+        if (item.Content is not null)
+        {
+            entity.Content = JsonUtilities.DefaultSerialize(item.Content);
+        }
+        if (item.WordCount is not null)
         {
             entity.WordCount = item.WordCount;
         }
