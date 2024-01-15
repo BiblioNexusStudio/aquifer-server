@@ -26,7 +26,7 @@ public record BaseResourceResponse
     [JsonIgnore]
     public DateTime? HistoryCreated { get; set; }
 
-    public int WordCount { get; set; }
+    public int? WordCount { get; set; }
 }
 
 public record ResourceAssignedToSelfResponse : BaseResourceResponse
