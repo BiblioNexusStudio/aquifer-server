@@ -19,7 +19,11 @@ public static class GetResourceContentSummaryEndpoints
                 ParentResourceName = rc.Resource.ParentResource.DisplayName,
                 ResourceContentId = rc.Id,
                 ResourceId = rc.ResourceId,
-                Language = rc.Language.EnglishDisplay,
+                Language = new ResourceContentSummaryLanguage
+                {
+                    EnglishDisplay = rc.Language.EnglishDisplay,
+                    ISO6393Code = rc.Language.ISO6393Code,
+                },
                 Status = rc.Status,
                 MediaType = rc.MediaType,
                 HasAudio = rc.Resource.ResourceContents.Any(orc =>

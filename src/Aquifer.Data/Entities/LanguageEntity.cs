@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Aquifer.Data.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;

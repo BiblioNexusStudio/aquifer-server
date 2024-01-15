@@ -14,12 +14,20 @@ public class ResourceContentSummaryById : ResourceContentSummaryDetailsById
     public bool HasAudio { get; set; }
     public ResourceContentMediaType MediaType { get; set; }
     public ResourceContentStatus Status { get; set; }
-    public string Language { get; set; } = null!;
+    public ResourceContentSummaryLanguage Language { get; set; } = null!;
     public IEnumerable<ResourceContentSummaryVersion> ContentVersions { get; set; } = null!;
     public IEnumerable<ResourceContentSummaryContentTranslations> ContentTranslations { get; set; } = null!;
 
     [JsonIgnore]
     public int ResourceId { get; set; }
+}
+
+public class ResourceContentSummaryLanguage
+{
+    public string EnglishDisplay { get; set; } = null!;
+
+    [JsonPropertyName("iso6393Code")]
+    public string ISO6393Code { get; set; } = null!;
 }
 
 public class ResourceContentSummaryVersion
