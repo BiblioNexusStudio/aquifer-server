@@ -44,4 +44,4 @@ runs:
           uses: azure/webapps-deploy@v2
           with:
               app-name: ${{ inputs.web-app-name }}
-              package: ./build/Build.zip
+              package: ./build/Aquifer.API.zip
