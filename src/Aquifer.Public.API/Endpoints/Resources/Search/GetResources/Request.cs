@@ -21,7 +21,7 @@ public record Request
     public string? LanguageCode { get; init; }
 
     /// <summary>
-    ///     The type of resource to search for. If none specified will default to None. Either an int or string can be
+    ///     The type of resource to search for. If none specified will default to None.
     ///     provided.
     /// </summary>
     public ResourceType ResourceType { get; init; }
