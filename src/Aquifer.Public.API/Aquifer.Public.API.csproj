@@ -4,7 +4,8 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <InvariantGlobalization>true</InvariantGlobalization>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <WarningsAsErrors>true</WarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,6 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Aquifer.Common\Aquifer.Common.csproj"/>
         <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj"/>
     </ItemGroup>
 

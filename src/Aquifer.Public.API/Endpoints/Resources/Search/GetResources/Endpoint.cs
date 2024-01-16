@@ -1,12 +1,11 @@
 ﻿using Aquifer.Data;
 using FastEndpoints;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Search.GetResources;
 
-public class Endpoint : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
 {
-    public AquiferDbContext _DbContext { get; set; }
-
     public override void Configure()
     {
         Get("/resources/search");
@@ -14,19 +13,45 @@ public class Endpoint : Endpoint<Request, Response>
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        // x.EnglishLabel.Contains(query) &&
-        //     (request.ParentResourceId == default || x.ParentResourceId == request.ParentResourceId) &&
-        //     (request.LanguageId == default || x.ResourceContents.Any(rc => rc.LanguageId == request.LanguageId))
-
-        // var resources = await _DbContext.Resources.Where(x => x.EnglishLabel.Contains(req.Query) && )
-        //     .OrderBy(x => x.EnglishLabel)
-        //     .Skip(request.Skip).Take(request.Take)
+        var items = await GetResourcesAsync(req, ct);
 
         await SendAsync(new Response
             {
-                Value = "Hello Fast Endpoints"
+                Items = items,
+                ItemCount = items.Count
             },
             200,
             ct);
+    }
+
+    private async Task<List<ResponseContent>> GetResourcesAsync(Request req, CancellationToken ct)
+    {
+        var resources = await _dbContext.ResourceContents.Where(x =>
+                x.Resource.EnglishLabel.Contains(req.Query) &&
+                (req.ResourceType == default || x.Resource.ParentResource.ResourceType == req.ResourceType) &&
+                (x.LanguageId == req.LanguageId || x.Language.ISO6393Code == req.LanguageCode) &&
+                x.Versions.Any(v => v.IsPublished))
+            .OrderBy(x => x.Resource.EnglishLabel)
+            .Skip(req.Skip)
+            .Take(req.Take)
+            .Select(x => new ResponseContent
+            {
+                Id = x.Id,
+                Name = x.Resource.EnglishLabel,
+                LanguageCode = x.Language.ISO6393Code,
+                Grouping = new ResourceTypeMetadata
+                {
+                    Name = x.Resource.ParentResource.DisplayName,
+                    Type = x.Resource.ParentResource.ResourceType
+                }
+            })
+            .ToListAsync(ct);
+
+        if (resources.Count is 0)
+        {
+            ThrowError("No records found for the given request", 404);
+        }
+
+        return resources;
     }
 }

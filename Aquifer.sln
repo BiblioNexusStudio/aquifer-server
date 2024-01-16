@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Migrations", "src\A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Public.API", "src\Aquifer.Public.API\Aquifer.Public.API.csproj", "{7BE90A99-0E5B-43D8-81EE-960EDDAE05B3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Common", "src\Aquifer.Common\Aquifer.Common.csproj", "{9AB0BF9D-39CC-4DD1-8D88-976EC77C0B78}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,6 +39,10 @@ Global
 		{7BE90A99-0E5B-43D8-81EE-960EDDAE05B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7BE90A99-0E5B-43D8-81EE-960EDDAE05B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7BE90A99-0E5B-43D8-81EE-960EDDAE05B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9AB0BF9D-39CC-4DD1-8D88-976EC77C0B78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9AB0BF9D-39CC-4DD1-8D88-976EC77C0B78}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9AB0BF9D-39CC-4DD1-8D88-976EC77C0B78}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9AB0BF9D-39CC-4DD1-8D88-976EC77C0B78}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -46,6 +52,7 @@ Global
 		{2CE9009D-784B-4A78-BBA9-8B0043AA9277} = {795E7203-D40F-4962-837D-DD39BAF2C930}
 		{47A55D6A-68CE-4DAE-82BD-6DC78CF701F1} = {795E7203-D40F-4962-837D-DD39BAF2C930}
 		{7BE90A99-0E5B-43D8-81EE-960EDDAE05B3} = {795E7203-D40F-4962-837D-DD39BAF2C930}
+		{9AB0BF9D-39CC-4DD1-8D88-976EC77C0B78} = {795E7203-D40F-4962-837D-DD39BAF2C930}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8E32492B-EA66-40E4-A7A8-67E4ABA14A53}
