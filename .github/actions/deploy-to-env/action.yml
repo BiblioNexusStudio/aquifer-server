@@ -40,7 +40,18 @@ runs:
         - name: Run migrations
           run: ./build/Migrate --connection '${{ inputs.connection-url }}'
           shell: bash
-        - name: Upload package
+        - name: Deploy to staging slot if not dev
+          if: inputs.environment != 'dev'
+          uses: azure/webapps-deploy@v2
+          with:
+              app-name: ${{ inputs.web-app-name }}-staging
+              package: ./build/Build.zip
+        - name: Swap with production if not dev
+          if: inputs.environment != 'dev'
+          run: az webapp deployment slot swap --name ${{ inputs.web-app-name }} --slot staging --target-slot production
+          shell: bash
+        - name: Deploy directly to production if dev
+          if: inputs.environment == 'dev'
           uses: azure/webapps-deploy@v2
           with:
               app-name: ${{ inputs.web-app-name }}
