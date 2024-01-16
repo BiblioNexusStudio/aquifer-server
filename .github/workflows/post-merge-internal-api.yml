@@ -1,0 +1,133 @@
+name: Post-merge (Internal API)
+
+on:
+    push:
+        branches:
+            - master
+        paths:
+            - 'src/Aquifer.API/**'
+            - 'src/Aquifer.Data/**'
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: Environment
+                type: environment
+                required: true
+
+permissions:
+    id-token: write
+    contents: write
+
+jobs:
+    build:
+        name: Build
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout source code
+              uses: actions/checkout@v3
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v3
+              with:
+                  dotnet-version: '8.x'
+            - name: Install NuGet packages (linux)
+              run: dotnet restore --runtime linux-x64
+            - name: Restore CLI tools
+              run: dotnet tool restore
+            - name: Make build directory
+              run: mkdir ./build
+            - name: Build API
+              run: dotnet publish src/Aquifer.API --output ./Aquifer.API --configuration Release --runtime win-x64 --self-contained
+            - name: Zip API
+              run: cd ./Aquifer.API && zip ../build/Build.zip *
+            - name: Bundle migrations
+              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --output build/Migrate --self-contained
+            - name: Publish artifact
+              uses: actions/upload-artifact@v3
+              with:
+                  name: build
+                  path: build
+
+    deploy_internal_api_to_dev:
+        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'dev'
+        name: Deploy Internal API to dev
+        runs-on: ubuntu-latest
+        needs: build
+        environment:
+            name: dev-internal
+            url: ${{ vars.URL_DEV }}
+        steps:
+            - name: Checkout source code
+              uses: actions/checkout@v3
+            - uses: ./.github/actions/deploy-to-env
+              id: deploy
+              with:
+                  environment: dev
+                  connection-url: ${{ vars.DB_CONNECTION_URL_DEV }}
+                  web-app-name: ${{ vars.AZURE_WEB_APP_NAME_INTERNAL_DEV }}
+                  azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+                  azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+                  azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    deploy_internal_api_to_qa:
+        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'qa'
+        name: Deploy Internal API to qa
+        runs-on: ubuntu-latest
+        needs: build
+        environment:
+            name: qa-internal
+            url: ${{ vars.URL_QA }}
+        steps:
+            - name: Checkout source code
+              uses: actions/checkout@v3
+            - uses: ./.github/actions/deploy-to-env
+              id: deploy
+              with:
+                  environment: qa
+                  connection-url: ${{ vars.DB_CONNECTION_URL_QA }}
+                  web-app-name: ${{ vars.AZURE_WEB_APP_NAME_INTERNAL_QA }}
+                  azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+                  azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+                  azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    deploy_internal_api_to_prod:
+        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'prod'
+        name: Deploy Internal API to prod
+        runs-on: ubuntu-latest
+        needs: build
+        environment:
+            name: prod-internal
+            url: ${{ vars.URL_PROD }}
+        steps:
+            - name: Checkout source code
+              uses: actions/checkout@v3
+              with:
+                  ref: ${{ github.event.pull_request.head.sha }}
+            - uses: ./.github/actions/deploy-to-env
+              id: deploy
+              with:
+                  environment: prod
+                  connection-url: ${{ vars.DB_CONNECTION_URL_PROD }}
+                  web-app-name: ${{ vars.AZURE_WEB_APP_NAME_INTERNAL_PROD }}
+                  azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+                  azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+                  azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    e2e_tests:
+        name: E2E tests
+        runs-on: ubuntu-latest
+        needs: deploy_to_dev
+        steps:
+            - name: Checkout E2E test code
+              uses: actions/checkout@v3
+              with:
+                  repository: BiblioNexusStudio/well-e2e
+                  ssh-key: ${{ secrets.WELL_E2E_DEPLOY_KEY }}
+            - name: Use Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 18.16.0
+                  cache: yarn
+            - name: Install dependencies
+              run: yarn install --frozen-lockfile
+            - name: Test
+              run: yarn test:ci --url ${{ vars.URL_DEV }}
