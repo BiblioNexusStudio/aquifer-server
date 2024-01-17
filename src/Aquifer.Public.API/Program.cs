@@ -14,6 +14,7 @@ builder.Services.AddDbContext<AquiferDbContext>(options =>
 builder.Services.AddFastEndpoints()
     .SwaggerDocument(sd =>
     {
+        sd.ShortSchemaNames = true;
         sd.EnableJWTBearerAuth = false;
         sd.DocumentSettings = ds =>
         {
@@ -26,7 +27,6 @@ builder.Services.AddFastEndpoints()
                     Type = OpenApiSecuritySchemeType.ApiKey
                 });
         };
-        sd.ShortSchemaNames = true;
     })
     .AddOutputCache();
 

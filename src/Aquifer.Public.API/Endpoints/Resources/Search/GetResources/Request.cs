@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+﻿using System.Text.Json.Serialization;
 using Aquifer.Data.Entities;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Search.GetResources;
@@ -41,6 +41,5 @@ public record Request
     /// <summary>
     ///     Records to skip if paging through results. Default is 0.
     /// </summary>
-    [DefaultValue(0)]
     public int Offset { get; init; }
 }
