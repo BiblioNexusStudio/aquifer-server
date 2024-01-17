@@ -27,7 +27,8 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
     private async Task<List<ResponseContent>> GetResourcesAsync(Request req, CancellationToken ct)
     {
         var resources = await _dbContext.ResourceContents.Where(x =>
-                x.Resource.EnglishLabel.Contains(req.Query) &&
+                (x.Versions.Any(v => v.DisplayName.Contains(req.Query)) ||
+                 x.Resource.EnglishLabel.Contains(req.Query)) &&
                 (req.ResourceType == default || x.Resource.ParentResource.ResourceType == req.ResourceType) &&
                 (x.LanguageId == req.LanguageId || x.Language.ISO6393Code == req.LanguageCode) &&
                 x.Versions.Any(v => v.IsPublished))
@@ -38,7 +39,9 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
             {
                 Id = x.Id,
                 Name = x.Resource.EnglishLabel,
+                LocalizedName = x.Versions.Where(v => v.IsPublished).Select(v => v.DisplayName).Single(),
                 LanguageCode = x.Language.ISO6393Code,
+                MediaType = x.MediaType,
                 Grouping = new ResourceTypeMetadata
                 {
                     Name = x.Resource.ParentResource.DisplayName,

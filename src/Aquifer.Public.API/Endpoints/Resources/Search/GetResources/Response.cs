@@ -13,6 +13,11 @@ public class ResponseContent
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
+    public string LocalizedName { get; set; } = null!;
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public ResourceContentMediaType MediaType { get; set; }
+
     public string LanguageCode { get; set; } = null!;
     public ResourceTypeMetadata Grouping { get; set; } = null!;
 }
