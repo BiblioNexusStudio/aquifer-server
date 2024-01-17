@@ -26,26 +26,27 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
 
     private async Task<List<ResponseContent>> GetResourcesAsync(Request req, CancellationToken ct)
     {
-        var resources = await _dbContext.ResourceContents.Where(x =>
-                (x.Versions.Any(v => v.DisplayName.Contains(req.Query)) ||
-                 x.Resource.EnglishLabel.Contains(req.Query)) &&
-                (req.ResourceType == default || x.Resource.ParentResource.ResourceType == req.ResourceType) &&
-                (x.LanguageId == req.LanguageId || x.Language.ISO6393Code == req.LanguageCode) &&
-                x.Versions.Any(v => v.IsPublished))
-            .OrderBy(x => x.Resource.EnglishLabel)
+        var resources = await _dbContext.ResourceContentVersions.Where(x => x.IsPublished &&
+            (x.DisplayName.Contains(req.Query)
+             || x.ResourceContent.Resource.EnglishLabel.Contains(req.Query)) &&
+            (req.ResourceType == default
+             || x.ResourceContent.Resource.ParentResource.ResourceType == req.ResourceType) &&
+            (x.ResourceContent.LanguageId == req.LanguageId
+             || x.ResourceContent.Language.ISO6393Code == req.LanguageCode))
+            .OrderBy(x => x.ResourceContent.Resource.EnglishLabel)
             .Skip(req.Skip)
             .Take(req.Take)
             .Select(x => new ResponseContent
             {
-                Id = x.Id,
-                Name = x.Resource.EnglishLabel,
-                LocalizedName = x.Versions.Where(v => v.IsPublished).Select(v => v.DisplayName).Single(),
-                LanguageCode = x.Language.ISO6393Code,
-                MediaType = x.MediaType,
+                Id = x.ResourceContent.Id,
+                Name = x.ResourceContent.Resource.EnglishLabel,
+                LocalizedName = x.DisplayName,
+                LanguageCode = x.ResourceContent.Language.ISO6393Code,
+                MediaType = x.ResourceContent.MediaType,
                 Grouping = new ResourceTypeMetadata
                 {
-                    Name = x.Resource.ParentResource.DisplayName,
-                    Type = x.Resource.ParentResource.ResourceType
+                    Name = x.ResourceContent.Resource.ParentResource.DisplayName,
+                    Type = x.ResourceContent.Resource.ParentResource.ResourceType
                 }
             })
             .ToListAsync(ct);
