@@ -9,6 +9,13 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
     public override void Configure()
     {
         Get("/resources/{ContentId}");
+        Description(d => d.ProducesProblemFE(404));
+        Summary(s =>
+        {
+            s.Summary = "Get specific resource information.";
+            s.Description =
+                "For a given resource id, return the data for that resource. This can be text content as well as CDN links for image, audio, and video media types.";
+        });
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
