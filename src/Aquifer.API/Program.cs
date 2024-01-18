@@ -12,7 +12,6 @@ var configuration = builder.Configuration.Get<ConfigurationOptions>();
 
 builder.Services
     .AddAuth(configuration?.JwtSettings)
-    .AddSwagger()
     .AddCors()
     .AddOutputCache()
     .AddApplicationInsightsTelemetry()
@@ -32,6 +31,11 @@ builder.Services
     })
     .AddScoped<IUserService, UserService>()
     .AddScoped<IAzureKeyVaultService, AzureKeyVaultService>()
+    .AddScoped<IResourceContentRequestService, ResourceContentRequestService>()
+    .AddSingleton<ResourceContentRequestBackgroundService>()
+    .AddHostedService<ResourceContentRequestBackgroundService>(sp =>
+        sp.GetService<ResourceContentRequestBackgroundService>()
+            ?? throw new InvalidOperationException("ResourceContentRequestBackgroundService not available"))
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 
@@ -42,7 +46,6 @@ var app = builder.Build();
 app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseHealthChecks("/_health");
 app.UseAuth();
-app.UseSwaggerWithUi();
 app.UseOutputCache();
 if (app.Environment.IsDevelopment())
 {

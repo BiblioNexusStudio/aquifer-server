@@ -1,4 +1,5 @@
-﻿using Aquifer.API.Utilities;
+﻿using Aquifer.API.Services;
+using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.ApplicationInsights;
@@ -53,6 +54,7 @@ public static class ResourceContentBatchEndpoints
             [FromQuery] int[] ids,
             AquiferDbContext dbContext,
             CancellationToken cancellationToken,
+            IResourceContentRequestService resourceContentRequestService,
             TelemetryClient telemetry
         )
     {
@@ -81,6 +83,7 @@ public static class ResourceContentBatchEndpoints
             return TypedResults.NotFound("One or more couldn't be found. Were some IDs for non-text content?");
         }
 
+        resourceContentRequestService.TrackResourceContentRequestsInBackground(ids);
         return TypedResults.Ok(contents);
     }
 }
