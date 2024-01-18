@@ -1,9 +1,9 @@
 using System.Text.Json;
 using Aquifer.Data;
+using Aquifer.Public.API.Swagger;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 using Microsoft.EntityFrameworkCore;
-using NSwag;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,22 +12,7 @@ builder.Services.AddDbContext<AquiferDbContext>(options =>
         providerOptions => providerOptions.EnableRetryOnFailure(3)));
 
 builder.Services.AddFastEndpoints()
-    .SwaggerDocument(sd =>
-    {
-        sd.ShortSchemaNames = true;
-        sd.EnableJWTBearerAuth = false;
-        sd.DocumentSettings = ds =>
-        {
-            ds.Title = "Aquifer API";
-            ds.AddAuth("ApiKey",
-                new OpenApiSecurityScheme
-                {
-                    Name = "api-key",
-                    In = OpenApiSecurityApiKeyLocation.Header,
-                    Type = OpenApiSecuritySchemeType.ApiKey
-                });
-        };
-    })
+    .AddSwaggerDocumentSettings()
     .AddOutputCache();
 
 var app = builder.Build();

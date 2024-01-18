@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using Aquifer.Data.Entities;
+﻿using Aquifer.Data.Entities;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Search.GetResources;
 
@@ -22,14 +21,8 @@ public record Request
     public string? LanguageCode { get; init; }
 
     /// <summary>
-    ///     The type of resource to search for. If none specified will default to None.
-    ///     Either an int or string can be provided.
-    ///     None = 0 - Will query against all types
-    ///     Guide = 1 - Refers to translation guides such as FIA and may also include audio files
-    ///     Dictionary = 2
-    ///     StudyNotes = 3
-    ///     Images = 4
-    ///     Videos = 5
+    ///     The type of resource to search for. If none specified will default to None. Either an int or string can be
+    ///     provided.
     /// </summary>
     public ResourceType ResourceType { get; init; }
 
