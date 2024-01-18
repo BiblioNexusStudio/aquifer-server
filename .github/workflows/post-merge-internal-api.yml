@@ -1,9 +1,12 @@
-name: Post-merge
+name: Post-merge (Internal API)
 
 on:
     push:
         branches:
             - master
+        paths:
+            - 'src/Aquifer.API/**'
+            - 'src/Aquifer.Data/**'
     workflow_dispatch:
         inputs:
             environment:
@@ -35,7 +38,7 @@ jobs:
             - name: Build API
               run: dotnet publish src/Aquifer.API --output ./Aquifer.API --configuration Release --runtime win-x64 --self-contained
             - name: Zip API
-              run: cd ./Aquifer.API && zip ../build/Aquifer.API.zip *
+              run: cd ./Aquifer.API && zip ../build/Build.zip *
             - name: Bundle migrations
               run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --output build/Migrate --self-contained
             - name: Publish artifact
@@ -44,13 +47,13 @@ jobs:
                   name: build
                   path: build
 
-    deploy_to_dev:
+    deploy_internal_api_to_dev:
         if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'dev'
-        name: Deploy to dev
+        name: Deploy Internal API to dev
         runs-on: ubuntu-latest
         needs: build
         environment:
-            name: dev
+            name: dev-internal
             url: ${{ vars.URL_DEV }}
         steps:
             - name: Checkout source code
@@ -60,18 +63,19 @@ jobs:
               with:
                   environment: dev
                   connection-url: ${{ vars.DB_CONNECTION_URL_DEV }}
-                  web-app-name: ${{ vars.AZURE_WEB_APP_NAME_DEV }}
+                  web-app-name: ${{ vars.AZURE_WEB_APP_NAME_INTERNAL_DEV }}
+                  resource-group: ${{ vars.AZURE_RESOURCE_GROUP_DEV }}
                   azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
                   azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
                   azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    deploy_to_qa:
+    deploy_internal_api_to_qa:
         if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'qa'
-        name: Deploy to qa
+        name: Deploy Internal API to qa
         runs-on: ubuntu-latest
         needs: build
         environment:
-            name: qa
+            name: qa-internal
             url: ${{ vars.URL_QA }}
         steps:
             - name: Checkout source code
@@ -81,18 +85,19 @@ jobs:
               with:
                   environment: qa
                   connection-url: ${{ vars.DB_CONNECTION_URL_QA }}
-                  web-app-name: ${{ vars.AZURE_WEB_APP_NAME_QA }}
+                  web-app-name: ${{ vars.AZURE_WEB_APP_NAME_INTERNAL_QA }}
+                  resource-group: ${{ vars.AZURE_RESOURCE_GROUP_QA }}
                   azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
                   azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
                   azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    deploy_to_prod:
+    deploy_internal_api_to_prod:
         if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'prod'
-        name: Deploy to prod
+        name: Deploy Internal API to prod
         runs-on: ubuntu-latest
         needs: build
         environment:
-            name: prod
+            name: prod-internal
             url: ${{ vars.URL_PROD }}
         steps:
             - name: Checkout source code
@@ -104,38 +109,16 @@ jobs:
               with:
                   environment: prod
                   connection-url: ${{ vars.DB_CONNECTION_URL_PROD }}
-                  web-app-name: ${{ vars.AZURE_WEB_APP_NAME_PROD }}
+                  web-app-name: ${{ vars.AZURE_WEB_APP_NAME_INTERNAL_PROD }}
+                  resource-group: ${{ vars.AZURE_RESOURCE_GROUP_PROD }}
                   azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
                   azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
                   azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    create_release:
-        name: Create release
-        runs-on: ubuntu-latest
-        needs: deploy_to_prod
-        steps:
-            - name: Checkout source code
-              uses: actions/checkout@v2
-            - name: Get the latest tag
-              uses: actions-ecosystem/action-get-latest-tag@v1
-              id: get-latest-tag
-            - name: Calculate the new tag
-              uses: actions-ecosystem/action-bump-semver@v1
-              id: bump-semver
-              with:
-                  current_version: ${{ steps.get-latest-tag.outputs.tag }}
-                  level: patch
-            - name: Create release
-              uses: softprops/action-gh-release@v1
-              with:
-                  tag_name: ${{ steps.bump-semver.outputs.new_version }}
-                  target_commitish: ${{ github.sha }}
-                  generate_release_notes: true
-
     e2e_tests:
         name: E2E tests
         runs-on: ubuntu-latest
-        needs: deploy_to_dev
+        needs: deploy_internal_api_to_dev
         steps:
             - name: Checkout E2E test code
               uses: actions/checkout@v3

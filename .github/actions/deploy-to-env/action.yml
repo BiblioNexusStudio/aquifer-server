@@ -5,6 +5,9 @@ inputs:
     environment:
         description: Environment to deploy to
         required: true
+    resource-group:
+        description: Azure Resource Group
+        required: true
     connection-url:
         description: DB connection URL
         required: true
@@ -40,8 +43,20 @@ runs:
         - name: Run migrations
           run: ./build/Migrate --connection '${{ inputs.connection-url }}'
           shell: bash
-        - name: Upload package
+        - name: Deploy to staging slot if not dev
+          if: inputs.environment != 'dev'
           uses: azure/webapps-deploy@v2
           with:
               app-name: ${{ inputs.web-app-name }}
-              package: ./build/Aquifer.API.zip
+              slot-name: staging
+              package: ./build/Build.zip
+        - name: Swap with production if not dev
+          if: inputs.environment != 'dev'
+          run: az webapp deployment slot swap --name ${{ inputs.web-app-name }} --resource-group ${{ inputs.resource-group }} --slot staging --target-slot production
+          shell: bash
+        - name: Deploy directly to production if dev
+          if: inputs.environment == 'dev'
+          uses: azure/webapps-deploy@v2
+          with:
+              app-name: ${{ inputs.web-app-name }}
+              package: ./build/Build.zip
