@@ -1,4 +1,5 @@
-﻿using Aquifer.Data.Entities;
+﻿using System.ComponentModel;
+using Aquifer.Data.Entities;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Search.GetResources;
 
@@ -13,6 +14,7 @@ public record Request
     /// <summary>
     ///     Optional language id internal to Aquifer. If not specified, language code is required.
     /// </summary>
+    [DefaultValue(0)]
     public int LanguageId { get; init; }
 
     /// <summary>
@@ -27,12 +29,14 @@ public record Request
     public ResourceType ResourceType { get; init; }
 
     /// <summary>
-    ///     The number of results to return. Default is 10 and max is 100.
+    ///     The number of results to return. Max is 100.
     /// </summary>
+    [DefaultValue(10)]
     public int Limit { get; init; } = 10;
 
     /// <summary>
-    ///     Records to skip if paging through results. Default is 0.
+    ///     Records to skip if paging through results.
     /// </summary>
+    [DefaultValue(0)]
     public int Offset { get; init; }
 }
