@@ -22,7 +22,9 @@ public static class SwaggerDocumentSettings
                         Type = OpenApiSecuritySchemeType.ApiKey
                     });
                 ds.SchemaSettings.SchemaProcessors.Add(new EnumSchemaProcessor());
+                ds.OperationProcessors.Add(new MakeDefaultingParametersOptionalProcessor());
             };
         });
     }
 }
+

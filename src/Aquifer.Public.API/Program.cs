@@ -22,6 +22,8 @@ app.UseResponseCaching()
     {
         config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         config.Endpoints.Configurator = ep => { ep.AllowAnonymous(); };
-    }).UseSwaggerGen();
+    })
+    .UseSwaggerGen()
+    .UseReDoc(options => { options.Path = "/docs"; });
 
 app.Run();
