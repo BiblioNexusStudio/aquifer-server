@@ -1,7 +1,3 @@
-
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-using Microsoft.Identity.Client;
-
 public record MonthlyAquiferiationStartsAndCompletionsResponse(
     List<StatusCountPerMonth> Starts,
     List<StatusCountPerMonth> Completions

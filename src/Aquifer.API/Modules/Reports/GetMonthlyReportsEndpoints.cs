@@ -17,10 +17,7 @@ public static class GetMonthlyReportsEndpoints
             .SqlQuery<StatusCountPerMonth>($"exec ({startedSqlStr})")
             .ToListAsync(cancellationToken);
 
-         int englishLanguageId = (await dbContext.Languages.Where(language => language.ISO6393Code.ToLower() == "eng")
-            .FirstOrDefaultAsync(cancellationToken))?.Id ?? -1;
-
-        var completedSqlStr = GetMonthlyCountSqlStringForStatusByLanguage((int)ResourceContentStatus.Complete, englishLanguageId);
+        var completedSqlStr = GetMonthlyCountSqlStringForEnglishByStatus((int)ResourceContentStatus.Complete);
         var monthlyCompletedResources = await dbContext.Database
             .SqlQuery<StatusCountPerMonth>($"exec ({completedSqlStr})")
             .ToListAsync(cancellationToken);
@@ -40,13 +37,14 @@ public static class GetMonthlyReportsEndpoints
         ";
     }
 
-    private static string GetMonthlyCountSqlStringForStatusByLanguage(int status, int languageId) {
+    private static string GetMonthlyCountSqlStringForEnglishByStatus(int status) {
         return 
         $@"
         select DATEADD(mm,0,DATEADD(mm, DATEDIFF(m,0,rcvsh.[Created]),0)) AS Date, Count(rcvsh.[Status]) as StatusCount from ResourceContentVersionStatusHistory rcvsh 
                 JOIN ResourceContentVersions rcv on rcvsh.ResourceContentVersionId = rcv.Id
                 JOIN ResourceContents rc on rcv.ResourceContentId = rc.Id
-            WHERE  rc.LanguageId = {languageId} AND
+                JOIN Languages l on rc.LanguageId = l.Id
+            WHERE  l.ISO6393Code = 'eng' AND
                 rcvsh.Created >= DATEADD(MONTH, -6, GETDATE()) AND
                 rcvsh.[Status] = {status}
         GROUP BY DATEADD(mm,0,DATEADD(mm, DATEDIFF(m,0,rcvsh.[Created]),0));
