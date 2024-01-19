@@ -1,8 +1,7 @@
 using System.Text.Json;
 using Aquifer.Data;
-using Aquifer.Public.API.Swagger;
+using Aquifer.Public.API.OpenApi;
 using FastEndpoints;
-using FastEndpoints.Swagger;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,7 +22,7 @@ app.UseResponseCaching()
         config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         config.Endpoints.Configurator = ep => { ep.AllowAnonymous(); };
     })
-    .UseSwaggerGen()
+    .UseOpenApi()
     .UseReDoc(options => { options.Path = "/docs"; });
 
 app.Run();

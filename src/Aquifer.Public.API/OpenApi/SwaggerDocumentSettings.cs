@@ -1,7 +1,7 @@
 ﻿using FastEndpoints.Swagger;
 using NSwag;
 
-namespace Aquifer.Public.API.Swagger;
+namespace Aquifer.Public.API.OpenApi;
 
 public static class SwaggerDocumentSettings
 {
@@ -22,9 +22,8 @@ public static class SwaggerDocumentSettings
                         Type = OpenApiSecuritySchemeType.ApiKey
                     });
                 ds.SchemaSettings.SchemaProcessors.Add(new EnumSchemaProcessor());
-                ds.OperationProcessors.Add(new MakeDefaultingParametersOptionalProcessor());
+                ds.OperationProcessors.Add(new DefaultParameterOperationProcessor());
             };
         });
     }
 }
-

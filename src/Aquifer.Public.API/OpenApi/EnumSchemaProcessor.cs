@@ -1,7 +1,7 @@
 ﻿using NJsonSchema;
 using NJsonSchema.Generation;
 
-namespace Aquifer.Public.API.Swagger;
+namespace Aquifer.Public.API.OpenApi;
 
 public class EnumSchemaProcessor : ISchemaProcessor
 {
