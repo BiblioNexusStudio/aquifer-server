@@ -1,7 +1,9 @@
 using Aquifer.API.Configuration;
+using Aquifer.API.Middleware;
 using Aquifer.API.Modules;
 using Aquifer.API.Services;
 using Aquifer.Data;
+using Azure.Storage.Queues;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
@@ -32,10 +34,11 @@ builder.Services
     .AddScoped<IUserService, UserService>()
     .AddScoped<IAzureKeyVaultService, AzureKeyVaultService>()
     .AddScoped<IResourceContentRequestService, ResourceContentRequestService>()
-    .AddSingleton<ResourceContentRequestBackgroundService>()
-    .AddHostedService<ResourceContentRequestBackgroundService>(sp =>
-        sp.GetService<ResourceContentRequestBackgroundService>()
-            ?? throw new InvalidOperationException("ResourceContentRequestBackgroundService not available"))
+    .AddSingleton(sp =>
+    {
+        var connectionString = configuration?.ConnectionStrings?.AzureStorageAccount;
+        return new QueueClient(connectionString, "your-queue-name");
+    })
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 
@@ -46,6 +49,7 @@ var app = builder.Build();
 app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseHealthChecks("/_health");
 app.UseAuth();
+app.UseMiddleware<TrackResourceRequestMiddleware>();
 app.UseOutputCache();
 if (app.Environment.IsDevelopment())
 {

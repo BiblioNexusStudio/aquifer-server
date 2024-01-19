@@ -10,7 +10,7 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
     public override void Configure()
     {
         Get("/resources/search");
-        Options(x => x.CacheOutput(c => c.Expire(TimeSpan.FromMinutes(5))));
+        ResponseCache(60);
         Summary(s =>
         {
             s.Summary = "Search resources by keyword query.";
@@ -24,10 +24,10 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
         var items = await GetResourcesAsync(req, ct);
 
         await SendAsync(new Response
-            {
-                Items = items,
-                ItemCount = items.Count
-            },
+        {
+            Items = items,
+            ItemCount = items.Count
+        },
             200,
             ct);
     }
