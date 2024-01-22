@@ -22,6 +22,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Aquifer.Common\Aquifer.Common.csproj" />
         <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj" />
+        <ProjectReference Include="..\Aquifer.Functions\Aquifer.Functions.csproj" />
     </ItemGroup>
 
 </Project>

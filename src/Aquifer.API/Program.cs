@@ -33,11 +33,10 @@ builder.Services
     })
     .AddScoped<IUserService, UserService>()
     .AddScoped<IAzureKeyVaultService, AzureKeyVaultService>()
-    .AddScoped<IResourceContentRequestService, ResourceContentRequestService>()
     .AddSingleton(sp =>
     {
-        var connectionString = configuration?.ConnectionStrings?.AzureStorageAccount;
-        return new QueueClient(connectionString, "your-queue-name");
+        var connectionString = configuration?.ConnectionStrings.AzureStorageAccount;
+        return new QueueClient(connectionString, configuration?.JobSettings.JobQueueName);
     })
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
@@ -49,7 +48,7 @@ var app = builder.Build();
 app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseHealthChecks("/_health");
 app.UseAuth();
-app.UseMiddleware<TrackResourceRequestMiddleware>();
+app.UseMiddleware<TrackResourceContentRequestMiddleware>();
 app.UseOutputCache();
 if (app.Environment.IsDevelopment())
 {

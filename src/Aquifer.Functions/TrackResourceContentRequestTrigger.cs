@@ -1,37 +1,49 @@
 using Azure.Storage.Queues.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using Aquifer.Functions.Messages;
+using Aquifer.Data;
+using Aquifer.Data.Entities;
 
 namespace Aquifer.Functions
 {
     public class TrackResourceContentRequestTrigger
     {
         private readonly ILogger<TrackResourceContentRequestTrigger> _logger;
+        private readonly AquiferDbContext _dbContext;
 
-        public TrackResourceContentRequestTrigger(ILogger<TrackResourceContentRequestTrigger> logger)
+        public TrackResourceContentRequestTrigger(ILogger<TrackResourceContentRequestTrigger> logger, AquiferDbContext dbContext)
         {
             _logger = logger;
+            _dbContext = dbContext;
         }
 
         [Function(nameof(TrackResourceContentRequestTrigger))]
-        public void Run([QueueTrigger("myqueue-items", Connection = "")] QueueMessage message)
+        public async Task Run([QueueTrigger("myqueue-items", Connection = "")] QueueMessage message, CancellationToken stoppingToken)
         {
             try
             {
-                foreach (var resourceContentId in resourceContentIds)
+                var trackingMetadata = JsonSerializer.Deserialize<TrackResourceContentRequestMessage>(message.MessageText);
+                if (trackingMetadata == null)
                 {
-                    dbContext.ResourceContentRequests.Add(new ResourceContentRequestEntity
+                    _logger.LogError("Failed to deserialize message");
+                    return;
+                }
+
+                foreach (var resourceContentId in trackingMetadata.ResourceContentIds)
+                {
+                    _dbContext.ResourceContentRequests.Add(new ResourceContentRequestEntity
                     {
                         ResourceContentId = resourceContentId,
                         IpAddress = trackingMetadata.IpAddress
                     });
                 }
-                await dbContext.SaveChangesAsync(stoppingToken);
+                await _dbContext.SaveChangesAsync(stoppingToken);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"{ex.ToString()}");
-                _telemetry.TrackException(ex);
+                _logger.LogError(ex, "An error occurred while processing the message");
             }
         }
     }

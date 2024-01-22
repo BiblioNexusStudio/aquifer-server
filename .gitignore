@@ -399,3 +399,7 @@ FodyWeavers.xsd
 *.DotSettings.user
 appsettings.Development.json
 .idea/
+
+# Local queue development
+__azurite_*
+__queuestorage*
