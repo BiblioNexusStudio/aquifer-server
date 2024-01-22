@@ -12,10 +12,13 @@ builder.Services.AddDbContext<AquiferDbContext>(options =>
 
 builder.Services.AddFastEndpoints()
     .AddSwaggerDocumentSettings()
-    .AddOutputCache();
+    .AddOutputCache()
+    .AddHealthChecks()
+    .AddDbContextCheck<AquiferDbContext>();;
 
 var app = builder.Build();
-app.UseResponseCaching()
+app.UseHealthChecks("/_health")
+    .UseResponseCaching()
     .UseOutputCache()
     .UseFastEndpoints(config =>
     {
