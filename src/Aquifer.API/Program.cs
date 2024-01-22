@@ -39,7 +39,7 @@ builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
 
 var app = builder.Build();
 
-app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()); // need to expand on this
+app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseAuth();
 app.UseSwaggerWithUi();
 app.UseOutputCache();
