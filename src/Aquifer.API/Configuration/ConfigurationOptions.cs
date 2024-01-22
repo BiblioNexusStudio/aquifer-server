@@ -7,7 +7,7 @@ public class ConfigurationOptions
     public required ConnectionStringOptions ConnectionStrings { get; init; }
     public required JwtSettingOptions JwtSettings { get; init; }
     public required Auth0Settings Auth0Settings { get; init; }
-    public required JobSettings JobSettings { get; init; }
+    public required JobQueues JobQueues { get; init; }
     public required string KeyVaultUri { get; init; }
 }
 
@@ -34,7 +34,8 @@ public class Auth0Settings
     public required string BaseUri { get; init; }
 }
 
-public class JobSettings
+public class JobQueues
 {
-    public required string JobQueueName { get; init; }
+    public required string BaseName { get; init; }
+    public required string TrackResourceContentRequest { get; init; }
 }

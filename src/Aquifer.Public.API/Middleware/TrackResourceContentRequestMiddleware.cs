@@ -9,7 +9,7 @@ public class TrackResourceContentRequestMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly QueueClient _jobQueueClient;
-    private readonly Regex _getResourceRegex = new Regex("^/resources/(\\d+)$");
+    private static readonly Regex _getResourceRegex = new Regex("^/resources/(\\d+)$");
 
     public TrackResourceContentRequestMiddleware(RequestDelegate next, QueueClient jobQueueClient)
     {

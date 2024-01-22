@@ -1,4 +1,5 @@
-﻿using Aquifer.Functions.Messages;
+﻿using Aquifer.Common.Factories;
+using Aquifer.Functions.Messages;
 using Azure.Storage.Queues;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -9,13 +10,13 @@ public class TrackResourceContentRequestMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly QueueClient _jobQueueClient;
-    private readonly Regex _getResourceRegex = new Regex("^/resources/(\\d+)/content$");
-    private readonly Regex _getBatchResourcesRegex = new Regex("^/resources/batch/content/text$");
+    private static readonly Regex _getResourceRegex = new Regex("^/resources/(\\d+)/content$");
+    private static readonly Regex _getBatchResourcesRegex = new Regex("^/resources/batch/content/text$");
 
-    public TrackResourceContentRequestMiddleware(RequestDelegate next, QueueClient jobQueueClient)
+    public TrackResourceContentRequestMiddleware(RequestDelegate next, IQueueClientFactory queueClientFactory)
     {
         _next = next;
-        _jobQueueClient = jobQueueClient;
+        _jobQueueClient = queueClientFactory.GetQueueClient();
     }
 
     public async Task InvokeAsync(HttpContext context)

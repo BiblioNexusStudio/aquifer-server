@@ -54,7 +54,6 @@ public static class ResourceContentBatchEndpoints
             [FromQuery] int[] ids,
             AquiferDbContext dbContext,
             CancellationToken cancellationToken,
-            IResourceContentRequestService resourceContentRequestService,
             TelemetryClient telemetry
         )
     {
@@ -83,7 +82,6 @@ public static class ResourceContentBatchEndpoints
             return TypedResults.NotFound("One or more couldn't be found. Were some IDs for non-text content?");
         }
 
-        resourceContentRequestService.TrackResourceContentRequestsInBackground(ids);
         return TypedResults.Ok(contents);
     }
 }

@@ -16,7 +16,6 @@ public static class ResourceContentItemEndpoints
         int contentId,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken,
-        IResourceContentRequestService resourceContentRequestService,
         TelemetryClient telemetry,
         [FromQuery] string audioType = "webm"
     )
@@ -33,7 +32,6 @@ public static class ResourceContentItemEndpoints
 
         if (contentVersion.ResourceContent.MediaType == ResourceContentMediaType.Text)
         {
-            resourceContentRequestService.TrackResourceContentRequestsInBackground([contentVersion.ResourceContentId]);
             return TypedResults.Ok(JsonUtilities.DefaultDeserialize(contentVersion.Content));
         }
 
@@ -59,7 +57,6 @@ public static class ResourceContentItemEndpoints
 
         if (url != null)
         {
-            resourceContentRequestService.TrackResourceContentRequestsInBackground([contentVersion.ResourceContentId]);
             return TypedResults.Redirect(url);
         }
 

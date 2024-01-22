@@ -3,7 +3,6 @@ using Aquifer.Data;
 using Aquifer.Public.API.OpenApi;
 using Aquifer.Public.API.Configuration;
 using Aquifer.Public.API.Middleware;
-using Azure.Storage.Queues;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,10 +14,12 @@ builder.Services.AddDbContext<AquiferDbContext>(options =>
         providerOptions => providerOptions.EnableRetryOnFailure(3)));
 
 builder.Services.AddFastEndpoints()
-    .AddSingleton(sp =>
+    .AddSingleton<IQueueClientFactory>(sp =>
     {
-        var connectionString = configuration?.ConnectionStrings.AzureStorageAccount;
-        return new QueueClient(connectionString, configuration?.JobSettings.JobQueueName);
+        var configuration = sp.GetService<IConfiguration>();
+        var baseName = configuration?.Get<ConfigurationOptions>()?.JobQueues.BaseName;
+        var connectionString = configuration?.Get<ConfigurationOptions>()?.ConnectionStrings.AzureStorageAccount;
+        return new QueueClientFactory(baseName, connectionString);
     })
     .AddSwaggerDocumentSettings()
     .AddOutputCache()

@@ -33,10 +33,12 @@ builder.Services
     })
     .AddScoped<IUserService, UserService>()
     .AddScoped<IAzureKeyVaultService, AzureKeyVaultService>()
-    .AddSingleton(sp =>
+    .AddSingleton<IQueueClientFactory>(sp =>
     {
-        var connectionString = configuration?.ConnectionStrings.AzureStorageAccount;
-        return new QueueClient(connectionString, configuration?.JobSettings.JobQueueName);
+        var configuration = sp.GetService<IConfiguration>();
+        var baseName = configuration?.Get<ConfigurationOptions>()?.JobQueues.BaseName;
+        var connectionString = configuration?.Get<ConfigurationOptions>()?.ConnectionStrings.AzureStorageAccount;
+        return new QueueClientFactory(baseName, connectionString);
     })
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();

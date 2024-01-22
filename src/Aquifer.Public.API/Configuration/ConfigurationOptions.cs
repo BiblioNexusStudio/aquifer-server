@@ -3,7 +3,7 @@
 public class ConfigurationOptions
 {
     public required ConnectionStringOptions ConnectionStrings { get; init; }
-    public required JobSettings JobSettings { get; init; }
+    public required JobQueues JobQueues { get; init; }
 }
 
 public class ConnectionStringOptions
@@ -12,7 +12,8 @@ public class ConnectionStringOptions
     public required string AzureStorageAccount { get; init; }
 }
 
-public class JobSettings
+public class JobQueues
 {
-    public required string JobQueueName { get; init; }
+    public required string BaseName { get; init; }
+    public required string TrackResourceContentRequest { get; init; }
 }
