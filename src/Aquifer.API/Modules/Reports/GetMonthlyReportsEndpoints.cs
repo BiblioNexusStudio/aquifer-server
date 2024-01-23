@@ -26,11 +26,8 @@ public static class GetMonthlyReportsEndpoints
         var months = ReportUtilities.GetLastMonths(6);
         int monthlyResourceIdx = 0;
         // fill in 'empty' months with a StatusCount of zero
-        for (int i = months.Count() - 1; i >= 0; i--) {
-            if (monthlyCompletedResources == null) {
-                monthlyCompletedResources = new List<StatusCountPerMonth>();
-                monthlyCompletedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
-            } else if (monthlyCompletedResources.Count() - 1  < monthlyResourceIdx){
+        for (int i = months.Count - 1; i >= 0; i--) {
+            if (monthlyCompletedResources.Count - 1  < monthlyResourceIdx){
                 monthlyCompletedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
             }  else if (monthlyCompletedResources[monthlyResourceIdx] != null) {
                 DateTime completedMonth = monthlyCompletedResources[monthlyResourceIdx].Date;
@@ -39,12 +36,9 @@ public static class GetMonthlyReportsEndpoints
                 }
             } 
 
-            if (monthlyStartedResources == null) {
-                monthlyStartedResources = new List<StatusCountPerMonth>();
+            if (monthlyStartedResources.Count - 1  < monthlyResourceIdx){
                 monthlyStartedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
-            } else if (monthlyStartedResources.Count() - 1  < monthlyResourceIdx){
-                monthlyStartedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
-            }  else if (monthlyStartedResources[monthlyResourceIdx] != null) {
+            } else if (monthlyStartedResources[monthlyResourceIdx] != null) {
                 DateTime completedMonth = monthlyStartedResources[monthlyResourceIdx].Date;
                 if(completedMonth.Month != months[i].Month) {
                     monthlyStartedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
