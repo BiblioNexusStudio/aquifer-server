@@ -17,7 +17,7 @@ builder.Services
     .AddOutputCache()
     .AddApplicationInsightsTelemetry()
     .AddDbContext<AquiferDbContext>(options =>
-        options.UseSqlServer(configuration?.ConnectionStrings?.BiblioNexusDb,
+        options.UseSqlServer(configuration?.ConnectionStrings.BiblioNexusDb,
             providerOptions => providerOptions.EnableRetryOnFailure(3)))
     .RegisterModules()
     .Configure<JsonOptions>(options =>
@@ -40,10 +40,10 @@ builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
 var app = builder.Build();
 
 app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+app.UseHealthChecks("/_health");
 app.UseAuth();
 app.UseSwaggerWithUi();
 app.UseOutputCache();
-app.UseHealthChecks("/_health");
 if (app.Environment.IsDevelopment())
 {
     app.UseHttpLogging();

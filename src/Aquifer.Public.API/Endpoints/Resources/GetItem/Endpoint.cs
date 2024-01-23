@@ -9,6 +9,7 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
     public override void Configure()
     {
         Get("/resources/{ContentId}");
+        Options(x => x.CacheOutput(c => c.Expire(TimeSpan.FromMinutes(5))));
         Description(d => d.ProducesProblemFE(404));
         Summary(s =>
         {
