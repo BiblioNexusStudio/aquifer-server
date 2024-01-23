@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "Aquifer_Functions": {
+    "Aquifer_Jobs": {
       "commandName": "Project",
       "commandLineArgs": "--port 7253",
       "launchBrowser": false

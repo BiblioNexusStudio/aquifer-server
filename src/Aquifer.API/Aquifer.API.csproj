@@ -27,7 +27,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj" />
-        <ProjectReference Include="..\Aquifer.Functions\Aquifer.Functions.csproj" />
+        <ProjectReference Include="..\Aquifer.Jobs\Aquifer.Jobs.csproj" />
     </ItemGroup>
 
 </Project>

@@ -17,7 +17,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Public.API", "src\A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Common", "src\Aquifer.Common\Aquifer.Common.csproj", "{9AB0BF9D-39CC-4DD1-8D88-976EC77C0B78}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Functions", "src\Aquifer.Functions\Aquifer.Functions.csproj", "{CDDA72AF-C879-4CFC-9015-B0CB4979837F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Jobs", "src\Aquifer.Jobs\Aquifer.Jobs.csproj", "{CDDA72AF-C879-4CFC-9015-B0CB4979837F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

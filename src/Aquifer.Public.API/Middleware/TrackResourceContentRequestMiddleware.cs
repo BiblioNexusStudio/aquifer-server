@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.RegularExpressions;
-using Aquifer.Functions.Messages;
+using Aquifer.Jobs.Messages;
 using Azure.Storage.Queues;
 
 namespace Aquifer.Public.API.Middleware;

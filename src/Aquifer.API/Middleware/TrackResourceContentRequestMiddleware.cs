@@ -1,4 +1,4 @@
-﻿using Aquifer.Functions.Messages;
+﻿using Aquifer.Jobs.Messages;
 using Azure.Storage.Queues;
 using System.Text.Json;
 using System.Text.RegularExpressions;

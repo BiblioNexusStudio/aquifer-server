@@ -2,11 +2,11 @@ using Azure.Storage.Queues.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using Aquifer.Functions.Messages;
+using Aquifer.Jobs.Messages;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 
-namespace Aquifer.Functions;
+namespace Aquifer.Jobs;
 
 public class TrackResourceContentRequestQueueTrigger(ILogger<TrackResourceContentRequestQueueTrigger> _logger, AquiferDbContext _dbContext)
 {
