@@ -33,16 +33,7 @@ builder.Services
     })
     .AddScoped<IUserService, UserService>()
     .AddScoped<IAzureKeyVaultService, AzureKeyVaultService>()
-    .AddSingleton<QueueClient>(sp =>
-    {
-        var client = new QueueClient(configuration?.ConnectionStrings.AzureStorageAccount,
-            configuration?.JobQueues.TrackResourceContentRequestQueue, new QueueClientOptions
-            {
-                MessageEncoding = QueueMessageEncoding.Base64
-            });
-        client.CreateIfNotExists();
-        return client;
-    })
+    .AddSingleton<ITrackResourceContentRequestService, TrackResourceContentRequestService>()
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 

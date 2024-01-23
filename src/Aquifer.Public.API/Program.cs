@@ -3,9 +3,9 @@ using Aquifer.Data;
 using Aquifer.Public.API.OpenApi;
 using Aquifer.Public.API.Configuration;
 using Aquifer.Public.API.Middleware;
+using Aquifer.Public.API.Services;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
-using Azure.Storage.Queues;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration.Get<ConfigurationOptions>();
@@ -15,16 +15,7 @@ builder.Services.AddDbContext<AquiferDbContext>(options =>
         providerOptions => providerOptions.EnableRetryOnFailure(3)));
 
 builder.Services.AddFastEndpoints()
-    .AddSingleton<QueueClient>(sp =>
-    {
-        var client = new QueueClient(configuration?.ConnectionStrings.AzureStorageAccount,
-            configuration?.JobQueues.TrackResourceContentRequestQueue, new QueueClientOptions
-            {
-                MessageEncoding = QueueMessageEncoding.Base64
-            });
-        client.CreateIfNotExists();
-        return client;
-    })
+    .AddSingleton<ITrackResourceContentRequestService, TrackResourceContentRequestService>()
     .AddSwaggerDocumentSettings()
     .AddOutputCache()
     .AddHealthChecks()

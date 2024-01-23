@@ -1,36 +1,29 @@
-﻿using System.Text.Json;
-using System.Text.RegularExpressions;
-using Aquifer.Jobs.Messages;
-using Azure.Storage.Queues;
+﻿using System.Text.RegularExpressions;
+using Aquifer.Public.API.Services;
 
 namespace Aquifer.Public.API.Middleware;
 
-public class TrackResourceContentRequestMiddleware(RequestDelegate _next, QueueClient _queueClient)
+public class TrackResourceContentRequestMiddleware(RequestDelegate _next, ITrackResourceContentRequestService _trackerService, ILogger<TrackResourceContentRequestMiddleware> _logger)
 {
-    private static readonly Regex _getResourceRegex = new("^/resources/(\\d+)$");
+    private static readonly Regex ResourcePathRegex = new("^/resources/(\\d+)$");
 
     public async Task InvokeAsync(HttpContext context)
     {
         await _next(context);
 
-        var path = context.Request.Path.Value ?? "";
-
-        if (_getResourceRegex.IsMatch(path))
+        try
         {
-            var resourceId = int.Parse(_getResourceRegex.Match(path).Groups[1].Value);
-            await SendTrackResourceContentRequestMessage(new List<int> { resourceId }, context);
+            var path = context.Request.Path.Value ?? "";
+
+            if (ResourcePathRegex.IsMatch(path))
+            {
+                var resourceId = int.Parse(ResourcePathRegex.Match(path).Groups[1].Value);
+                await _trackerService.TrackResourceContentRequest([resourceId], context.Request.HttpContext);
+            }
         }
-    }
-
-    private async Task SendTrackResourceContentRequestMessage(List<int> resourceIds, HttpContext context)
-    {
-        var ipAddress = context.Request.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
-        var message = new TrackResourceContentRequestMessage
+        catch (Exception ex)
         {
-            ResourceContentIds = resourceIds,
-            IpAddress = ipAddress
-        };
-        var serializedMessage = JsonSerializer.Serialize(message);
-        await _queueClient.SendMessageAsync(serializedMessage);
+            _logger.LogError(ex, "Failed to track resource content request");
+        }
     }
 }

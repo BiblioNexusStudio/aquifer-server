@@ -2,16 +2,16 @@ using Azure.Storage.Queues.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using Aquifer.Jobs.Messages;
+using Aquifer.Common.Jobs.Messages;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 
 namespace Aquifer.Jobs;
 
-public class TrackResourceContentRequestQueueTrigger(ILogger<TrackResourceContentRequestQueueTrigger> _logger, AquiferDbContext _dbContext)
+public class TrackResourceContentRequestJob(ILogger<TrackResourceContentRequestJob> _logger, AquiferDbContext _dbContext)
 {
 
-    [Function(nameof(TrackResourceContentRequestQueueTrigger))]
+    [Function(nameof(TrackResourceContentRequestJob))]
     public async Task Run([QueueTrigger("%JobQueues:TrackResourceContentRequestQueue%", Connection = "AzureWebJobsStorage")]
         QueueMessage message, CancellationToken stoppingToken)
     {
@@ -20,7 +20,7 @@ public class TrackResourceContentRequestQueueTrigger(ILogger<TrackResourceConten
             var trackingMetadata = JsonSerializer.Deserialize<TrackResourceContentRequestMessage>(message.MessageText);
             if (trackingMetadata == null)
             {
-                _logger.LogError("Failed to deserialize message");
+                _logger.LogError($"Failed to deserialize the message: {message.MessageText}");
                 return;
             }
 
@@ -37,7 +37,8 @@ public class TrackResourceContentRequestQueueTrigger(ILogger<TrackResourceConten
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred while processing the message");
+            _logger.LogError(ex, $"An error occurred while processing the message: {message.MessageText}");
+            throw ex;
         }
     }
 }

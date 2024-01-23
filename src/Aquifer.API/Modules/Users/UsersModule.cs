@@ -1,6 +1,6 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
-using Aquifer.API.Utilities;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -115,12 +115,12 @@ public class UsersModule : IModule
         }
 
         await dbContext.Users.AddAsync(new UserEntity
-            {
-                Email = user.Email,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                ProviderId = authUser.UserId
-            },
+        {
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            ProviderId = authUser.UserId
+        },
             cancellationToken);
 
         await dbContext.SaveChangesAsync(cancellationToken);
