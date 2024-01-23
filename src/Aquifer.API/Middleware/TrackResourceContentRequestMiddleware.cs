@@ -1,23 +1,14 @@
-﻿using Aquifer.Common.Factories;
-using Aquifer.Functions.Messages;
+﻿using Aquifer.Functions.Messages;
 using Azure.Storage.Queues;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace Aquifer.API.Middleware;
 
-public class TrackResourceContentRequestMiddleware
+public class TrackResourceContentRequestMiddleware(RequestDelegate _next, QueueClient _queueClient)
 {
-    private readonly RequestDelegate _next;
-    private readonly QueueClient _jobQueueClient;
-    private static readonly Regex _getResourceRegex = new Regex("^/resources/(\\d+)/content$");
-    private static readonly Regex _getBatchResourcesRegex = new Regex("^/resources/batch/content/text$");
-
-    public TrackResourceContentRequestMiddleware(RequestDelegate next, IQueueClientFactory queueClientFactory)
-    {
-        _next = next;
-        _jobQueueClient = queueClientFactory.GetQueueClient();
-    }
+    private static readonly Regex _getResourceRegex = new("^/resources/(\\d+)/content$");
+    private static readonly Regex _getBatchResourcesRegex = new("^/resources/batch/content/text$");
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -46,6 +37,6 @@ public class TrackResourceContentRequestMiddleware
             IpAddress = ipAddress
         };
         var serializedMessage = JsonSerializer.Serialize(message);
-        await _jobQueueClient.SendMessageAsync(serializedMessage);
+        await _queueClient.SendMessageAsync(serializedMessage);
     }
 }

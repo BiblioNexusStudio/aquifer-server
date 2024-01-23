@@ -5,17 +5,9 @@ using Azure.Storage.Queues;
 
 namespace Aquifer.Public.API.Middleware;
 
-public class TrackResourceContentRequestMiddleware
+public class TrackResourceContentRequestMiddleware(RequestDelegate _next, QueueClient _queueClient)
 {
-    private readonly RequestDelegate _next;
-    private readonly QueueClient _jobQueueClient;
-    private static readonly Regex _getResourceRegex = new Regex("^/resources/(\\d+)$");
-
-    public TrackResourceContentRequestMiddleware(RequestDelegate next, QueueClient jobQueueClient)
-    {
-        _next = next;
-        _jobQueueClient = jobQueueClient;
-    }
+    private static readonly Regex _getResourceRegex = new("^/resources/(\\d+)$");
 
     public async Task InvokeAsync(HttpContext context)
     {
@@ -39,6 +31,6 @@ public class TrackResourceContentRequestMiddleware
             IpAddress = ipAddress
         };
         var serializedMessage = JsonSerializer.Serialize(message);
-        await _jobQueueClient.SendMessageAsync(serializedMessage);
+        await _queueClient.SendMessageAsync(serializedMessage);
     }
 }

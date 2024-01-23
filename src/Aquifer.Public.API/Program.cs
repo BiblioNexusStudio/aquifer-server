@@ -5,6 +5,7 @@ using Aquifer.Public.API.Configuration;
 using Aquifer.Public.API.Middleware;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
+using Azure.Storage.Queues;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration.Get<ConfigurationOptions>();
@@ -14,13 +15,9 @@ builder.Services.AddDbContext<AquiferDbContext>(options =>
         providerOptions => providerOptions.EnableRetryOnFailure(3)));
 
 builder.Services.AddFastEndpoints()
-    .AddSingleton<IQueueClientFactory>(sp =>
-    {
-        var configuration = sp.GetService<IConfiguration>();
-        var baseName = configuration?.Get<ConfigurationOptions>()?.JobQueues.BaseName;
-        var connectionString = configuration?.Get<ConfigurationOptions>()?.ConnectionStrings.AzureStorageAccount;
-        return new QueueClientFactory(baseName, connectionString);
-    })
+    .AddSingleton<QueueClient>(sp =>
+            new QueueClient(configuration?.ConnectionStrings.AzureStorageAccount, configuration?.JobQueues.TrackResourceContentRequestQueue)
+            )
     .AddSwaggerDocumentSettings()
     .AddOutputCache()
     .AddHealthChecks()

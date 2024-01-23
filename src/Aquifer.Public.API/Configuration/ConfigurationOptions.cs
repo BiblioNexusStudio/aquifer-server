@@ -14,6 +14,5 @@ public class ConnectionStringOptions
 
 public class JobQueues
 {
-    public required string BaseName { get; init; }
-    public required string TrackResourceContentRequest { get; init; }
+    public required string TrackResourceContentRequestQueue { get; init; }
 }

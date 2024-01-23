@@ -1,5 +1,4 @@
-﻿using Aquifer.API.Services;
-using Aquifer.API.Utilities;
+﻿using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.ApplicationInsights;
