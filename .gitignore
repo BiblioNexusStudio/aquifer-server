@@ -402,4 +402,5 @@ appsettings.Development.json
 
 # Local queue development
 __azurite_*
-__queuestorage*
+__queuestorage__*
+__blobstorage__*

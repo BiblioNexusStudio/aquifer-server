@@ -12,7 +12,7 @@ public class TrackResourceContentRequestQueueTrigger(ILogger<TrackResourceConten
 {
 
     [Function(nameof(TrackResourceContentRequestQueueTrigger))]
-    public async Task Run([QueueTrigger("%JobQueues.BaseName%-%JobQueues.TrackResourceContentRequestQueue%", Connection = "AzureWebJobsStorage")]
+    public async Task Run([QueueTrigger("%JobQueues:TrackResourceContentRequestQueue%", Connection = "AzureWebJobsStorage")]
         QueueMessage message, CancellationToken stoppingToken)
     {
         try
