@@ -71,3 +71,12 @@ dotnet ef database update --startup-project src/Aquifer.Migrations --project src
 # unit tests
 dotnet test
 ```
+
+## Functions/Job Queues
+
+We use Azure Storage Queues and Azure Functions for queueing and running jobs. To develop locally, you'll need
+[Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio,blob-storage)
+and [Azure Function Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local).
+
+1. Run Azurite so that you can have local queues. In the `aquifer-server` dir, run `azurite --queueHost 127.0.0.1`.
+2. Run Aquifer.Functions using the function core tools. In the `aquifer-server/src/Aquifer.Functions` run `func start`.

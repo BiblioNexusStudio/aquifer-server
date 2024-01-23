@@ -29,7 +29,8 @@ public class TrackResourceContentRequestQueueTrigger(ILogger<TrackResourceConten
                 _dbContext.ResourceContentRequests.Add(new ResourceContentRequestEntity
                 {
                     ResourceContentId = resourceContentId,
-                    IpAddress = trackingMetadata.IpAddress
+                    IpAddress = trackingMetadata.IpAddress,
+                    Created = message.InsertedOn?.UtcDateTime ?? DateTime.UtcNow
                 });
             }
             await _dbContext.SaveChangesAsync(stoppingToken);

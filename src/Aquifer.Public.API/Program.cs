@@ -17,7 +17,11 @@ builder.Services.AddDbContext<AquiferDbContext>(options =>
 builder.Services.AddFastEndpoints()
     .AddSingleton<QueueClient>(sp =>
     {
-        var client = new QueueClient(configuration?.ConnectionStrings.AzureStorageAccount, configuration?.JobQueues.TrackResourceContentRequestQueue);
+        var client = new QueueClient(configuration?.ConnectionStrings.AzureStorageAccount,
+            configuration?.JobQueues.TrackResourceContentRequestQueue, new QueueClientOptions
+            {
+                MessageEncoding = QueueMessageEncoding.Base64
+            });
         client.CreateIfNotExists();
         return client;
     })
