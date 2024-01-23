@@ -14,7 +14,7 @@ builder.Services.AddFastEndpoints()
     .AddSwaggerDocumentSettings()
     .AddOutputCache()
     .AddHealthChecks()
-    .AddDbContextCheck<AquiferDbContext>();;
+    .AddDbContextCheck<AquiferDbContext>();
 
 var app = builder.Build();
 app.UseHealthChecks("/_health")
