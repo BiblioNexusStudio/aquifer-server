@@ -27,24 +27,26 @@ public static class GetMonthlyReportsEndpoints
         int monthlyResourceIdx = 0;
         // fill in 'empty' months with a StatusCount of zero
         for (int i = months.Count - 1; i >= 0; i--) {
+            // processing completed resource
             if (monthlyCompletedResources.Count - 1  < monthlyResourceIdx){
                 monthlyCompletedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
-            }  else if (monthlyCompletedResources[monthlyResourceIdx] != null) {
-                DateTime completedMonth = monthlyCompletedResources[monthlyResourceIdx].Date;
-                if(completedMonth.Month != months[i].Month) {
-                    monthlyCompletedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
-                }
-            } 
+            }  
 
+            DateTime completedDate = monthlyCompletedResources[monthlyResourceIdx].Date;
+
+            if (completedDate.Month != months[i].Month) {
+                monthlyCompletedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
+            }
+
+            // processing started resources
             if (monthlyStartedResources.Count - 1  < monthlyResourceIdx){
                 monthlyStartedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
-            } else if (monthlyStartedResources[monthlyResourceIdx] != null) {
-                DateTime completedMonth = monthlyStartedResources[monthlyResourceIdx].Date;
-                if(completedMonth.Month != months[i].Month) {
-                    monthlyStartedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
-                }
-            } 
-
+            }
+            DateTime startedDate = monthlyStartedResources[monthlyResourceIdx].Date;
+            if(startedDate.Month != months[i].Month) {
+                monthlyStartedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
+            }
+            
             monthlyResourceIdx++;
         }
         
