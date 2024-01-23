@@ -24,34 +24,34 @@ public static class GetMonthlyReportsEndpoints
             .ToListAsync(cancellationToken);
 
         var months = ReportUtilities.GetLastMonths(6);
-        int g = 0;
+        int monthlyResourceIdx = 0;
         // fill in 'empty' months with a StatusCount of zero
         for (int i = months.Count() - 1; i >= 0; i--) {
             if (monthlyCompletedResources == null) {
                 monthlyCompletedResources = new List<StatusCountPerMonth>();
-                monthlyCompletedResources.Insert(g, new StatusCountPerMonth(months[i], 0));
-            } else if (monthlyCompletedResources.Count() - 1  < g){
-                monthlyCompletedResources.Insert(g, new StatusCountPerMonth(months[i], 0));
-            }  else if (monthlyCompletedResources[g] != null) {
-                DateTime completedMonth = monthlyCompletedResources[g].Date;
+                monthlyCompletedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
+            } else if (monthlyCompletedResources.Count() - 1  < monthlyResourceIdx){
+                monthlyCompletedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
+            }  else if (monthlyCompletedResources[monthlyResourceIdx] != null) {
+                DateTime completedMonth = monthlyCompletedResources[monthlyResourceIdx].Date;
                 if(completedMonth.Month != months[i].Month) {
-                    monthlyCompletedResources.Insert(g, new StatusCountPerMonth(months[i], 0));
+                    monthlyCompletedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
                 }
             } 
 
             if (monthlyStartedResources == null) {
                 monthlyStartedResources = new List<StatusCountPerMonth>();
-                monthlyStartedResources.Insert(g, new StatusCountPerMonth(months[i], 0));
-            } else if (monthlyStartedResources.Count() - 1  < g){
-                monthlyStartedResources.Insert(g, new StatusCountPerMonth(months[i], 0));
-            }  else if (monthlyStartedResources[g] != null) {
-                DateTime completedMonth = monthlyStartedResources[g].Date;
+                monthlyStartedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
+            } else if (monthlyStartedResources.Count() - 1  < monthlyResourceIdx){
+                monthlyStartedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
+            }  else if (monthlyStartedResources[monthlyResourceIdx] != null) {
+                DateTime completedMonth = monthlyStartedResources[monthlyResourceIdx].Date;
                 if(completedMonth.Month != months[i].Month) {
-                    monthlyStartedResources.Insert(g, new StatusCountPerMonth(months[i], 0));
+                    monthlyStartedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
                 }
             } 
 
-            g++;
+            monthlyResourceIdx++;
         }
         
         return TypedResults.Ok(new MonthlyAquiferiationStartsAndCompletionsResponse(monthlyStartedResources, monthlyCompletedResources));
