@@ -33,7 +33,7 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
                     options.Value.JobQueues.TrackResourceContentRequestQueue,
                     clientOptions);
         }
-        _client.CreateIfNotExists();
+        _client.CreateIfNotExistsAsync();
     }
 
     public async Task TrackResourceContentRequest(List<int> resourceIds, HttpContext httpContext)
