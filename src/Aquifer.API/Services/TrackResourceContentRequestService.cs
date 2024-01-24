@@ -1,6 +1,6 @@
 ﻿using Aquifer.API.Configuration;
 using Aquifer.Common.Jobs.Messages;
-using Azure.Identity;
+using Aquifer.Common.Services;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
@@ -16,23 +16,25 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
 {
     private readonly QueueClient _client;
 
-    public TrackResourceContentRequestService(IOptions<ConfigurationOptions> options)
+    public TrackResourceContentRequestService(IOptions<ConfigurationOptions> options,
+        IAzureClientService azureClientService)
     {
         var clientOptions = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
         if (options.Value.ConnectionStrings.AzureStorageAccount.StartsWith("http"))
         {
             _client = new QueueClient(
-                    new Uri($"{options.Value.ConnectionStrings.AzureStorageAccount}/{options.Value.JobQueues.TrackResourceContentRequestQueue}"),
-                    new DefaultAzureCredential(),
-                    clientOptions);
+                new Uri(
+                    $"{options.Value.ConnectionStrings.AzureStorageAccount}/{options.Value.JobQueues.TrackResourceContentRequestQueue}"),
+                azureClientService.GetCredential(),
+                clientOptions);
         }
         else
         {
-            _client = new QueueClient(
-                    options.Value.ConnectionStrings.AzureStorageAccount,
-                    options.Value.JobQueues.TrackResourceContentRequestQueue,
-                    clientOptions);
+            _client = new QueueClient(options.Value.ConnectionStrings.AzureStorageAccount,
+                options.Value.JobQueues.TrackResourceContentRequestQueue,
+                clientOptions);
         }
+
         _client.CreateIfNotExists();
     }
 
@@ -43,7 +45,7 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
             ResourceContentIds = resourceIds,
             IpAddress = GetClientIp(httpContext)
         };
-        var serializedMessage = JsonSerializer.Serialize(message);
+        string serializedMessage = JsonSerializer.Serialize(message);
         await _client.SendMessageAsync(serializedMessage);
     }
 
@@ -51,12 +53,13 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
     {
         if (httpContext.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor))
         {
-            var ip = forwardedFor.FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim();
+            string? ip = forwardedFor.FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim();
             if (!string.IsNullOrEmpty(ip))
             {
                 return ip;
             }
         }
+
         return httpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
     }
 }
