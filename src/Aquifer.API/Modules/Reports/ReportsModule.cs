@@ -11,7 +11,7 @@ public class ReportsModule : IModule
                 MonthlyReportsEndpoints.AquiferizationCompleteAndStart)
             .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)))
             .RequireAuthorization();
-        group.MapGet("resources/item-totals", ResourceItemTotalsEndpoint.HandleAsync);
+        group.MapGet("resources/item-totals", ResourceItemTotalsEndpoint.HandleAsync).RequireAuthorization();
 
         return endpoints;
     }

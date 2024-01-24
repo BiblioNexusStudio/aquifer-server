@@ -33,7 +33,7 @@ public static class ResourceItemTotalsEndpoint
                 INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
             WHERE RC.MediaType != 2
             GROUP BY RES.Id
-            HAVING COUNT(DISTINCT RC.LanguageId) > 1) TwoPlusResources) AS TotalResourcesTwoPlus,
+            HAVING COUNT(DISTINCT RC.LanguageId) > 1) TwoPlusResources) AS TotalResourcesTwoPlusLanguages,
             
             (SELECT COUNT(*)
         FROM (SELECT RES.Id
@@ -43,7 +43,7 @@ public static class ResourceItemTotalsEndpoint
                 AND RC.Created > DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)
             GROUP BY RES.Id
             HAVING COUNT(DISTINCT RC.LanguageId) > 1) TwoPlusResources
-        ) AS TotalResourcesTwoPlusThisMonth,
+        ) AS TotalResourcesTwoPlusLanguagesThisMonth,
             
         (SELECT COUNT(DISTINCT RES.Id)
         FROM Resources RES
@@ -61,7 +61,7 @@ public static class ResourceItemTotalsEndpoint
         (SELECT COUNT(DISTINCT RES.Id)
         FROM Resources RES
             INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
-        WHERE RC.Status IN (7, 8, 9)) AS TotalResourceTranslastion,
+        WHERE RC.Status IN (7, 8, 9)) AS TotalResourceBeingTranslated,
             
         (SELECT COUNT(DISTINCT RES.Id)
         FROM Resources RES
@@ -69,7 +69,7 @@ public static class ResourceItemTotalsEndpoint
             INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
             INNER JOIN ResourceContentVersionStatusHistory RCVSH ON RCVSH.ResourceContentVersionId = RCV.Id
         WHERE RCVSH.Created > DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)
-            AND RCVSH.Status = 7) AS TotalResourceTranslastionedThisMonth;
+            AND RCVSH.Status = 7) AS TotalResourceBeingTranslatedThisMonth;
         """;
 
     public static async Task<Ok<ResourceItemTotalsResponse>>
