@@ -5,6 +5,7 @@ on:
         branches:
             - master
         paths:
+            - 'src/Aquifer.Common/**'
             - 'src/Aquifer.API/**'
             - 'src/Aquifer.Data/**'
     workflow_dispatch:
@@ -48,7 +49,7 @@ jobs:
                   path: build
 
     deploy_internal_api_to_dev:
-        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'dev'
+        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'dev-internal'
         name: Deploy Internal API to dev
         runs-on: ubuntu-latest
         needs: build
@@ -70,7 +71,7 @@ jobs:
                   azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     deploy_internal_api_to_qa:
-        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'qa'
+        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'qa-internal'
         name: Deploy Internal API to qa
         runs-on: ubuntu-latest
         needs: build
@@ -92,7 +93,7 @@ jobs:
                   azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     deploy_internal_api_to_prod:
-        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'prod'
+        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'prod-internal'
         name: Deploy Internal API to prod
         runs-on: ubuntu-latest
         needs: build

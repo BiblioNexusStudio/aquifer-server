@@ -1,7 +1,7 @@
 using Aquifer.API.Common;
 using Aquifer.API.Configuration;
 using Aquifer.API.Services;
-using Aquifer.API.Utilities;
+using Aquifer.Common.Utilities;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Net.Mime;
@@ -44,7 +44,7 @@ public class AuthProviderHttpService : IAuthProviderHttpService
     {
         _httpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", authToken);
-        
+
         var createUserRequest = new CreateOAuthUserRequest
         {
             Connection = Auth0Constants.Connection,

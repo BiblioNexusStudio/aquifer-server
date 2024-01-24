@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Aquifer.API.Utilities;
+namespace Aquifer.Common.Utilities;
 
 public static class JsonUtilities
 {

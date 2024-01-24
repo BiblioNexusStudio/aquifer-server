@@ -1,5 +1,5 @@
 ﻿using System.Text.Json.Serialization;
-using Aquifer.API.Utilities;
+using Aquifer.Common.Utilities;
 using Aquifer.Data.Entities;
 
 namespace Aquifer.Public.API.Endpoints.Resources.GetItem;

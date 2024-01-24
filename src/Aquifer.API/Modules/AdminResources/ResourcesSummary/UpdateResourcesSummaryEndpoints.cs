@@ -1,6 +1,6 @@
 using Aquifer.API.Modules.AdminResources.ResourceContentSummary;
 using Aquifer.API.Services;
-using Aquifer.API.Utilities;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;

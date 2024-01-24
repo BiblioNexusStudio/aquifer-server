@@ -1,23 +1,31 @@
 using System.Text.Json;
 using Aquifer.Data;
 using Aquifer.Public.API.OpenApi;
+using Aquifer.Public.API.Configuration;
+using Aquifer.Public.API.Middleware;
+using Aquifer.Public.API.Services;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+var configuration = builder.Configuration.Get<ConfigurationOptions>();
 
 builder.Services.AddDbContext<AquiferDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("BiblioNexusDb"),
+    options.UseSqlServer(configuration?.ConnectionStrings.BiblioNexusDb,
         providerOptions => providerOptions.EnableRetryOnFailure(3)));
 
 builder.Services.AddFastEndpoints()
+    .AddSingleton<ITrackResourceContentRequestService, TrackResourceContentRequestService>()
     .AddSwaggerDocumentSettings()
     .AddOutputCache()
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 
+builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
+
 var app = builder.Build();
 app.UseHealthChecks("/_health")
+    .UseMiddleware<TrackResourceContentRequestMiddleware>()
     .UseResponseCaching()
     .UseOutputCache()
     .UseFastEndpoints(config =>

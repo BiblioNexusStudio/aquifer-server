@@ -1,7 +1,9 @@
 using Aquifer.API.Configuration;
+using Aquifer.API.Middleware;
 using Aquifer.API.Modules;
 using Aquifer.API.Services;
 using Aquifer.Data;
+using Azure.Storage.Queues;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +14,6 @@ var configuration = builder.Configuration.Get<ConfigurationOptions>();
 
 builder.Services
     .AddAuth(configuration?.JwtSettings)
-    .AddSwagger()
     .AddCors()
     .AddOutputCache()
     .AddApplicationInsightsTelemetry()
@@ -32,6 +33,7 @@ builder.Services
     })
     .AddScoped<IUserService, UserService>()
     .AddScoped<IAzureKeyVaultService, AzureKeyVaultService>()
+    .AddSingleton<ITrackResourceContentRequestService, TrackResourceContentRequestService>()
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 
@@ -42,7 +44,7 @@ var app = builder.Build();
 app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseHealthChecks("/_health");
 app.UseAuth();
-app.UseSwaggerWithUi();
+app.UseMiddleware<TrackResourceContentRequestMiddleware>();
 app.UseOutputCache();
 if (app.Environment.IsDevelopment())
 {
