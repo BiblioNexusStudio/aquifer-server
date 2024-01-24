@@ -1,6 +1,7 @@
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Aquifer.API.Utilities;
 
 namespace Aquifer.API.Modules.AdminResources.ResourcesSummary;
 
@@ -46,7 +47,7 @@ public static class GetResourcesSummaryEndpoints
 
         // resourcesByParentResource sum will be changed later, so keep this at the top
         int allResourcesCount = resourcesByParentResource.Select(x => x.ResourceCount).Sum();
-        var months = GetMonthsForSummary();
+        var months = ReportUtilities.GetLastMonths(5);
         var languages = resourcesByLanguage.Select(x => x.LanguageName).Distinct().ToList();
         var parentResources = resourcesByLanguage.Select(x => x.ParentResourceName).Distinct().ToList();
 
@@ -69,13 +70,6 @@ public static class GetResourcesSummaryEndpoints
             multiLanguageResourcesCount,
             languages,
             parentResources));
-    }
-
-    private static List<DateTime> GetMonthsForSummary()
-    {
-        var currentDate = DateTime.UtcNow;
-        return Enumerable.Range(0, 5).Select(i => new DateTime(currentDate.Year, currentDate.Month, 1).AddMonths(-i))
-            .ToList();
     }
 
     private static List<ResourcesSummaryByParentResourceResponse> GetResourcesByParentResourceResponse(
