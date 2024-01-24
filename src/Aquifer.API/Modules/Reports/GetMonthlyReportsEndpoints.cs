@@ -6,19 +6,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Modules.Reports;
 
-public static class GetMonthlyReportsEndpoints 
+public static class MonthlyReportsEndpoints 
 {
 
-     public static async Task<Results<Ok<MonthlyAquiferiationStartsAndCompletionsResponse>, NotFound>> GetAquiferizationCompleteAndStart(
+     public static async Task<Results<Ok<MonthlyAquiferiationStartsAndCompletionsResponse>, NotFound>> AquiferizationCompleteAndStart(
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var startedSql = GetMonthlyCountQuery(ResourceContentStatus.AquiferizeInProgress);
+        var startedSql = MonthlyCountQuery(ResourceContentStatus.AquiferizeInProgress);
         var monthlyStartedResources = await dbContext.Database
             .SqlQuery<StatusCountPerMonth>($"exec ({startedSql})")
             .ToListAsync(cancellationToken);
 
-        var completedSql = GetMonthlyCountForEnglishQuery(ResourceContentStatus.Complete);
+        var completedSql = MonthlyCountForEnglishQuery(ResourceContentStatus.Complete);
         var monthlyCompletedResources = await dbContext.Database
             .SqlQuery<StatusCountPerMonth>($"exec ({completedSql})")
             .ToListAsync(cancellationToken);
@@ -32,7 +32,7 @@ public static class GetMonthlyReportsEndpoints
                 monthlyCompletedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
             }  
 
-            DateTime completedDate = monthlyCompletedResources[monthlyResourceIdx].Date;
+            var completedDate = monthlyCompletedResources[monthlyResourceIdx].Date;
 
             if (completedDate.Month != months[i].Month) {
                 monthlyCompletedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
@@ -42,7 +42,7 @@ public static class GetMonthlyReportsEndpoints
             if (monthlyStartedResources.Count - 1  < monthlyResourceIdx){
                 monthlyStartedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
             }
-            DateTime startedDate = monthlyStartedResources[monthlyResourceIdx].Date;
+            var startedDate = monthlyStartedResources[monthlyResourceIdx].Date;
             if(startedDate.Month != months[i].Month) {
                 monthlyStartedResources.Insert(monthlyResourceIdx, new StatusCountPerMonth(months[i], 0));
             }
@@ -53,7 +53,7 @@ public static class GetMonthlyReportsEndpoints
         return TypedResults.Ok(new MonthlyAquiferiationStartsAndCompletionsResponse(monthlyStartedResources, monthlyCompletedResources));
     }  
 
-    private static string GetMonthlyCountQuery(ResourceContentStatus status) {
+    private static string MonthlyCountQuery(ResourceContentStatus status) {
         return 
         $"""
         select DATEADD(mm,0,DATEADD(mm, DATEDIFF(m,0,Created),0)) AS Date, 
@@ -64,7 +64,7 @@ public static class GetMonthlyReportsEndpoints
         """;
     }
 
-    private static string GetMonthlyCountForEnglishQuery(ResourceContentStatus status) {
+    private static string MonthlyCountForEnglishQuery(ResourceContentStatus status) {
         return 
         $"""
         select DATEADD(mm,0,DATEADD(mm, DATEDIFF(m,0,rcvsh.[Created]),0)) AS Date, Count(rcvsh.[Status]) as StatusCount from ResourceContentVersionStatusHistory rcvsh 

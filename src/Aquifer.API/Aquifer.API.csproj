@@ -8,9 +8,11 @@
         <WarningsAsErrors>true</WarningsAsErrors>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(RunConfiguration)' == 'https' " />
+    <PropertyGroup Condition=" '$(RunConfiguration)' == 'http' " />
     <ItemGroup>
-        <PackageReference Include="Azure.Identity" Version="1.10.4"/>
-        <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.5.0"/>
+        <PackageReference Include="Azure.Identity" Version="1.10.4" />
+        <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.5.0" />
         <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.1" />
@@ -20,12 +22,12 @@
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="8.0.1" />
         <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.1" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     </ItemGroup>
 
 
     <ItemGroup>
-        <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj"/>
+        <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj" />
     </ItemGroup>
 
 </Project>
