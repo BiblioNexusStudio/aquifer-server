@@ -3,7 +3,8 @@ using Aquifer.Public.API.Services;
 
 namespace Aquifer.Public.API.Middleware;
 
-public class TrackResourceContentRequestMiddleware(RequestDelegate _next, ITrackResourceContentRequestService _trackerService, ILogger<TrackResourceContentRequestMiddleware> _logger)
+public class TrackResourceContentRequestMiddleware(RequestDelegate _next, ITrackResourceContentRequestService _trackerService,
+    ILogger<TrackResourceContentRequestMiddleware> _logger)
 {
     private static readonly Regex ResourcePathRegex = new("^/resources/(\\d+)$");
 
@@ -13,12 +14,15 @@ public class TrackResourceContentRequestMiddleware(RequestDelegate _next, ITrack
 
         try
         {
-            var path = context.Request.Path.Value ?? "";
-
-            if (ResourcePathRegex.IsMatch(path))
+            if (context.Response.StatusCode == 200)
             {
-                var resourceId = int.Parse(ResourcePathRegex.Match(path).Groups[1].Value);
-                await _trackerService.TrackResourceContentRequest([resourceId], context.Request.HttpContext);
+                var path = context.Request.Path.Value ?? "";
+
+                if (ResourcePathRegex.IsMatch(path))
+                {
+                    var resourceId = int.Parse(ResourcePathRegex.Match(path).Groups[1].Value);
+                    await _trackerService.TrackResourceContentRequest([resourceId], context.Request.HttpContext);
+                }
             }
         }
         catch (Exception ex)
