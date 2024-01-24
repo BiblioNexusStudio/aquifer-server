@@ -1,5 +1,4 @@
-using Aquifer.API.Utilities;
-using Aquifer.Data.Enums;
+using Aquifer.Common.Utilities;
 using System.Text.Json.Serialization;
 
 namespace Aquifer.API.Modules.Bibles;
