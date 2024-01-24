@@ -8,7 +8,44 @@ public static class ResourceItemTotalsEndpoint
 {
     private const string TotalsQuery =
         """
-        SELECT (SELECT COUNT(DISTINCT RES.Id)
+        SELECT
+        (SELECT COUNT(*)
+        FROM Resources) AS TotalResources,
+
+        (SELECT COUNT(*)
+        FROM Resources
+        WHERE Created > DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)) AS TotalResourcesThisMonth,
+            
+        (SELECT COUNT(DISTINCT RES.Id)
+        FROM Resources RES
+            INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
+        WHERE RC.LanguageId != 1) AS TotalNonEnglishResources,
+
+        (SELECT COUNT(DISTINCT RES.Id)
+        FROM Resources RES
+            INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
+        WHERE RC.LanguageId != 1
+            AND RC.Created > DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)) AS TotalNonEnglishResourcesThisMonth,
+            
+        (SELECT COUNT(*)
+        FROM (SELECT RES.Id
+            FROM Resources RES
+                INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
+            WHERE RC.MediaType != 2
+            GROUP BY RES.Id
+            HAVING COUNT(DISTINCT RC.LanguageId) > 1) TwoPlusResources) AS TotalResourcesTwoPlus,
+            
+            (SELECT COUNT(*)
+        FROM (SELECT RES.Id
+            FROM Resources RES
+                INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
+            WHERE RC.MediaType != 2  --  This is leaving out audio types from an earlier decision.
+                AND RC.Created > DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)
+            GROUP BY RES.Id
+            HAVING COUNT(DISTINCT RC.LanguageId) > 1) TwoPlusResources
+        ) AS TotalResourcesTwoPlusThisMonth,
+            
+        (SELECT COUNT(DISTINCT RES.Id)
         FROM Resources RES
              INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
         WHERE RC.Status IN (2, 4, 5)) AS AquiferizedResources,
@@ -19,7 +56,20 @@ public static class ResourceItemTotalsEndpoint
              INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
              INNER JOIN ResourceContentVersionStatusHistory RCVSH ON RCVSH.ResourceContentVersionId = RCV.Id
         WHERE RCVSH.Created > DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)
-        AND RCVSH.Status = 2)       AS AquiferizedResourcesThisMonth;
+        AND RCVSH.Status = 2) AS AquiferizedResourcesThisMonth,
+
+        (SELECT COUNT(DISTINCT RES.Id)
+        FROM Resources RES
+            INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
+        WHERE RC.Status IN (7, 8, 9)) AS TotalResourceTranslastion,
+            
+        (SELECT COUNT(DISTINCT RES.Id)
+        FROM Resources RES
+            INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
+            INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
+            INNER JOIN ResourceContentVersionStatusHistory RCVSH ON RCVSH.ResourceContentVersionId = RCV.Id
+        WHERE RCVSH.Created > DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)
+            AND RCVSH.Status = 7) AS TotalResourceTranslastionedThisMonth;
         """;
 
     public static async Task<Ok<ResourceItemTotalsResponse>>
