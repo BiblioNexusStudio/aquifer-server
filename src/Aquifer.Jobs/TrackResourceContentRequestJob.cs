@@ -20,7 +20,7 @@ public class TrackResourceContentRequestJob(ILogger<TrackResourceContentRequestJ
             var trackingMetadata = JsonSerializer.Deserialize<TrackResourceContentRequestMessage>(message.MessageText);
             if (trackingMetadata == null)
             {
-                _logger.LogError($"Failed to deserialize the message: {message.MessageText}");
+                _logger.LogError("Failed to deserialize the message: {MessageText}", message.MessageText);
                 return;
             }
 
@@ -37,8 +37,8 @@ public class TrackResourceContentRequestJob(ILogger<TrackResourceContentRequestJ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"An error occurred while processing the message: {message.MessageText}");
-            throw ex;
+            _logger.LogError(ex, "An error occurred while processing the message: {MessageText}", message.MessageText);
+            throw;
         }
     }
 }

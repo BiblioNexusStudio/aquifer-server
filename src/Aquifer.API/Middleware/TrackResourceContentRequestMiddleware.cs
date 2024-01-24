@@ -14,17 +14,20 @@ public class TrackResourceContentRequestMiddleware(RequestDelegate _next, ITrack
 
         try
         {
-            var path = context.Request.Path.Value ?? "";
+            if (context.Response.StatusCode == 200)
+            {
+                var path = context.Request.Path.Value ?? "";
 
-            if (ResourcePathRegex.IsMatch(path))
-            {
-                var resourceId = int.Parse(ResourcePathRegex.Match(path).Groups[1].Value);
-                await _trackerService.TrackResourceContentRequest([resourceId], context.Request.HttpContext);
-            }
-            else if (BatchResourcesPathRegex.IsMatch(path))
-            {
-                var ids = context.Request.Query["ids[]"].Where(s => !string.IsNullOrEmpty(s)).Select(int.Parse!).ToList();
-                await _trackerService.TrackResourceContentRequest(ids, context.Request.HttpContext);
+                if (ResourcePathRegex.IsMatch(path))
+                {
+                    var resourceId = int.Parse(ResourcePathRegex.Match(path).Groups[1].Value);
+                    await _trackerService.TrackResourceContentRequest([resourceId], context.Request.HttpContext);
+                }
+                else if (BatchResourcesPathRegex.IsMatch(path))
+                {
+                    var ids = context.Request.Query["ids[]"].Where(s => !string.IsNullOrEmpty(s)).Select(int.Parse!).ToList();
+                    await _trackerService.TrackResourceContentRequest(ids, context.Request.HttpContext);
+                }
             }
         }
         catch (Exception ex)

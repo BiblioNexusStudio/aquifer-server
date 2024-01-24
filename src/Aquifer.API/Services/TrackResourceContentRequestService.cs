@@ -38,13 +38,25 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
 
     public async Task TrackResourceContentRequest(List<int> resourceIds, HttpContext httpContext)
     {
-        var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
         var message = new TrackResourceContentRequestMessage
         {
             ResourceContentIds = resourceIds,
-            IpAddress = ipAddress
+            IpAddress = GetClientIp(httpContext)
         };
         var serializedMessage = JsonSerializer.Serialize(message);
         await _client.SendMessageAsync(serializedMessage);
+    }
+
+    private string GetClientIp(HttpContext httpContext)
+    {
+        if (httpContext.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor))
+        {
+            var ip = forwardedFor.FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim();
+            if (!string.IsNullOrEmpty(ip))
+            {
+                return ip;
+            }
+        }
+        return httpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
     }
 }
