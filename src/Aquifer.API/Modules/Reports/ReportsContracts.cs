@@ -1,11 +1,11 @@
+namespace Aquifer.API.Modules.Reports;
+
 public record MonthlyAquiferiationStartsAndCompletionsResponse(
-    List<StatusCountPerMonth> Starts,
-    List<StatusCountPerMonth> Completions
+    IEnumerable<StatusCountPerMonth> Starts,
+    IEnumerable<StatusCountPerMonth> Completions
 );
 
-public record StatusCountPerMonth
-    (
-        DateTime Date,
-        int StatusCount
-    );
-
+public record StatusCountPerMonth(
+    DateTime Date,
+    int StatusCount
+);
