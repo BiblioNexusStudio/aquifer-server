@@ -2,8 +2,8 @@ using Aquifer.API.Configuration;
 using Aquifer.API.Middleware;
 using Aquifer.API.Modules;
 using Aquifer.API.Services;
+using Aquifer.Common.Services;
 using Aquifer.Data;
-using Azure.Storage.Queues;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
@@ -21,10 +21,7 @@ builder.Services
         options.UseSqlServer(configuration?.ConnectionStrings.BiblioNexusDb,
             providerOptions => providerOptions.EnableRetryOnFailure(3)))
     .RegisterModules()
-    .Configure<JsonOptions>(options =>
-    {
-        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    })
+    .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))
     .AddHttpLogging(logging =>
     {
         logging.LoggingFields = HttpLoggingFields.Response;
@@ -34,6 +31,7 @@ builder.Services
     .AddScoped<IUserService, UserService>()
     .AddScoped<IAzureKeyVaultService, AzureKeyVaultService>()
     .AddSingleton<ITrackResourceContentRequestService, TrackResourceContentRequestService>()
+    .AddAzureClient(builder.Environment.IsDevelopment())
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 
