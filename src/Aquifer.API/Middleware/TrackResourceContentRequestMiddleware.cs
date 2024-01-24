@@ -25,7 +25,7 @@ public class TrackResourceContentRequestMiddleware(RequestDelegate _next, ITrack
                 }
                 else if (BatchResourcesPathRegex.IsMatch(path))
                 {
-                    var ids = context.Request.Query["ids[]"].Where(s => !string.IsNullOrEmpty(s)).Select(int.Parse!).ToList();
+                    var ids = context.Request.Query["ids"].Where(s => !string.IsNullOrEmpty(s)).Select(int.Parse!).ToList();
                     await _trackerService.TrackResourceContentRequest(ids, context.Request.HttpContext);
                 }
             }
