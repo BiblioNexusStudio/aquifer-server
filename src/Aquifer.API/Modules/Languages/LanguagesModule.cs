@@ -1,5 +1,4 @@
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 

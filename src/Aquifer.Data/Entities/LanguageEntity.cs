@@ -21,5 +21,5 @@ public enum ScriptDirection
 {
     None = 0,
     LTR = 1,
-    RTL = 2,
+    RTL = 2
 }

@@ -1,10 +1,10 @@
+using System.Text;
 using Aquifer.API.Modules.AdminResources.ResourceContentSummary;
 using Aquifer.API.Services;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using System.Text;
 
 namespace Aquifer.API.Modules.AdminResources.ResourcesSummary;
 
@@ -37,10 +37,12 @@ public class UpdateResourcesSummaryEndpoints
         {
             entity.Content = JsonUtilities.DefaultSerialize(item.Content);
         }
+
         if (item.WordCount is not null)
         {
             entity.WordCount = item.WordCount;
         }
+
         entity.DisplayName = item.DisplayName;
         entity.ContentSize = Encoding.UTF8.GetByteCount(entity.Content);
         entity.Updated = DateTime.UtcNow;

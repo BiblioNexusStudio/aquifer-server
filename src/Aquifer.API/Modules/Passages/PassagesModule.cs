@@ -1,9 +1,9 @@
 using Aquifer.API.Common;
+using Aquifer.API.Modules.Resources;
 using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using Aquifer.API.Modules.Resources;
 
 namespace Aquifer.API.Modules.Passages;
 
@@ -35,11 +35,12 @@ public class PassagesModule : IModule
         var passagesByBook = (await dbContext.Passages
                 .Where(p => p.PassageResources.Any(pr =>
                     pr.Resource.ParentResource == parentResource &&
-                    pr.Resource.ResourceContents.Any(rc => rc.Versions.Any(rcv => rcv.IsPublished) && rc.LanguageId == languageId)))
+                    pr.Resource.ResourceContents.Any(rc =>
+                        rc.Versions.Any(rcv => rcv.IsPublished) && rc.LanguageId == languageId)))
                 .Select(passage =>
                     new
                     {
-                        Id = passage.Id,
+                        passage.Id,
                         PassageStartDetails = BibleUtilities.TranslateVerseId(passage.StartVerseId),
                         PassageEndDetails = BibleUtilities.TranslateVerseId(passage.EndVerseId)
                     }
@@ -69,7 +70,7 @@ public class PassagesModule : IModule
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var passage = await dbContext.Passages.FindAsync(passageId, cancellationToken);
+        var passage = await dbContext.Passages.FindAsync([passageId], cancellationToken);
         if (passage == null)
         {
             return TypedResults.NotFound();

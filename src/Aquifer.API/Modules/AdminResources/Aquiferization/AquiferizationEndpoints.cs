@@ -153,7 +153,7 @@ public static class AquiferizationEndpoints
         if (currentDraftVersion is null)
         {
             var resourceContent =
-                await dbContext.ResourceContents.FindAsync(contentId, cancellationToken) ??
+                await dbContext.ResourceContents.FindAsync([contentId], cancellationToken) ??
                 throw new ArgumentNullException();
 
             resourceContent.Status = ResourceContentStatus.New;
@@ -204,7 +204,7 @@ public static class AquiferizationEndpoints
         }
 
         var resourceContent =
-            await dbContext.ResourceContents.FindAsync(contentId, cancellationToken) ??
+            await dbContext.ResourceContents.FindAsync([contentId], cancellationToken) ??
             throw new ArgumentNullException();
 
         resourceContent.Status = ResourceContentStatus.AquiferizeInProgress;

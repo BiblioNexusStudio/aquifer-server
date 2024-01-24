@@ -1,14 +1,14 @@
-using Microsoft.Extensions.Hosting;
+using Aquifer.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
-using Aquifer.Data;
+using Microsoft.Extensions.Hosting;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
     .ConfigureServices((context, services) =>
     {
-        var connectionString = context.Configuration.GetConnectionString("BiblioNexusDb");
+        string? connectionString = context.Configuration.GetConnectionString("BiblioNexusDb");
         services.AddDbContext<AquiferDbContext>(options =>
             options.UseSqlServer(connectionString,
                 providerOptions => providerOptions.EnableRetryOnFailure(3)));

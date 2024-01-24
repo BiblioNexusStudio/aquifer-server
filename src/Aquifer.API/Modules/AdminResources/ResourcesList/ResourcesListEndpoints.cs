@@ -1,9 +1,9 @@
+using System.Linq.Expressions;
 using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace Aquifer.API.Modules.AdminResources.ResourcesList;
 
@@ -33,11 +33,7 @@ public static class ResourcesListEndpoints
                 ParentResourceName = x.ParentResource.DisplayName,
                 Status = x.ResourceContents.Select(rc => rc.Status).OrderBy(status => (int)status).First(),
                 ContentIdsWithLanguageIds = x.ResourceContents
-                    .Select(rc => new ResourceListItemForLanguageResponse
-                    {
-                        ContentId = rc.Id,
-                        LanguageId = rc.LanguageId
-                    })
+                    .Select(rc => new ResourceListItemForLanguageResponse { ContentId = rc.Id, LanguageId = rc.LanguageId })
             }).ToListAsync(cancellationToken);
 
         return TypedResults.Ok(resources);

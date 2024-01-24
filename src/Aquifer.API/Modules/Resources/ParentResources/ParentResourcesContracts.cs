@@ -1,6 +1,6 @@
+using System.Text.Json.Serialization;
 using Aquifer.Common.Utilities;
 using Aquifer.Data.Entities;
-using System.Text.Json.Serialization;
 
 namespace Aquifer.API.Modules.Resources.ParentResources;
 

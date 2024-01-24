@@ -7,8 +7,10 @@ namespace Aquifer.API.Modules.AdminResources;
 public static class AdminResourcesHelpers
 {
     public const string InvalidUserIdResponse = "The AssignedUserId was not valid.";
+
     public const string NoResourceFoundForContentIdResponse =
         "There is no ResourceContentVersion with the given contentId.";
+
     public const string DraftAlreadyExistsResponse = "This resource is already being aquiferized.";
     public const string NoDraftExistsResponse = "No draft currently exists for this resource.";
     public const string NotInReviewPendingResponse = "This resource is not in review pending status";

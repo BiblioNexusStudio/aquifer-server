@@ -1,8 +1,8 @@
-﻿using Aquifer.API.Common;
+﻿using System.Security.Claims;
+using Aquifer.API.Common;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace Aquifer.API.Services;
 
@@ -26,13 +26,13 @@ public class UserService(AquiferDbContext _dbContext, IHttpContextAccessor _http
     public List<string> GetAllJwtRoles()
     {
         return _httpContextAccessor.HttpContext?.User.FindAll(Constants.RolesClaim).Select(c => c.Value)
-                   .ToList() ?? [];
+            .ToList() ?? [];
     }
 
     public List<string> GetAllJwtPermissions()
     {
         return _httpContextAccessor.HttpContext?.User.FindAll(Constants.PermissionsClaim).Select(c => c.Value)
-                   .ToList() ?? [];
+            .ToList() ?? [];
     }
 
     public bool HasJwtClaim(string permission)
@@ -44,6 +44,6 @@ public class UserService(AquiferDbContext _dbContext, IHttpContextAccessor _http
 
     public async Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken)
     {
-        return userId is null || await _dbContext.Users.FindAsync(userId, cancellationToken) is not null;
+        return userId is null || await _dbContext.Users.FindAsync([userId], cancellationToken) is not null;
     }
 }

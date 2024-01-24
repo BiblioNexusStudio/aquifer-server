@@ -16,8 +16,8 @@ public static class ResourceContentBatchEndpoints
         GetResourceMetadataByIds(
             [FromQuery] int[] ids,
             AquiferDbContext dbContext,
-            CancellationToken cancellationToken,
-            TelemetryClient telemetry
+            TelemetryClient telemetry,
+            CancellationToken cancellationToken
         )
     {
         if (ids.Length > 100)
@@ -52,8 +52,8 @@ public static class ResourceContentBatchEndpoints
         GetResourceTextContentByIds(
             [FromQuery] int[] ids,
             AquiferDbContext dbContext,
-            CancellationToken cancellationToken,
-            TelemetryClient telemetry
+            TelemetryClient telemetry,
+            CancellationToken cancellationToken
         )
     {
         if (ids.Length > 10)

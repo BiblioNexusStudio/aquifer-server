@@ -13,7 +13,10 @@ public class DefaultParameterOperationProcessor : IOperationProcessor
         var dtoType = ((AspNetCoreOperationProcessorContext)context).ApiDescription.ParameterDescriptions
             .FirstOrDefault()?.Type;
 
-        if (dtoType is null) return true;
+        if (dtoType is null)
+        {
+            return true;
+        }
 
         foreach (var parameter in context.OperationDescription.Operation.Parameters)
         {

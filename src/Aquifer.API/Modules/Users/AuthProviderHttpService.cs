@@ -1,11 +1,11 @@
+using System.Net.Http.Headers;
+using System.Net.Mime;
+using System.Text;
 using Aquifer.API.Common;
 using Aquifer.API.Configuration;
 using Aquifer.API.Services;
 using Aquifer.Common.Utilities;
 using Microsoft.Extensions.Options;
-using System.Net.Http.Headers;
-using System.Net.Mime;
-using System.Text;
 
 namespace Aquifer.API.Modules.Users;
 

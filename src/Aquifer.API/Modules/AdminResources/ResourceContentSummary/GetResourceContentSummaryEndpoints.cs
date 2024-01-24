@@ -22,7 +22,7 @@ public static class GetResourceContentSummaryEndpoints
                 Language = new ResourceContentSummaryLanguage
                 {
                     EnglishDisplay = rc.Language.EnglishDisplay,
-                    ISO6393Code = rc.Language.ISO6393Code,
+                    ISO6393Code = rc.Language.ISO6393Code
                 },
                 Status = rc.Status,
                 MediaType = rc.MediaType,

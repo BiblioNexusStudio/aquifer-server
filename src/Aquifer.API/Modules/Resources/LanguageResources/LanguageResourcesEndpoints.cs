@@ -121,13 +121,7 @@ public static class LanguageResourcesEndpoints
         // This filters them by grouping appropriately and selecting the current language resource (if available) then falling back to English.
         var filteredDownToOneLanguage = passageResourceContent.Concat(verseResourceContent)
             .Concat(associatedResourceContent)
-            .GroupBy(rc => new
-            {
-                rc.StartChapter,
-                rc.EndChapter,
-                rc.MediaType,
-                rc.ResourceId
-            })
+            .GroupBy(rc => new { rc.StartChapter, rc.EndChapter, rc.MediaType, rc.ResourceId })
             .Select(grc =>
             {
                 var first = grc.OrderBy(rc => rc.LanguageId == languageId ? 0 : 1).First();

@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
-[Index(nameof(StartVerseId), nameof(EndVerseId), IsUnique = true),
- EntityTypeConfiguration(typeof(PassageEntityConfiguration))]
+[Index(nameof(StartVerseId), nameof(EndVerseId), IsUnique = true)]
+[EntityTypeConfiguration(typeof(PassageEntityConfiguration))]
 public class PassageEntity
 {
     public int Id { get; set; }

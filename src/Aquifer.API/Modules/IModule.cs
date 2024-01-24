@@ -2,14 +2,18 @@
 
 public interface IModule
 {
-    IServiceCollection RegisterModule(IServiceCollection builder) => builder;
+    IServiceCollection RegisterModule(IServiceCollection builder)
+    {
+        return builder;
+    }
+
     IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints);
 }
 
 public static class ModuleExtensions
 {
     // this could also be added into the DI container
-    private static readonly List<IModule> registeredModules = new();
+    private static readonly List<IModule> registeredModules = [];
 
     public static IServiceCollection RegisterModules(this IServiceCollection services)
     {

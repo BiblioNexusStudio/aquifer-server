@@ -14,8 +14,8 @@ public static class ResourceContentItemEndpoints
     public static async Task<Results<Ok<object>, NotFound, RedirectHttpResult>> GetResourceContentById(
         int contentId,
         AquiferDbContext dbContext,
-        CancellationToken cancellationToken,
         TelemetryClient telemetry,
+        CancellationToken cancellationToken,
         [FromQuery] string audioType = "webm"
     )
     {
