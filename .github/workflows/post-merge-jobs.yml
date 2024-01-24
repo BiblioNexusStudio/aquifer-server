@@ -3,7 +3,7 @@ name: Post-merge (Jobs)
 on:
     push:
         branches:
-            - bib-308-track-resource-requests
+            - master
         paths:
             - 'src/Aquifer.Common/**'
             - 'src/Aquifer.Data/**'
