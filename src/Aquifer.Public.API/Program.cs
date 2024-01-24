@@ -1,8 +1,9 @@
 using System.Text.Json;
+using Aquifer.Common.Services;
 using Aquifer.Data;
-using Aquifer.Public.API.OpenApi;
 using Aquifer.Public.API.Configuration;
 using Aquifer.Public.API.Middleware;
+using Aquifer.Public.API.OpenApi;
 using Aquifer.Public.API.Services;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ builder.Services.AddDbContext<AquiferDbContext>(options =>
 
 builder.Services.AddFastEndpoints()
     .AddSingleton<ITrackResourceContentRequestService, TrackResourceContentRequestService>()
+    .AddAzureClient(builder.Environment.IsDevelopment())
     .AddSwaggerDocumentSettings()
     .AddOutputCache()
     .AddHealthChecks()
