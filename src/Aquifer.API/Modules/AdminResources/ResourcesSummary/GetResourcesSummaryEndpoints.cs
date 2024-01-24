@@ -74,7 +74,7 @@ public static class GetResourcesSummaryEndpoints
     private static List<DateTime> GetMonthsForSummary()
     {
         var currentDate = DateTime.UtcNow;
-        return Enumerable.Range(0, 5).Select(i => new DateTime(currentDate.Year, currentDate.Month, 1).AddMonths(-i))
+        return Enumerable.Range(0, 6).Select(i => new DateTime(currentDate.Year, currentDate.Month, 1).AddMonths(-i))
             .ToList();
     }
 
