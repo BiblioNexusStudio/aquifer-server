@@ -14,6 +14,11 @@ public class ReportsModule : IModule
         group.MapGet("resources/item-totals", ResourceItemTotalsEndpoint.HandleAsync)
             .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5))).RequireAuthorization();
 
+        group.MapGet("monthly/translation",
+                MonthlyReportsEndpoints.TranslationCompleteAndStart)
+            .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)))
+            .RequireAuthorization();
+
         return endpoints;
     }
 }
