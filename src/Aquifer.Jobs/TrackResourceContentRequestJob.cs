@@ -1,18 +1,20 @@
-using Azure.Storage.Queues.Models;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Aquifer.Common.Jobs.Messages;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Azure.Storage.Queues.Models;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Logging;
 
 namespace Aquifer.Jobs;
 
-public class TrackResourceContentRequestJob(ILogger<TrackResourceContentRequestJob> _logger, AquiferDbContext _dbContext)
+public class TrackResourceContentRequestJob(
+    ILogger<TrackResourceContentRequestJob> _logger,
+    AquiferDbContext _dbContext)
 {
-
     [Function(nameof(TrackResourceContentRequestJob))]
-    public async Task Run([QueueTrigger("%JobQueues:TrackResourceContentRequestQueue%", Connection = "AzureWebJobsStorage")]
+    public async Task Run(
+        [QueueTrigger("%JobQueues:TrackResourceContentRequestQueue%", Connection = "AzureWebJobsStorage")]
         QueueMessage message, CancellationToken stoppingToken)
     {
         try
@@ -24,7 +26,7 @@ public class TrackResourceContentRequestJob(ILogger<TrackResourceContentRequestJ
                 return;
             }
 
-            foreach (var resourceContentId in trackingMetadata.ResourceContentIds)
+            foreach (int resourceContentId in trackingMetadata.ResourceContentIds)
             {
                 _dbContext.ResourceContentRequests.Add(new ResourceContentRequestEntity
                 {
@@ -33,6 +35,7 @@ public class TrackResourceContentRequestJob(ILogger<TrackResourceContentRequestJ
                     Created = message.InsertedOn?.UtcDateTime ?? DateTime.UtcNow
                 });
             }
+
             await _dbContext.SaveChangesAsync(stoppingToken);
         }
         catch (Exception ex)

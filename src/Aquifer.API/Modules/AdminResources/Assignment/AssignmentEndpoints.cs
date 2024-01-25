@@ -36,14 +36,15 @@ public class AssignmentEndpoints
         }
 
         var user = await userService.GetUserFromJwtAsync(cancellationToken);
-        var hasAssignOverridePermission = userService.HasJwtClaim(PermissionName.AssignOverride);
+        bool hasAssignOverridePermission = userService.HasJwtClaim(PermissionName.AssignOverride);
         if ((!hasAssignOverridePermission && draftVersion.AssignedUserId != user.Id) ||
             draftVersion.AssignedUserId == postBody.AssignedUserId)
         {
             return TypedResults.BadRequest("Unable to assign user");
         }
 
-        if (draftVersion.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview && draftVersion.AssignedUserId != user.Id)
+        if (draftVersion.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview &&
+            draftVersion.AssignedUserId != user.Id)
         {
             return TypedResults.BadRequest("Must be assigned the in-review content in order to assign to another user");
         }

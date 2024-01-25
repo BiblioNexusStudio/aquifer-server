@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Aquifer.API.Configuration;
 using Aquifer.API.Middleware;
 using Aquifer.API.Modules;
@@ -7,7 +8,6 @@ using Aquifer.Data;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration.Get<ConfigurationOptions>();

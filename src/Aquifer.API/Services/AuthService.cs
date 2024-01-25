@@ -1,8 +1,8 @@
-﻿using Aquifer.API.Common;
+﻿using System.Security.Claims;
+using Aquifer.API.Common;
 using Aquifer.API.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
 
 namespace Aquifer.API.Services;
 
@@ -21,11 +21,11 @@ public static class AuthService
                     new TokenValidationParameters { NameClaimType = ClaimTypes.NameIdentifier };
             });
 
-        foreach (var permissionName in Constants.AllPermissions)
+        foreach (string permissionName in Constants.AllPermissions)
         {
             services.AddAuthorization(options =>
-                    options.AddPolicy(permissionName,
-                        policy => policy.RequireClaim("user").RequireClaim("permissions", permissionName)));
+                options.AddPolicy(permissionName,
+                    policy => policy.RequireClaim("user").RequireClaim("permissions", permissionName)));
         }
 
         return services;

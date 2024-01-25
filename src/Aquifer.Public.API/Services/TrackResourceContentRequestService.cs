@@ -20,32 +20,23 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
         IAzureClientService azureClientService)
     {
         var clientOptions = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
-        if (options.Value.ConnectionStrings.AzureStorageAccount.StartsWith("http"))
-        {
-            _client = new QueueClient(
+        _client = options.Value.ConnectionStrings.AzureStorageAccount.StartsWith("http")
+            ? new QueueClient(
                 new Uri(
                     $"{options.Value.ConnectionStrings.AzureStorageAccount}/{options.Value.JobQueues.TrackResourceContentRequestQueue}"),
                 azureClientService.GetCredential(),
-                clientOptions);
-        }
-        else
-        {
-            _client = new QueueClient(options.Value.ConnectionStrings.AzureStorageAccount,
+                clientOptions)
+            : new QueueClient(options.Value.ConnectionStrings.AzureStorageAccount,
                 options.Value.JobQueues.TrackResourceContentRequestQueue,
                 clientOptions);
-        }
 
         _client.CreateIfNotExists();
     }
 
     public async Task TrackResourceContentRequest(List<int> resourceIds, HttpContext httpContext)
     {
-        var message = new TrackResourceContentRequestMessage
-        {
-            ResourceContentIds = resourceIds,
-            IpAddress = GetClientIp(httpContext)
-        };
-        var serializedMessage = JsonSerializer.Serialize(message);
+        var message = new TrackResourceContentRequestMessage { ResourceContentIds = resourceIds, IpAddress = GetClientIp(httpContext) };
+        string serializedMessage = JsonSerializer.Serialize(message);
         await _client.SendMessageAsync(serializedMessage);
     }
 
@@ -53,7 +44,7 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
     {
         if (httpContext.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor))
         {
-            var ip = forwardedFor.FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim();
+            string? ip = forwardedFor.FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim();
             if (!string.IsNullOrEmpty(ip))
             {
                 return ip;

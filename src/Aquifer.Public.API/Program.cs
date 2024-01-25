@@ -33,9 +33,9 @@ app.UseHealthChecks("/_health")
     .UseFastEndpoints(config =>
     {
         config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        config.Endpoints.Configurator = ep => { ep.AllowAnonymous(); };
+        config.Endpoints.Configurator = ep => ep.AllowAnonymous();
     })
     .UseOpenApi()
-    .UseReDoc(options => { options.Path = "/docs"; });
+    .UseReDoc(options => options.Path = "/docs");
 
 app.Run();

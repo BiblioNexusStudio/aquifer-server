@@ -30,11 +30,8 @@ public class UsersModule : IModule
     private async Task<Ok<List<UserResponse>>> GetAllUsers(AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var users = await dbContext.Users.Select(user => new UserResponse
-        {
-            Id = user.Id,
-            Name = $"{user.FirstName} {user.LastName}"
-        }).ToListAsync(cancellationToken);
+        var users = await dbContext.Users.Select(user => new UserResponse { Id = user.Id, Name = $"{user.FirstName} {user.LastName}" })
+            .ToListAsync(cancellationToken);
 
         return TypedResults.Ok(users);
     }
@@ -114,13 +111,8 @@ public class UsersModule : IModule
                                             """);
         }
 
-        await dbContext.Users.AddAsync(new UserEntity
-        {
-            Email = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            ProviderId = authUser.UserId
-        },
+        await dbContext.Users.AddAsync(
+            new UserEntity { Email = user.Email, FirstName = user.FirstName, LastName = user.LastName, ProviderId = authUser.UserId },
             cancellationToken);
 
         await dbContext.SaveChangesAsync(cancellationToken);

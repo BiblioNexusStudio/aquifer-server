@@ -11,11 +11,7 @@ public static class ResourceContentStatusEndpoints
         var statuses = Enum.GetValues(typeof(ResourceContentStatus))
             .Cast<ResourceContentStatus>()
             .Where(s => s != ResourceContentStatus.None)
-            .Select(x => new ResourceContentStatusResponse
-            {
-                DisplayName = x.GetDisplayName(),
-                Status = x
-            }).ToList();
+            .Select(x => new ResourceContentStatusResponse { DisplayName = x.GetDisplayName(), Status = x }).ToList();
 
         return TypedResults.Ok(statuses);
     }

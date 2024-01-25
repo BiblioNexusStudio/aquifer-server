@@ -1,7 +1,7 @@
-using Aquifer.API.Common;
-using Aquifer.Data.Enums;
 using System.Text.Json.Serialization;
+using Aquifer.API.Common;
 using Aquifer.API.Modules.Resources;
+using Aquifer.Data.Enums;
 
 namespace Aquifer.API.Modules.Passages;
 

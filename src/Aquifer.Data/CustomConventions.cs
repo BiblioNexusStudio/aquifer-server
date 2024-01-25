@@ -28,10 +28,14 @@ public static class ConventionBehaviors
         {
             var properties = entity.GetProperties();
             foreach (var property in properties)
+            {
                 if (property.PropertyInfo?
                         .GetCustomAttributes(typeof(TAttribute), false)
                         .FirstOrDefault() is TAttribute attribute)
+                {
                     propsToModify.Add(new Tuple<IMutableProperty, TAttribute>(property, attribute));
+                }
+            }
         }
 
         return propsToModify;

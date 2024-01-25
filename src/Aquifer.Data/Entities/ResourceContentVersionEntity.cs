@@ -40,7 +40,8 @@ public class ResourceContentVersionEntityConfiguration : IEntityTypeConfiguratio
     public void Configure(EntityTypeBuilder<ResourceContentVersionEntity> builder)
     {
         builder
-            .ToTable(b => b.HasCheckConstraint("CK_ResourceContentVersions_IsPublishedOrIsDraftNotBoth", "IsPublished = 0 OR IsDraft = 0"));
+            .ToTable(b => b.HasCheckConstraint("CK_ResourceContentVersions_IsPublishedOrIsDraftNotBoth",
+                "IsPublished = 0 OR IsDraft = 0"));
 
         builder
             .HasIndex(x => new { x.ResourceContentId, x.Version })

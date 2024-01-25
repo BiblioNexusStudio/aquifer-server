@@ -1,9 +1,12 @@
-﻿using Aquifer.API.Services;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
+using Aquifer.API.Services;
 
 namespace Aquifer.API.Middleware;
 
-public class TrackResourceContentRequestMiddleware(RequestDelegate _next, ITrackResourceContentRequestService _trackerService, ILogger<TrackResourceContentRequestMiddleware> _logger)
+public class TrackResourceContentRequestMiddleware(
+    RequestDelegate _next,
+    ITrackResourceContentRequestService _trackerService,
+    ILogger<TrackResourceContentRequestMiddleware> _logger)
 {
     private static readonly Regex ResourcePathRegex = new("^/resources/(\\d+)/content$");
     private static readonly Regex BatchResourcesPathRegex = new("^/resources/batch/content/text$");
@@ -16,11 +19,11 @@ public class TrackResourceContentRequestMiddleware(RequestDelegate _next, ITrack
         {
             if (context.Response.StatusCode == 200)
             {
-                var path = context.Request.Path.Value ?? "";
+                string path = context.Request.Path.Value ?? "";
 
                 if (ResourcePathRegex.IsMatch(path))
                 {
-                    var resourceId = int.Parse(ResourcePathRegex.Match(path).Groups[1].Value);
+                    int resourceId = int.Parse(ResourcePathRegex.Match(path).Groups[1].Value);
                     await _trackerService.TrackResourceContentRequest([resourceId], context.Request.HttpContext);
                 }
                 else if (BatchResourcesPathRegex.IsMatch(path))

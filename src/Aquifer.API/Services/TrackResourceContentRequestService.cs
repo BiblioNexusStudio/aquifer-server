@@ -1,9 +1,9 @@
-﻿using Aquifer.API.Configuration;
+﻿using System.Text.Json;
+using Aquifer.API.Configuration;
 using Aquifer.Common.Jobs.Messages;
 using Aquifer.Common.Services;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
 
 namespace Aquifer.API.Services;
 
@@ -20,31 +20,22 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
         IAzureClientService azureClientService)
     {
         var clientOptions = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
-        if (options.Value.ConnectionStrings.AzureStorageAccount.StartsWith("http"))
-        {
-            _client = new QueueClient(
+        _client = options.Value.ConnectionStrings.AzureStorageAccount.StartsWith("http")
+            ? new QueueClient(
                 new Uri(
                     $"{options.Value.ConnectionStrings.AzureStorageAccount}/{options.Value.JobQueues.TrackResourceContentRequestQueue}"),
                 azureClientService.GetCredential(),
-                clientOptions);
-        }
-        else
-        {
-            _client = new QueueClient(options.Value.ConnectionStrings.AzureStorageAccount,
+                clientOptions)
+            : new QueueClient(options.Value.ConnectionStrings.AzureStorageAccount,
                 options.Value.JobQueues.TrackResourceContentRequestQueue,
                 clientOptions);
-        }
 
         _client.CreateIfNotExists();
     }
 
     public async Task TrackResourceContentRequest(List<int> resourceIds, HttpContext httpContext)
     {
-        var message = new TrackResourceContentRequestMessage
-        {
-            ResourceContentIds = resourceIds,
-            IpAddress = GetClientIp(httpContext)
-        };
+        var message = new TrackResourceContentRequestMessage { ResourceContentIds = resourceIds, IpAddress = GetClientIp(httpContext) };
         string serializedMessage = JsonSerializer.Serialize(message);
         await _client.SendMessageAsync(serializedMessage);
     }

@@ -1,5 +1,5 @@
-using Aquifer.Common.Utilities;
 using System.Text.Json.Serialization;
+using Aquifer.Common.Utilities;
 
 namespace Aquifer.API.Modules.Bibles;
 

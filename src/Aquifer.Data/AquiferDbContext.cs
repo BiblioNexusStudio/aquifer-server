@@ -3,13 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data;
 
-public class AquiferDbContext : DbContext
+public class AquiferDbContext(DbContextOptions<AquiferDbContext> options) : DbContext(options)
 {
-    public AquiferDbContext(DbContextOptions<AquiferDbContext> options)
-        : base(options)
-    {
-    }
-
     public DbSet<BibleBookContentEntity> BibleBookContents { get; set; }
     public DbSet<BibleEntity> Bibles { get; set; }
     public DbSet<LanguageEntity> Languages { get; set; }

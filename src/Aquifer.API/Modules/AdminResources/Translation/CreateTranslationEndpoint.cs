@@ -36,7 +36,7 @@ public static class CreateTranslationEndpoint
             return TypedResults.BadRequest("Translation already exists");
         }
 
-        var language = await dbContext.Languages.FindAsync(request.LanguageId);
+        var language = await dbContext.Languages.FindAsync([request.LanguageId], cancellationToken);
         if (language is null)
         {
             return TypedResults.BadRequest("Invalid language id");
@@ -57,7 +57,8 @@ public static class CreateTranslationEndpoint
             Version = 1
         };
 
-        await dbContext.ResourceContents.AddAsync(new ResourceContentEntity
+        await dbContext.ResourceContents.AddAsync(
+            new ResourceContentEntity
             {
                 LanguageId = language.Id,
                 ResourceId = baseContent.ResourceId,

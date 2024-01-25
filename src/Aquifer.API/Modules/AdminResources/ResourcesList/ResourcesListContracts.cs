@@ -1,5 +1,5 @@
-using Aquifer.Data.Entities;
 using System.Text.Json.Serialization;
+using Aquifer.Data.Entities;
 
 namespace Aquifer.API.Modules.AdminResources.ResourcesList;
 
