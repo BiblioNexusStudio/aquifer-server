@@ -1,9 +1,9 @@
-﻿using Aquifer.Public.API.Configuration;
+﻿using System.Text.Json;
 using Aquifer.Common.Jobs.Messages;
-using Azure.Identity;
+using Aquifer.Common.Services;
+using Aquifer.Public.API.Configuration;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
 
 namespace Aquifer.Public.API.Services;
 
@@ -16,23 +16,25 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
 {
     private readonly QueueClient _client;
 
-    public TrackResourceContentRequestService(IOptions<ConfigurationOptions> options)
+    public TrackResourceContentRequestService(IOptions<ConfigurationOptions> options,
+        IAzureClientService azureClientService)
     {
         var clientOptions = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
         if (options.Value.ConnectionStrings.AzureStorageAccount.StartsWith("http"))
         {
             _client = new QueueClient(
-                new Uri($"{options.Value.ConnectionStrings.AzureStorageAccount}/{options.Value.JobQueues.TrackResourceContentRequestQueue}"),
-                new DefaultAzureCredential(),
+                new Uri(
+                    $"{options.Value.ConnectionStrings.AzureStorageAccount}/{options.Value.JobQueues.TrackResourceContentRequestQueue}"),
+                azureClientService.GetCredential(),
                 clientOptions);
         }
         else
         {
-            _client = new QueueClient(
-                options.Value.ConnectionStrings.AzureStorageAccount,
+            _client = new QueueClient(options.Value.ConnectionStrings.AzureStorageAccount,
                 options.Value.JobQueues.TrackResourceContentRequestQueue,
                 clientOptions);
         }
+
         _client.CreateIfNotExists();
     }
 
@@ -57,6 +59,7 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
                 return ip;
             }
         }
+
         return httpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
     }
 }

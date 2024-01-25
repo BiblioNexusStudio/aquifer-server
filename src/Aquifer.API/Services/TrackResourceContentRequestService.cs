@@ -1,6 +1,6 @@
 ﻿using Aquifer.API.Configuration;
 using Aquifer.Common.Jobs.Messages;
-using Azure.Identity;
+using Aquifer.Common.Services;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
@@ -16,7 +16,8 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
 {
     private readonly QueueClient _client;
 
-    public TrackResourceContentRequestService(IOptions<ConfigurationOptions> options)
+    public TrackResourceContentRequestService(IOptions<ConfigurationOptions> options,
+        IAzureClientService azureClientService)
     {
         var clientOptions = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
         if (options.Value.ConnectionStrings.AzureStorageAccount.StartsWith("http"))
@@ -24,7 +25,7 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
             _client = new QueueClient(
                 new Uri(
                     $"{options.Value.ConnectionStrings.AzureStorageAccount}/{options.Value.JobQueues.TrackResourceContentRequestQueue}"),
-                new DefaultAzureCredential(),
+                azureClientService.GetCredential(),
                 clientOptions);
         }
         else
