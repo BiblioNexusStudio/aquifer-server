@@ -13,6 +13,8 @@ public static class ParentResourcesEndpoints
             .Select(x => new ParentResourceResponse
             {
                 Id = x.Id,
+                ShortName = x.ShortName,
+                ResourceType = x.ResourceType,
                 DisplayName = x.DisplayName,
                 SerializedLicenseInfo = x.LicenseInfo,
                 ComplexityLevel = x.ComplexityLevel
