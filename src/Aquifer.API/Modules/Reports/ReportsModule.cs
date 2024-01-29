@@ -1,3 +1,4 @@
+using Aquifer.API.Modules.Reports.EditedResources;
 using Aquifer.API.Modules.Reports.RequestedResources;
 using Aquifer.API.Modules.Reports.ResourceItemTotals;
 
@@ -12,6 +13,7 @@ public class ReportsModule : IModule
                 MonthlyReportsEndpoints.AquiferizationCompleteAndStart)
             .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)))
             .RequireAuthorization();
+
         group.MapGet("resources/item-totals", ResourceItemTotalsEndpoint.HandleAsync)
             .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5))).RequireAuthorization();
 
@@ -20,10 +22,16 @@ public class ReportsModule : IModule
             .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)))
             .RequireAuthorization();
 
+        group.MapGet("resources/edited-last-thirty-days",
+                EditedResourcesLastThirtyDays.HandleAsync)
+            .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)))
+            .RequireAuthorization();
+
         group.MapGet("resources/most-requested-resources",
                 MostRequestedResources.HandleAsync)
             .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)))
             .RequireAuthorization();
+
         return endpoints;
     }
 }
