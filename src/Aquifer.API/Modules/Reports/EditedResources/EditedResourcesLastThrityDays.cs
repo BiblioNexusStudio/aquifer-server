@@ -17,7 +17,8 @@ public class EditedResourcesLastThirtyDays
             INNER JOIN Resources R ON R.Id = RC.ResourceId
             INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
             INNER JOIN Languages L ON L.Id = RC.LanguageId
-        WHERE RCVSH.Status = 3 AND RCVSH.Created >= DATEADD(DAY, -30, GETDATE())
+        WHERE RCVSH.Status = 3 -- status 3 is complete
+        AND RCVSH.Created >= DATEADD(DAY, -30, GETDATE())
         """;
 
     /// <summary>
