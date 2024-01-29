@@ -8,6 +8,18 @@ namespace Aquifer.API.Modules.Reports.EditedResources;
 /// </summary>
 public class EditedResourcesLastThirtyDays
 {
+    private const string EditedResourcesLastThirtyDaysQuery =
+        """
+        SELECT DISTINCT PR.DisplayName, R.EnglishLabel, L.EnglishDisplay
+        FROM ResourceContentVersionStatusHistory RCVSH
+            INNER JOIN ResourceContentVersions RCV ON RCV.Id = RCVSH.ResourceContentVersionId
+            INNER JOIN ResourceContents RC ON RC.Id = RCV.ResourceContentId
+            INNER JOIN Resources R ON R.Id = RC.ResourceId
+            INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
+            INNER JOIN Languages L ON L.Id = RC.LanguageId
+        WHERE RCVSH.Status = 3 AND RCVSH.Created >= DATEADD(DAY, -30, GETDATE())
+        """;
+
     /// <summary>
     ///     Handles the retrieval of resources edited in the last thirty days.
     /// </summary>
@@ -18,16 +30,8 @@ public class EditedResourcesLastThirtyDays
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var lastThirtyDays = DateTime.UtcNow.AddDays(-30);
-        var editedResources = await dbContext.ResourceContentVersions
-            .Where(rcv => rcv.Created >= lastThirtyDays)
-            .Select(rvc => new
-            {
-                rvc.Version,
-                rvc.IsDraft,
-                rvc.DisplayName,
-                rvc.WordCount
-            })
+        var editedResources = await dbContext.Database
+            .SqlQuery<EditedResourcesLastThirtyDaysResponse>($"exec ({EditedResourcesLastThirtyDaysQuery})")
             .ToListAsync(cancellationToken);
 
         return Results.Ok(editedResources);
