@@ -5,8 +5,8 @@ namespace Aquifer.API.Modules.Reports.RequestedResources;
 /// </summary>
 public class MostRequestedResourcesResponse
 {
-    public int ResourceContentId { get; set; }
-    public int Count { get; set; }
-    public string EnglishDisplay { get; set; }
-    public string EnglishLabel { get; set; }
+    public string DisplayName { get; set; } = null!;
+    public int Count { get; set; } = 0;
+    public string EnglishDisplay { get; set; } = null!;
+    public string EnglishLabel { get; set; } = null!;
 }

@@ -10,13 +10,14 @@ public class MostRequestedResources
 {
     private const string MostRequestedResourcesQuery =
         """
-        SELECT TOP 100 RCR.ResourceContentId, COUNT(RCR.ResourceContentId) AS Count, L.EnglishDisplay, R.EnglishLabel
+        SELECT TOP 100 PR.DisplayName, R.EnglishLabel, L.EnglishDisplay, COUNT(RCR.ResourceContentId) AS Count
         FROM ResourceContentRequests RCR
-            INNER JOIN ResourceContents RC ON RC.Id = RCR.ResourceContentId
-            INNER JOIN Resources R ON R.Id = RC.ResourceId
-            INNER JOIN Languages L ON L.Id = RC.LanguageId
+                 INNER JOIN ResourceContents RC ON RC.Id = RCR.ResourceContentId
+                 INNER JOIN Resources R ON R.Id = RC.ResourceId
+                 INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
+                 INNER JOIN Languages L ON L.Id = RC.LanguageId
         WHERE RCR.Created >= DATEADD(DAY, -30, GETDATE())
-        GROUP BY RCR.ResourceContentId, L.EnglishDisplay, R.EnglishLabel
+        GROUP BY RCR.ResourceContentId, L.EnglishDisplay, R.EnglishLabel, PR.DisplayName
         ORDER BY Count DESC;
         """;
 
