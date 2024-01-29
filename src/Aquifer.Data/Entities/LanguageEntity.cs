@@ -14,6 +14,11 @@ public class LanguageEntity
     [MaxLength(255)]
     public string EnglishDisplay { get; set; } = null!;
 
+    [MaxLength(255)]
+    public string DisplayName { get; set; } = null!;
+
+    public bool Enabled { get; set; }
+
     public ScriptDirection ScriptDirection { get; set; }
 }
 
