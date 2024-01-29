@@ -18,7 +18,9 @@ public class ParentResourceEntity
 
 public enum ResourceTypeComplexityLevel
 {
-    None = 0
+    None = 0,
+    Basic = 1,
+    Advanced = 2
 }
 
 public enum ResourceType
