@@ -1,4 +1,3 @@
-using Aquifer.API.Modules.Reports.MonthlyReports;
 using Aquifer.API.Utilities;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -8,19 +7,20 @@ namespace Aquifer.API.Modules.Reports.DailyDownloadTotals;
 
 public static class DailyDownloadEndpoints
 {
-    private const string dailyDownloadTotalQuery =
+    private const string DailyDownloadTotalQuery =
         """
         select DATEADD(DD,0,DATEADD(DD, DATEDIFF(D,0,Created),0)) AS Date,
                 Count(*) as Amount from ResourceContentRequests
         WHERE [Created] >= DATEADD(DAY, -30, GETDATE())
         GROUP By DATEADD(DD,0,DATEADD(DD, DATEDIFF(D,0,Created),0));
         """;
+
     public static async Task<Ok<DailyDownloadTotalsResponse>> DailyResourceDownloadTotals(
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var dailyDownloadTotals = await dbContext.Database
-            .SqlQuery<AmountPerDay>($"exec ({dailyDownloadTotalQuery})")
+            .SqlQuery<AmountPerDay>($"exec ({DailyDownloadTotalQuery})")
             .ToListAsync(cancellationToken);
 
         var lastSixMonthDates = ReportUtilities.GetLastDays(30);
@@ -32,6 +32,7 @@ public static class DailyDownloadEndpoints
                 dailyDownloadTotals.Add(zeroCountMonth);
             }
         }
+
         return TypedResults.Ok(new DailyDownloadTotalsResponse(dailyDownloadTotals.OrderBy(x => x.Date)));
     }
 }
