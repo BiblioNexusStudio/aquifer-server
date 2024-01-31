@@ -9,28 +9,26 @@ public static class DailyDownloadEndpoints
 {
     private const string DailyDownloadTotalsQuery =
         """
-        SELECT DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0)) AS Date,
-                COUNT(*) AS Amount FROM ResourceContentRequests
+        SELECT DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0)) AS DateValue,
+                COUNT(*) AS amount FROM ResourceContentRequests
         WHERE [Created] >= DATEADD(DAY, -30, GETUTCDATE())
         GROUP BY DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0));
         """;
 
-    public static Ok<IOrderedEnumerable<AmountPerDay>> DailyResourceDownloadTotals(
-        AquiferDbContext dbContext)
+    public static async Task<Ok<IOrderedEnumerable<AmountPerDay>>> DailyResourceDownloadTotals(
+        AquiferDbContext dbContext,
+        CancellationToken cancellationToken)
     {
-        var dailyDownloadTotals = dbContext.Database
-            .SqlQuery<AmountPerDayResult>($"exec ({DailyDownloadTotalsQuery})")
-            .AsEnumerable()
-            .Select(x => new AmountPerDay(DateOnly.FromDateTime(x.Date), x.Amount))
-            .ToList();
+        var dailyDownloadTotals = await dbContext.Database
+            .SqlQuery<AmountPerDay>($"exec ({DailyDownloadTotalsQuery})")
+            .ToListAsync(cancellationToken);
 
         var lastThirtyDays = ReportUtilities.GetLastDays(30);
         foreach (var date in lastThirtyDays)
         {
-            var zeroCountDay = new AmountPerDay(date, 0);
-            if (dailyDownloadTotals.All(x => x.Date != zeroCountDay.Date))
+            if (dailyDownloadTotals.All(x => x.DateValue.Day != date.Day))
             {
-                dailyDownloadTotals.Add(zeroCountDay);
+                dailyDownloadTotals.Add(new AmountPerDay { DateValue = date, Amount = 0 });
             }
         }
 

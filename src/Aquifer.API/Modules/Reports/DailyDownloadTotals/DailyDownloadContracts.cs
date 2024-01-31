@@ -4,12 +4,9 @@ public record DailyDownloadTotalsResponse(
     IEnumerable<AmountPerDay> Downloads
 );
 
-public record AmountPerDay(
-    DateOnly Date,
-    int Amount
-);
-
-public record AmountPerDayResult(
-    DateTime Date,
-    int Amount
-);
+public class AmountPerDay
+{
+    public int Amount { get; set; }
+    public DateTime DateValue { get; init; }
+    public DateOnly Date => DateOnly.FromDateTime(DateValue);
+}
