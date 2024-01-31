@@ -19,7 +19,7 @@ public static class ResourcesListEndpoints
         {
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
-                { "outOfRange", new[] { "Take must between 1 and 100. Skip must be greater than 0." } }
+                { "outOfRange", ["Take must between 1 and 100. Skip must be greater than 0."] }
             });
         }
 
@@ -33,7 +33,11 @@ public static class ResourcesListEndpoints
                 ParentResourceName = x.ParentResource.DisplayName,
                 Status = x.ResourceContents.Select(rc => rc.Status).OrderBy(status => (int)status).First(),
                 ContentIdsWithLanguageIds = x.ResourceContents
-                    .Select(rc => new ResourceListItemForLanguageResponse { ContentId = rc.Id, LanguageId = rc.LanguageId })
+                    .Select(rc => new ResourceListItemForLanguageResponse
+                    {
+                        ContentId = rc.Id,
+                        LanguageId = rc.LanguageId
+                    })
             }).ToListAsync(cancellationToken);
 
         return TypedResults.Ok(resources);
@@ -46,9 +50,10 @@ public static class ResourcesListEndpoints
     {
         var user = await userService.GetUserFromJwtAsync(cancellationToken);
         var resourceContents = (await dbContext.ResourceContentVersions
-                .Where(rcv =>
-                    rcv.AssignedUserId == user.Id &&
-                    rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInProgress)
+            .Where(rcv =>
+                rcv.AssignedUserId == user.Id &&
+                (rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInProgress ||
+                 rcv.ResourceContent.Status == ResourceContentStatus.TranslationInProgress))
                 .Select(x => new ResourceAssignedToSelfResponse
                 {
                     ContentId = x.ResourceContentId,
@@ -71,7 +76,9 @@ public static class ResourcesListEndpoints
         var resourceContents = (await dbContext.ResourceContentVersions
                 .Where(rcv => rcv.IsDraft &&
                               (rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
-                               rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview))
+                               rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview ||
+                               rcv.ResourceContent.Status == ResourceContentStatus.TranslationInReview ||
+                               rcv.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending))
                 .Select(x => new ResourcePendingReviewResponse
                 {
                     ContentId = x.ResourceContentId,
