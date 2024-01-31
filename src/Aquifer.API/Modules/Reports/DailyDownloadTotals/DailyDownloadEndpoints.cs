@@ -16,20 +16,21 @@ public static class DailyDownloadEndpoints
         """;
 
     public static async Task<Ok<IOrderedEnumerable<AmountPerDay>>> DailyResourceDownloadTotals(
-        AquiferDbContext dbContext,
-        CancellationToken cancellationToken)
+        AquiferDbContext dbContext)
     {
-        var dailyDownloadTotals = await dbContext.Database
-            .SqlQuery<AmountPerDay>($"exec ({DailyDownloadTotalsQuery})")
-            .ToListAsync(cancellationToken);
+        var dailyDownloadTotals = dbContext.Database
+            .SqlQuery<AmountPerDayResult>($"exec ({DailyDownloadTotalsQuery})")
+            .AsEnumerable()
+            .Select(x => new AmountPerDay(DateOnly.FromDateTime(x.Date), x.Amount))
+            .ToList();
 
         var lastThirtyDays = ReportUtilities.GetLastDays(30);
         foreach (var date in lastThirtyDays)
         {
-            var zeroCountMonth = new AmountPerDay(date, 0);
-            if (dailyDownloadTotals.All(x => x.Date.Day != date.Day))
+            var zeroCountDay = new AmountPerDay(date, 0);
+            if (dailyDownloadTotals.All(x => x.Date != zeroCountDay.Date))
             {
-                dailyDownloadTotals.Add(zeroCountMonth);
+                dailyDownloadTotals.Add(zeroCountDay);
             }
         }
 
