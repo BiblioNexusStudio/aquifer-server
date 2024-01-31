@@ -4,7 +4,7 @@ using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Modules.Reports;
+namespace Aquifer.API.Modules.Reports.MonthlyReports;
 
 public static class MonthlyReportsEndpoints
 {
