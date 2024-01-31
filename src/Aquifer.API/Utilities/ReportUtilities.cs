@@ -10,9 +10,9 @@ public static class ReportUtilities
             .ToList();
     }
 
-    public static List<DateOnly> GetLastDays(int goBackAmount)
+    public static List<DateTime> GetLastDays(int goBackAmount)
     {
-        var currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+        var currentDate = DateTime.UtcNow;
         return Enumerable.Range(0, goBackAmount)
             .Select(i => currentDate.AddDays(-i))
             .ToList();
