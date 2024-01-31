@@ -14,7 +14,7 @@ public static class ReportUtilities
     {
         var currentDate = DateTime.UtcNow;
         return Enumerable.Range(0, goBackAmount)
-            .Select(i => new DateTime(currentDate.Year, currentDate.Month, currentDate.Day).AddDays(-i))
+            .Select(i => currentDate.AddDays(-i))
             .ToList();
     }
 }

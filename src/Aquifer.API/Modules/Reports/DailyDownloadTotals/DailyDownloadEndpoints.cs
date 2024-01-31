@@ -27,7 +27,7 @@ public static class DailyDownloadEndpoints
         foreach (var date in lastThirtyDays)
         {
             var zeroCountMonth = new AmountPerDay(date, 0);
-            if (dailyDownloadTotals.All(x => x.Date != date))
+            if (dailyDownloadTotals.All(x => x.Date.Day != date.Day))
             {
                 dailyDownloadTotals.Add(zeroCountMonth);
             }
