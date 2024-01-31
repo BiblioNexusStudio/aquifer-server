@@ -32,7 +32,7 @@ public class ReportsModule : IModule
             .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)))
             .RequireAuthorization();
 
-        group.MapGet("resources/most-requessted-resources",
+        group.MapGet("resources/most-requested-resources",
                 MostRequestedResources.HandleAsync)
             .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)))
             .RequireAuthorization();
