@@ -15,7 +15,7 @@ public static class DailyDownloadEndpoints
         GROUP BY DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0));
         """;
 
-    public static async Task<Ok<IOrderedEnumerable<AmountPerDay>>> DailyResourceDownloadTotals(
+    public static Ok<IOrderedEnumerable<AmountPerDay>> DailyResourceDownloadTotals(
         AquiferDbContext dbContext)
     {
         var dailyDownloadTotals = dbContext.Database
