@@ -20,7 +20,7 @@ public class ReportsModule : IModule
             .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5))).RequireAuthorization();
 
         group.MapGet("bar-charts/daily-resource-downloads", DailyDownloadEndpoints.DailyResourceDownloadTotals)
-            .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5))); //.RequireAuthorization();
+            .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5))).RequireAuthorization();
 
         group.MapGet("translations/monthly",
                 MonthlyReportsEndpoints.TranslationCompleteAndStart)
