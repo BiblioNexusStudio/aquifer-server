@@ -9,9 +9,9 @@ public static class DailyDownloadEndpoints
 {
     private const string DailyDownloadTotalQuery =
         """
-        select DATEADD(DD,0,DATEADD(DD, DATEDIFF(D,0,Created),0)) AS Date,
-                Count(*) as Amount from ResourceContentRequests
-        WHERE [Created] >= DATEADD(DAY, -30, GETDATE())
+        SELECT DATEADD(DD,0,DATEADD(DD, DATEDIFF(D,0,Created),0)) AS Date,
+                COUNT(*) AS Amount FROM ResourceContentRequests
+        WHERE [Created] >= DATEADD(DAY, -30, GETUTCDATE())
         GROUP By DATEADD(DD,0,DATEADD(DD, DATEDIFF(D,0,Created),0));
         """;
 
