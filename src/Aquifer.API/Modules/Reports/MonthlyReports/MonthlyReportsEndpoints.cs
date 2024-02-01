@@ -4,7 +4,7 @@ using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Modules.Reports;
+namespace Aquifer.API.Modules.Reports.MonthlyReports;
 
 public static class MonthlyReportsEndpoints
 {
@@ -67,7 +67,7 @@ public static class MonthlyReportsEndpoints
             $"""
               SELECT DATEADD(mm, 0, DATEADD(mm, DATEDIFF(m, 0, Created),0)) AS Date,
               Count(Status) AS StatusCount from ResourceContentVersionStatusHistory
-                  WHERE Created >= DATEADD(MONTH, -6, GETDATE())
+                  WHERE Created >= DATEADD(MONTH, -6, GETUTCDATE())
               AND [Status] = {(int)status}
               GROUP By DATEADD(mm, 0,DATEADD(mm, DATEDIFF(m, 0, Created), 0));
               """;
@@ -84,7 +84,7 @@ public static class MonthlyReportsEndpoints
                      JOIN ResourceContentVersions rcv on rcvsh.ResourceContentVersionId = rcv.Id
                      JOIN ResourceContents rc on rcv.ResourceContentId = rc.Id
             {whereLanguage}
-              AND rcvsh.Created >= DATEADD(MONTH, -6, GETDATE())
+              AND rcvsh.Created >= DATEADD(MONTH, -6, GETUTCDATE())
               AND rcvsh.[Status] = 3
             GROUP BY DATEADD(mm, 0, DATEADD(mm, DATEDIFF(m, 0, rcvsh.[Created]), 0))
             """;
