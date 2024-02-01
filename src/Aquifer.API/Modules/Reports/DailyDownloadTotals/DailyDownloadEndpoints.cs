@@ -9,8 +9,8 @@ public static class DailyDownloadEndpoints
 {
     private const string DailyDownloadTotalsQuery =
         """
-        SELECT DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0)) AS DateValue,
-                COUNT(*) AS amount FROM ResourceContentRequests
+        SELECT DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0)) AS Date,
+                COUNT(*) AS Amount FROM ResourceContentRequests
         WHERE [Created] >= DATEADD(DAY, -30, GETUTCDATE())
         GROUP BY DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0));
         """;
@@ -26,12 +26,16 @@ public static class DailyDownloadEndpoints
         var lastThirtyDays = ReportUtilities.GetLastDays(30);
         foreach (var date in lastThirtyDays)
         {
-            if (dailyDownloadTotals.All(x => x.DateValue.Day != date.Day))
+            if (dailyDownloadTotals.All(x => x.Date != date))
             {
-                dailyDownloadTotals.Add(new AmountPerDay { DateValue = date, Amount = 0 });
+                dailyDownloadTotals.Add(new AmountPerDay
+                {
+                    Date = date,
+                    Amount = 0
+                });
             }
         }
 
-        return TypedResults.Ok(dailyDownloadTotals.OrderBy(x => x.Date.Day));
+        return TypedResults.Ok(dailyDownloadTotals.OrderBy(x => x.Date));
     }
 }

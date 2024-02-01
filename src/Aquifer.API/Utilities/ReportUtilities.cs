@@ -4,7 +4,7 @@ public static class ReportUtilities
 {
     public static List<DateTime> GetLastMonths(int goBackAmount)
     {
-        var currentDate = DateTime.UtcNow;
+        var currentDate = DateTime.UtcNow.Date;
         return Enumerable.Range(0, goBackAmount)
             .Select(i => new DateTime(currentDate.Year, currentDate.Month, 1).AddMonths(-i))
             .ToList();
@@ -12,7 +12,7 @@ public static class ReportUtilities
 
     public static List<DateTime> GetLastDays(int goBackAmount)
     {
-        var currentDate = DateTime.UtcNow;
+        var currentDate = DateTime.UtcNow.Date;
         return Enumerable.Range(0, goBackAmount)
             .Select(i => currentDate.AddDays(-i))
             .ToList();
