@@ -7,29 +7,23 @@ using Aquifer.API.Services;
 using Aquifer.Common.Utilities;
 using Microsoft.Extensions.Options;
 
-namespace Aquifer.API.Modules.Users;
+namespace Aquifer.API.Clients.Http.Auth0;
 
-public interface IAuthProviderHttpService
+public interface IAuth0HttpClient
 {
-    Task<HttpResponseMessage> CreateUser(CreateUserRequest userRequest, string authToken,
-        CancellationToken cancellationToken);
-
+    Task<HttpResponseMessage> CreateUser(string name, string email, string authToken, CancellationToken cancellationToken);
     Task<HttpResponseMessage> GetAuth0Token(CancellationToken cancellationToken);
     Task<HttpResponseMessage> GetUserRoles(string auth0Token, CancellationToken cancellationToken);
-
-    Task<HttpResponseMessage> AssignUserToRole(string roleId,
-        string userId,
-        string auth0Token,
-        CancellationToken cancellationToken);
+    Task<HttpResponseMessage> AssignUserToRole(string roleId, string userId, string auth0Token, CancellationToken cancellationToken);
 }
 
-public class AuthProviderHttpService : IAuthProviderHttpService
+public class Auth0HttpClient : IAuth0HttpClient
 {
     private readonly Auth0Settings _authSettings;
     private readonly HttpClient _httpClient;
     private readonly IAzureKeyVaultService _keyVaultService;
 
-    public AuthProviderHttpService(HttpClient httpClient,
+    public Auth0HttpClient(HttpClient httpClient,
         IOptions<ConfigurationOptions> options,
         IAzureKeyVaultService keyVaultService)
     {
@@ -37,25 +31,6 @@ public class AuthProviderHttpService : IAuthProviderHttpService
         _authSettings = options.Value.Auth0Settings;
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(_authSettings.BaseUri);
-    }
-
-    public async Task<HttpResponseMessage> CreateUser(CreateUserRequest user, string authToken,
-        CancellationToken cancellationToken)
-    {
-        _httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", authToken);
-
-        var createUserRequest = new CreateOAuthUserRequest
-        {
-            Connection = Auth0Constants.Connection,
-            Email = user.Email,
-            Password = user.Password,
-            Name = $"{user.FirstName} {user.LastName}"
-        };
-        string createUserJsonContent = JsonUtilities.DefaultSerialize(createUserRequest);
-        var createUserHttpContent =
-            new StringContent(createUserJsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
-        return await _httpClient.PostAsync("/api/v2/users", createUserHttpContent, cancellationToken);
     }
 
     public async Task<HttpResponseMessage> GetUserRoles(string auth0Token, CancellationToken cancellationToken)
@@ -75,7 +50,7 @@ public class AuthProviderHttpService : IAuthProviderHttpService
             GrantType = Auth0Constants.ClientCredentials
         };
 
-        string jsonContent = JsonUtilities.DefaultSerialize(tokenRequest);
+        var jsonContent = JsonUtilities.DefaultSerialize(tokenRequest);
         var httpContent = new StringContent(jsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
 
         return await _httpClient.PostAsync("/oauth/token", httpContent, cancellationToken);
@@ -88,12 +63,32 @@ public class AuthProviderHttpService : IAuthProviderHttpService
     {
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth0Token);
 
-        string postUri = $"/api/v2/roles/{roleId}/users";
+        var postUri = $"/api/v2/roles/{roleId}/users";
 
-        var requestBody = new PostRoleUsersRequest { Users = [userId] };
-        string jsonContent = JsonUtilities.DefaultSerialize(requestBody);
+        var requestBody = new Auth0AssignUserRolesRequest { Users = [userId] };
+        var jsonContent = JsonUtilities.DefaultSerialize(requestBody);
         var httpContent = new StringContent(jsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
 
         return await _httpClient.PostAsync(postUri, httpContent, cancellationToken);
+    }
+
+    public async Task<HttpResponseMessage> CreateUser(string name, string email, string authToken, CancellationToken cancellationToken)
+    {
+        _httpClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", authToken);
+
+        var createUserRequest = new Auth0CreateUserRequest
+        {
+            Connection = Auth0Constants.Connection,
+            Email = email,
+            Password = "generated now",
+            Name = name
+        };
+
+        var createUserJsonContent = JsonUtilities.DefaultSerialize(createUserRequest);
+        var createUserHttpContent =
+            new StringContent(createUserJsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
+
+        return await _httpClient.PostAsync("/api/v2/users", createUserHttpContent, cancellationToken);
     }
 }
