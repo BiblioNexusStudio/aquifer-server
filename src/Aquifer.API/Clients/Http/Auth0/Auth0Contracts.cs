@@ -1,14 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Aquifer.API.Modules.Users;
+namespace Aquifer.API.Clients.Http.Auth0;
 
-public class TokenResponse
-{
-    [JsonPropertyName("access_token")]
-    public string AccessToken { get; set; } = null!;
-}
-
-public class CreateOAuthUserRequest
+public class Auth0CreateUserRequest
 {
     public string Connection { get; set; } = null!;
     public string Email { get; set; } = null!;
@@ -16,7 +10,7 @@ public class CreateOAuthUserRequest
     public string Name { get; set; } = null!;
 }
 
-public class CreateUserResponse
+public class Auth0CreateUserResponse
 {
     [JsonPropertyName("user_id")]
     public string UserId { get; set; } = null!;
@@ -36,13 +30,28 @@ public class Auth0TokenRequest
     public string GrantType { get; init; } = null!;
 }
 
-public class GetRolesResponse
+public class Auth0TokenResponse
+{
+    [JsonPropertyName("access_token")]
+    public string AccessToken { get; set; } = null!;
+}
+
+public class Auth0AssignUserRolesRequest
+{
+    public List<string> Users { get; set; } = null!;
+}
+
+public class Auth0AssignUserRolesResponse
 {
     public string Id { get; set; } = null!;
     public string Name { get; set; } = null!;
 }
 
-public class PostRoleUsersRequest
+public class Auth0PasswordResetRequest
 {
-    public List<string> Users { get; set; } = null!;
+    [JsonPropertyName("client_id")]
+    public required string ClientId { get; set; }
+
+    public required string Email { get; set; }
+    public string Connection { get; } = "Username-Password-Authentication";
 }

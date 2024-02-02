@@ -8,7 +8,7 @@ var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
     .ConfigureServices((context, services) =>
     {
-        string? connectionString = context.Configuration.GetConnectionString("BiblioNexusDb");
+        var connectionString = context.Configuration.GetConnectionString("BiblioNexusDb");
         services.AddDbContext<AquiferDbContext>(options =>
             options.UseSqlServer(connectionString,
                 providerOptions => providerOptions.EnableRetryOnFailure(3)));

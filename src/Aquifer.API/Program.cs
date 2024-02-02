@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Aquifer.API.Configuration;
 using Aquifer.API.Middleware;
@@ -5,6 +6,7 @@ using Aquifer.API.Modules;
 using Aquifer.API.Services;
 using Aquifer.Common.Services;
 using Aquifer.Data;
+using FastEndpoints;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
@@ -28,10 +30,12 @@ builder.Services
         logging.RequestBodyLogLimit = 4096;
         logging.ResponseBodyLogLimit = 4096;
     })
+    .AddAquiferHttpServices()
     .AddScoped<IUserService, UserService>()
     .AddScoped<IAzureKeyVaultService, AzureKeyVaultService>()
     .AddSingleton<ITrackResourceContentRequestService, TrackResourceContentRequestService>()
     .AddAzureClient(builder.Environment.IsDevelopment())
+    .AddFastEndpoints()
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 
@@ -48,6 +52,8 @@ if (app.Environment.IsDevelopment())
 {
     app.UseHttpLogging();
 }
+
+app.UseFastEndpoints(config => config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase);
 
 app.MapEndpoints();
 app.Run();

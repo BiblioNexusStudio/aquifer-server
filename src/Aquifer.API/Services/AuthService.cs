@@ -21,7 +21,7 @@ public static class AuthService
                     new TokenValidationParameters { NameClaimType = ClaimTypes.NameIdentifier };
             });
 
-        foreach (string permissionName in Constants.AllPermissions)
+        foreach (var permissionName in Constants.AllPermissions)
         {
             services.AddAuthorization(options =>
                 options.AddPolicy(permissionName,

@@ -99,7 +99,7 @@ public static class ResourcesListEndpoints
         CancellationToken cancellationToken)
     {
         var resourceFilter = CreateResourceFilterExpression(request);
-        int count = await dbContext.Resources.CountAsync(resourceFilter, cancellationToken);
+        var count = await dbContext.Resources.CountAsync(resourceFilter, cancellationToken);
 
         return TypedResults.Ok(count);
     }
@@ -107,7 +107,7 @@ public static class ResourcesListEndpoints
     private static Expression<Func<ResourceEntity, bool>> CreateResourceFilterExpression(
         ResourceListCountRequest request)
     {
-        string query = request.Query ?? string.Empty;
+        var query = request.Query ?? string.Empty;
         return x =>
             x.EnglishLabel.Contains(query) &&
             (request.ParentResourceId == default || x.ParentResourceId == request.ParentResourceId) &&

@@ -19,7 +19,7 @@ public class UserService(AquiferDbContext _dbContext, IHttpContextAccessor _http
 {
     public async Task<UserEntity> GetUserFromJwtAsync(CancellationToken cancellationToken)
     {
-        string providerId = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+        var providerId = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
         return await _dbContext.Users.SingleAsync(u => u.ProviderId == providerId, cancellationToken);
     }
 

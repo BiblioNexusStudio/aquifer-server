@@ -36,7 +36,7 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
     public async Task TrackResourceContentRequest(List<int> resourceIds, HttpContext httpContext)
     {
         var message = new TrackResourceContentRequestMessage { ResourceContentIds = resourceIds, IpAddress = GetClientIp(httpContext) };
-        string serializedMessage = JsonSerializer.Serialize(message);
+        var serializedMessage = JsonSerializer.Serialize(message);
         await _client.SendMessageAsync(serializedMessage);
     }
 
@@ -44,7 +44,7 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
     {
         if (httpContext.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor))
         {
-            string? ip = forwardedFor.FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim();
+            var ip = forwardedFor.FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim();
             if (!string.IsNullOrEmpty(ip))
             {
                 return ip;

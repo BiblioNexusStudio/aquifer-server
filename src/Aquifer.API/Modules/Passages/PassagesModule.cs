@@ -76,7 +76,7 @@ public class PassagesModule : IModule
             return TypedResults.NotFound();
         }
 
-        int englishLanguageId = (await dbContext.Languages.Where(language => language.ISO6393Code.ToLower() == "eng")
+        var englishLanguageId = (await dbContext.Languages.Where(language => language.ISO6393Code.ToLower() == "eng")
             .FirstOrDefaultAsync(cancellationToken))?.Id ?? -1;
 
         var passageResourceContent = await dbContext.PassageResources
