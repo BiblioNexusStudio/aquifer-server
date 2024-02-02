@@ -27,7 +27,8 @@ public class JwtSettingOptions
 
 public class Auth0Settings
 {
-    public required string ClientId { get; init; }
+    public required string ApiClientId { get; init; }
+    public required string ApplicationClientId { get; set; }
     public required string Audience { get; init; }
 
     [Url]

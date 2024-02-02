@@ -15,6 +15,7 @@ public interface IAuth0HttpClient
     Task<HttpResponseMessage> GetAuth0Token(CancellationToken cancellationToken);
     Task<HttpResponseMessage> GetUserRoles(string auth0Token, CancellationToken cancellationToken);
     Task<HttpResponseMessage> AssignUserToRole(string roleId, string userId, string auth0Token, CancellationToken cancellationToken);
+    Task<HttpResponseMessage> ResetPassword(string email, string authToken, CancellationToken cancellationToken);
 }
 
 public class Auth0HttpClient : IAuth0HttpClient
@@ -35,7 +36,7 @@ public class Auth0HttpClient : IAuth0HttpClient
 
     public async Task<HttpResponseMessage> GetUserRoles(string auth0Token, CancellationToken cancellationToken)
     {
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth0Token);
+        SetAuthHeader(auth0Token);
 
         return await _httpClient.GetAsync("/api/v2/roles", cancellationToken);
     }
@@ -44,7 +45,7 @@ public class Auth0HttpClient : IAuth0HttpClient
     {
         var tokenRequest = new Auth0TokenRequest
         {
-            ClientId = _authSettings.ClientId,
+            ClientId = _authSettings.ApiClientId,
             ClientSecret = await _keyVaultService.GetSecretAsync(KeyVaultSecretName.Auth0ClientSecret),
             Audience = _authSettings.Audience,
             GrantType = Auth0Constants.ClientCredentials
@@ -61,7 +62,7 @@ public class Auth0HttpClient : IAuth0HttpClient
         string auth0Token,
         CancellationToken cancellationToken)
     {
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth0Token);
+        SetAuthHeader(auth0Token);
 
         var postUri = $"/api/v2/roles/{roleId}/users";
 
@@ -74,13 +75,13 @@ public class Auth0HttpClient : IAuth0HttpClient
 
     public async Task<HttpResponseMessage> CreateUser(string name, string email, string authToken, CancellationToken cancellationToken)
     {
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+        SetAuthHeader(authToken);
 
         var createUserRequest = new Auth0CreateUserRequest
         {
             Connection = Auth0Constants.Connection,
             Email = email,
-            Password = "generated now",
+            Password = "a79.J36E|8R~",
             Name = name
         };
 
@@ -90,8 +91,24 @@ public class Auth0HttpClient : IAuth0HttpClient
         return await _httpClient.PostAsync("/api/v2/users", createUserHttpContent, cancellationToken);
     }
 
-    // public async Task<HttpResponseMessage> ResetPassword(string userId, string authToken, CancellationToken cancellationToken)
-    // {
-    //     _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
-    // }
+    public async Task<HttpResponseMessage> ResetPassword(string email, string authToken, CancellationToken cancellationToken)
+    {
+        const string endpointPath = "/dbconnections/change_password";
+        SetAuthHeader(authToken);
+
+        var request = new StringContent(JsonUtilities.DefaultSerialize(new Auth0PasswordResetRequest
+            {
+                Email = email,
+                ClientId = _authSettings.ApplicationClientId
+            }),
+            Encoding.UTF8,
+            MediaTypeNames.Application.Json);
+
+        return await _httpClient.PostAsync(endpointPath, request, cancellationToken);
+    }
+
+    private void SetAuthHeader(string token)
+    {
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    }
 }

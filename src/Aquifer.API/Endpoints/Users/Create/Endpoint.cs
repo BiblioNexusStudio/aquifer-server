@@ -27,6 +27,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         var roleId = await GetRoleIdAsync(req, accessToken, ct);
         var newUserId = await CreateAuth0User(req, accessToken, ct);
         await AssignAuth0Role(accessToken, newUserId, roleId, ct);
+        await SendPasswordReset(accessToken, req.Email, ct);
 
         await SaveUserToDatabase(req, newUserId, ct);
     }
@@ -88,7 +89,33 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
             logger.LogWarning("Unable to assign Auth0 user to role: {statusCode} - {response}", response.StatusCode, responseContent);
 
             ThrowError($"""
-                        Auth0 threw error on user role assignment.
+                        Auth0 threw an error on user role assignment.
+                        Note that the Auth0 user has been created and recalling this
+                        endpoint will result in different errors. Please ask for help.
+                        {responseContent}
+                        """,
+                (int)response.StatusCode);
+        }
+    }
+
+    private async Task SendPasswordReset(string accessToken, string email, CancellationToken ct)
+    {
+        // Auth0 doesn't support creating a user account without a password and having the user
+        // create a password as part of the email verification. So we have to create a password
+        // as part of creating their account, and then immediately send them the reset email
+        // which will act as a creation / set password flow.
+
+        var response = await authProviderService.ResetPassword(email, accessToken, ct);
+
+        var responseContent = await response.Content.ReadAsStringAsync(ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogWarning("Unable to reset Auth0 password on account creation: {statusCode} - {response}",
+                response.StatusCode,
+                responseContent);
+
+            ThrowError($"""
+                        Auth0 threw an error sending the password reset email.
                         Note that the Auth0 user has been created and recalling this
                         endpoint will result in different errors. Please ask for help.
                         {responseContent}
