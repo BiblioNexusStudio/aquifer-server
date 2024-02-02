@@ -74,8 +74,7 @@ public class Auth0HttpClient : IAuth0HttpClient
 
     public async Task<HttpResponseMessage> CreateUser(string name, string email, string authToken, CancellationToken cancellationToken)
     {
-        _httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", authToken);
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
 
         var createUserRequest = new Auth0CreateUserRequest
         {
@@ -86,9 +85,13 @@ public class Auth0HttpClient : IAuth0HttpClient
         };
 
         var createUserJsonContent = JsonUtilities.DefaultSerialize(createUserRequest);
-        var createUserHttpContent =
-            new StringContent(createUserJsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
+        var createUserHttpContent = new StringContent(createUserJsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
 
         return await _httpClient.PostAsync("/api/v2/users", createUserHttpContent, cancellationToken);
     }
+
+    // public async Task<HttpResponseMessage> ResetPassword(string userId, string authToken, CancellationToken cancellationToken)
+    // {
+    //     _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+    // }
 }

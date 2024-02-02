@@ -46,3 +46,11 @@ public class Auth0AssignUserRolesResponse
     public string Id { get; set; } = null!;
     public string Name { get; set; } = null!;
 }
+
+public class Auth0PasswordResetRequest
+{
+    // [JsonPropertyName("result_url")]
+    // public required string ResultUrl { get; set; }
+
+    public required string UserId { get; set; }
+}
