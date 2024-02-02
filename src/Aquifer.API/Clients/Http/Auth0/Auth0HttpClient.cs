@@ -81,7 +81,7 @@ public class Auth0HttpClient : IAuth0HttpClient
         {
             Connection = Auth0Constants.Connection,
             Email = email,
-            Password = "a79.J36E|8R~",
+            Password = CryptographyUtilities.GenerateSimplePassword(),
             Name = name
         };
 
