@@ -3,30 +3,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Modules.Reports.EditedResources;
 
-/// <summary>
-///     Handles the retrieval of edited resources
-/// </summary>
 public class EditedResourcesLastThirtyDays
 {
     private const string EditedResourcesLastThirtyDaysQuery =
         """
-        SELECT DISTINCT PR.DisplayName, R.EnglishLabel, L.EnglishDisplay
+        SELECT DISTINCT PR.DisplayName AS Resource, R.EnglishLabel AS Label, L.EnglishDisplay AS Language
         FROM ResourceContentVersionStatusHistory RCVSH
             INNER JOIN ResourceContentVersions RCV ON RCV.Id = RCVSH.ResourceContentVersionId
             INNER JOIN ResourceContents RC ON RC.Id = RCV.ResourceContentId
             INNER JOIN Resources R ON R.Id = RC.ResourceId
             INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
             INNER JOIN Languages L ON L.Id = RC.LanguageId
-        WHERE RCVSH.Status = 3 -- status 3 is complete
+        WHERE RCVSH.Status IN (2, 4, 5, 7, 8, 9) -- in progress, in review, review pending
         AND RCVSH.Created >= DATEADD(DAY, -30, GETUTCDATE())
         """;
 
-    /// <summary>
-    ///     Handles the retrieval of resources edited in the last thirty days.
-    /// </summary>
-    /// <param name="dbContext">The database context.</param>
-    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the HTTP result.</returns>
     public static async Task<IResult> HandleAsync(
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
