@@ -96,14 +96,13 @@ public class Auth0HttpClient : IAuth0HttpClient
         const string endpointPath = "/dbconnections/change_password";
         SetAuthHeader(authToken);
 
-        var request = new StringContent(JsonUtilities.DefaultSerialize(new Auth0PasswordResetRequest
-            {
-                Email = email,
-                ClientId = _authSettings.ApplicationClientId
-            }),
-            Encoding.UTF8,
-            MediaTypeNames.Application.Json);
+        var requestModel = new Auth0PasswordResetRequest
+        {
+            Email = email,
+            ClientId = _authSettings.ApplicationClientId
+        };
 
+        var request = new StringContent(JsonUtilities.DefaultSerialize(requestModel), Encoding.UTF8, MediaTypeNames.Application.Json);
         return await _httpClient.PostAsync(endpointPath, request, cancellationToken);
     }
 
