@@ -53,10 +53,7 @@ if (app.Environment.IsDevelopment())
     app.UseHttpLogging();
 }
 
-app.UseFastEndpoints(config =>
-{
-    config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-});
+app.UseFastEndpoints(config => config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase);
 
 app.MapEndpoints();
 app.Run();

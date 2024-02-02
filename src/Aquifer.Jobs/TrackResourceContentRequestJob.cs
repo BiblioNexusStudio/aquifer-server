@@ -26,7 +26,7 @@ public class TrackResourceContentRequestJob(
                 return;
             }
 
-            foreach (int resourceContentId in trackingMetadata.ResourceContentIds)
+            foreach (var resourceContentId in trackingMetadata.ResourceContentIds)
             {
                 _dbContext.ResourceContentRequests.Add(new ResourceContentRequestEntity
                 {

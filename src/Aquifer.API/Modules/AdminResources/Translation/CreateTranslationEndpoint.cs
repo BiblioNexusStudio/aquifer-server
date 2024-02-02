@@ -28,7 +28,7 @@ public static class CreateTranslationEndpoint
             return TypedResults.BadRequest("Base version not found");
         }
 
-        bool isExistingTranslation = await dbContext.ResourceContents.AnyAsync(x =>
+        var isExistingTranslation = await dbContext.ResourceContents.AnyAsync(x =>
                 x.LanguageId == request.LanguageId && x.ResourceId == baseContent.ResourceId,
             cancellationToken);
         if (isExistingTranslation)

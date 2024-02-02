@@ -6,8 +6,8 @@ public static class BibleUtilities
 {
     public static (BookId bookId, int chapter, int verse) TranslateVerseId(int verseId)
     {
-        int verse = verseId % 1000;
-        int chapter = verseId / 1000 % 1000;
+        var verse = verseId % 1000;
+        var chapter = verseId / 1000 % 1000;
         var bookId = (BookId)(verseId / 1000000 % 1000);
 
         return (bookId, chapter, verse);

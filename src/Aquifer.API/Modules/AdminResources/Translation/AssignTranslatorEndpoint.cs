@@ -44,7 +44,7 @@ public static class AssignTranslatorEndpoint
         }
 
         var user = await userService.GetUserFromJwtAsync(cancellationToken);
-        bool hasAssignOverridePermission = userService.HasJwtClaim(PermissionName.AssignOverride);
+        var hasAssignOverridePermission = userService.HasJwtClaim(PermissionName.AssignOverride);
         if ((!hasAssignOverridePermission && translationDraft.AssignedUserId != user.Id) ||
             translationDraft.AssignedUserId == request.AssignedUserId)
         {

@@ -30,7 +30,7 @@ public static class LanguageResourcesEndpoints
             return TypedResults.BadRequest("parentResourceNames query param must be specified");
         }
 
-        int englishLanguageId = (await dbContext.Languages.Where(language => language.ISO6393Code.ToLower() == "eng")
+        var englishLanguageId = (await dbContext.Languages.Where(language => language.ISO6393Code.ToLower() == "eng")
                                     .FirstOrDefaultAsync(cancellationToken))?.Id ??
                                 -1;
 

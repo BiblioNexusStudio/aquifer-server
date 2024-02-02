@@ -42,11 +42,11 @@ public static class GetResourcesSummaryEndpoints
     public static async Task<Ok<ResourcesSummaryResponse>> Get(AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        (var resourcesByParentResource, var resourcesByLanguage, int multiLanguageResourcesCount) =
+        var (resourcesByParentResource, resourcesByLanguage, multiLanguageResourcesCount) =
             await GetDataAsync(dbContext, cancellationToken);
 
         // resourcesByParentResource sum will be changed later, so keep this at the top
-        int allResourcesCount = resourcesByParentResource.Select(x => x.ResourceCount).Sum();
+        var allResourcesCount = resourcesByParentResource.Select(x => x.ResourceCount).Sum();
         var months = ReportUtilities.GetLastMonths(6);
         var languages = resourcesByLanguage.Select(x => x.LanguageName).Distinct().ToList();
         var parentResources = resourcesByLanguage.Select(x => x.ParentResourceName).Distinct().ToList();
@@ -102,7 +102,7 @@ public static class GetResourcesSummaryEndpoints
         foreach (var resourceGroup in parentResourcesByGroup)
         {
             var orderedGroup = resourceGroup.OrderBy(x => x.Date).ToList();
-            for (int i = 1; i < orderedGroup.Count; i++)
+            for (var i = 1; i < orderedGroup.Count; i++)
             {
                 orderedGroup[i].ResourceCount += orderedGroup[i - 1].ResourceCount;
             }
@@ -122,9 +122,9 @@ public static class GetResourcesSummaryEndpoints
         // Must iterate twice with current setup (i.e. don't call ToList)
         var resourceLanguagesByGroup = resourcesByLanguage.GroupBy(x => (x.LanguageName, x.ParentResourceName));
 
-        foreach (string language in languages)
+        foreach (var language in languages)
         {
-            foreach (string resource in resources)
+            foreach (var resource in resources)
             {
                 if (!resourcesByLanguage.Any(x => x.ParentResourceName == resource && x.LanguageName == language))
                 {
@@ -159,7 +159,7 @@ public static class GetResourcesSummaryEndpoints
         foreach (var resourceGroup in resourceLanguagesByGroup)
         {
             var orderedGroup = resourceGroup.OrderBy(x => x.Date).ToList();
-            for (int i = 1; i < orderedGroup.Count; i++)
+            for (var i = 1; i < orderedGroup.Count; i++)
             {
                 orderedGroup[i].ResourceCount += orderedGroup[i - 1].ResourceCount;
             }
@@ -187,7 +187,7 @@ public static class GetResourcesSummaryEndpoints
             .SqlQuery<ResourcesSummaryByLanguage>($"exec ({GetResourcesByLanguageQuery})")
             .ToListAsync(cancellationToken);
 
-        int multiLanguageResourcesCount = (await dbContext.Database
+        var multiLanguageResourcesCount = (await dbContext.Database
             .SqlQuery<int>($"exec ({GetMultiLanguageResourcesCountQuery})").ToListAsync(cancellationToken)).Single();
 
         return (resourcesByParentResource, resourcesByLanguage, multiLanguageResourcesCount);

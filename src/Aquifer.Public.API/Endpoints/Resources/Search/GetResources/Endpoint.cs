@@ -74,8 +74,8 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
         var resourceTypeFailure = ValidationFailures.FirstOrDefault(x => x.PropertyName.ToLower() == "resourcetype");
         if (resourceTypeFailure is not null)
         {
-            string validValues = string.Join(", ", Enum.GetValues(typeof(ResourceType)).Cast<ResourceType>().ToList());
-            string errorMessage = $"{resourceTypeFailure.ErrorMessage} Valid values are {validValues}";
+            var validValues = string.Join(", ", Enum.GetValues(typeof(ResourceType)).Cast<ResourceType>().ToList());
+            var errorMessage = $"{resourceTypeFailure.ErrorMessage} Valid values are {validValues}";
             resourceTypeFailure.ErrorMessage = errorMessage;
         }
 

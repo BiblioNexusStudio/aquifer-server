@@ -18,11 +18,11 @@ public class TrackResourceContentRequestMiddleware(
         {
             if (context.Response.StatusCode == 200)
             {
-                string path = context.Request.Path.Value ?? "";
+                var path = context.Request.Path.Value ?? "";
 
                 if (ResourcePathRegex.IsMatch(path))
                 {
-                    int resourceId = int.Parse(ResourcePathRegex.Match(path).Groups[1].Value);
+                    var resourceId = int.Parse(ResourcePathRegex.Match(path).Groups[1].Value);
                     await _trackerService.TrackResourceContentRequest([resourceId], context.Request.HttpContext);
                 }
             }

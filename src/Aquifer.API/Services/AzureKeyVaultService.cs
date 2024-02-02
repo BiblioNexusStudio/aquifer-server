@@ -16,7 +16,7 @@ public class AzureKeyVaultService : IAzureKeyVaultService
 
     public AzureKeyVaultService(IOptions<ConfigurationOptions> options, IAzureClientService azureClientService)
     {
-        string kvUri = options.Value.KeyVaultUri;
+        var kvUri = options.Value.KeyVaultUri;
         _client = new SecretClient(new Uri(kvUri), azureClientService.GetCredential());
     }
 

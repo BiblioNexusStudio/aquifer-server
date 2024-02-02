@@ -75,7 +75,7 @@ public static class MonthlyReportsEndpoints
 
     private static string MonthlyCompletedQuery(bool isEnglish)
     {
-        string whereLanguage = isEnglish ? "WHERE rc.LanguageId = 1" : "WHERE rc.LanguageId != 1";
+        var whereLanguage = isEnglish ? "WHERE rc.LanguageId = 1" : "WHERE rc.LanguageId != 1";
         return
             $"""
             SELECT DATEADD(mm, 0, DATEADD(mm, DATEDIFF(m, 0, rcvsh.[Created]), 0)) AS Date,

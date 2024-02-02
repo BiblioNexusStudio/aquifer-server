@@ -127,12 +127,12 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
     private async Task SaveUserToDatabase(Request req, string providerUserId, CancellationToken ct)
     {
         await dbContext.Users.AddAsync(new UserEntity
-            {
-                Email = req.Email,
-                FirstName = req.FirstName,
-                LastName = req.LastName,
-                ProviderId = providerUserId
-            },
+        {
+            Email = req.Email,
+            FirstName = req.FirstName,
+            LastName = req.LastName,
+            ProviderId = providerUserId
+        },
             ct);
 
         await dbContext.SaveChangesAsync(ct);
