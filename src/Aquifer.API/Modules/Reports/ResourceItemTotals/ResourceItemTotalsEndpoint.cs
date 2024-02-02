@@ -14,7 +14,7 @@ public static class ResourceItemTotalsEndpoint
 
         (SELECT COUNT(*)
         FROM Resources
-        WHERE Created > DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)) AS TotalResourcesThisMonth,
+        WHERE Created > DATEADD(mm, DATEDIFF(mm, 0, GETUTCDATE()), 0)) AS TotalResourcesThisMonth,
             
         (SELECT COUNT(DISTINCT RES.Id)
         FROM Resources RES
@@ -25,7 +25,7 @@ public static class ResourceItemTotalsEndpoint
         FROM Resources RES
             INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
         WHERE RC.LanguageId != 1
-            AND RC.Created > DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)) AS TotalNonEnglishResourcesThisMonth,
+            AND RC.Created > DATEADD(mm, DATEDIFF(mm, 0, GETUTCDATE()), 0)) AS TotalNonEnglishResourcesThisMonth,
             
         (SELECT COUNT(*)
         FROM (SELECT RES.Id
@@ -40,7 +40,7 @@ public static class ResourceItemTotalsEndpoint
             FROM Resources RES
                 INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
             WHERE RC.MediaType != 2  --  This is leaving out audio types from an earlier decision.
-                AND RC.Created > DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)
+                AND RC.Created > DATEADD(mm, DATEDIFF(mm, 0, GETUTCDATE()), 0)
             GROUP BY RES.Id
             HAVING COUNT(DISTINCT RC.LanguageId) > 1) TwoPlusResources
         ) AS TotalResourcesTwoPlusLanguagesThisMonth,
@@ -55,7 +55,7 @@ public static class ResourceItemTotalsEndpoint
              INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
              INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
              INNER JOIN ResourceContentVersionStatusHistory RCVSH ON RCVSH.ResourceContentVersionId = RCV.Id
-        WHERE RCVSH.Created > DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)
+        WHERE RCVSH.Created > DATEADD(mm, DATEDIFF(mm, 0, GETUTCDATE()), 0)
         AND RCVSH.Status = 2) AS AquiferizedResourcesThisMonth,
 
         (SELECT COUNT(DISTINCT RES.Id)
@@ -68,7 +68,7 @@ public static class ResourceItemTotalsEndpoint
             INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
             INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
             INNER JOIN ResourceContentVersionStatusHistory RCVSH ON RCVSH.ResourceContentVersionId = RCV.Id
-        WHERE RCVSH.Created > DATEADD(mm, DATEDIFF(mm, 0, GETDATE()), 0)
+        WHERE RCVSH.Created > DATEADD(mm, DATEDIFF(mm, 0, GETUTCDATE()), 0)
             AND RCVSH.Status = 7) AS TotalResourceBeingTranslatedThisMonth;
         """;
 
