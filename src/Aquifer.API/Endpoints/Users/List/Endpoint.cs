@@ -18,7 +18,9 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
         var users = await dbContext.Users.Select(user => new Response
         {
             Id = user.Id,
-            Name = $"{user.FirstName} {user.LastName}"
+            Name = $"{user.FirstName} {user.LastName}",
+            Role = user.Role,
+            CompanyName = user.Company == null ? null : user.Company.Name
         }).ToListAsync(ct);
 
         await SendAsync(users, 200, ct);

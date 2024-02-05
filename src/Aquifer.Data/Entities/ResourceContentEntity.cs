@@ -27,6 +27,8 @@ public class ResourceContentEntity
 
     public LanguageEntity Language { get; set; } = null!;
     public ResourceEntity Resource { get; set; } = null!;
+
+    public ICollection<ProjectEntity> Projects { get; set; } = new List<ProjectEntity>();
 }
 
 public enum ResourceContentMediaType
