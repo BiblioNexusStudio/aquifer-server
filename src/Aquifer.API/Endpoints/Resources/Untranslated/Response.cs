@@ -1,0 +1,9 @@
+namespace Aquifer.API.Endpoints.Resources.Untranslated;
+
+public record Response
+{
+    public required string Title { get; set; }
+    public required int ResourceId { get; set; }
+    public required int WordCount { get; set; }
+    public required bool IsBeingAquiferized { get; set; }
+}

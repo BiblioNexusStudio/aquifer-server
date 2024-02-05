@@ -22,4 +22,14 @@ public static class BibleUtilities
     {
         return ((int)bookId * 1000000) + 1000999999;
     }
+
+    public static int LowerBoundOfChapter(BookId bookId, int chapter)
+    {
+        return ((int)bookId * 1000000) + (chapter * 1000) + 1000000000;
+    }
+
+    public static int UpperBoundOfChapter(BookId bookId, int chapter)
+    {
+        return ((int)bookId * 1000000) + ((chapter + 1) * 1000) - 1 + 1000000000;
+    }
 }
