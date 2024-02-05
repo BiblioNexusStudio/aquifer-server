@@ -67,11 +67,11 @@ namespace Aquifer.Data.Migrations
                     LanguageId = table.Column<int>(type: "int", nullable: false),
                     ProjectManagerUserId = table.Column<int>(type: "int", nullable: false),
                     CompanyId = table.Column<int>(type: "int", nullable: false),
-                    PlatformId = table.Column<int>(type: "int", nullable: false),
+                    ProjectPlatformId = table.Column<int>(type: "int", nullable: false),
                     CompanyLeadUserId = table.Column<int>(type: "int", nullable: true),
                     SourceWordCount = table.Column<int>(type: "int", nullable: false),
                     EffectiveWordCount = table.Column<int>(type: "int", nullable: true),
-                    QuotedCostCents = table.Column<int>(type: "int", nullable: true),
+                    QuotedCost = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
                     Started = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ProjectedDeliveryDate = table.Column<DateOnly>(type: "date", nullable: true),
                     ActualDeliveryDate = table.Column<DateOnly>(type: "date", nullable: true),
@@ -96,8 +96,8 @@ namespace Aquifer.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Projects_ProjectPlatforms_PlatformId",
-                        column: x => x.PlatformId,
+                        name: "FK_Projects_ProjectPlatforms_ProjectPlatformId",
+                        column: x => x.ProjectPlatformId,
                         principalTable: "ProjectPlatforms",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -164,14 +164,14 @@ namespace Aquifer.Data.Migrations
                 column: "LanguageId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Projects_PlatformId",
-                table: "Projects",
-                column: "PlatformId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Projects_ProjectManagerUserId",
                 table: "Projects",
                 column: "ProjectManagerUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Projects_ProjectPlatformId",
+                table: "Projects",
+                column: "ProjectPlatformId");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Users_Companies_CompanyId",

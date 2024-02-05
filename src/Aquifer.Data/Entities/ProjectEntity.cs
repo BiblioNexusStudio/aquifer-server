@@ -14,13 +14,16 @@ public class ProjectEntity
     public UserEntity ProjectManagerUser { get; set; } = null!;
     public int CompanyId { get; set; }
     public CompanyEntity Company { get; set; } = null!;
-    public int PlatformId { get; set; }
-    public ProjectPlatformEntity Platform { get; set; } = null!;
+    public int ProjectPlatformId { get; set; }
+    public ProjectPlatformEntity ProjectPlatform { get; set; } = null!;
     public int? CompanyLeadUserId { get; set; }
     public UserEntity? CompanyLeadUser { get; set; }
     public int SourceWordCount { get; set; }
     public int? EffectiveWordCount { get; set; }
-    public int? QuotedCostCents { get; set; }
+
+    [Precision(18, 2)]
+    public decimal? QuotedCost { get; set; }
+
     public DateTime? Started { get; set; }
     public DateOnly? ProjectedDeliveryDate { get; set; }
     public DateOnly? ActualDeliveryDate { get; set; }

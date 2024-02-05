@@ -283,10 +283,10 @@ namespace Aquifer.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("PlatformId")
+                    b.Property<int>("ProjectManagerUserId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProjectManagerUserId")
+                    b.Property<int>("ProjectPlatformId")
                         .HasColumnType("int");
 
                     b.Property<DateOnly?>("ProjectedDeliveryDate")
@@ -295,8 +295,9 @@ namespace Aquifer.Data.Migrations
                     b.Property<DateOnly?>("ProjectedPublishDate")
                         .HasColumnType("date");
 
-                    b.Property<int?>("QuotedCostCents")
-                        .HasColumnType("int");
+                    b.Property<decimal?>("QuotedCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("SourceWordCount")
                         .HasColumnType("int");
@@ -317,9 +318,9 @@ namespace Aquifer.Data.Migrations
 
                     b.HasIndex("LanguageId");
 
-                    b.HasIndex("PlatformId");
-
                     b.HasIndex("ProjectManagerUserId");
+
+                    b.HasIndex("ProjectPlatformId");
 
                     b.ToTable("Projects");
                 });
@@ -753,15 +754,15 @@ namespace Aquifer.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Aquifer.Data.Entities.ProjectPlatformEntity", "Platform")
-                        .WithMany()
-                        .HasForeignKey("PlatformId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Aquifer.Data.Entities.UserEntity", "ProjectManagerUser")
                         .WithMany()
                         .HasForeignKey("ProjectManagerUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aquifer.Data.Entities.ProjectPlatformEntity", "ProjectPlatform")
+                        .WithMany()
+                        .HasForeignKey("ProjectPlatformId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -771,9 +772,9 @@ namespace Aquifer.Data.Migrations
 
                     b.Navigation("Language");
 
-                    b.Navigation("Platform");
-
                     b.Navigation("ProjectManagerUser");
+
+                    b.Navigation("ProjectPlatform");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentEntity", b =>
