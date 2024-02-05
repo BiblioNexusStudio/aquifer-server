@@ -43,11 +43,8 @@ public static class BibleUtilities
 
         var bookId = BookCodes.IdFromCode(bookCode);
 
-        if (chapters is null || chapters.Length == 0)
-        {
-            return [(LowerBoundOfBook(bookId), UpperBoundOfBook(bookId))];
-        }
-
-        return chapters.Select(c => (LowerBoundOfChapter(bookId, c), UpperBoundOfChapter(bookId, c))).ToList();
+        return chapters is null || chapters.Length == 0
+            ? [(LowerBoundOfBook(bookId), UpperBoundOfBook(bookId))]
+            : chapters.Select(c => (LowerBoundOfChapter(bookId, c), UpperBoundOfChapter(bookId, c))).ToList();
     }
 }
