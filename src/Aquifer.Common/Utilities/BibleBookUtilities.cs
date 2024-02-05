@@ -1,19 +1,20 @@
+using Aquifer.Common.Extensions;
 using Aquifer.Data.Enums;
 
-namespace Aquifer.API.Common;
+namespace Aquifer.Common.Utilities;
 
-public static class BookCodes
+public static class BibleBookUtilities
 {
-    private static readonly Dictionary<string, BookMetadata> BookCodeToMetadata = [];
-    private static readonly Dictionary<BookId, BookMetadata> BookIdToMetadata = [];
+    private static readonly Dictionary<string, BibleBookMetadata> BookCodeToMetadata = [];
+    private static readonly Dictionary<BookId, BibleBookMetadata> BookIdToMetadata = [];
 
-    static BookCodes()
+    static BibleBookUtilities()
     {
         var bookIds = Enum.GetValues(typeof(BookId)).Cast<BookId>();
 
         foreach (var bookId in bookIds)
         {
-            var metadata = new BookMetadata
+            var metadata = new BibleBookMetadata
             {
                 BookId = bookId,
                 BookCode = bookId.ToString().Replace("Book", ""),
@@ -39,7 +40,12 @@ public static class BookCodes
         return BookIdToMetadata.TryGetValue(bookId, out var obj) ? obj.BookFullName : "";
     }
 
-    private record BookMetadata
+    public static List<BibleBookMetadata> GetAll()
+    {
+        return BookIdToMetadata.Select(x => x.Value).Skip(1).ToList();
+    }
+
+    public record BibleBookMetadata
     {
         public BookId BookId { get; set; }
         public string BookCode { get; set; } = null!;
