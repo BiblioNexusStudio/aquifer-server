@@ -41,15 +41,13 @@ public static class BibleUtilities
             return [];
         }
 
+        var bookId = BookCodes.IdFromCode(bookCode);
+
         if (chapters is null || chapters.Length == 0)
         {
-            var bookId = BookCodes.IdFromCode(bookCode);
             return [(LowerBoundOfBook(bookId), UpperBoundOfBook(bookId))];
         }
-        else
-        {
-            var bookId = BookCodes.IdFromCode(bookCode);
-            return chapters.Select(c => (LowerBoundOfChapter(bookId, c), UpperBoundOfChapter(bookId, c))).ToList();
-        }
+
+        return chapters.Select(c => (LowerBoundOfChapter(bookId, c), UpperBoundOfChapter(bookId, c))).ToList();
     }
 }
