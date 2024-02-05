@@ -3,7 +3,7 @@ using Aquifer.Data.Enums;
 using FastEndpoints;
 using FluentValidation;
 
-namespace Aquifer.API.Endpoints.Resources.Untranslated;
+namespace Aquifer.API.Endpoints.Resources.Untranslated.List;
 
 public class Validator : Validator<Request>
 {

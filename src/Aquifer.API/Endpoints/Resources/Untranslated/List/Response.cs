@@ -1,4 +1,4 @@
-namespace Aquifer.API.Endpoints.Resources.Untranslated;
+namespace Aquifer.API.Endpoints.Resources.Untranslated.List;
 
 public record Response
 {

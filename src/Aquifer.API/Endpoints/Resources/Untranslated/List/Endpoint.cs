@@ -6,7 +6,7 @@ using FastEndpoints;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.Untranslated;
+namespace Aquifer.API.Endpoints.Resources.Untranslated.List;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Response>>
 {
