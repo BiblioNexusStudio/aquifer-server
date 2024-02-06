@@ -5,13 +5,13 @@ using FastEndpoints;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.Untranslated.List;
+namespace Aquifer.API.Endpoints.Resources.Unaquiferized.List;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Response>>
 {
     public override void Configure()
     {
-        Get("/resources/untranslated");
+        Get("/resources/unaquiferized");
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
@@ -35,17 +35,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                          INNER JOIN Languages l ON l.Id = rc.LanguageId
                          WHERE l.ISO6393Code = 'eng'
                          AND r.ParentResourceId = @ParentResourceId
-                         AND rcv.IsPublished = 1
                          AND rc.MediaType = {(int)ResourceContentMediaType.Text}
-                         AND NOT EXISTS (
-                             SELECT 1
-                             FROM ResourceContents rc2
-                             WHERE rc2.ResourceId = rc.ResourceId
-                             AND rc2.MediaType = {(int)ResourceContentMediaType.Text}
-                             AND rc2.LanguageId = @LanguageId
-                             AND (rc2.Status != {(int)ResourceContentStatus.TranslationNotStarted}
-                                 OR EXISTS (SELECT 1 FROM ProjectResourceContents prc WHERE prc.ResourceContentId = rc2.Id))
-                         )
+                         AND rc.Status = {(int)ResourceContentStatus.New}
                          AND (@SearchQuery = '' OR r.EnglishLabel LIKE '%' + @SearchQuery + '%')
                      ),
                      FilteredResources AS (
@@ -66,23 +57,24 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                      SELECT
                          COALESCE(rcv.WordCount, 0) AS WordCount,
                          rc.ResourceId AS ResourceId,
-                         r.EnglishLabel AS Title,
-                         CAST(CASE WHEN rc.Status IN
-                                 ({(int)ResourceContentStatus.AquiferizeInProgress},
-                                  {(int)ResourceContentStatus.AquiferizeInReview},
-                                  {(int)ResourceContentStatus.AquiferizeReviewPending}) THEN 1 ELSE 0 END AS BIT) AS IsBeingAquiferized
+                         r.EnglishLabel AS Title
                      FROM
                          ResourceContentVersions rcv
                      INNER JOIN ResourceContents rc ON rcv.ResourceContentId = rc.Id
                      INNER JOIN FilteredResources fr ON fr.ResourceContentId = rc.Id
                      INNER JOIN Resources r ON rc.ResourceId = r.Id
-                     WHERE rcv.IsPublished = 1
+                     WHERE rcv.Id = (
+                         SELECT TOP 1 rcv2.id
+                         FROM ResourceContentVersions rcv2
+                         WHERE rcv.ResourceContentId = rcv2.ResourceContentId
+                         ORDER BY Created DESC
+                     )
                      ORDER BY r.EnglishLabel ASC;
                      """;
 
         var response = await dbContext.Database
             .SqlQueryRaw<Response>(query, new SqlParameter("ParentResourceId", request.ParentResourceId),
-                new SqlParameter("LanguageId", request.LanguageId), new SqlParameter("SearchQuery", request.SearchQuery ?? ""))
+                new SqlParameter("SearchQuery", request.SearchQuery ?? ""))
             .ToListAsync(ct);
 
         await SendAsync(response, 200, ct);
