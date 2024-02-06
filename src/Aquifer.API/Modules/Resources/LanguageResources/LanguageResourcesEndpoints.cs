@@ -20,7 +20,7 @@ public static class LanguageResourcesEndpoints
             [FromQuery] string[]? parentResourceNames = null
         )
     {
-        var bookId = BibleBookUtilities.IdFromCode(bookCode);
+        var bookId = BibleBookCodeUtilities.IdFromCode(bookCode);
         if (bookId == BookId.None)
         {
             return TypedResults.NotFound();

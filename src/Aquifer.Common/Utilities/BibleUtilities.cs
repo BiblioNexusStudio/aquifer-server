@@ -1,7 +1,6 @@
-﻿using Aquifer.API.Common;
-using Aquifer.Data.Enums;
+﻿using Aquifer.Data.Enums;
 
-namespace Aquifer.API.Utilities;
+namespace Aquifer.Common.Utilities;
 
 public static class BibleUtilities
 {
@@ -41,10 +40,16 @@ public static class BibleUtilities
             return [];
         }
 
-        var bookId = BookCodes.IdFromCode(bookCode);
+        var bookId = BibleBookCodeUtilities.IdFromCode(bookCode);
 
         return chapters is null || chapters.Length == 0
             ? [(LowerBoundOfBook(bookId), UpperBoundOfBook(bookId))]
             : chapters.Select(c => (LowerBoundOfChapter(bookId, c), UpperBoundOfChapter(bookId, c))).ToList();
+    }
+
+    public static (int startVerseId, int endVerseId) GetBookVerseRange(int bookNumber)
+    {
+        return (int.Parse($"1{bookNumber.ToString().PadLeft(3, '0')}000000"),
+            int.Parse($"1{(bookNumber + 1).ToString().PadLeft(3, '0')}000000"));
     }
 }

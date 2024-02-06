@@ -14,14 +14,14 @@ public class PassagesByBookResponse
 public class PassageResponse
 {
     public int Id { get; set; }
-    public string BookCode => BibleBookUtilities.CodeFromId(PassageStartDetails.BookId);
+    public string BookCode => BibleBookCodeUtilities.CodeFromId(PassageStartDetails.BookId);
     public int StartChapter => PassageStartDetails.Chapter;
     public int EndChapter => PassageEndDetails.Chapter;
     public int StartVerse => PassageStartDetails.Verse;
     public int EndVerse => PassageEndDetails.Verse;
 
     [JsonIgnore]
-    public (BookId BookId, int Chapter, int Verse) PassageStartDetails { get; set; }
+    public (Data.Enums.BookId BookId, int Chapter, int Verse) PassageStartDetails { get; set; }
 
     [JsonIgnore]
     public (BookId BookId, int Chapter, int Verse) PassageEndDetails { get; set; }

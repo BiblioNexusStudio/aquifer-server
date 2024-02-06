@@ -1,4 +1,5 @@
-﻿using Aquifer.Data;
+﻿using Aquifer.Common.Utilities;
+using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Public.API.Helpers;
 using FastEndpoints;
@@ -51,17 +52,19 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
 
     private IQueryable<ResourceContentVersionEntity> GetQuery(Request req)
     {
-        var endVerseId = req.EndVerseId ?? req.StartVerseId;
+        var (startVerseId, endVerseId) = req.BookId.HasValue
+            ? BibleUtilities.GetBookVerseRange(req.BookId.Value)
+            : (req.StartVerseId, req.EndVerseId ?? req.StartVerseId);
 
-        return _dbContext.ResourceContentVersions.Where(x => x.IsPublished &&
-            ((req.Query != null &&
-                    (x.DisplayName.Contains(req.Query) || x.ResourceContent.Resource.EnglishLabel.Contains(req.Query))) ||
-                (req.StartVerseId != null &&
-                    (x.ResourceContent.Resource.VerseResources.Any(vr =>
-                            vr.VerseId >= req.StartVerseId && vr.VerseId <= endVerseId) ||
-                        x.ResourceContent.Resource.PassageResources.Any(pr =>
-                            (req.StartVerseId >= pr.Passage.StartVerseId && req.StartVerseId <= pr.Passage.EndVerseId) ||
-                            (endVerseId >= pr.Passage.StartVerseId && endVerseId <= pr.Passage.EndVerseId))))) &&
+        return _dbContext.ResourceContentVersions.Where(x =>
+            x.IsPublished &&
+            (req.Query == null || x.DisplayName.Contains(req.Query) || x.ResourceContent.Resource.EnglishLabel.Contains(req.Query)) &&
+            (startVerseId == null ||
+                x.ResourceContent.Resource.VerseResources.Any(vr =>
+                    vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
+                x.ResourceContent.Resource.PassageResources.Any(pr =>
+                    (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
+                    (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId))) &&
             (req.ResourceType == default || x.ResourceContent.Resource.ParentResource.ResourceType == req.ResourceType) &&
             (x.ResourceContent.LanguageId == req.LanguageId || x.ResourceContent.Language.ISO6393Code == req.LanguageCode));
     }

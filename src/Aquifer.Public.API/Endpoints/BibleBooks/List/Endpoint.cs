@@ -21,7 +21,7 @@ public class Endpoint : EndpointWithoutRequest<IEnumerable<Response>>
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var response = BibleBookUtilities.GetAll().Select(x => new Response
+        var response = BibleBookCodeUtilities.GetAll().Select(x => new Response
         {
             Number = x.BookId,
             Name = x.BookFullName,

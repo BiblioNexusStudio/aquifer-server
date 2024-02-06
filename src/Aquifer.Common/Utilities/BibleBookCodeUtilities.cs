@@ -3,12 +3,12 @@ using Aquifer.Data.Enums;
 
 namespace Aquifer.Common.Utilities;
 
-public static class BibleBookUtilities
+public static class BibleBookCodeUtilities
 {
     private static readonly Dictionary<string, BibleBookMetadata> BookCodeToMetadata = [];
     private static readonly Dictionary<BookId, BibleBookMetadata> BookIdToMetadata = [];
 
-    static BibleBookUtilities()
+    static BibleBookCodeUtilities()
     {
         var bookIds = Enum.GetValues(typeof(BookId)).Cast<BookId>();
 

@@ -12,6 +12,12 @@ public record Request
     public string? Query { get; init; } = null!;
 
     /// <summary>
+    ///     Optional book id based off USFM book numbers. Can get a list of available books and ids from the /bible-books endpoint.
+    ///     Use this to search across an entire book, use startVerseId and endVerseId for more narrow results.
+    /// </summary>
+    public int? BookId { get; init; }
+
+    /// <summary>
     ///     Optional verse id to search on. Resources often have relationships to verses or passages (however, there are
     ///     resources in the system that do not). Any resource that has a relationship to the provided range will be returned.
     ///     (e.g. a resource tied to Mark 1:3-5 would be found for a search across Mark 1:1-10). The Id should be prefixed by a 1,
