@@ -1,4 +1,5 @@
-﻿using Aquifer.Data.Enums;
+﻿using Aquifer.API.Common;
+using Aquifer.Data.Enums;
 
 namespace Aquifer.API.Utilities;
 
@@ -21,5 +22,29 @@ public static class BibleUtilities
     public static int UpperBoundOfBook(BookId bookId)
     {
         return ((int)bookId * 1000000) + 1000999999;
+    }
+
+    public static int LowerBoundOfChapter(BookId bookId, int chapter)
+    {
+        return ((int)bookId * 1000000) + (chapter * 1000) + 1000000000;
+    }
+
+    public static int UpperBoundOfChapter(BookId bookId, int chapter)
+    {
+        return ((int)bookId * 1000000) + ((chapter + 1) * 1000) - 1 + 1000000000;
+    }
+
+    public static List<(int, int)> VerseRangesForBookAndChapters(string? bookCode, int[]? chapters)
+    {
+        if (bookCode is null)
+        {
+            return [];
+        }
+
+        var bookId = BookCodes.IdFromCode(bookCode);
+
+        return chapters is null || chapters.Length == 0
+            ? [(LowerBoundOfBook(bookId), UpperBoundOfBook(bookId))]
+            : chapters.Select(c => (LowerBoundOfChapter(bookId, c), UpperBoundOfChapter(bookId, c))).ToList();
     }
 }

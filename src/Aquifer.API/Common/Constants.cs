@@ -25,6 +25,7 @@ public static class Constants
             PermissionName.CreateContent,
             PermissionName.SendReviewContent,
             PermissionName.ReviewContent,
+            PermissionName.CreateProject,
             PermissionName.CreateUser
         ]);
 }
@@ -39,6 +40,7 @@ public static class PermissionName
         AssignOverride = "assign:override",
         ReviewContent = "review:content",
         SendReviewContent = "send-review:content",
+        CreateProject = "create:project",
         CreateUser = "create:user";
 }
 
