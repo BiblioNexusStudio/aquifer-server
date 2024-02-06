@@ -64,7 +64,8 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
                     vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
                 x.ResourceContent.Resource.PassageResources.Any(pr =>
                     (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
-                    (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId))) &&
+                    (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
+                    (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
             (req.ResourceType == default || x.ResourceContent.Resource.ParentResource.ResourceType == req.ResourceType) &&
             (x.ResourceContent.LanguageId == req.LanguageId || x.ResourceContent.Language.ISO6393Code == req.LanguageCode));
     }

@@ -24,7 +24,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                         vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
                     x.Resource.PassageResources.Any(pr =>
                         (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
-                        (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId))))
+                        (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
+                        (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))))
             .GroupBy(x => x.Language)
             .Select(x => new Response
             {
