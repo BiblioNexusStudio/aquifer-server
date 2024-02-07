@@ -20,7 +20,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
     {
         var project = await GetProjectAsync(req, ct);
 
-        if (project == null)
+        if (project is null)
         {
             await SendNotFoundAsync(ct);
             return;
