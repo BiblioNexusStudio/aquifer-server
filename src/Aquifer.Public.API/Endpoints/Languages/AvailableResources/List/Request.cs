@@ -1,23 +1,36 @@
-﻿namespace Aquifer.Public.API.Endpoints.Languages.AvailableResources.List;
+﻿using System.ComponentModel;
+
+namespace Aquifer.Public.API.Endpoints.Languages.AvailableResources.List;
 
 public record Request
 {
     /// <summary>
-    ///     Book id based off USFM book numbers. Can get a list of available books and ids from the /bible-books endpoint.
-    ///     Use this to search across an entire book, use startVerseId and endVerseId for more narrow results.
+    ///     Required book code based off USFM book identifier (e.g. GEN, EXO, etc.). Can get a list of available books and identifiers
+    ///     from the /bible-books endpoint. Use this by itself to search across an entire book.
     /// </summary>
-    public int? BookId { get; init; }
+    public required string BookCode { get; init; }
 
     /// <summary>
-    ///     Optional verse id to search on. The Id should be prefixed by a 1, then the book number using the standard USFM number,
-    ///     the chapter number, and the verse number. All values should be padded with zeroes to make them length 3.
-    ///     For example, If you were looking for Mark chapter 5 verse 13, the id would be 1042005013. You can get a list of book
-    ///     numbers from the /bible-books endpoint.
+    ///     Optional start chapter to search from. If included, must also provide an end chapter. Required with verses.
     /// </summary>
-    public int? StartVerseId { get; init; }
+    [DefaultValue(0)]
+    public int StartChapter { get; init; }
 
     /// <summary>
-    ///     Optional end verse id. If not provided it will default to the startVerseId (i.e. search according to a single verse)
+    ///     Optional end chapter to search from. Required with start chapter and verses.
     /// </summary>
-    public int? EndVerseId { get; init; }
+    [DefaultValue(0)]
+    public int EndChapter { get; init; }
+
+    /// <summary>
+    ///     Optional start verse to search from. If included, must also provide an end verse and chapters.
+    /// </summary>
+    [DefaultValue(0)]
+    public int StartVerse { get; init; }
+
+    /// <summary>
+    ///     Optional end verse to search from. Required with start verse.
+    /// </summary>
+    [DefaultValue(0)]
+    public int EndVerse { get; init; }
 }

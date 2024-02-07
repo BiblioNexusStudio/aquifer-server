@@ -38,8 +38,14 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
     {
         var query = GetQuery(req);
         var totalCount = await GetTotalResourceCountAsync(req, query, ct);
-        var items = await GetResourcesAsync(req, query, ct);
 
+        if (totalCount == 0)
+        {
+            await SendAsync(new Response(), 200, ct);
+            return;
+        }
+
+        var items = await GetResourcesAsync(req, query, ct);
         var response = new Response
         {
             TotalItemCount = totalCount,
@@ -52,9 +58,9 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
 
     private IQueryable<ResourceContentVersionEntity> GetQuery(Request req)
     {
-        var (startVerseId, endVerseId) = req.BookId.HasValue
-            ? BibleUtilities.GetBookVerseRange(req.BookId.Value)
-            : (req.StartVerseId, req.EndVerseId ?? req.StartVerseId);
+        var (startVerseId, endVerseId) = req.BookCode is null
+            ? ((int?)null, (int?)null)
+            : BibleUtilities.GetVerseIds(req.BookCode, req.StartChapter, req.EndChapter, req.StartVerse, req.EndVerse);
 
         return _dbContext.ResourceContentVersions.Where(x =>
             x.IsPublished &&
@@ -73,14 +79,9 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
     private async Task<int> GetTotalResourceCountAsync(Request req, IQueryable<ResourceContentVersionEntity> query, CancellationToken ct)
     {
         var totalCount = await query.CountAsync(ct);
-        if (totalCount is 0)
+        if (req.Offset >= totalCount && req.Offset != 0)
         {
-            ThrowError("No records found for the given request", 404);
-        }
-
-        if (req.Offset >= totalCount)
-        {
-            ThrowError($"Offset of {req.Offset} exceeds total of {totalCount}");
+            ThrowError($"Offset of {req.Offset} equals or exceeds total of {totalCount}");
         }
 
         return totalCount;

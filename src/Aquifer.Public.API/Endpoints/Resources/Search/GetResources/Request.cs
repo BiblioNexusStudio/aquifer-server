@@ -7,32 +7,39 @@ public record Request
 {
     /// <summary>
     ///     The keyword to search on. Currently only searches against content names (not inside content).
-    ///     Non-English names are supported. Must be at least 3 characters in length. Optional if StartVerseId is provided.
+    ///     Non-English names are supported. Must be at least 3 characters in length. Optional if bookCode is provided.
     /// </summary>
-    public string? Query { get; init; } = null!;
+    public string? Query { get; init; }
 
     /// <summary>
-    ///     Optional book id based off USFM book numbers. Can get a list of available books and ids from the /bible-books endpoint.
-    ///     Use this to search across an entire book, use startVerseId and endVerseId for more narrow results.
+    ///     Book code based off USFM book identifier (e.g. GEN, EXO, etc.). Can get a list of available books and identifiers
+    ///     from the /bible-books endpoint. Use this by itself to search across an entire book. Required if no query parameter provided.
     /// </summary>
-    public int? BookId { get; init; }
+    public string? BookCode { get; init; }
 
     /// <summary>
-    ///     Optional verse id to search on. Resources often have relationships to verses or passages (however, there are
-    ///     resources in the system that do not). Any resource that has a relationship to the provided range will be returned.
-    ///     (e.g. a resource tied to Mark 1:3-5 would be found for a search across Mark 1:1-10). The Id should be prefixed by a 1,
-    ///     then the book number using the standard USFM number, the chapter number, and the verse number. All values should be padded
-    ///     with zeroes to make them length 3.
-    ///     For example, If you were looking for Mark chapter 5 verse 13, the id would be 1042005013. You can get a list of book
-    ///     numbers from the /bible-books endpoint.
+    ///     Optional start chapter to search from. If included, must also provide an end chapter. Required with verses.
     /// </summary>
-    public int? StartVerseId { get; init; }
+    [DefaultValue(0)]
+    public int StartChapter { get; init; }
 
     /// <summary>
-    ///     Same as the StartVerseId. If no value is provided it will search upon a single verse. If, for example, you wanted the whole book
-    ///     of Mark, you could search from 1042000000 to 1043000000.
+    ///     Optional end chapter to search from. Required with start chapter and verses.
     /// </summary>
-    public int? EndVerseId { get; init; }
+    [DefaultValue(0)]
+    public int EndChapter { get; init; }
+
+    /// <summary>
+    ///     Optional start verse to search from. If included, must also provide an end verse and chapters.
+    /// </summary>
+    [DefaultValue(0)]
+    public int StartVerse { get; init; }
+
+    /// <summary>
+    ///     Optional end verse to search from. Required with start verse.
+    /// </summary>
+    [DefaultValue(0)]
+    public int EndVerse { get; init; }
 
     /// <summary>
     ///     Optional language id internal to Aquifer. If not specified, language code is required.

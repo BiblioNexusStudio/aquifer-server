@@ -1,6 +1,5 @@
 using Aquifer.API.Common;
 using Aquifer.API.Modules.Resources;
-using Aquifer.API.Utilities;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Microsoft.AspNetCore.Http.HttpResults;

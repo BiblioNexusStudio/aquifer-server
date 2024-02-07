@@ -1,6 +1,4 @@
-﻿using Aquifer.Data.Entities;
-
-namespace Aquifer.Public.API.Endpoints.Languages.List;
+﻿namespace Aquifer.Public.API.Endpoints.Languages.List;
 
 public record Response
 {
@@ -8,5 +6,5 @@ public record Response
     public string Code { get; init; } = null!;
     public string EnglishDisplay { get; init; } = null!;
     public string LocalizedDisplay { get; init; } = null!;
-    public ScriptDirection ScriptDirection { get; init; }
+    public string ScriptDirection { get; init; } = null!;
 }

@@ -47,9 +47,35 @@ public static class BibleUtilities
             : chapters.Select(c => (LowerBoundOfChapter(bookId, c), UpperBoundOfChapter(bookId, c))).ToList();
     }
 
-    public static (int startVerseId, int endVerseId) GetBookVerseRange(int bookNumber)
+    public static (int startVerseId, int endVerseId) GetVerseIds(string bookCode,
+        int startChapter,
+        int endChapter,
+        int startVerse,
+        int endVerse)
     {
-        return (int.Parse($"1{bookNumber.ToString().PadLeft(3, '0')}000000"),
-            int.Parse($"1{(bookNumber + 1).ToString().PadLeft(3, '0')}000000"));
+        var bookId = BibleBookCodeUtilities.IdFromCode(bookCode);
+
+        if (startChapter == 0 && endChapter == 0)
+        {
+            return (LowerBoundOfBook(bookId), UpperBoundOfBook(bookId));
+        }
+
+        if (startVerse == 0 && endVerse == 0)
+        {
+            return (LowerBoundOfChapter(bookId, startChapter), UpperBoundOfChapter(bookId, endChapter));
+        }
+
+        var bookNumber = (int)bookId;
+        return (GetVerseId(bookNumber, startChapter, startVerse), GetVerseId(bookNumber, endChapter, endVerse));
+    }
+
+    public static string PadVerseId(int value)
+    {
+        return value.ToString().PadLeft(3, '0');
+    }
+
+    public static int GetVerseId(int bookNumber, int chapterNumber, int verseNumber)
+    {
+        return int.Parse($"1{PadVerseId(bookNumber)}{PadVerseId(chapterNumber)}{PadVerseId(verseNumber)}");
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Aquifer.Common.Utilities;
 using Aquifer.Data;
+using Aquifer.Public.API.Helpers;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,13 +11,19 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     public override void Configure()
     {
         Get("/languages/available-resources");
+        Options(EndpointHelpers.SetCacheOption());
+        Summary(s =>
+        {
+            s.Summary = "Get count of resource types per language";
+            s.Description =
+                "For a given range, get a count of resources available per language and type.";
+        });
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var (startVerseId, endVerseId) = req.BookId.HasValue
-            ? BibleUtilities.GetBookVerseRange(req.BookId.Value)
-            : (req.StartVerseId!.Value, req.EndVerseId ?? req.StartVerseId.Value);
+        var (startVerseId, endVerseId) =
+            BibleUtilities.GetVerseIds(req.BookCode, req.StartChapter, req.EndChapter, req.StartVerse, req.EndVerse);
 
         var response = await dbContext.ResourceContents.Where(x =>
                 x.Versions.Any(v => v.IsPublished) &&

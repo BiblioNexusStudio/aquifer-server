@@ -32,7 +32,7 @@ public static class BibleBookCodeUtilities
 
     public static BookId IdFromCode(string stringValue)
     {
-        return BookCodeToMetadata.TryGetValue(stringValue, out var obj) ? obj.BookId : BookId.None;
+        return BookCodeToMetadata.TryGetValue(stringValue.ToUpper(), out var obj) ? obj.BookId : BookId.None;
     }
 
     public static string FullNameFromId(BookId bookId)

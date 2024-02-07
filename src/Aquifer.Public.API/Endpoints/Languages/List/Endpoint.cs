@@ -26,7 +26,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
             Code = x.ISO6393Code,
             EnglishDisplay = x.EnglishDisplay,
             LocalizedDisplay = x.DisplayName,
-            ScriptDirection = x.ScriptDirection
+            ScriptDirection = x.ScriptDirection.ToString()
         }).ToListAsync(ct);
 
         await SendAsync(languages, 200, ct);

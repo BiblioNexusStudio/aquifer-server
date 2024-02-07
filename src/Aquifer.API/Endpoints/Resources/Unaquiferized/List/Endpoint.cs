@@ -1,4 +1,4 @@
-﻿using Aquifer.API.Utilities;
+﻿using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -73,7 +73,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                      """;
 
         var response = await dbContext.Database
-            .SqlQueryRaw<Response>(query, new SqlParameter("ParentResourceId", request.ParentResourceId),
+            .SqlQueryRaw<Response>(query,
+                new SqlParameter("ParentResourceId", request.ParentResourceId),
                 new SqlParameter("SearchQuery", request.SearchQuery ?? ""))
             .ToListAsync(ct);
 

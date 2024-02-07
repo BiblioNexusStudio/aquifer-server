@@ -1,4 +1,6 @@
-﻿using FastEndpoints;
+﻿using Aquifer.Common.Utilities;
+using Aquifer.Data.Enums;
+using FastEndpoints;
 using FluentValidation;
 
 namespace Aquifer.Public.API.Endpoints.Languages.AvailableResources.List;
@@ -7,12 +9,22 @@ public class Validator : Validator<Request>
 {
     public Validator()
     {
-        RuleFor(x => x)
-            .Must(x => (x.BookId is not null && x.StartVerseId is null) || (x.StartVerseId is not null && x.BookId is null))
-            .WithMessage("Either bookId or startVerseId is required. Cannot use both.");
+        // Should look into not having to duplicate this logic. It's also in /resources/Search/GetResources.
+        RuleFor(x => x.BookCode).NotNull().Length(3);
+        RuleFor(x => x.BookCode).Must(x => BibleBookCodeUtilities.IdFromCode(x) != BookId.None)
+            .WithMessage("Invalid book code {PropertyValue}. Get a valid list from /bible-books endpoint.");
 
-        RuleFor(x => x.BookId).InclusiveBetween(1, 87).When(x => x.BookId is not null);
-        RuleFor(x => x.StartVerseId).InclusiveBetween(1001001001, 1099999999).When(x => x.StartVerseId is not null);
-        RuleFor(x => x.EndVerseId).InclusiveBetween(1001001001, 1099999999).When(x => x.EndVerseId is not null);
+        RuleFor(x => x.StartChapter).InclusiveBetween(0, 150);
+        RuleFor(x => x.EndChapter).InclusiveBetween(0, 150);
+        RuleFor(x => x.StartVerse).InclusiveBetween(0, 200);
+        RuleFor(x => x.EndVerse).InclusiveBetween(0, 200);
+
+        RuleFor(x => x.StartChapter).GreaterThan(0).When(x => x.EndChapter > 0 || x.StartVerse > 0);
+        RuleFor(x => x.EndChapter).GreaterThan(0).When(x => x.StartChapter > 0);
+        RuleFor(x => x.StartVerse).GreaterThan(0).When(x => x.EndVerse > 0);
+        RuleFor(x => x.EndVerse).GreaterThan(0).When(x => x.StartVerse > 0);
+
+        RuleFor(x => x).Must(x => x.StartVerse <= x.EndVerse && x.StartChapter <= x.EndChapter)
+            .WithMessage("Start verse/chapter cannot be greater than end verse/chapter");
     }
 }
