@@ -17,7 +17,7 @@ public class TrackResourceContentRequestMiddleware(
 
         try
         {
-            if (context.Response.StatusCode == 200)
+            if (context.Response.StatusCode is 200 or 302)
             {
                 var path = context.Request.Path.Value ?? "";
 
