@@ -10,8 +10,7 @@ public class Validator : Validator<Request>
     public Validator()
     {
         // Should look into not having to duplicate this logic. It's also in /resources/Search/GetResources.
-        RuleFor(x => x.BookCode).NotNull().Length(3);
-        RuleFor(x => x.BookCode).Must(x => BibleBookCodeUtilities.IdFromCode(x) != BookId.None)
+        RuleFor(x => x.BookCode).Must(x => x != null && BibleBookCodeUtilities.IdFromCode(x) != BookId.None)
             .WithMessage("Invalid book code {PropertyValue}. Get a valid list from /bible-books endpoint.");
 
         RuleFor(x => x.StartChapter).InclusiveBetween(0, 150);
@@ -24,7 +23,7 @@ public class Validator : Validator<Request>
         RuleFor(x => x.StartVerse).GreaterThan(0).When(x => x.EndVerse > 0);
         RuleFor(x => x.EndVerse).GreaterThan(0).When(x => x.StartVerse > 0);
 
-        RuleFor(x => x).Must(x => x.StartVerse <= x.EndVerse && x.StartChapter <= x.EndChapter)
-            .WithMessage("Start verse/chapter cannot be greater than end verse/chapter");
+        RuleFor(x => x).Must(x => x.StartChapter <= x.EndChapter)
+            .WithMessage("startChapter cannot be greater than endChapter");
     }
 }

@@ -23,9 +23,8 @@ public class Endpoint : EndpointWithoutRequest<IEnumerable<Response>>
     {
         var response = BibleBookCodeUtilities.GetAll().Select(x => new Response
         {
-            Number = x.BookId,
             Name = x.BookFullName,
-            Identifier = x.BookCode
+            Code = x.BookCode
         });
 
         await SendAsync(response, 200, ct);
