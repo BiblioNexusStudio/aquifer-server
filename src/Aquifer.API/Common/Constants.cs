@@ -9,11 +9,16 @@ public static class Constants
     public const string RolesClaim = "bnRoles";
 
     // this represents the resource types that we allow to be accessed as the starting point when viewing content
-    public static readonly ReadOnlyCollection<string> RootParentResourceNames = new(["CBBTER"]);
+    public static readonly ReadOnlyCollection<string> RootParentResourceNames = new([
+        "CBBTER"
+    ]);
 
     // this represents the media types that we default to English for
     public static readonly ReadOnlyCollection<ResourceContentMediaType> FallbackToEnglishForMediaTypes =
-        new([ResourceContentMediaType.Image, ResourceContentMediaType.Video]);
+        new([
+            ResourceContentMediaType.Image,
+            ResourceContentMediaType.Video
+        ]);
 
     public static readonly ReadOnlyCollection<string> AllPermissions =
         new([
@@ -26,7 +31,8 @@ public static class Constants
             PermissionName.SendReviewContent,
             PermissionName.ReviewContent,
             PermissionName.CreateProject,
-            PermissionName.CreateUser
+            PermissionName.CreateUser,
+            PermissionName.ReadProject
         ]);
 }
 
@@ -41,6 +47,7 @@ public static class PermissionName
         ReviewContent = "review:content",
         SendReviewContent = "send-review:content",
         CreateProject = "create:project",
+        ReadProject = "read:projects",
         CreateUser = "create:user";
 }
 
