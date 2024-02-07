@@ -1,5 +1,5 @@
 ﻿using Aquifer.API.Common;
-using Aquifer.API.Utilities;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -19,7 +19,7 @@ public static class LanguageResourcesEndpoints
             [FromQuery] string[]? parentResourceNames = null
         )
     {
-        var bookId = BookCodes.IdFromCode(bookCode);
+        var bookId = BibleBookCodeUtilities.IdFromCode(bookCode);
         if (bookId == BookId.None)
         {
             return TypedResults.NotFound();
@@ -31,8 +31,8 @@ public static class LanguageResourcesEndpoints
         }
 
         var englishLanguageId = (await dbContext.Languages.Where(language => language.ISO6393Code.ToLower() == "eng")
-                                    .FirstOrDefaultAsync(cancellationToken))?.Id ??
-                                -1;
+                .FirstOrDefaultAsync(cancellationToken))?.Id ??
+            -1;
 
         var parentResourceEntities = await dbContext.ParentResources
             .Where(rt => parentResourceNames.Contains(rt.ShortName))
@@ -41,14 +41,14 @@ public static class LanguageResourcesEndpoints
         var passageResourceContent = await dbContext.PassageResources
             // find all passages that overlap with the current book
             .Where(pr => parentResourceEntities.Contains(pr.Resource.ParentResource) &&
-                         ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
-                           pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookId)) ||
-                          (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
-                           pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
+                ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                        pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookId)) ||
+                    (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                        pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
             .SelectMany(pr => pr.Resource.ResourceContents
                 .Where(rc => rc.LanguageId == languageId ||
-                             (rc.LanguageId == englishLanguageId &&
-                              Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
+                    (rc.LanguageId == englishLanguageId &&
+                        Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
                 .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
                     .Select(rcv =>
                         new
@@ -67,12 +67,12 @@ public static class LanguageResourcesEndpoints
         var verseResourceContent = await dbContext.VerseResources
             // find all verses contained in the current book
             .Where(vr => parentResourceEntities.Contains(vr.Resource.ParentResource) &&
-                         vr.VerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
-                         vr.VerseId < BibleUtilities.UpperBoundOfBook(bookId))
+                vr.VerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                vr.VerseId < BibleUtilities.UpperBoundOfBook(bookId))
             .SelectMany(vr => vr.Resource.ResourceContents
                 .Where(rc => rc.LanguageId == languageId ||
-                             (rc.LanguageId == englishLanguageId &&
-                              Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
+                    (rc.LanguageId == englishLanguageId &&
+                        Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
                 .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
                     .Select(rcv =>
                         new
@@ -92,16 +92,16 @@ public static class LanguageResourcesEndpoints
         var associatedResourceContent = await dbContext.PassageResources
             // find all passages that overlap with the current book
             .Where(pr => Constants.RootParentResourceNames.Contains(pr.Resource.ParentResource.ShortName) &&
-                         ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
-                           pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookId)) ||
-                          (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
-                           pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
+                ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                        pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookId)) ||
+                    (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
+                        pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
             .SelectMany(pr => pr.Resource.AssociatedResourceChildren
                 .Where(ar => parentResourceEntities.Contains(ar.ParentResource))
                 .SelectMany(sr => sr.ResourceContents
                     .Where(rc => rc.LanguageId == languageId ||
-                                 (rc.LanguageId == englishLanguageId &&
-                                  Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
+                        (rc.LanguageId == englishLanguageId &&
+                            Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
                     .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
                         .Select(rcv =>
                             new
@@ -121,7 +121,13 @@ public static class LanguageResourcesEndpoints
         // This filters them by grouping appropriately and selecting the current language resource (if available) then falling back to English.
         var filteredDownToOneLanguage = passageResourceContent.Concat(verseResourceContent)
             .Concat(associatedResourceContent)
-            .GroupBy(rc => new { rc.StartChapter, rc.EndChapter, rc.MediaType, rc.ResourceId })
+            .GroupBy(rc => new
+            {
+                rc.StartChapter,
+                rc.EndChapter,
+                rc.MediaType,
+                rc.ResourceId
+            })
             .Select(grc =>
             {
                 var first = grc.OrderBy(rc => rc.LanguageId == languageId ? 0 : 1).First();

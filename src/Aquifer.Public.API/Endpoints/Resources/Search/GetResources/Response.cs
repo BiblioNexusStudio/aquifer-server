@@ -5,7 +5,8 @@ namespace Aquifer.Public.API.Endpoints.Resources.Search.GetResources;
 
 public class Response
 {
-    public int ItemCount { get; set; }
+    public int TotalItemCount { get; set; }
+    public int ReturnedItemCount { get; set; }
     public List<ResponseContent> Items { get; set; } = [];
 }
 

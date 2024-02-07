@@ -1,4 +1,3 @@
-using Aquifer.API.Common;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Enums;
@@ -49,7 +48,7 @@ public class BiblesModule : IModule
                 Books = bible.BibleBookContents.OrderBy(book => book.BookId).Select(book =>
                     new BibleBookMetadataResponse
                     {
-                        BookCode = BookCodes.CodeFromId(book.BookId),
+                        BookCode = BibleBookCodeUtilities.CodeFromId(book.BookId),
                         DisplayName = book.DisplayName,
                         TextSize = book.TextSize,
                         AudioSize = book.AudioSize,
@@ -66,7 +65,7 @@ public class BiblesModule : IModule
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var bookCodeEnum = BookCodes.IdFromCode(bookCode);
+        var bookCodeEnum = BibleBookCodeUtilities.IdFromCode(bookCode);
         if (bookCodeEnum == BookId.None)
         {
             return TypedResults.NotFound();
@@ -84,7 +83,7 @@ public class BiblesModule : IModule
         {
             AudioSize = book.AudioSize,
             AudioUrls = book.AudioUrls is not null ? JsonUtilities.DefaultDeserialize(book.AudioUrls) : null,
-            BookCode = BookCodes.CodeFromId(book.BookId),
+            BookCode = BibleBookCodeUtilities.CodeFromId(book.BookId),
             ChapterCount = book.ChapterCount,
             DisplayName = book.DisplayName,
             TextSize = book.TextSize,

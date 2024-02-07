@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
-using Aquifer.API.Common;
 using Aquifer.API.Modules.Resources;
+using Aquifer.Common.Utilities;
 using Aquifer.Data.Enums;
 
 namespace Aquifer.API.Modules.Passages;
@@ -14,14 +14,14 @@ public class PassagesByBookResponse
 public class PassageResponse
 {
     public int Id { get; set; }
-    public string BookCode => BookCodes.CodeFromId(PassageStartDetails.BookId);
+    public string BookCode => BibleBookCodeUtilities.CodeFromId(PassageStartDetails.BookId);
     public int StartChapter => PassageStartDetails.Chapter;
     public int EndChapter => PassageEndDetails.Chapter;
     public int StartVerse => PassageStartDetails.Verse;
     public int EndVerse => PassageEndDetails.Verse;
 
     [JsonIgnore]
-    public (BookId BookId, int Chapter, int Verse) PassageStartDetails { get; set; }
+    public (Data.Enums.BookId BookId, int Chapter, int Verse) PassageStartDetails { get; set; }
 
     [JsonIgnore]
     public (BookId BookId, int Chapter, int Verse) PassageEndDetails { get; set; }

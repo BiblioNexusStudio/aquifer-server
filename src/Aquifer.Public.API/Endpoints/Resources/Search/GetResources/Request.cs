@@ -7,9 +7,39 @@ public record Request
 {
     /// <summary>
     ///     The keyword to search on. Currently only searches against content names (not inside content).
-    ///     Non-English names are supported. Must be at least 3 characters in length.
+    ///     Non-English names are supported. Must be at least 3 characters in length. Optional if bookCode is provided.
     /// </summary>
-    public string Query { get; init; } = null!;
+    public string? Query { get; init; }
+
+    /// <summary>
+    ///     Book code based off USFM book identifier (e.g. GEN, EXO, etc.). Can get a list of available books and identifiers
+    ///     from the /bible-books endpoint. Use this by itself to search across an entire book. Required if no query parameter provided.
+    /// </summary>
+    public string? BookCode { get; init; }
+
+    /// <summary>
+    ///     Optional start chapter to search from. If included, must also provide an end chapter. Required with verses.
+    /// </summary>
+    [DefaultValue(0)]
+    public int StartChapter { get; init; }
+
+    /// <summary>
+    ///     Optional end chapter to search from. Required with start chapter and verses.
+    /// </summary>
+    [DefaultValue(0)]
+    public int EndChapter { get; init; }
+
+    /// <summary>
+    ///     Optional start verse to search from. If included, must also provide an end verse and chapters.
+    /// </summary>
+    [DefaultValue(0)]
+    public int StartVerse { get; init; }
+
+    /// <summary>
+    ///     Optional end verse to search from. Required with start verse.
+    /// </summary>
+    [DefaultValue(0)]
+    public int EndVerse { get; init; }
 
     /// <summary>
     ///     Optional language id internal to Aquifer. If not specified, language code is required.
