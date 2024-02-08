@@ -13,6 +13,9 @@ dotnet_analyzer_diagnostic.category-Security.severity = warning
 # Suppress XML documentation warnings
 dotnet_diagnostic.CS1591.severity = none
 
+# Suppress ternary expression warning
+dotnet_diagnostic.IDE0046.severity = none
+
 #### Core EditorConfig Options ####
 
 # Indentation and spacing

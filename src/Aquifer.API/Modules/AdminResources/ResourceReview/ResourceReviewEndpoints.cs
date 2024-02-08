@@ -12,11 +12,11 @@ public static class ResourceReviewEndpoints
         AquiferDbContext dbContext,
         IAdminResourceHistoryService historyService,
         IUserService userService,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         var contentVersionDraft = await dbContext.ResourceContentVersions
             .Where(x => x.ResourceContentId == contentId && x.IsDraft).Include(x => x.ResourceContent)
-            .SingleOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(ct);
 
         if (contentVersionDraft == null)
         {
@@ -28,18 +28,18 @@ public static class ResourceReviewEndpoints
             return TypedResults.BadRequest(AdminResourcesHelpers.NotInReviewPendingResponse);
         }
 
-        var user = await userService.GetUserFromJwtAsync(cancellationToken);
+        var user = await userService.GetUserFromJwtAsync(ct);
 
         contentVersionDraft.Updated = DateTime.UtcNow;
         contentVersionDraft.AssignedUserId = user.Id;
         contentVersionDraft.ResourceContent.Status = ResourceContentStatus.AquiferizeInReview;
 
-        await historyService.AddAssignedUserHistoryAsync(contentVersionDraft, user.Id, user.Id);
+        await historyService.AddAssignedUserHistoryAsync(contentVersionDraft, user.Id, user.Id, ct);
         await historyService.AddStatusHistoryAsync(contentVersionDraft.Id,
             ResourceContentStatus.AquiferizeInReview,
-            user.Id);
+            user.Id, ct);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(ct);
         return TypedResults.Ok();
     }
 
@@ -48,18 +48,18 @@ public static class ResourceReviewEndpoints
         int contentId,
         IUserService userService,
         IAdminResourceHistoryService historyService,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         var draftVersion = await dbContext.ResourceContentVersions
             .Where(x => x.ResourceContentId == contentId && x.IsDraft).Include(x => x.ResourceContent)
-            .SingleOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(ct);
 
         if (draftVersion is null || draftVersion.ResourceContent.Status != ResourceContentStatus.AquiferizeInProgress)
         {
             return TypedResults.BadRequest("Resource content not found or not in draft status");
         }
 
-        var user = await userService.GetUserFromJwtAsync(cancellationToken);
+        var user = await userService.GetUserFromJwtAsync(ct);
         if (user.Id != draftVersion.AssignedUserId)
         {
             return TypedResults.BadRequest("Unable to change status of resource content");
@@ -68,12 +68,12 @@ public static class ResourceReviewEndpoints
         draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeReviewPending;
         draftVersion.AssignedUserId = null;
 
-        await historyService.AddAssignedUserHistoryAsync(draftVersion.Id, null, user.Id);
+        await historyService.AddAssignedUserHistoryAsync(draftVersion.Id, null, user.Id, ct);
         await historyService.AddStatusHistoryAsync(draftVersion.Id,
             ResourceContentStatus.AquiferizeReviewPending,
-            user.Id);
+            user.Id, ct);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(ct);
         return TypedResults.Ok();
     }
 }

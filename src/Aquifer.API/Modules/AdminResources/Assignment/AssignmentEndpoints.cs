@@ -16,26 +16,26 @@ public class AssignmentEndpoints
         AquiferDbContext dbContext,
         IUserService userService,
         IAdminResourceHistoryService historyService,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         //At a high level, this endpoint should take a draft resource and assign the given user to it and set the status to AquiferizeInProgress
         // using the content id, get all the resource content versions from database
 
         var draftVersion = await dbContext.ResourceContentVersions
             .Where(rcv => rcv.ResourceContentId == contentId && rcv.IsDraft).Include(rcv => rcv.ResourceContent)
-            .SingleOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(ct);
 
         if (draftVersion?.ResourceContent is null)
         {
             return TypedResults.BadRequest("Resource content not found or not in draft status");
         }
 
-        if (!await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, cancellationToken))
+        if (!await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, ct))
         {
             return TypedResults.BadRequest("Assigned user not found");
         }
 
-        var user = await userService.GetUserFromJwtAsync(cancellationToken);
+        var user = await userService.GetUserFromJwtAsync(ct);
         var hasAssignOverridePermission = userService.HasJwtClaim(PermissionName.AssignOverride);
         if ((!hasAssignOverridePermission && draftVersion.AssignedUserId != user.Id) ||
             draftVersion.AssignedUserId == postBody.AssignedUserId)
@@ -52,16 +52,16 @@ public class AssignmentEndpoints
         draftVersion.AssignedUserId = postBody.AssignedUserId;
         draftVersion.Updated = DateTime.UtcNow;
 
-        await historyService.AddAssignedUserHistoryAsync(draftVersion.Id, postBody.AssignedUserId, user.Id);
+        await historyService.AddAssignedUserHistoryAsync(draftVersion.Id, postBody.AssignedUserId, user.Id, ct);
         if (draftVersion.ResourceContent.Status != ResourceContentStatus.AquiferizeInProgress)
         {
             draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeInProgress;
             await historyService.AddStatusHistoryAsync(draftVersion.Id,
                 ResourceContentStatus.AquiferizeInProgress,
-                user.Id);
+                user.Id, ct);
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(ct);
         return TypedResults.Ok();
     }
 }

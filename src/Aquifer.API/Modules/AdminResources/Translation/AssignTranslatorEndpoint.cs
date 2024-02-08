@@ -17,7 +17,7 @@ public static class AssignTranslatorEndpoint
         AquiferDbContext dbContext,
         IAdminResourceHistoryService historyService,
         IUserService userService,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         List<ResourceContentStatus> allowedStatuses =
         [
@@ -31,19 +31,19 @@ public static class AssignTranslatorEndpoint
                 rcv.ResourceContentId == contentId &&
                 rcv.IsDraft &&
                 allowedStatuses.Contains(rcv.ResourceContent.Status)).Include(rcv => rcv.ResourceContent)
-            .SingleOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(ct);
 
         if (translationDraft?.ResourceContent is null)
         {
             return TypedResults.BadRequest("Resource content in translation status not found or not in draft status");
         }
 
-        if (!await userService.ValidateNonNullUserIdAsync(request.AssignedUserId, cancellationToken))
+        if (!await userService.ValidateNonNullUserIdAsync(request.AssignedUserId, ct))
         {
             return TypedResults.BadRequest(AdminResourcesHelpers.InvalidUserIdResponse);
         }
 
-        var user = await userService.GetUserFromJwtAsync(cancellationToken);
+        var user = await userService.GetUserFromJwtAsync(ct);
         var hasAssignOverridePermission = userService.HasJwtClaim(PermissionName.AssignOverride);
         if ((!hasAssignOverridePermission && translationDraft.AssignedUserId != user.Id) ||
             translationDraft.AssignedUserId == request.AssignedUserId)
@@ -51,19 +51,19 @@ public static class AssignTranslatorEndpoint
             return TypedResults.BadRequest("Unable to assign user");
         }
 
-        await historyService.AddAssignedUserHistoryAsync(translationDraft.Id, request.AssignedUserId, user.Id);
+        await historyService.AddAssignedUserHistoryAsync(translationDraft.Id, request.AssignedUserId, user.Id, ct);
         if (translationDraft.ResourceContent.Status != ResourceContentStatus.TranslationInProgress)
         {
             translationDraft.ResourceContent.Status = ResourceContentStatus.TranslationInProgress;
             await historyService.AddStatusHistoryAsync(translationDraft.Id,
                 ResourceContentStatus.TranslationInProgress,
-                user.Id);
+                user.Id, ct);
         }
 
         translationDraft.AssignedUserId = request.AssignedUserId;
         translationDraft.Updated = DateTime.UtcNow;
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(ct);
         return TypedResults.Ok();
     }
 }
