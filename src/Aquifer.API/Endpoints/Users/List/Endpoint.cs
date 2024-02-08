@@ -20,7 +20,9 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
             Id = user.Id,
             Name = $"{user.FirstName} {user.LastName}",
             Role = user.Role,
-            CompanyName = user.Company == null ? null : user.Company.Name
+            CompanyName = user.Company == null ? null : user.Company.Name,
+            Email = user.Email,
+            IsEmailVerified = user.EmailVerified
         }).ToListAsync(ct);
 
         await SendAsync(users, 200, ct);
