@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using FastEndpoints;
 
@@ -7,9 +8,9 @@ public abstract class BaseEndpoint<TRequest, TResponse> : Endpoint<TRequest, TRe
     where TRequest : class
     where TResponse : class
 {
-    protected T? AddEntityNotFoundError<T>(Expression<Func<TRequest, object?>> property)
+    [DoesNotReturn]
+    protected void ThrowEntityNotFoundError(Expression<Func<TRequest, object?>> property)
     {
-        AddError(property, "No record found.");
-        return default;
+        ThrowError(property, "No record found.");
     }
 }

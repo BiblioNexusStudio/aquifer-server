@@ -1,5 +1,4 @@
 using Aquifer.API.Common;
-using Aquifer.API.Modules.AdminResources;
 using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -19,49 +18,51 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var language = await dbContext.Languages.FindAsync([request.LanguageId], ct) ??
-                       AddEntityNotFoundError<LanguageEntity>(r => r.LanguageId);
-        var projectManagerUser = await dbContext.Users.FindAsync([request.ProjectManagerUserId], ct) ??
-                                 AddEntityNotFoundError<UserEntity>(r => r.ProjectManagerUserId);
-        var company = await dbContext.Companies.FindAsync([request.CompanyId], ct) ??
-                      AddEntityNotFoundError<CompanyEntity>(r => r.CompanyId);
-        var projectPlatform = await dbContext.ProjectPlatforms.FindAsync([request.ProjectPlatformId], ct) ??
-                              AddEntityNotFoundError<ProjectPlatformEntity>(r => r.ProjectPlatformId);
 
-        UserEntity? companyLeadUser = null;
-
-        if (projectPlatform?.Name == "Aquifer")
+        var language = await dbContext.Languages.SingleOrDefaultAsync(l => l.Id == request.LanguageId, ct);
+        if (language is null)
         {
-            companyLeadUser = await dbContext.Users.FindAsync([request.CompanyLeadUserId], ct) ??
-                              AddEntityNotFoundError<UserEntity>(r => r.CompanyLeadUserId);
-
-            if (companyLeadUser?.Role is not UserRole.Publisher or UserRole.Manager)
-            {
-                AddError(r => r.CompanyLeadUserId, "Company lead must be a Manager or Publisher.");
-            }
+            ThrowEntityNotFoundError(r => r.LanguageId);
         }
 
-        if (projectManagerUser?.Role != UserRole.Publisher)
+        var projectManagerUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.ProjectManagerUserId, ct);
+        if (projectManagerUser is null)
         {
-            AddError(r => r.ProjectManagerUserId, "Project manager must be a Publisher.");
+            ThrowEntityNotFoundError(r => r.ProjectManagerUserId);
         }
+        if (projectManagerUser.Role != UserRole.Publisher)
+        {
+            ThrowError(r => r.ProjectManagerUserId, "Project manager must be a Publisher.");
+        }
+
+        var company = await dbContext.Companies.SingleOrDefaultAsync(c => c.Id == request.CompanyId, ct);
+        if (company is null)
+        {
+            ThrowEntityNotFoundError(r => r.CompanyId);
+        }
+
+        var projectPlatform = await dbContext.ProjectPlatforms.SingleOrDefaultAsync(p => p.Id == request.ProjectPlatformId, ct);
+        if (projectPlatform is null)
+        {
+            ThrowEntityNotFoundError(r => r.ProjectPlatformId);
+        }
+
+        var companyLeadUser = await MaybeGetCompanyLeadUser(projectPlatform, request, ct);
 
         var resourceContents = await CreateOrFindResourceContentFromResourceIds(language, request, user, ct);
 
-        ThrowIfAnyErrors();
-
-        var wordCount = resourceContents.Aggregate(0, (total, rc) => (rc.Versions.FirstOrDefault(v => v.IsDraft)?.WordCount ?? 0) + total);
+        var wordCount = resourceContents.Sum(rc => rc.Versions.FirstOrDefault(v => v.IsDraft)?.WordCount ?? 0);
 
         var newProject = new ProjectEntity
         {
             Name = request.Title,
             SourceWordCount = wordCount,
             ResourceContents = resourceContents,
-            Language = language!,
-            ProjectManagerUser = projectManagerUser!,
+            Language = language,
+            ProjectManagerUser = projectManagerUser,
             CompanyLeadUser = companyLeadUser,
-            Company = company!,
-            ProjectPlatform = projectPlatform!
+            Company = company,
+            ProjectPlatform = projectPlatform
         };
 
         await dbContext.Projects.AddAsync(newProject, ct);
@@ -71,21 +72,35 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
         await SendAsync(new Response { Id = newProject.Id }, 201, ct);
     }
 
-    private async Task<List<ResourceContentEntity>> CreateOrFindResourceContentFromResourceIds(LanguageEntity? language, Request request,
+    private async Task<UserEntity?> MaybeGetCompanyLeadUser(ProjectPlatformEntity projectPlatform, Request request, CancellationToken ct)
+    {
+        if (projectPlatform?.Name == "Aquifer")
+        {
+            var companyLeadUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.CompanyLeadUserId, ct);
+            if (companyLeadUser is null)
+            {
+                ThrowEntityNotFoundError(r => r.CompanyLeadUserId);
+            }
+
+            if (companyLeadUser.Role is not (UserRole.Publisher or UserRole.Manager))
+            {
+                ThrowError(r => r.CompanyLeadUserId, "Company lead must be a Manager or Publisher.");
+            }
+        }
+
+        return null;
+    }
+
+    private async Task<List<ResourceContentEntity>> CreateOrFindResourceContentFromResourceIds(LanguageEntity language, Request request,
         UserEntity user,
         CancellationToken ct)
     {
-        if (language?.ISO6393Code == "eng")
+        if (language.ISO6393Code == "eng")
         {
             return await CreateOrFindAquiferizationResourceContent(language, request, ct);
         }
 
-        if (language is not null)
-        {
-            return await CreateOrFindTranslationResourceContent(language, request, user, ct);
-        }
-
-        return [];
+        return await CreateOrFindTranslationResourceContent(language, request, user, ct);
     }
 
     private async Task<List<ResourceContentEntity>> CreateOrFindAquiferizationResourceContent(LanguageEntity language, Request request,
@@ -97,22 +112,19 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
 
         if (resourceContents.Count < request.ResourceIds.Length)
         {
-            AddError(r => r.ResourceIds, "One or more not found.");
-            return [];
+            ThrowError(r => r.ResourceIds, "One or more not found.");
         }
 
         foreach (var resourceContent in resourceContents)
         {
             if (resourceContent.Status != ResourceContentStatus.New)
             {
-                AddError(r => r.ResourceIds, "All resources must be in the New status.");
-                return [];
+                ThrowError(r => r.ResourceIds, "All resources must be in the New status.");
             }
 
             if (resourceContent.Projects.Count > 0)
             {
-                AddError(r => r.ResourceIds, "One or more resources are already in a project.");
-                return [];
+                ThrowError(r => r.ResourceIds, "One or more resources are already in a project.");
             }
 
             var draftVersion = resourceContent.Versions.FirstOrDefault(v => v.IsDraft);
@@ -155,8 +167,7 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
                 var baseVersion = resourceContent.Versions.FirstOrDefault(v => v.IsPublished);
                 if (baseVersion is null)
                 {
-                    AddError(r => r.ResourceIds, "One or more resources are missing a published English version to use as a base.");
-                    return [];
+                    ThrowError(r => r.ResourceIds, "One or more resources are missing a published English version to use as a base.");
                 }
 
                 var newResourceContentVersion = new ResourceContentVersionEntity
@@ -187,21 +198,18 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
             {
                 if (resourceContent.Projects.Count > 0)
                 {
-                    AddError(r => r.ResourceIds, "One or more resources are already in a project.");
-                    return [];
+                    ThrowError(r => r.ResourceIds, "One or more resources are already in a project.");
                 }
 
                 if (resourceContent.Status != ResourceContentStatus.TranslationNotStarted)
                 {
-                    AddError(r => r.ResourceIds, "One or more resources exist but are not in TranslationNotStarted status.");
-                    return [];
+                    ThrowError(r => r.ResourceIds, "One or more resources exist but are not in TranslationNotStarted status.");
                 }
 
                 var existingVersion = resourceContent.Versions.FirstOrDefault(v => v.IsDraft);
                 if (existingVersion is null)
                 {
-                    AddError(r => r.ResourceIds, "One or more resources exist but are missing a draft to use.");
-                    return [];
+                    ThrowError(r => r.ResourceIds, "One or more resources exist but are missing a draft to use.");
                 }
 
                 resourceContents.Add(resourceContent);

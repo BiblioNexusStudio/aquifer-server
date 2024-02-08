@@ -1,7 +1,7 @@
 ﻿using Aquifer.Data;
 using Aquifer.Data.Entities;
 
-namespace Aquifer.API.Modules.AdminResources;
+namespace Aquifer.API.Services;
 
 public interface IAdminResourceHistoryService
 {
