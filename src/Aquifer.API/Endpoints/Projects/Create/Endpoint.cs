@@ -1,3 +1,4 @@
+using Aquifer.API.Common;
 using Aquifer.API.Modules.AdminResources;
 using Aquifer.API.Services;
 using Aquifer.Data;
@@ -12,6 +13,7 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
     public override void Configure()
     {
         Post("/projects");
+        Permissions(PermissionName.CreateProject);
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
@@ -35,7 +37,7 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
 
             if (companyLeadUser?.Role is not UserRole.Publisher or UserRole.Manager)
             {
-                AddError(r => r.ProjectManagerUserId, "Company lead must be a Manager or Publisher.");
+                AddError(r => r.CompanyLeadUserId, "Company lead must be a Manager or Publisher.");
             }
         }
 
@@ -75,7 +77,7 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
     {
         if (language?.ISO6393Code == "eng")
         {
-            return await CreateOrFindAquiferizeResourceContent(language, request, ct);
+            return await CreateOrFindAquiferizationResourceContent(language, request, ct);
         }
 
         if (language is not null)
@@ -86,7 +88,7 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
         return [];
     }
 
-    private async Task<List<ResourceContentEntity>> CreateOrFindAquiferizeResourceContent(LanguageEntity language, Request request,
+    private async Task<List<ResourceContentEntity>> CreateOrFindAquiferizationResourceContent(LanguageEntity language, Request request,
         CancellationToken ct)
     {
         var resourceContents = await dbContext.ResourceContents
@@ -95,7 +97,7 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
 
         if (resourceContents.Count < request.ResourceIds.Length)
         {
-            AddError(r => r.ResourceIds, "One or more {PropertyName} not found.");
+            AddError(r => r.ResourceIds, "One or more not found.");
             return [];
         }
 

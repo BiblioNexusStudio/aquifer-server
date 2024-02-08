@@ -9,7 +9,7 @@ public abstract class BaseEndpoint<TRequest, TResponse> : Endpoint<TRequest, TRe
 {
     protected T? AddEntityNotFoundError<T>(Expression<Func<TRequest, object?>> property)
     {
-        AddError(property, "No record found by {PropertyName}.");
+        AddError(property, "No record found.");
         return default;
     }
 }
