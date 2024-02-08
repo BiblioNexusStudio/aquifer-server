@@ -56,7 +56,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         }
 
         var roles = JsonUtilities.DefaultDeserialize<List<Auth0AssignUserRolesResponse>>(responseContent);
-        var role = roles.FirstOrDefault(r => r.Name == req.Role);
+        var role = roles.FirstOrDefault(r => r.Name.Equals(req.Role.ToString(), StringComparison.CurrentCultureIgnoreCase));
         if (role is null)
         {
             logger.LogWarning("Requested non-existent role: {requestedRole} - {response}", req.Role, responseContent);
@@ -126,15 +126,17 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
 
     private async Task SaveUserToDatabase(Request req, string providerUserId, CancellationToken ct)
     {
-        await dbContext.Users.AddAsync(new UserEntity
+        var user = new UserEntity
         {
             Email = req.Email,
             FirstName = req.FirstName,
             LastName = req.LastName,
-            ProviderId = providerUserId
-        },
-            ct);
+            ProviderId = providerUserId,
+            CompanyId = req.CompanyId,
+            Role = req.Role
+        };
 
+        await dbContext.Users.AddAsync(user, ct);
         await dbContext.SaveChangesAsync(ct);
     }
 }
