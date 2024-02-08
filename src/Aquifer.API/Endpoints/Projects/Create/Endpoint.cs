@@ -2,12 +2,14 @@ using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
+using static Aquifer.API.Helpers.EndpointHelpers;
 
 namespace Aquifer.API.Endpoints.Projects.Create;
 
-public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService historyService, IUserService userService)
-    : BaseEndpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService)
+    : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -17,19 +19,31 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
+        var newProject = await BuildProjectFromRequest(request, ct);
+
+        await dbContext.Projects.AddAsync(newProject, ct);
+
+        await dbContext.SaveChangesAsync(ct);
+
+        await SendAsync(new Response { Id = newProject.Id }, 201, ct);
+    }
+
+    private async Task<ProjectEntity> BuildProjectFromRequest(Request request, CancellationToken ct)
+    {
         var user = await userService.GetUserFromJwtAsync(ct);
 
         var language = await dbContext.Languages.SingleOrDefaultAsync(l => l.Id == request.LanguageId, ct);
         if (language is null)
         {
-            ThrowEntityNotFoundError(r => r.LanguageId);
+            ThrowEntityNotFoundError<Request>(r => r.LanguageId);
         }
 
         var projectManagerUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.ProjectManagerUserId, ct);
         if (projectManagerUser is null)
         {
-            ThrowEntityNotFoundError(r => r.ProjectManagerUserId);
+            ThrowEntityNotFoundError<Request>(r => r.ProjectManagerUserId);
         }
+
         if (projectManagerUser.Role != UserRole.Publisher)
         {
             ThrowError(r => r.ProjectManagerUserId, "Project manager must be a Publisher.");
@@ -38,13 +52,13 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
         var company = await dbContext.Companies.SingleOrDefaultAsync(c => c.Id == request.CompanyId, ct);
         if (company is null)
         {
-            ThrowEntityNotFoundError(r => r.CompanyId);
+            ThrowEntityNotFoundError<Request>(r => r.CompanyId);
         }
 
         var projectPlatform = await dbContext.ProjectPlatforms.SingleOrDefaultAsync(p => p.Id == request.ProjectPlatformId, ct);
         if (projectPlatform is null)
         {
-            ThrowEntityNotFoundError(r => r.ProjectPlatformId);
+            ThrowEntityNotFoundError<Request>(r => r.ProjectPlatformId);
         }
 
         var companyLeadUser = await MaybeGetCompanyLeadUser(projectPlatform, request, ct);
@@ -53,7 +67,7 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
 
         var wordCount = resourceContents.Sum(rc => rc.Versions.FirstOrDefault(v => v.IsDraft)?.WordCount ?? 0);
 
-        var newProject = new ProjectEntity
+        return new ProjectEntity
         {
             Name = request.Title,
             SourceWordCount = wordCount,
@@ -64,12 +78,6 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
             Company = company,
             ProjectPlatform = projectPlatform
         };
-
-        await dbContext.Projects.AddAsync(newProject, ct);
-
-        await dbContext.SaveChangesAsync(ct);
-
-        await SendAsync(new Response { Id = newProject.Id }, 201, ct);
     }
 
     private async Task<UserEntity?> MaybeGetCompanyLeadUser(ProjectPlatformEntity projectPlatform, Request request, CancellationToken ct)
@@ -79,7 +87,7 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
             var companyLeadUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.CompanyLeadUserId, ct);
             if (companyLeadUser is null)
             {
-                ThrowEntityNotFoundError(r => r.CompanyLeadUserId);
+                ThrowEntityNotFoundError<Request>(r => r.CompanyLeadUserId);
             }
 
             if (companyLeadUser.Role is not (UserRole.Publisher or UserRole.Manager))
@@ -178,6 +186,13 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
                     Content = baseVersion.Content,
                     ContentSize = baseVersion.ContentSize,
                     WordCount = baseVersion.WordCount,
+                    ResourceContentVersionStatusHistories = [
+                        new ResourceContentVersionStatusHistoryEntity
+                        {
+                            Status = ResourceContentStatus.TranslationNotStarted,
+                            ChangedByUserId = user.Id,
+                            Created = DateTime.UtcNow
+                        }],
                     Version = 1
                 };
                 var newResourceContent = new ResourceContentEntity
@@ -190,8 +205,6 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
                     Versions = [newResourceContentVersion]
                 };
                 await dbContext.ResourceContents.AddAsync(newResourceContent, ct);
-                await historyService.AddStatusHistoryAsync(newResourceContentVersion, ResourceContentStatus.TranslationNotStarted, user.Id,
-                    ct);
                 resourceContents.Add(newResourceContent);
             }
             else
