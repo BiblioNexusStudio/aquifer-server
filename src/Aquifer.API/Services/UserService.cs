@@ -11,7 +11,7 @@ public interface IUserService
     Task<UserEntity> GetUserFromJwtAsync(CancellationToken cancellationToken);
     List<string> GetAllJwtPermissions();
     List<string> GetAllJwtRoles();
-    bool HasJwtClaim(string permission);
+    bool HasPermission(string permission);
     Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken);
 }
 
@@ -35,7 +35,7 @@ public class UserService(AquiferDbContext _dbContext, IHttpContextAccessor _http
             .ToList() ?? [];
     }
 
-    public bool HasJwtClaim(string permission)
+    public bool HasPermission(string permission)
     {
         return _httpContextAccessor.HttpContext?.User.HasClaim(c =>
                    c.Type == Constants.PermissionsClaim && c.Value == permission) ??

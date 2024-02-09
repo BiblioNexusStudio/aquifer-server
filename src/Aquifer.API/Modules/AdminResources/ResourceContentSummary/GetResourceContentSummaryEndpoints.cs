@@ -63,7 +63,8 @@ public static class GetResourceContentSummaryEndpoints
                                 : new ResourceContentSummaryAssignedUser
                                 {
                                     Id = v.AssignedUser.Id,
-                                    Name = $"{v.AssignedUser.FirstName} {v.AssignedUser.LastName}"
+                                    Name = $"{v.AssignedUser.FirstName} {v.AssignedUser.LastName}",
+                                    CompanyId = v.AssignedUser.CompanyId
                                 }
                     })
             }).FirstOrDefaultAsync(cancellationToken);

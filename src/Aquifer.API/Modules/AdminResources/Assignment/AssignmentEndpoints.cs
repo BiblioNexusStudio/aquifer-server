@@ -18,11 +18,9 @@ public class AssignmentEndpoints
         IAdminResourceHistoryService historyService,
         CancellationToken ct)
     {
-        //At a high level, this endpoint should take a draft resource and assign the given user to it and set the status to AquiferizeInProgress
-        // using the content id, get all the resource content versions from database
-
         var draftVersion = await dbContext.ResourceContentVersions
             .Where(rcv => rcv.ResourceContentId == contentId && rcv.IsDraft).Include(rcv => rcv.ResourceContent)
+            .Include(rcv => rcv.AssignedUser)
             .SingleOrDefaultAsync(ct);
 
         if (draftVersion?.ResourceContent is null)
@@ -30,15 +28,27 @@ public class AssignmentEndpoints
             return TypedResults.BadRequest("Resource content not found or not in draft status");
         }
 
-        if (!await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, ct))
+        var user = await userService.GetUserFromJwtAsync(ct);
+        var userToAssign = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == postBody.AssignedUserId, ct);
+        var hasAssignOverridePermission = userService.HasPermission(PermissionName.AssignOverride);
+        var hasAssignOutsideCompanyPermission = userService.HasPermission(PermissionName.AssignOutsideCompany);
+
+        if (userToAssign is null)
         {
-            return TypedResults.BadRequest("Assigned user not found");
+            return TypedResults.BadRequest(AdminResourcesHelpers.InvalidUserIdResponse);
         }
 
-        var user = await userService.GetUserFromJwtAsync(ct);
-        var hasAssignOverridePermission = userService.HasJwtClaim(PermissionName.AssignOverride);
-        if ((!hasAssignOverridePermission && draftVersion.AssignedUserId != user.Id) ||
-            draftVersion.AssignedUserId == postBody.AssignedUserId)
+        if (userToAssign.CompanyId != user.CompanyId && hasAssignOutsideCompanyPermission)
+        {
+            return TypedResults.BadRequest("Unable to assign to a user outside your company");
+        }
+
+        var currentUserIsAssigned = draftVersion.AssignedUserId == user.Id;
+        var assignedUserIsInCompany = draftVersion.AssignedUser?.CompanyId == user.CompanyId;
+        var allowedToAssign = (hasAssignOverridePermission && (assignedUserIsInCompany || hasAssignOutsideCompanyPermission)) ||
+                              currentUserIsAssigned;
+
+        if (!allowedToAssign || draftVersion.AssignedUserId == postBody.AssignedUserId)
         {
             return TypedResults.BadRequest("Unable to assign user");
         }

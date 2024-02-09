@@ -14,8 +14,8 @@ public class UserEntity
     public bool EmailVerified { get; set; }
     public UserRole Role { get; set; }
 
-    public int? CompanyId { get; set; }
-    public CompanyEntity? Company { get; set; }
+    public int CompanyId { get; set; }
+    public CompanyEntity Company { get; set; } = null!;
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
