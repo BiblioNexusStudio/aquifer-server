@@ -14,14 +14,13 @@ public class Endpoint(IUserService userService) : EndpointWithoutRequest<Respons
     {
         var user = await userService.GetUserFromJwtAsync(ct);
         var permissions = userService.GetAllJwtPermissions();
-        var roles = userService.GetAllJwtRoles();
 
         var response = new Response
         {
             Id = user.Id,
             Name = $"{user.FirstName} {user.LastName}",
             Permissions = permissions,
-            Roles = roles
+            Company = new() { Id = user.CompanyId }
         };
 
         await SendAsync(response, 200, ct);

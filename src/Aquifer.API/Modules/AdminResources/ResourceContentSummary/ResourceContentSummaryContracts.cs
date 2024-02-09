@@ -93,8 +93,9 @@ public class ResourceContentSummaryPassageById
 
 public class ResourceContentSummaryAssignedUser
 {
-    public int Id { get; init; }
+    public required int Id { get; init; }
     public string Name { get; init; } = null!;
+    public required int CompanyId { get; init; }
 }
 
 public class ResourceContentSummaryContentTranslations
