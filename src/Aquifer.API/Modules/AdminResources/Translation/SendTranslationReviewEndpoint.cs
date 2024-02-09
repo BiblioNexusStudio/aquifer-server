@@ -14,35 +14,35 @@ public static class SendTranslationReviewEndpoint
         AquiferDbContext dbContext,
         IUserService userService,
         IAdminResourceHistoryService historyService,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         var translationDraft = await dbContext.ResourceContentVersions
             .Where(x => x.ResourceContentId == contentId &&
                         x.IsDraft &&
                         x.ResourceContent.Status == ResourceContentStatus.TranslationInProgress)
             .Include(x => x.ResourceContent)
-            .SingleOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(ct);
 
         if (translationDraft is null)
         {
             return TypedResults.BadRequest("Resource content draft with Translation - In Progress status not found");
         }
 
-        var user = await userService.GetUserFromJwtAsync(cancellationToken);
+        var user = await userService.GetUserFromJwtAsync(ct);
         if (user.Id != translationDraft.AssignedUserId)
         {
             return TypedResults.BadRequest("Only assigned users can send to review");
         }
 
-        await historyService.AddAssignedUserHistoryAsync(translationDraft.Id, null, user.Id);
+        await historyService.AddAssignedUserHistoryAsync(translationDraft.Id, null, user.Id, ct);
         await historyService.AddStatusHistoryAsync(translationDraft.Id,
             ResourceContentStatus.TranslationReviewPending,
-            user.Id);
+            user.Id, ct);
 
         translationDraft.ResourceContent.Status = ResourceContentStatus.TranslationReviewPending;
         translationDraft.AssignedUserId = null;
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(ct);
         return TypedResults.Ok();
     }
 }

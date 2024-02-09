@@ -1,30 +1,34 @@
 ﻿using Aquifer.Data;
 using Aquifer.Data.Entities;
 
-namespace Aquifer.API.Modules.AdminResources;
+namespace Aquifer.API.Services;
 
 public interface IAdminResourceHistoryService
 {
-    Task AddStatusHistoryAsync(int resourceContentVersionId, ResourceContentStatus status, int changedByUserId);
+    Task AddStatusHistoryAsync(int resourceContentVersionId, ResourceContentStatus status, int changedByUserId, CancellationToken ct);
 
     Task AddAssignedUserHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
         int? assignedUserId,
-        int changedByUserId);
+        int changedByUserId,
+        CancellationToken ct);
 
     Task AddStatusHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
         ResourceContentStatus status,
-        int changedByUserId);
+        int changedByUserId,
+        CancellationToken ct);
 
     Task AddAssignedUserHistoryAsync(int resourceContentVersionId,
         int? assignedUserId,
-        int changedByUserId);
+        int changedByUserId,
+        CancellationToken ct);
 }
 
 public class AdminResourceHistoryService(AquiferDbContext _dbContext) : IAdminResourceHistoryService
 {
     public async Task AddStatusHistoryAsync(int resourceContentVersionId,
         ResourceContentStatus status,
-        int changedByUserId)
+        int changedByUserId,
+        CancellationToken ct)
     {
         var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
         {
@@ -34,12 +38,13 @@ public class AdminResourceHistoryService(AquiferDbContext _dbContext) : IAdminRe
             Created = DateTime.UtcNow
         };
 
-        await _dbContext.ResourceContentVersionStatusHistory.AddAsync(resourceContentVersionStatusHistory);
+        await _dbContext.ResourceContentVersionStatusHistory.AddAsync(resourceContentVersionStatusHistory, ct);
     }
 
     public async Task AddStatusHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
         ResourceContentStatus status,
-        int changedByUserId)
+        int changedByUserId,
+        CancellationToken ct)
     {
         var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
         {
@@ -49,12 +54,13 @@ public class AdminResourceHistoryService(AquiferDbContext _dbContext) : IAdminRe
             Created = DateTime.UtcNow
         };
 
-        await _dbContext.ResourceContentVersionStatusHistory.AddAsync(resourceContentVersionStatusHistory);
+        await _dbContext.ResourceContentVersionStatusHistory.AddAsync(resourceContentVersionStatusHistory, ct);
     }
 
     public async Task AddAssignedUserHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
         int? assignedUserId,
-        int changedByUserId)
+        int changedByUserId,
+        CancellationToken ct)
     {
         var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
         {
@@ -64,12 +70,13 @@ public class AdminResourceHistoryService(AquiferDbContext _dbContext) : IAdminRe
             Created = DateTime.UtcNow
         };
 
-        await _dbContext.ResourceContentVersionAssignedUserHistory.AddAsync(resourceContentVersionAssignedUserHistory);
+        await _dbContext.ResourceContentVersionAssignedUserHistory.AddAsync(resourceContentVersionAssignedUserHistory, ct);
     }
 
     public async Task AddAssignedUserHistoryAsync(int resourceContentVersionId,
         int? assignedUserId,
-        int changedByUserId)
+        int changedByUserId,
+        CancellationToken ct)
     {
         var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
         {
@@ -79,6 +86,6 @@ public class AdminResourceHistoryService(AquiferDbContext _dbContext) : IAdminRe
             Created = DateTime.UtcNow
         };
 
-        await _dbContext.ResourceContentVersionAssignedUserHistory.AddAsync(resourceContentVersionAssignedUserHistory);
+        await _dbContext.ResourceContentVersionAssignedUserHistory.AddAsync(resourceContentVersionAssignedUserHistory, ct);
     }
 }

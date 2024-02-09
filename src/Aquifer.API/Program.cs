@@ -32,6 +32,7 @@ builder.Services
     })
     .AddAquiferHttpServices()
     .AddScoped<IUserService, UserService>()
+    .AddScoped<IAdminResourceHistoryService, AdminResourceHistoryService>()
     .AddScoped<IAzureKeyVaultService, AzureKeyVaultService>()
     .AddSingleton<ITrackResourceContentRequestService, TrackResourceContentRequestService>()
     .AddAzureClient(builder.Environment.IsDevelopment())

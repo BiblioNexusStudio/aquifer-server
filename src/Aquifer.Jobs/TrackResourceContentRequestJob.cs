@@ -15,7 +15,7 @@ public class TrackResourceContentRequestJob(
     [Function(nameof(TrackResourceContentRequestJob))]
     public async Task Run(
         [QueueTrigger("%JobQueues:TrackResourceContentRequestQueue%", Connection = "AzureWebJobsStorage")]
-        QueueMessage message, CancellationToken stoppingToken)
+        QueueMessage message, CancellationToken ct)
     {
         try
         {
@@ -28,15 +28,15 @@ public class TrackResourceContentRequestJob(
 
             foreach (var resourceContentId in trackingMetadata.ResourceContentIds)
             {
-                _dbContext.ResourceContentRequests.Add(new ResourceContentRequestEntity
+                await _dbContext.ResourceContentRequests.AddAsync(new ResourceContentRequestEntity
                 {
                     ResourceContentId = resourceContentId,
                     IpAddress = trackingMetadata.IpAddress,
                     Created = message.InsertedOn?.UtcDateTime ?? DateTime.UtcNow
-                });
+                }, ct);
             }
 
-            await _dbContext.SaveChangesAsync(stoppingToken);
+            await _dbContext.SaveChangesAsync(ct);
         }
         catch (Exception ex)
         {

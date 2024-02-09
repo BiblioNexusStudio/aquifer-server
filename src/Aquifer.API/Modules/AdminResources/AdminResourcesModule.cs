@@ -68,9 +68,4 @@ public class AdminResourcesModule : IModule
 
         return endpoints;
     }
-
-    public IServiceCollection RegisterModule(IServiceCollection services)
-    {
-        return services.AddScoped<IAdminResourceHistoryService, AdminResourceHistoryService>();
-    }
 }

@@ -38,6 +38,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                          AND rc.MediaType = {(int)ResourceContentMediaType.Text}
                          AND rc.Status = {(int)ResourceContentStatus.New}
                          AND (@SearchQuery = '' OR r.EnglishLabel LIKE '%' + @SearchQuery + '%')
+                         AND rc.Id NOT IN (SELECT ResourceContentId FROM ProjectResourceContents)
                      ),
                      FilteredResources AS (
                          SELECT DISTINCT rcc.ResourceContentId
