@@ -16,11 +16,11 @@ public static class CreateTranslationEndpoint
         AquiferDbContext dbContext,
         IAdminResourceHistoryService historyService,
         IUserService userService,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         var baseContent = await dbContext.ResourceContents.Where(x => x.Id == request.BaseContentId)
             .Include(x => x.Versions)
-            .SingleOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(ct);
         if (baseContent is null ||
             !baseContent.Versions.Any(x => x.IsPublished) ||
             (request.UseDraft && !baseContent.Versions.Any(x => x.IsDraft)))
@@ -30,13 +30,13 @@ public static class CreateTranslationEndpoint
 
         var isExistingTranslation = await dbContext.ResourceContents.AnyAsync(x =>
                 x.LanguageId == request.LanguageId && x.ResourceId == baseContent.ResourceId,
-            cancellationToken);
+            ct);
         if (isExistingTranslation)
         {
             return TypedResults.BadRequest("Translation already exists");
         }
 
-        var language = await dbContext.Languages.FindAsync([request.LanguageId], cancellationToken);
+        var language = await dbContext.Languages.FindAsync([request.LanguageId], ct);
         if (language is null)
         {
             return TypedResults.BadRequest("Invalid language id");
@@ -67,14 +67,14 @@ public static class CreateTranslationEndpoint
                 Trusted = true,
                 Versions = [newResourceContentVersion]
             },
-            cancellationToken);
+            ct);
 
-        var user = await userService.GetUserFromJwtAsync(cancellationToken);
+        var user = await userService.GetUserFromJwtAsync(ct);
         await historyService.AddStatusHistoryAsync(newResourceContentVersion,
             ResourceContentStatus.TranslationNotStarted,
-            user.Id);
+            user.Id, ct);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(ct);
         return TypedResults.Created();
     }
 }

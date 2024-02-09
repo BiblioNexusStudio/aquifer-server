@@ -14,31 +14,31 @@ public static class ReviewTranslationEndpoint
         AquiferDbContext dbContext,
         IAdminResourceHistoryService historyService,
         IUserService userService,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         var draft = await dbContext.ResourceContentVersions
             .Where(x => x.ResourceContentId == contentId &&
                         x.IsDraft &&
                         x.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending)
             .Include(x => x.ResourceContent)
-            .SingleOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(ct);
 
         if (draft is null)
         {
             return TypedResults.NotFound("No translation draft pending review found");
         }
 
-        var user = await userService.GetUserFromJwtAsync(cancellationToken);
-        await historyService.AddAssignedUserHistoryAsync(draft, user.Id, user.Id);
+        var user = await userService.GetUserFromJwtAsync(ct);
+        await historyService.AddAssignedUserHistoryAsync(draft, user.Id, user.Id, ct);
         await historyService.AddStatusHistoryAsync(draft.Id,
             ResourceContentStatus.TranslationInReview,
-            user.Id);
+            user.Id, ct);
 
         draft.Updated = DateTime.UtcNow;
         draft.AssignedUserId = user.Id;
         draft.ResourceContent.Status = ResourceContentStatus.TranslationInReview;
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(ct);
         return TypedResults.Ok();
     }
 }

@@ -14,9 +14,9 @@ public static class AquiferizationEndpoints
         AquiferDbContext dbContext,
         IAdminResourceHistoryService historyService,
         IUserService userService,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
-        if (!await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, cancellationToken))
+        if (!await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, ct))
         {
             return TypedResults.BadRequest(AdminResourcesHelpers.InvalidUserIdResponse);
         }
@@ -24,7 +24,7 @@ public static class AquiferizationEndpoints
         var (mostRecentContentVersion, _, currentDraftVersion) =
             await AdminResourcesHelpers.GetResourceContentVersions(contentId,
                 dbContext,
-                cancellationToken);
+                ct);
 
         if (mostRecentContentVersion is null)
         {
@@ -44,9 +44,9 @@ public static class AquiferizationEndpoints
             userService,
             null,
             historyService,
-            cancellationToken);
+            ct);
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(ct);
         return TypedResults.Ok();
     }
 
@@ -55,9 +55,9 @@ public static class AquiferizationEndpoints
         AquiferDbContext dbContext,
         IAdminResourceHistoryService historyService,
         IUserService userService,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
-        if (!await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, cancellationToken))
+        if (!await userService.ValidateNonNullUserIdAsync(postBody.AssignedUserId, ct))
         {
             return TypedResults.BadRequest(AdminResourcesHelpers.InvalidUserIdResponse);
         }
@@ -65,7 +65,7 @@ public static class AquiferizationEndpoints
         var (mostRecentContentVersion, currentlyPublishedVersion, currentDraftVersion) =
             await AdminResourcesHelpers.GetResourceContentVersions(contentId,
                 dbContext,
-                cancellationToken);
+                ct);
 
         if (mostRecentContentVersion is null)
         {
@@ -88,11 +88,11 @@ public static class AquiferizationEndpoints
         mostRecentContentVersion.IsPublished = true;
         mostRecentContentVersion.Updated = DateTime.UtcNow;
 
-        var user = await userService.GetUserFromJwtAsync(cancellationToken);
+        var user = await userService.GetUserFromJwtAsync(ct);
         if (mostRecentContentVersion.AssignedUserId is not null)
         {
             mostRecentContentVersion.AssignedUserId = null;
-            await historyService.AddAssignedUserHistoryAsync(mostRecentContentVersion, null, user.Id);
+            await historyService.AddAssignedUserHistoryAsync(mostRecentContentVersion, null, user.Id, ct);
         }
 
         if (postBody.CreateDraft)
@@ -106,22 +106,22 @@ public static class AquiferizationEndpoints
                 userService,
                 user,
                 historyService,
-                cancellationToken);
+                ct);
         }
         else
         {
             var resourceContent =
-                await dbContext.ResourceContents.FirstOrDefaultAsync(x => x.Id == contentId, cancellationToken) ??
+                await dbContext.ResourceContents.FirstOrDefaultAsync(x => x.Id == contentId, ct) ??
                 throw new ArgumentNullException();
             resourceContent.Status = ResourceContentStatus.Complete;
             resourceContent.Updated = DateTime.UtcNow;
 
             await historyService.AddStatusHistoryAsync(mostRecentContentVersion.Id,
                 ResourceContentStatus.Complete,
-                user.Id);
+                user.Id, ct);
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(ct);
         return TypedResults.Ok();
     }
 
@@ -130,12 +130,12 @@ public static class AquiferizationEndpoints
         AquiferDbContext dbContext,
         IAdminResourceHistoryService historyService,
         IUserService userService,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         var (mostRecentResourceContentVersion, currentlyPublishedVersion, currentDraftVersion) =
             await AdminResourcesHelpers.GetResourceContentVersions(contentId,
                 dbContext,
-                cancellationToken);
+                ct);
 
         if (mostRecentResourceContentVersion is null)
         {
@@ -153,19 +153,19 @@ public static class AquiferizationEndpoints
         if (currentDraftVersion is null)
         {
             var resourceContent =
-                await dbContext.ResourceContents.FindAsync([contentId], cancellationToken) ??
+                await dbContext.ResourceContents.FindAsync([contentId], ct) ??
                 throw new ArgumentNullException();
 
             resourceContent.Status = ResourceContentStatus.New;
             resourceContent.Updated = DateTime.UtcNow;
 
-            var user = await userService.GetUserFromJwtAsync(cancellationToken);
+            var user = await userService.GetUserFromJwtAsync(ct);
             await historyService.AddStatusHistoryAsync(currentlyPublishedVersion.Id,
                 ResourceContentStatus.New,
-                user.Id);
+                user.Id, ct);
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(ct);
         return TypedResults.Ok();
     }
 
@@ -177,7 +177,7 @@ public static class AquiferizationEndpoints
         IUserService userService,
         UserEntity? user,
         IAdminResourceHistoryService historyService,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
         // Create a duplicate of the most recent ResourceContentVersion with the given contentId, incrementing the Version and setting IsDraft = 1.
         var newResourceContentVersion = new ResourceContentVersionEntity
@@ -195,16 +195,16 @@ public static class AquiferizationEndpoints
             Updated = DateTime.UtcNow
         };
 
-        dbContext.ResourceContentVersions.Add(newResourceContentVersion);
+        await dbContext.ResourceContentVersions.AddAsync(newResourceContentVersion, ct);
 
-        user ??= await userService.GetUserFromJwtAsync(cancellationToken);
+        user ??= await userService.GetUserFromJwtAsync(ct);
         if (assignedUserId is not null)
         {
-            await historyService.AddAssignedUserHistoryAsync(newResourceContentVersion, assignedUserId, user.Id);
+            await historyService.AddAssignedUserHistoryAsync(newResourceContentVersion, assignedUserId, user.Id, ct);
         }
 
         var resourceContent =
-            await dbContext.ResourceContents.FindAsync([contentId], cancellationToken) ??
+            await dbContext.ResourceContents.FindAsync([contentId], ct) ??
             throw new ArgumentNullException();
 
         resourceContent.Status = ResourceContentStatus.AquiferizeInProgress;
@@ -215,6 +215,6 @@ public static class AquiferizationEndpoints
 
         await historyService.AddStatusHistoryAsync(newResourceContentVersion,
             ResourceContentStatus.AquiferizeInProgress,
-            user.Id);
+            user.Id, ct);
     }
 }
