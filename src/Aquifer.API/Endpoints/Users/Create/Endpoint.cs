@@ -4,6 +4,7 @@ using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Users.Create;
 
@@ -23,13 +24,22 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
 
     private async Task CreateUserAsync(Request req, CancellationToken ct)
     {
+        await ValidateCompanyIdAsync(req.CompanyId, ct);
         var accessToken = await GetAccessTokenAsync(ct);
         var roleId = await GetRoleIdAsync(req, accessToken, ct);
-        var newUserId = await CreateAuth0User(req, accessToken, ct);
-        await AssignAuth0Role(accessToken, newUserId, roleId, ct);
-        await SendPasswordReset(accessToken, req.Email, ct);
+        var newUserId = await CreateAuth0UserAsync(req, accessToken, ct);
+        await AssignAuth0RoleAsync(accessToken, newUserId, roleId, ct);
+        await SendPasswordResetAsync(accessToken, req.Email, ct);
 
-        await SaveUserToDatabase(req, newUserId, ct);
+        await SaveUserToDatabaseAsync(req, newUserId, ct);
+    }
+
+    private async Task ValidateCompanyIdAsync(int companyId, CancellationToken ct)
+    {
+        if (await dbContext.Companies.SingleOrDefaultAsync(x => x.Id == companyId, ct) is null)
+        {
+            ThrowError(x => x.CompanyId, "Invalid company id");
+        }
     }
 
     private async Task<string> GetAccessTokenAsync(CancellationToken ct)
@@ -56,7 +66,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         }
 
         var roles = JsonUtilities.DefaultDeserialize<List<Auth0AssignUserRolesResponse>>(responseContent);
-        var role = roles.FirstOrDefault(r => r.Name == req.Role);
+        var role = roles.FirstOrDefault(r => r.Name.Equals(req.Role.ToString(), StringComparison.CurrentCultureIgnoreCase));
         if (role is null)
         {
             logger.LogWarning("Requested non-existent role: {requestedRole} - {response}", req.Role, responseContent);
@@ -66,7 +76,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         return role.Id;
     }
 
-    private async Task<string> CreateAuth0User(Request req, string accessToken, CancellationToken ct)
+    private async Task<string> CreateAuth0UserAsync(Request req, string accessToken, CancellationToken ct)
     {
         var response = await authProviderService.CreateUser($"{req.FirstName} {req.LastName}", req.Email, accessToken, ct);
         var responseContent = await response.Content.ReadAsStringAsync(ct);
@@ -79,7 +89,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         return JsonUtilities.DefaultDeserialize<Auth0CreateUserResponse>(responseContent).UserId;
     }
 
-    private async Task AssignAuth0Role(string accessToken, string userId, string roleId, CancellationToken ct)
+    private async Task AssignAuth0RoleAsync(string accessToken, string userId, string roleId, CancellationToken ct)
     {
         var response = await authProviderService.AssignUserToRole(roleId, userId, accessToken, ct);
 
@@ -98,7 +108,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         }
     }
 
-    private async Task SendPasswordReset(string accessToken, string email, CancellationToken ct)
+    private async Task SendPasswordResetAsync(string accessToken, string email, CancellationToken ct)
     {
         // Auth0 doesn't support creating a user account without a password and having the user
         // create a password as part of the email verification. So we have to create a password
@@ -124,17 +134,19 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         }
     }
 
-    private async Task SaveUserToDatabase(Request req, string providerUserId, CancellationToken ct)
+    private async Task SaveUserToDatabaseAsync(Request req, string providerUserId, CancellationToken ct)
     {
-        await dbContext.Users.AddAsync(new UserEntity
+        var user = new UserEntity
         {
             Email = req.Email,
             FirstName = req.FirstName,
             LastName = req.LastName,
-            ProviderId = providerUserId
-        },
-            ct);
+            ProviderId = providerUserId,
+            CompanyId = req.CompanyId,
+            Role = req.Role
+        };
 
+        await dbContext.Users.AddAsync(user, ct);
         await dbContext.SaveChangesAsync(ct);
     }
 }
