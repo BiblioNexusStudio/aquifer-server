@@ -2,6 +2,7 @@
 
 public class Response
 {
+    public int Id { get; set; }
     public required string Name { get; set; }
     public required string Language { get; set; }
     public required string ProjectLead { get; set; }
