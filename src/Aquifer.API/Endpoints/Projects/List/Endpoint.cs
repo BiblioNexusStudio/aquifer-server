@@ -40,6 +40,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
 
         return await dbContext.Projects.Select(x => new Response
         {
+            Id = x.Id,
             Name = x.Name,
             Company = x.Company.Name,
             Language = x.Language.EnglishDisplay,
