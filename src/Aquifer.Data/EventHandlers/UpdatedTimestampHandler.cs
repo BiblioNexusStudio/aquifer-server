@@ -5,9 +5,9 @@ namespace Aquifer.Data.EventHandlers;
 
 public static class UpdatedTimestampHandler
 {
-    public static void SetUpdatedTimestamp(object sender, EntityEntryEventArgs e)
+    public static void SetUpdatedTimestamp(EntityEntry entityEntry)
     {
-        if (e.Entry is { Entity: IHasUpdatedTimestamp entity, State: EntityState.Modified })
+        if (entityEntry is { Entity: IHasUpdatedTimestamp entity, State: EntityState.Modified })
         {
             entity.Updated = DateTime.UtcNow;
         }

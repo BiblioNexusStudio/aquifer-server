@@ -1,10 +1,18 @@
 using Aquifer.Data.Entities;
+using Aquifer.Data.EventHandlers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Aquifer.Data;
 
-public class AquiferDbContext(DbContextOptions<AquiferDbContext> options) : DbContext(options)
+public class AquiferDbContext : DbContext
 {
+    public AquiferDbContext(DbContextOptions<AquiferDbContext> options) : base(options)
+    {
+        ChangeTracker.StateChanged += OnStateChange;
+        SavingChanges += OnSavingChanges;
+    }
+
     public DbSet<BibleBookContentEntity> BibleBookContents { get; set; }
     public DbSet<BibleEntity> Bibles { get; set; }
     public DbSet<CompanyEntity> Companies { get; set; }
@@ -28,5 +36,16 @@ public class AquiferDbContext(DbContextOptions<AquiferDbContext> options) : DbCo
     {
         base.OnModelCreating(builder);
         SqlDefaultValueAttributeConvention.Apply(builder);
+    }
+
+    private static void OnStateChange(object? sender, EntityEntryEventArgs e)
+    {
+        UpdatedTimestampHandler.SetUpdatedTimestamp(e.Entry);
+    }
+
+    private void OnSavingChanges(object? sender, SavingChangesEventArgs e)
+    {
+        var entries = ChangeTracker.Entries();
+        ProjectCompletionHandler.SetProjectCompletionStatus(Projects, ChangeTracker, entries);
     }
 }
