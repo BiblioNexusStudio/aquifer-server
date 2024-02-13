@@ -61,6 +61,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
             ThrowEntityNotFoundError<Request>(r => r.ProjectPlatformId);
         }
 
+        if (dbContext.Projects.Any(p => p.Name == request.Title))
+        {
+            ThrowError(r => r.Title, "A project with this title already exists.");
+        }
+
         var companyLeadUser = await MaybeGetCompanyLeadUser(projectPlatform, request, ct);
 
         var resourceContents = await CreateOrFindResourceContentFromResourceIds(language, request, user, ct);
@@ -186,13 +191,15 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
                     Content = baseVersion.Content,
                     ContentSize = baseVersion.ContentSize,
                     WordCount = baseVersion.WordCount,
-                    ResourceContentVersionStatusHistories = [
+                    ResourceContentVersionStatusHistories =
+                    [
                         new ResourceContentVersionStatusHistoryEntity
                         {
                             Status = ResourceContentStatus.TranslationNotStarted,
                             ChangedByUserId = user.Id,
                             Created = DateTime.UtcNow
-                        }],
+                        }
+                    ],
                     Version = 1
                 };
                 var newResourceContent = new ResourceContentEntity
