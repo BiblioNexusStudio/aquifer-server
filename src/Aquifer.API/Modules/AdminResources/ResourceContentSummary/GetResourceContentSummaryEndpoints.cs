@@ -47,6 +47,13 @@ public static class GetResourceContentSummaryEndpoints
                             ParentResourceName = ar.ParentResource.DisplayName,
                             MediaTypes = ar.ResourceContents.Select(arrc => arrc.MediaType)
                         }),
+                Project = rc.Projects.FirstOrDefault() == null
+                    ? null
+                    : new ResourceContentSummaryProject
+                    {
+                        Id = rc.Projects.FirstOrDefault()!.Id,
+                        Name = rc.Projects.FirstOrDefault()!.Name
+                    },
                 ContentVersions =
                     rc.Versions.Select(v => new ResourceContentSummaryVersion
                     {

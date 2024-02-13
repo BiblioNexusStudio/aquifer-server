@@ -17,6 +17,7 @@ public class ResourceContentSummaryById : ResourceContentSummaryDetailsById
     public ResourceContentSummaryLanguage Language { get; set; } = null!;
     public IEnumerable<ResourceContentSummaryVersion> ContentVersions { get; set; } = null!;
     public IEnumerable<ResourceContentSummaryContentTranslations> ContentTranslations { get; set; } = null!;
+    public ResourceContentSummaryProject? Project { get; set; }
 
     [JsonIgnore]
     public int ResourceId { get; set; }
@@ -57,6 +58,12 @@ public class ResourceContentSummaryDetailsById
 public class ResourceContentSummaryAssociatedContentById : ResourceContentSummaryDetailsById
 {
     public IEnumerable<ResourceContentMediaType> MediaTypes { get; set; } = null!;
+}
+
+public class ResourceContentSummaryProject
+{
+    public required int Id { get; set; }
+    public required string Name { get; set; }
 }
 
 public class ResourceContentSummaryVerseById
