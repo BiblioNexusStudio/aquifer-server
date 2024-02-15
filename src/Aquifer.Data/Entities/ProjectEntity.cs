@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Aquifer.Data.Entities;
 
 [EntityTypeConfiguration(typeof(ProjectEntityConfiguration))]
+[Index(nameof(Name), IsUnique = true)]
 public class ProjectEntity
 {
     public int Id { get; set; }
@@ -52,6 +53,10 @@ public class ProjectEntityConfiguration : IEntityTypeConfiguration<ProjectEntity
                     .HasPrincipalKey(nameof(ResourceContentEntity.Id)).OnDelete(DeleteBehavior.Restrict),
                 r => r.HasOne(typeof(ProjectEntity)).WithMany().HasForeignKey("ProjectId").HasPrincipalKey(nameof(ProjectEntity.Id))
                     .OnDelete(DeleteBehavior.Restrict),
-                j => j.HasKey("ProjectId", "ResourceContentId"));
+                j =>
+                {
+                    j.HasKey("ProjectId", "ResourceContentId");
+                    j.HasIndex("ResourceContentId").IsUnique();
+                });
     }
 }
