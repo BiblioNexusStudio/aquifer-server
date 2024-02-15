@@ -1,3 +1,4 @@
+using Aquifer.Data.EventHandlers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -6,7 +7,7 @@ namespace Aquifer.Data.Entities;
 [Index(nameof(ParentResourceId),
      nameof(ExternalId),
      IsUnique = true), EntityTypeConfiguration(typeof(ResourceEntityConfiguration))]
-public class ResourceEntity
+public class ResourceEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
     public int ParentResourceId { get; set; }

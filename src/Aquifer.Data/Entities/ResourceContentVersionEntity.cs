@@ -1,10 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Aquifer.Data.EventHandlers;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
 [EntityTypeConfiguration(typeof(ResourceContentVersionEntityConfiguration))]
-public class ResourceContentVersionEntity
+public class ResourceContentVersionEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
 
@@ -44,7 +45,11 @@ public class ResourceContentVersionEntityConfiguration : IEntityTypeConfiguratio
                 "IsPublished = 0 OR IsDraft = 0"));
 
         builder
-            .HasIndex(x => new { x.ResourceContentId, x.Version })
+            .HasIndex(x => new
+            {
+                x.ResourceContentId,
+                x.Version
+            })
             .IsUnique();
 
         builder

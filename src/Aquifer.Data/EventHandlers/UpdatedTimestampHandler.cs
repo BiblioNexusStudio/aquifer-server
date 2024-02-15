@@ -5,7 +5,7 @@ namespace Aquifer.Data.EventHandlers;
 
 public static class UpdatedTimestampHandler
 {
-    public static void SetUpdatedTimestamp(EntityEntry entityEntry)
+    public static void Handle(EntityEntry entityEntry)
     {
         if (entityEntry is { Entity: IHasUpdatedTimestamp entity, State: EntityState.Modified })
         {

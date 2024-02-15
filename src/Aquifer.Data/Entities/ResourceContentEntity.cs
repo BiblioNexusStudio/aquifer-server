@@ -8,12 +8,10 @@ namespace Aquifer.Data.Entities;
     nameof(LanguageId),
     nameof(MediaType),
     IsUnique = true)]
-public class ResourceContentEntity : IHasUpdatedTimestamp, IProjectCompletion
+public class ResourceContentEntity : IHasUpdatedTimestamp
 {
-    public int Id { get; set; }
     public int ResourceId { get; set; }
     public int LanguageId { get; set; }
-    public ResourceContentStatus Status { get; set; }
     public bool Trusted { get; set; }
     public ResourceContentMediaType MediaType { get; set; }
 
@@ -27,6 +25,8 @@ public class ResourceContentEntity : IHasUpdatedTimestamp, IProjectCompletion
     public ResourceEntity Resource { get; set; } = null!;
 
     public ICollection<ProjectEntity> Projects { get; set; } = new List<ProjectEntity>();
+    public int Id { get; set; }
+    public ResourceContentStatus Status { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;

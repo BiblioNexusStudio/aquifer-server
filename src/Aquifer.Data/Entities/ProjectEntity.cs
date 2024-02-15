@@ -1,10 +1,11 @@
+using Aquifer.Data.EventHandlers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
 [EntityTypeConfiguration(typeof(ProjectEntityConfiguration))]
-public class ProjectEntity
+public class ProjectEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
@@ -46,8 +47,7 @@ public class ProjectEntityConfiguration : IEntityTypeConfiguration<ProjectEntity
         builder
             .HasMany(x => x.ResourceContents)
             .WithMany(y => y.Projects)
-            .UsingEntity(
-                "ProjectResourceContents",
+            .UsingEntity("ProjectResourceContents",
                 l => l.HasOne(typeof(ResourceContentEntity)).WithMany().HasForeignKey("ResourceContentId")
                     .HasPrincipalKey(nameof(ResourceContentEntity.Id)).OnDelete(DeleteBehavior.Restrict),
                 r => r.HasOne(typeof(ProjectEntity)).WithMany().HasForeignKey("ProjectId").HasPrincipalKey(nameof(ProjectEntity.Id))

@@ -7,10 +7,17 @@ namespace Aquifer.Data;
 
 public class AquiferDbContext : DbContext
 {
+    private readonly DbContextOptions<AquiferDbContext> _options;
+
     public AquiferDbContext(DbContextOptions<AquiferDbContext> options) : base(options)
     {
+        _options = options;
+
+        // Note the issue here. I don't want to seal the class because there are situations where we want to put
+        // a wrapper around it. https://www.jetbrains.com/help/resharper/VirtualMemberCallInConstructor.html
+        // It's likely irrelevant anyway, because the events are additive.
         ChangeTracker.StateChanged += OnStateChange;
-        SavingChanges += OnSavingChanges;
+        SavedChanges += async (s, e) => await OnSavingChanges(s, e);
     }
 
     public DbSet<BibleBookContentEntity> BibleBookContents { get; set; }
@@ -40,12 +47,12 @@ public class AquiferDbContext : DbContext
 
     private static void OnStateChange(object? sender, EntityEntryEventArgs e)
     {
-        UpdatedTimestampHandler.SetUpdatedTimestamp(e.Entry);
+        UpdatedTimestampHandler.Handle(e.Entry);
     }
 
-    private void OnSavingChanges(object? sender, SavingChangesEventArgs e)
+    private async Task OnSavingChanges(object? sender, SavedChangesEventArgs e)
     {
         var entries = ChangeTracker.Entries();
-        ProjectCompletionHandler.SetProjectCompletionStatus(Projects, ChangeTracker, entries);
+        await ProjectCompletionHandler.HandleAsync(_options, entries);
     }
 }
