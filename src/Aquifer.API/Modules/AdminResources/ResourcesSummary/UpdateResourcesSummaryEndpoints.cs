@@ -45,7 +45,6 @@ public class UpdateResourcesSummaryEndpoints
 
         entity.DisplayName = item.DisplayName;
         entity.ContentSize = Encoding.UTF8.GetByteCount(entity.Content);
-        entity.Updated = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
 

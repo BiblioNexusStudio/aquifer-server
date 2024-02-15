@@ -1,3 +1,4 @@
+using Aquifer.Data.EventHandlers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -5,7 +6,7 @@ namespace Aquifer.Data.Entities;
 
 [EntityTypeConfiguration(typeof(ProjectEntityConfiguration))]
 [Index(nameof(Name), IsUnique = true)]
-public class ProjectEntity
+public class ProjectEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;

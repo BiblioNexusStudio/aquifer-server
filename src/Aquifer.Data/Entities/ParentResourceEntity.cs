@@ -1,6 +1,8 @@
+using Aquifer.Data.EventHandlers;
+
 namespace Aquifer.Data.Entities;
 
-public class ParentResourceEntity
+public class ParentResourceEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
     public string ShortName { get; set; } = null!;

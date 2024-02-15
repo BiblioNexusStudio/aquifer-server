@@ -1,10 +1,10 @@
+using Aquifer.Data.EventHandlers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
 
-[Index(nameof(ProviderId), IsUnique = true)]
-[Index(nameof(Email), IsUnique = true)]
-public class UserEntity
+[Index(nameof(ProviderId), IsUnique = true), Index(nameof(Email), IsUnique = true)]
+public class UserEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
     public string ProviderId { get; set; } = null!;

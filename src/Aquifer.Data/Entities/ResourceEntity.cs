@@ -1,13 +1,13 @@
+using Aquifer.Data.EventHandlers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
 [Index(nameof(ParentResourceId),
-    nameof(ExternalId),
-    IsUnique = true)]
-[EntityTypeConfiguration(typeof(ResourceEntityConfiguration))]
-public class ResourceEntity
+     nameof(ExternalId),
+     IsUnique = true), EntityTypeConfiguration(typeof(ResourceEntityConfiguration))]
+public class ResourceEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
     public int ParentResourceId { get; set; }
@@ -17,9 +17,6 @@ public class ResourceEntity
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
-
-    [SqlDefaultValue("getutcdate()")]
-    public DateTime Updated { get; set; } = DateTime.UtcNow;
 
     public ICollection<VerseResourceEntity> VerseResources { get; set; } =
         new List<VerseResourceEntity>();
@@ -35,6 +32,9 @@ public class ResourceEntity
 
     public ICollection<ResourceEntity> AssociatedResourceParents { get; set; } =
         new List<ResourceEntity>();
+
+    [SqlDefaultValue("getutcdate()")]
+    public DateTime Updated { get; set; } = DateTime.UtcNow;
 }
 
 public class ResourceEntityConfiguration : IEntityTypeConfiguration<ResourceEntity>

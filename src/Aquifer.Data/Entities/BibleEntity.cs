@@ -1,6 +1,8 @@
-﻿namespace Aquifer.Data.Entities;
+﻿using Aquifer.Data.EventHandlers;
 
-public class BibleEntity
+namespace Aquifer.Data.Entities;
+
+public class BibleEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
     public int LanguageId { get; set; }
@@ -12,8 +14,8 @@ public class BibleEntity
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
+    public ICollection<BibleBookContentEntity> BibleBookContents { get; set; } = new List<BibleBookContentEntity>();
+
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
-
-    public ICollection<BibleBookContentEntity> BibleBookContents { get; set; } = new List<BibleBookContentEntity>();
 }
