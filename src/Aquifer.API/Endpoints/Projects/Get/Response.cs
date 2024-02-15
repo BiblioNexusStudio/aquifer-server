@@ -16,6 +16,7 @@ public class Response
     public DateOnly? ActualDeliveryDate { get; set; }
     public DateOnly? ProjectedPublishDate { get; set; }
     public DateOnly? ActualPublishDate { get; set; }
+    public required IEnumerable<ProjectResourceItem> Items { get; set; }
 
     public ProjectResourceStatusCounts Counts { get; set; } = null!;
 }
@@ -25,4 +26,13 @@ public class ProjectResourceStatusCounts
     public int InProgress { get; set; }
     public int InReview { get; set; }
     public int Completed { get; set; }
+}
+
+public class ProjectResourceItem
+{
+    public required int ResourceContentId { get; set; }
+    public required string EnglishLabel { get; set; }
+    public required string ParentResourceName { get; set; }
+    public required string? AssignedUserName { get; set; }
+    public required string StatusDisplayName { get; set; }
 }
