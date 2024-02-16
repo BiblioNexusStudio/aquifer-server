@@ -1,4 +1,5 @@
 ﻿using Aquifer.Common.Utilities;
+using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
 using FastEndpoints;
 using FluentValidation;
@@ -20,6 +21,11 @@ public class Validator : Validator<Request>
         RuleFor(x => x.BookCode).Must(x => BibleBookCodeUtilities.IdFromCode(x!) != BookId.None)
             .WithMessage("Invalid book code {PropertyValue}. Get a valid list from /bible-books endpoint.")
             .When(x => x.BookCode is not null);
+
+        RuleFor(x => x).Must(x =>
+                x.ResourceType == ResourceType.None ||
+                (x.ResourceType != ResourceType.None && x.ResourceCollectionCode is null))
+            .WithMessage("Cannot specify both resourceType and resourceCollectionCode.");
 
         RuleFor(x => x.StartChapter).InclusiveBetween(0, 150);
         RuleFor(x => x.EndChapter).InclusiveBetween(0, 150);
