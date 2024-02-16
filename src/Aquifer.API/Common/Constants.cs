@@ -33,7 +33,8 @@ public static class Constants
             PermissionName.ReviewContent,
             PermissionName.CreateProject,
             PermissionName.CreateUser,
-            PermissionName.ReadProject
+            PermissionName.ReadProject,
+            PermissionName.EditProject
         ]);
 }
 
@@ -49,6 +50,7 @@ public static class PermissionName
         ReviewContent = "review:content",
         SendReviewContent = "send-review:content",
         CreateProject = "create:project",
+        EditProject = "edit:projects",
         ReadProject = "read:projects",
         CreateUser = "create:user";
 }
