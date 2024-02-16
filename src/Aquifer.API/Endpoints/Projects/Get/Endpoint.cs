@@ -48,6 +48,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
         return await dbContext.Projects.Where(x => x.Id == req.ProjectId).Select(x => new Response
         {
+            Id = x.Id,
             Name = x.Name,
             Company = x.Company.Name,
             Language = x.Language.EnglishDisplay,
