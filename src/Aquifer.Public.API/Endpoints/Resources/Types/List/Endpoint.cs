@@ -16,7 +16,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
         Options(EndpointHelpers.SetCacheOption(30));
         Summary(s =>
         {
-            s.Summary = "Get a list of available resource types and groups.";
+            s.Summary = "Get a list of available resource types and collections.";
             s.Description = """
                             Get a list of resource types that are available. Within each resource type will be a list of resource collections
                             that belong to that resource type. For example, Dictionary is a resource type, and "Bible Dictionary (Tyndale)"
