@@ -53,10 +53,17 @@ public record Request
     public string? LanguageCode { get; init; }
 
     /// <summary>
-    ///     The type of resource to search for. If none specified will default to None.
-    ///     provided.
+    ///     The type of resource to search for, such as "Dictionary". If none specified, will default to None.
+    ///     If sending resourceType, do not send resourceGroupTitle.
     /// </summary>
+    [DefaultValue(ResourceType.None)]
     public ResourceType ResourceType { get; init; }
+
+    /// <summary>
+    ///     Optional resource group title to search for. Search by code retrieved from /resources/types endpoint such as
+    ///     "TyndaleBibleDictionary". If sending resourceGroupTitle, do not send resourceType.
+    /// </summary>
+    public string? ResourceGroupTitle { get; init; }
 
     /// <summary>
     ///     The number of results to return. Max is 100.

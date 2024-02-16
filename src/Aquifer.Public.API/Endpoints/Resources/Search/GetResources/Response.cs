@@ -7,6 +7,7 @@ public class Response
 {
     public int TotalItemCount { get; set; }
     public int ReturnedItemCount { get; set; }
+    public int Offset { get; set; }
     public List<ResponseContent> Items { get; set; } = [];
 }
 
@@ -29,4 +30,6 @@ public class ResourceTypeMetadata
     public ResourceType Type { get; init; }
 
     public string Name { get; set; } = null!;
+    public string Title { get; set; } = null!;
+    public string Code { get; set; } = null!;
 }
