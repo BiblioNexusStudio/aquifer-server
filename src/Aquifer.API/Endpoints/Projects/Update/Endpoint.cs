@@ -35,7 +35,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
 
         await dbContext.SaveChangesAsync(ct);
 
-        await SendAsync(ct, cancellation: ct);
+        await SendOkAsync(ct);
     }
 
     private async Task ValidateRequest(ProjectEntity project, Request request, CancellationToken ct)
@@ -51,7 +51,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
         }
 
         if (request.CompanyLeadUserId is not null &&
-                await dbContext.Users.SingleOrDefaultAsync(p => p.Id == request.CompanyLeadUserId, ct) is null)
+            await dbContext.Users.SingleOrDefaultAsync(p => p.Id == request.CompanyLeadUserId, ct) is null)
         {
             ThrowEntityNotFoundError<Request>(r => r.CompanyLeadUserId);
         }
