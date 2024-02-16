@@ -30,6 +30,6 @@ public class ResourceTypeMetadata
     public ResourceType Type { get; init; }
 
     public string Name { get; set; } = null!;
-    public string Title { get; set; } = null!;
-    public string Code { get; set; } = null!;
+    public string CollectionTitle { get; set; } = null!;
+    public string CollectionCode { get; set; } = null!;
 }

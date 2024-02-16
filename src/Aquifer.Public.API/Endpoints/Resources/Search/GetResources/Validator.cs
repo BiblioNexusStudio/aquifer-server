@@ -24,8 +24,8 @@ public class Validator : Validator<Request>
 
         RuleFor(x => x).Must(x =>
                 x.ResourceType == ResourceType.None ||
-                (x.ResourceType != ResourceType.None && x.ResourceGroupTitle is null))
-            .WithMessage("Cannot specify both resourceType and resourceTitle.");
+                (x.ResourceType != ResourceType.None && x.ResourceCollectionCode is null))
+            .WithMessage("Cannot specify both resourceType and resourceCollectionCode.");
 
         RuleFor(x => x.StartChapter).InclusiveBetween(0, 150);
         RuleFor(x => x.EndChapter).InclusiveBetween(0, 150);

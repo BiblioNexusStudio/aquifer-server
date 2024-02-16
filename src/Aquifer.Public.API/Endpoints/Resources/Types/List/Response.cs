@@ -3,12 +3,12 @@
 public class Response
 {
     public required string Type { get; set; }
-    public List<AvailableResourceTitles> Titles { get; set; } = [];
+    public List<AvailableResourceCollection> Collections { get; set; } = [];
 }
 
-public class AvailableResourceTitles
+public class AvailableResourceCollection
 {
     public required string Code { get; set; }
-    public required string Name { get; set; }
+    public required string Title { get; set; }
     public object? LicenseInformation { get; set; }
 }

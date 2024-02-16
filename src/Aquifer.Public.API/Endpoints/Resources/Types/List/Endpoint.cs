@@ -18,9 +18,9 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
         {
             s.Summary = "Get a list of available resource types and groups.";
             s.Description = """
-                            Get a list of resource types that are available. Within each resource type will be a list of resource groups
+                            Get a list of resource types that are available. Within each resource type will be a list of resource collections
                             that belong to that resource type. For example, Dictionary is a resource type, and "Bible Dictionary (Tyndale)"
-                            is a group of resources within that type. The resource type and group code can be used in other queries.
+                            is a collection of resources within that type. The resource type and collection code can be used in other queries.
                             """;
         });
     }
@@ -36,10 +36,10 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
             response.Add(new Response
             {
                 Type = type.GetDisplayName(),
-                Titles = parentResources.Where(x => x.ResourceType == type).Select(x => new AvailableResourceTitles
+                Collections = parentResources.Where(x => x.ResourceType == type).Select(x => new AvailableResourceCollection
                 {
                     Code = x.ShortName,
-                    Name = x.DisplayName,
+                    Title = x.DisplayName,
                     LicenseInformation = x.LicenseInfo != null ? JsonUtilities.DefaultDeserialize(x.LicenseInfo) : null
                 }).ToList()
             });
