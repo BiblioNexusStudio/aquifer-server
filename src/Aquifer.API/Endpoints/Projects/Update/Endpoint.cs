@@ -11,7 +11,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
 {
     public override void Configure()
     {
-        Put("/projects/{Id}");
+        Patch("/projects/{Id}");
         Permissions(PermissionName.EditProject);
     }
 
