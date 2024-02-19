@@ -1,13 +1,12 @@
-﻿using System.Security.Claims;
-using Aquifer.API.Common;
+﻿using Aquifer.API.Common;
+using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
-using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Users.List;
 
-public class Endpoint(AquiferDbContext dbContext, IHttpContextAccessor _httpContextAccessor) : EndpointWithoutRequest<List<Response>>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService) : EndpointWithoutRequest<List<Response>>
 {
     public override void Configure()
     {
@@ -17,8 +16,7 @@ public class Endpoint(AquiferDbContext dbContext, IHttpContextAccessor _httpCont
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var providerId = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
-        var self = await dbContext.Users.Where(u => u.ProviderId == providerId).Include(u => u.Company).SingleAsync(ct);
+        var self = await userService.GetUserFromJwtAsync(ct);
         if (self.Role is not UserRole.Admin and not UserRole.Publisher and not UserRole.Manager)
         {
             await SendForbiddenAsync(ct);

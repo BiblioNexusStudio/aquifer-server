@@ -15,35 +15,35 @@ public interface IUserService
     Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken);
 }
 
-public class UserService(AquiferDbContext _dbContext, IHttpContextAccessor _httpContextAccessor) : IUserService
+public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpContextAccessor) : IUserService
 {
     public async Task<UserEntity> GetUserFromJwtAsync(CancellationToken cancellationToken)
     {
-        var providerId = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
-        return await _dbContext.Users.SingleAsync(u => u.ProviderId == providerId, cancellationToken);
+        var providerId = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+        return await dbContext.Users.SingleAsync(u => u.ProviderId == providerId, cancellationToken);
     }
 
     public List<string> GetAllJwtRoles()
     {
-        return _httpContextAccessor.HttpContext?.User.FindAll(Constants.RolesClaim).Select(c => c.Value)
+        return httpContextAccessor.HttpContext?.User.FindAll(Constants.RolesClaim).Select(c => c.Value)
             .ToList() ?? [];
     }
 
     public List<string> GetAllJwtPermissions()
     {
-        return _httpContextAccessor.HttpContext?.User.FindAll(Constants.PermissionsClaim).Select(c => c.Value)
+        return httpContextAccessor.HttpContext?.User.FindAll(Constants.PermissionsClaim).Select(c => c.Value)
             .ToList() ?? [];
     }
 
     public bool HasPermission(string permission)
     {
-        return _httpContextAccessor.HttpContext?.User.HasClaim(c =>
+        return httpContextAccessor.HttpContext?.User.HasClaim(c =>
                    c.Type == Constants.PermissionsClaim && c.Value == permission) ??
                false;
     }
 
     public async Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken)
     {
-        return userId is null || await _dbContext.Users.FindAsync([userId], cancellationToken) is not null;
+        return userId is null || await dbContext.Users.FindAsync([userId], cancellationToken) is not null;
     }
 }
