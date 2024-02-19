@@ -28,7 +28,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
         UpdateProject(request, project);
 
         await dbContext.SaveChangesAsync(ct);
-        await SendOkAsync(ct);
+        await SendNoContentAsync(ct);
     }
 
     private static void UpdateProject(Request request, ProjectEntity project)
