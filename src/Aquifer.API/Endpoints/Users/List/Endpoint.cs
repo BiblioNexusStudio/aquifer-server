@@ -26,15 +26,15 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var users = dbContext.Users.Where(x => (self.Role == UserRole.Manager && x.CompanyId == self.CompanyId) ||
                                                self.Role == UserRole.Publisher ||
                                                self.Role == UserRole.Admin).Select(user => new Response
-        {
-            Id = user.Id,
-            Name = $"{user.FirstName} {user.LastName}",
-            Role = user.Role,
-            CompanyName = user.Company.Name,
-            Company = new CompanyResponse { Id = user.CompanyId, Name = user.Company.Name },
-            Email = user.Email,
-            IsEmailVerified = user.EmailVerified
-        }).AsEnumerable().OrderBy(u => u.Name).ToList();
+                                               {
+                                                   Id = user.Id,
+                                                   Name = $"{user.FirstName} {user.LastName}",
+                                                   Role = user.Role,
+                                                   CompanyName = user.Company.Name,
+                                                   Company = new CompanyResponse { Id = user.CompanyId, Name = user.Company.Name },
+                                                   Email = user.Email,
+                                                   IsEmailVerified = user.EmailVerified
+                                               }).AsEnumerable().OrderBy(u => u.Name).ToList();
 
         await SendOkAsync(users, ct);
     }
