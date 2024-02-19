@@ -19,7 +19,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         await CreateUserAsync(req, ct);
-        await SendAsync(null, 201, ct);
+        await SendNoContentAsync(ct);
     }
 
     private async Task CreateUserAsync(Request req, CancellationToken ct)

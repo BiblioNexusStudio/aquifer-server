@@ -27,7 +27,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             return;
         }
 
-        await SendAsync(project, 200, ct);
+        await SendOkAsync(project, ct);
     }
 
     private async Task<Response?> GetProjectAsync(Request req, CancellationToken ct)

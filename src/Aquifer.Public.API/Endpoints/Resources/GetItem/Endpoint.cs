@@ -22,7 +22,7 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         var response = await GetResourceContentAsync(req, ct);
-        await SendAsync(response, 200, ct);
+        await SendOkAsync(response, ct);
     }
 
     private async Task<Response> GetResourceContentAsync(Request req, CancellationToken ct)

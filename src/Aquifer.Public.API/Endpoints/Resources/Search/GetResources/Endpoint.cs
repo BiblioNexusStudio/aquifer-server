@@ -17,7 +17,7 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
         {
             s.Summary = "Search resources by keyword query, passage, or both.";
             s.Description =
-                "For a given query, language, and content type, search for matching resources.";
+                "For a given query, language, and content type, search for matching resources. Can narrow results by resource type or collection.";
         });
     }
 
@@ -41,19 +41,14 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
 
         if (totalCount == 0)
         {
-            await SendAsync(new Response(), 200, ct);
+            await SendOkAsync(new Response(), ct);
             return;
         }
 
         var items = await GetResourcesAsync(req, query, ct);
-        var response = new Response
-        {
-            TotalItemCount = totalCount,
-            ReturnedItemCount = items.Count,
-            Items = items
-        };
+        var response = new Response { TotalItemCount = totalCount, ReturnedItemCount = items.Count, Offset = req.Offset, Items = items };
 
-        await SendAsync(response, 200, ct);
+        await SendOkAsync(response, ct);
     }
 
     private IQueryable<ResourceContentVersionEntity> GetQuery(Request req)
@@ -66,13 +61,16 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
             x.IsPublished &&
             (req.Query == null || x.DisplayName.Contains(req.Query) || x.ResourceContent.Resource.EnglishLabel.Contains(req.Query)) &&
             (startVerseId == null ||
-                x.ResourceContent.Resource.VerseResources.Any(vr =>
-                    vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
-                x.ResourceContent.Resource.PassageResources.Any(pr =>
-                    (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
-                    (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
-                    (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
+             x.ResourceContent.Resource.VerseResources.Any(vr =>
+                 vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
+             x.ResourceContent.Resource.PassageResources.Any(pr =>
+                 (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
+                 (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
+                 (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
             (req.ResourceType == default || x.ResourceContent.Resource.ParentResource.ResourceType == req.ResourceType) &&
+            (req.ResourceCollectionCode == null ||
+             x.ResourceContent.Resource.ParentResource.ShortName.ToLower() == req.ResourceCollectionCode.ToLower()
+            ) &&
             (x.ResourceContent.LanguageId == req.LanguageId || x.ResourceContent.Language.ISO6393Code == req.LanguageCode));
     }
 
@@ -104,6 +102,8 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
                 Grouping = new ResourceTypeMetadata
                 {
                     Name = x.ResourceContent.Resource.ParentResource.DisplayName,
+                    CollectionTitle = x.ResourceContent.Resource.ParentResource.DisplayName,
+                    CollectionCode = x.ResourceContent.Resource.ParentResource.ShortName,
                     Type = x.ResourceContent.Resource.ParentResource.ResourceType
                 }
             })

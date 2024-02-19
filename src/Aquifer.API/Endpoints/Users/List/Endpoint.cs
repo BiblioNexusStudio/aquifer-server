@@ -21,11 +21,11 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
             Name = $"{user.FirstName} {user.LastName}",
             Role = user.Role,
             CompanyName = user.Company.Name,
-            Company = new() { Id = user.CompanyId, Name = user.Company.Name },
+            Company = new CompanyResponse { Id = user.CompanyId, Name = user.Company.Name },
             Email = user.Email,
             IsEmailVerified = user.EmailVerified
         }).ToListAsync(ct);
 
-        await SendAsync(users, 200, ct);
+        await SendOkAsync(users, ct);
     }
 }
