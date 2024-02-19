@@ -15,7 +15,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var users = await dbContext.Users.Select(user => new Response
+        var users = dbContext.Users.Select(user => new Response
         {
             Id = user.Id,
             Name = $"{user.FirstName} {user.LastName}",
@@ -24,8 +24,8 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
             Company = new CompanyResponse { Id = user.CompanyId, Name = user.Company.Name },
             Email = user.Email,
             IsEmailVerified = user.EmailVerified
-        }).ToListAsync(ct);
+        }).AsEnumerable().OrderBy(u => u.Name);
 
-        await SendOkAsync(users, ct);
+        await SendOkAsync([..users], ct);
     }
 }
