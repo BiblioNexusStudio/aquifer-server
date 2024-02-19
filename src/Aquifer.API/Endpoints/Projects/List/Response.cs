@@ -8,9 +8,10 @@ public class Response
     public required string ProjectLead { get; set; }
     public required string Company { get; set; }
     public required string ProjectPlatform { get; set; }
-    public int? Days { get; set; }
+    public required int? Days { get; set; }
+    public required bool IsStarted { get; set; }
 
-    public ProjectResourceStatusCounts Counts { get; set; } = null!;
+    public required ProjectResourceStatusCounts Counts { get; set; } = null!;
 }
 
 public class ProjectResourceStatusCounts
