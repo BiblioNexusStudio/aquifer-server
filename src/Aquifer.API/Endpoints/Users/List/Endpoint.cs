@@ -34,8 +34,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             Company = new CompanyResponse { Id = user.CompanyId, Name = user.Company.Name },
             Email = user.Email,
             IsEmailVerified = user.EmailVerified
-        }).AsEnumerable().OrderBy(u => u.Name);
+        }).AsEnumerable().OrderBy(u => u.Name).ToList();
 
-        await SendOkAsync([..users], ct);
+        await SendOkAsync(users, ct);
     }
 }
