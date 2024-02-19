@@ -21,12 +21,10 @@ public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService h
         var draft = await dbContext.ResourceContentVersions
             .Where(x => x.ResourceContentId == request.ContentId &&
                         x.IsDraft &&
-                        ((x.ResourceContent.Language.ISO6393Code == "eng" &&
-                          (x.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
-                           x.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview)) ||
-                         (x.ResourceContent.Language.ISO6393Code != "eng" &&
-                          (x.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending ||
-                           x.ResourceContent.Status == ResourceContentStatus.TranslationInReview))))
+                        (x.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
+                         x.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview ||
+                         x.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending ||
+                         x.ResourceContent.Status == ResourceContentStatus.TranslationInReview))
             .Include(x => x.ResourceContent)
             .ThenInclude(x => x.Language)
             .SingleOrDefaultAsync(ct);
