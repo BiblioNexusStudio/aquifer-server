@@ -87,6 +87,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                 new SqlParameter("SearchQuery", request.SearchQuery ?? ""))
             .ToListAsync(ct);
 
-        await SendAsync(response, 200, ct);
+        await SendOkAsync(response, ct);
     }
 }

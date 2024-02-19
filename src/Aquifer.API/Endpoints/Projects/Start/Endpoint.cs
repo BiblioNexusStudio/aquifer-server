@@ -30,8 +30,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IAdm
         ValidateProject(project);
 
         var resourceContentVersions = await dbContext.ResourceContentVersions
-            .Where(rcv => rcv.ResourceContent.Projects.Contains(project) && rcv.IsDraft).Include(rcv => rcv.ResourceContent)
-            .Include(rcv => rcv.ResourceContent.Language).ToListAsync(ct);
+            .Where(rcv => rcv.ResourceContent.Projects.Contains(project) && rcv.IsDraft)
+            .Include(rcv => rcv.ResourceContent)
+            .ThenInclude(rc => rc.Language).ToListAsync(ct);
 
         foreach (var resourceContentVersion in resourceContentVersions)
         {
@@ -56,7 +57,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IAdm
 
         await dbContext.SaveChangesAsync(ct);
 
-        await SendOkAsync(ct);
+        await SendNoContentAsync(ct);
     }
 
     private void ValidateProject(ProjectEntity project)

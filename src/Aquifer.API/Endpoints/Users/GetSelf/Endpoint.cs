@@ -20,9 +20,9 @@ public class Endpoint(IUserService userService) : EndpointWithoutRequest<Respons
             Id = user.Id,
             Name = $"{user.FirstName} {user.LastName}",
             Permissions = permissions,
-            Company = new() { Id = user.CompanyId }
+            Company = new CompanyResponse { Id = user.CompanyId }
         };
 
-        await SendAsync(response, 200, ct);
+        await SendOkAsync(response, ct);
     }
 }

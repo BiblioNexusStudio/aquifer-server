@@ -66,9 +66,16 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
 
     private async Task ValidateRequest(ProjectEntity project, Request request, CancellationToken ct)
     {
-        if (project.Started is not null)
+        if (project.Started is not null && ((request.QuotedCost.HasValue && project.QuotedCost != request.QuotedCost) ||
+                                            (request.EffectiveWordCount.HasValue &&
+                                             project.EffectiveWordCount != request.EffectiveWordCount) ||
+                                            (request.ProjectedDeliveryDate.HasValue &&
+                                             project.ProjectedDeliveryDate != request.ProjectedDeliveryDate) ||
+                                            (request.ProjectedPublishDate.HasValue &&
+                                             project.ProjectedPublishDate != request.ProjectedPublishDate) ||
+                                            (request.CompanyLeadUserId.HasValue && project.CompanyLeadUserId != request.CompanyLeadUserId)))
         {
-            ThrowError(r => r.Id, "Can't make updates to a project that is already started.");
+            ThrowError(r => r.Id, "Can only update Project Manager after a project has been started.");
         }
 
         if (project.ProjectPlatform.Name != "Aquifer" && request.CompanyLeadUserId is not null)

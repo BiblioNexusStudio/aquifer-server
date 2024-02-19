@@ -25,7 +25,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
 
         await dbContext.SaveChangesAsync(ct);
 
-        await SendAsync(new Response { Id = newProject.Id }, 201, ct);
+        await SendOkAsync(new Response { Id = newProject.Id }, ct);
     }
 
     private async Task<ProjectEntity> BuildProjectFromRequest(Request request, CancellationToken ct)

@@ -19,7 +19,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     public override async Task HandleAsync(CancellationToken ct)
     {
         var projects = await GetProjectsAsync(ct);
-        await SendAsync(projects, 200, ct);
+        await SendOkAsync(projects, ct);
     }
 
     private async Task<List<Response>> GetProjectsAsync(CancellationToken ct)

@@ -29,6 +29,6 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
             ScriptDirection = x.ScriptDirection.ToString()
         }).ToListAsync(ct);
 
-        await SendAsync(languages, 200, ct);
+        await SendOkAsync(languages, ct);
     }
 }
