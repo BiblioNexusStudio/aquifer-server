@@ -11,7 +11,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
 {
     public override void Configure()
     {
-        Put("/projects/{Id}");
+        Patch("/projects/{Id}");
         Permissions(PermissionName.EditProject);
     }
 
@@ -25,17 +25,43 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
         }
 
         await ValidateRequest(project, request, ct);
-
-        project.QuotedCost = request.QuotedCost;
-        project.EffectiveWordCount = request.EffectiveWordCount;
-        project.ProjectedDeliveryDate = request.ProjectedDeliveryDate;
-        project.ProjectedPublishDate = request.ProjectedPublishDate;
-        project.ProjectManagerUserId = request.ProjectManagerUserId;
-        project.CompanyLeadUserId = request.CompanyLeadUserId;
+        UpdateProject(request, project);
 
         await dbContext.SaveChangesAsync(ct);
+        await SendNoContentAsync(ct);
+    }
 
-        await SendOkAsync(ct);
+    private static void UpdateProject(Request request, ProjectEntity project)
+    {
+        if (request.QuotedCost.HasValue)
+        {
+            project.QuotedCost = request.QuotedCost;
+        }
+
+        if (request.EffectiveWordCount.HasValue)
+        {
+            project.EffectiveWordCount = request.EffectiveWordCount;
+        }
+
+        if (request.ProjectedDeliveryDate.HasValue)
+        {
+            project.ProjectedDeliveryDate = request.ProjectedDeliveryDate;
+        }
+
+        if (request.ProjectedPublishDate.HasValue)
+        {
+            project.ProjectedPublishDate = request.ProjectedPublishDate;
+        }
+
+        if (request.ProjectManagerUserId.HasValue)
+        {
+            project.ProjectManagerUserId = request.ProjectManagerUserId.Value;
+        }
+
+        if (request.CompanyLeadUserId.HasValue)
+        {
+            project.CompanyLeadUserId = request.CompanyLeadUserId;
+        }
     }
 
     private async Task ValidateRequest(ProjectEntity project, Request request, CancellationToken ct)
@@ -56,15 +82,18 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
             ThrowEntityNotFoundError<Request>(r => r.CompanyLeadUserId);
         }
 
-        var projectManagerUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.ProjectManagerUserId, ct);
-        if (projectManagerUser is null)
+        if (request.ProjectManagerUserId is not null)
         {
-            ThrowEntityNotFoundError<Request>(r => r.ProjectManagerUserId);
-        }
+            var projectManagerUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.ProjectManagerUserId, ct);
+            if (projectManagerUser is null)
+            {
+                ThrowEntityNotFoundError<Request>(r => r.ProjectManagerUserId);
+            }
 
-        if (projectManagerUser.Role != UserRole.Publisher)
-        {
-            ThrowError(r => r.ProjectManagerUserId, "Project manager must be a Publisher.");
+            if (projectManagerUser.Role != UserRole.Publisher)
+            {
+                ThrowError(r => r.ProjectManagerUserId, "Project manager must be a Publisher.");
+            }
         }
     }
 }
