@@ -1,11 +1,17 @@
 ﻿using Aquifer.Data.EventHandlers;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
+
+[Index(nameof(GreekNewTestamentId),
+    nameof(WordIdentifier),
+    IsUnique = true)]
 public class GreekNewTestamentWordEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
-    public int GreekSourceId { get; set; }
+    public int GreekNewTestamentId { get; set; }
     public int GreekWordId { get; set; }
+    public int WordIdentifier { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
