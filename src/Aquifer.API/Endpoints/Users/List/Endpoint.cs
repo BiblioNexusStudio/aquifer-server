@@ -17,11 +17,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override async Task HandleAsync(CancellationToken ct)
     {
         var self = await userService.GetUserFromJwtAsync(ct);
-        if (!userService.HasPermission(PermissionName.ReadAllUsers))
-        {
-            await SendForbiddenAsync(ct);
-            return;
-        }
 
         var users = await dbContext.Users.Where(x =>
             userService.HasPermission(PermissionName.ReadAllUsers) || (userService.HasPermission(PermissionName.ReadUsers) && self.CompanyId == x.CompanyId)
