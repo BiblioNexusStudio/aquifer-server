@@ -41,7 +41,7 @@ public static class Constants
 public static class PermissionName
 {
     public const string ReadUsers = "read:users",
-        ReadUserDetails = "read:user-details",
+        ReadAllUsers = "read:all-users",
         EditContent = "edit:content",
         PublishContent = "publish:content",
         CreateContent = "create:content",
