@@ -16,7 +16,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var query = dbContext.ResourceContents.AsQueryable();
+        var query = dbContext.ResourceContents.Where(rc => rc.MediaType != ResourceContentMediaType.Audio);
 
         query = ApplyLanguageIdFilter(query, request.LanguageId);
         query = ApplyParentResourceIdFilter(query, request.ParentResourceId);
