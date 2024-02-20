@@ -63,14 +63,15 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             ActualPublishDate = x.ActualPublishDate,
             ProjectedDeliveryDate = x.ProjectedDeliveryDate,
             ProjectedPublishDate = x.ProjectedPublishDate,
-            Items = x.ResourceContents.SelectMany(rc => rc.Versions.Where(v => v.IsDraft).Select(rcv => new ProjectResourceItem
-            {
-                ResourceContentId = rc.Id,
-                EnglishLabel = rc.Resource.EnglishLabel,
-                ParentResourceName = rc.Resource.ParentResource.DisplayName,
-                StatusDisplayName = rc.Status.GetDisplayName(),
-                AssignedUserName = rcv.AssignedUser == null ? null : $"{rcv.AssignedUser.FirstName} {rcv.AssignedUser.LastName}"
-            })),
+            Items = x.ResourceContents.SelectMany(rc => rc.Versions.OrderByDescending(v => v.Created).Take(1).Select(rcv =>
+                new ProjectResourceItem
+                {
+                    ResourceContentId = rc.Id,
+                    EnglishLabel = rc.Resource.EnglishLabel,
+                    ParentResourceName = rc.Resource.ParentResource.DisplayName,
+                    StatusDisplayName = rc.Status.GetDisplayName(),
+                    AssignedUserName = rcv.AssignedUser == null ? null : $"{rcv.AssignedUser.FirstName} {rcv.AssignedUser.LastName}"
+                })),
             Counts = new ProjectResourceStatusCounts
             {
                 InProgress = x.ResourceContents.Count(rc => inProgressStatuses.Contains(rc.Status)),
