@@ -46,7 +46,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             ResourceContentStatus.TranslationReviewPending
         ];
 
-        return await dbContext.Projects.Where(x => x.Id == req.ProjectId).Select(x => new Response
+        return await dbContext.Projects.Where(x => x.Id == req.ProjectId).Include(x => x.CompanyLeadUser).Select(x => new Response
         {
             Id = x.Id,
             Name = x.Name,

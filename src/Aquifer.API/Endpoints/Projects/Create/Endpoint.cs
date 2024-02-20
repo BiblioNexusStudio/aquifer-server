@@ -120,7 +120,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
         CancellationToken ct)
     {
         var resourceContents = await dbContext.ResourceContents
-            .Where(rc => request.ResourceIds.Contains(rc.ResourceId) && rc.LanguageId == language.Id)
+            .Where(rc => request.ResourceIds.Contains(rc.ResourceId) && rc.LanguageId == language.Id &&
+                         rc.MediaType != ResourceContentMediaType.Audio)
             .Include(rc => rc.Versions.OrderByDescending(v => v.Created)).Include(rc => rc.Projects).ToListAsync(ct);
 
         if (resourceContents.Count < request.ResourceIds.Length)
@@ -165,10 +166,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
         UserEntity user, CancellationToken ct)
     {
         var englishOrLanguageResourceContents = await dbContext.ResourceContents
-            .Where(rc => request.ResourceIds.Contains(rc.ResourceId) && (rc.LanguageId == language.Id ||
-                                                                         (rc.Resource.ResourceContents.All(rci =>
-                                                                              rci.LanguageId != language.Id) &&
-                                                                          rc.Language.ISO6393Code == "eng")))
+            .Where(rc => request.ResourceIds.Contains(rc.ResourceId) && rc.MediaType != ResourceContentMediaType.Audio)
+            .Where(rc => rc.LanguageId == language.Id || (rc.Resource.ResourceContents.All(rci => rci.LanguageId != language.Id) &&
+                                                          rc.Language.ISO6393Code == "eng"))
             .Include(rc => rc.Versions).Include(rc => rc.Projects).Include(rc => rc.Language).ToListAsync(ct);
 
         List<ResourceContentEntity> resourceContents = [];
