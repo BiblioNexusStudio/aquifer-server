@@ -99,6 +99,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
             {
                 ThrowError(r => r.CompanyLeadUserId, "Company lead must be a Manager or Publisher.");
             }
+
+            return companyLeadUser;
         }
 
         return null;
