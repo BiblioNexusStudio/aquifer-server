@@ -2,6 +2,7 @@ using Aquifer.Data.Entities;
 using Aquifer.Data.EventHandlers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace Aquifer.Data;
 
@@ -21,9 +22,14 @@ public class AquiferDbContext : DbContext
     }
 
     public DbSet<BibleBookContentEntity> BibleBookContents { get; set; }
+    public DbSet<BibleVersionWordEntity> BibleVersionWords { get; set; }
     public DbSet<BibleEntity> Bibles { get; set; }
     public DbSet<CompanyEntity> Companies { get; set; }
+    public DbSet<GreekNewTestamentEntity> GreekNewTestaments { get; set; }
+    public DbSet<GreekNewTestamentWordEntity> GreekNewTestamentWords { get; set; }
+    public DbSet<GreekWordEntity> GreekWords { get; set; }
     public DbSet<LanguageEntity> Languages { get; set; }
+    public DbSet<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; }
     public DbSet<ParentResourceEntity> ParentResources { get; set; }
     public DbSet<PassageEntity> Passages { get; set; }
     public DbSet<PassageResourceEntity> PassageResources { get; set; }
@@ -43,6 +49,10 @@ public class AquiferDbContext : DbContext
     {
         base.OnModelCreating(builder);
         SqlDefaultValueAttributeConvention.Apply(builder);
+    }
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.Conventions.Remove(typeof(ForeignKeyIndexConvention));
     }
 
     private static void OnStateChange(object? sender, EntityEntryEventArgs e)

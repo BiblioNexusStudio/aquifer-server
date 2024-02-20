@@ -7,10 +7,10 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.21.0"/>
-        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.3.0"/>
-        <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.16.4"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.1">
+        <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.21.0" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.3.0" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.16.4" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.2">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
@@ -18,8 +18,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj"/>
-        <ProjectReference Include="..\Aquifer.Common\Aquifer.Common.csproj"/>
+        <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj" />
+        <ProjectReference Include="..\Aquifer.Common\Aquifer.Common.csproj" />
     </ItemGroup>
     <ItemGroup>
         <None Update="host.json">
@@ -31,6 +31,6 @@
         </None>
     </ItemGroup>
     <ItemGroup>
-        <Using Include="System.Threading.ExecutionContext" Alias="ExecutionContext"/>
+        <Using Include="System.Threading.ExecutionContext" Alias="ExecutionContext" />
     </ItemGroup>
 </Project>
