@@ -3,7 +3,7 @@
 public class Response
 {
     public required int Id { get; set; }
-    public required string Name { get; set; } = null!;
+    public required string Name { get; set; }
     public required string Language { get; set; }
     public required string ProjectManager { get; set; }
     public required string Company { get; set; }

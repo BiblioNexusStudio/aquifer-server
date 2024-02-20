@@ -46,6 +46,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
             Language = x.Language.EnglishDisplay,
             ProjectPlatform = x.ProjectPlatform.Name,
             ProjectLead = $"{x.ProjectManagerUser.FirstName} {x.ProjectManagerUser.LastName}",
+            IsStarted = x.Started != null,
             Days =
                 x.ProjectedDeliveryDate.HasValue
                     ? x.ProjectedDeliveryDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber
