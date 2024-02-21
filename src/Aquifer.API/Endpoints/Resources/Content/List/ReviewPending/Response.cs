@@ -5,7 +5,7 @@ namespace Aquifer.API.Endpoints.Resources.Content.List.ReviewPending;
 public record Response
 {
     public required int ContentId { get; set; }
-    public required string DisplayName { get; set; }
+    public required string EnglishLabel { get; set; }
     public required string ParentResourceName { get; set; }
     public required string LanguageEnglishDisplay { get; set; }
 

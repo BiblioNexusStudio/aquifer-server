@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using Aquifer.Data.Entities;
 
-namespace Aquifer.API.Endpoints.Resources.Content.List.AssignedToSelf;
+namespace Aquifer.API.Endpoints.Resources.Content.List.AssignedToOwnCompany;
 
 public record Response
 {
@@ -9,9 +9,7 @@ public record Response
     public required string EnglishLabel { get; set; }
     public required string ParentResourceName { get; set; }
     public required string LanguageEnglishDisplay { get; set; }
-
-    [JsonIgnore]
-    public DateTime? HistoryCreated { get; set; }
+    public required UserResponse AssignedUser { get; set; }
 
     [JsonIgnore]
     public ProjectEntity? Project { get; set; }
@@ -22,8 +20,13 @@ public record Response
 
     public string? ProjectName => Project?.Name;
 
-    public int DaysSinceAssignment => HistoryCreated is null ? 0 : (DateTime.UtcNow - HistoryCreated.Value).Days;
-
     public required int? WordCount { get; set; }
     public required string Status { get; set; }
+}
+
+public class UserResponse
+{
+    public required UserEntity User { get; set; }
+    public string Name => $"{User.FirstName} {User.LastName}";
+    public int Id => User.Id;
 }

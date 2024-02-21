@@ -23,13 +23,13 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
                 .Select(x => new Response
                 {
                     ContentId = x.ResourceContentId,
-                    DisplayName = x.DisplayName,
+                    EnglishLabel = x.ResourceContent.Resource.EnglishLabel,
                     LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
                     ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
                     HistoryCreated = x.ResourceContentVersionStatusHistories.Max(auh => auh.Created),
                     WordCount = x.WordCount
                 }).ToListAsync(ct))
-            .OrderByDescending(x => x.DaysSinceStatusChange).ThenBy(x => x.DisplayName).ToList();
+            .OrderByDescending(x => x.DaysSinceStatusChange).ThenBy(x => x.EnglishLabel).ToList();
 
         await SendOkAsync(resourceContents, ct);
     }

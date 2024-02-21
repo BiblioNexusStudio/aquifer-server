@@ -5,13 +5,13 @@ using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.Content.List.AssignedToSelf;
+namespace Aquifer.API.Endpoints.Resources.Content.List.AssignedToOwnCompany;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService) : EndpointWithoutRequest<List<Response>>
 {
     public override void Configure()
     {
-        Get("/resources/content/assigned-to-self");
+        Get("/resources/content/assigned-to-own-company");
     }
 
     public override async Task HandleAsync(CancellationToken ct)
@@ -19,25 +19,22 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var user = await userService.GetUserFromJwtAsync(ct);
         var resourceContents = (await dbContext.ResourceContentVersions
                 .Where(rcv =>
-                    rcv.AssignedUserId == user.Id &&
+                    rcv.AssignedUser != null &&
+                    rcv.AssignedUser.CompanyId == user.CompanyId &&
                     (rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInProgress ||
-                     rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview ||
-                     rcv.ResourceContent.Status == ResourceContentStatus.TranslationInProgress ||
-                     rcv.ResourceContent.Status == ResourceContentStatus.TranslationInReview))
+                     rcv.ResourceContent.Status == ResourceContentStatus.TranslationInProgress))
                 .Select(x => new Response
                 {
                     ContentId = x.ResourceContentId,
                     EnglishLabel = x.ResourceContent.Resource.EnglishLabel,
                     ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
-                    LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
                     Project = x.ResourceContent.Projects.First(),
-                    HistoryCreated =
-                        x.ResourceContentVersionAssignedUserHistories.Where(auh => auh.AssignedUserId == user.Id)
-                            .Max(auh => auh.Created),
+                    AssignedUser = new UserResponse { User = x.AssignedUser! },
+                    LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
                     WordCount = x.WordCount,
                     Status = x.ResourceContent.Status.GetDisplayName()
                 }).ToListAsync(ct))
-            .OrderByDescending(x => x.DaysSinceAssignment).ThenBy(x => x.EnglishLabel).ToList();
+            .OrderBy(x => x.DaysUntilDeadline).ThenBy(x => x.EnglishLabel).ToList();
 
         await SendOkAsync(resourceContents, ct);
     }
