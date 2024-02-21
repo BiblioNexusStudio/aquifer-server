@@ -4,7 +4,7 @@ using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.Content.List.ReviewPending;
+namespace Aquifer.API.Endpoints.Resources.Content.ReviewPending.List;
 
 public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<Response>>
 {
@@ -22,7 +22,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
                                rcv.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending))
                 .Select(x => new Response
                 {
-                    ContentId = x.ResourceContentId,
+                    Id = x.ResourceContentId,
                     EnglishLabel = x.ResourceContent.Resource.EnglishLabel,
                     LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
                     ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,

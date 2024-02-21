@@ -1,4 +1,5 @@
 ﻿using Aquifer.API.Common;
+using Aquifer.API.Common.Dtos;
 using Aquifer.API.Helpers;
 using Aquifer.Common.Extensions;
 using Aquifer.Data;
@@ -53,10 +54,10 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             Company = x.Company.Name,
             Language = x.Language.EnglishDisplay,
             CompanyLead = x.CompanyLeadUser != null ? $"{x.CompanyLeadUser.FirstName} {x.CompanyLeadUser.LastName}" : null,
-            CompanyLeadUser = x.CompanyLeadUser != null ? new UserResponse { User = x.CompanyLeadUser } : null,
+            CompanyLeadUser = UserDto.FromUserEntity(x.CompanyLeadUser),
             ProjectPlatform = x.ProjectPlatform.Name,
             ProjectManager = $"{x.ProjectManagerUser.FirstName} {x.ProjectManagerUser.LastName}",
-            ProjectManagerUser = new UserResponse { User = x.ProjectManagerUser },
+            ProjectManagerUser = UserDto.FromUserEntity(x.ProjectManagerUser)!,
             SourceWordCount = x.SourceWordCount,
             EffectiveWordCount = x.EffectiveWordCount,
             QuotedCost = x.QuotedCost,

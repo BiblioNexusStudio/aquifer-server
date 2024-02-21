@@ -1,4 +1,4 @@
-﻿using Aquifer.Data.Entities;
+﻿using Aquifer.API.Common.Dtos;
 
 namespace Aquifer.API.Endpoints.Projects.Get;
 
@@ -8,11 +8,11 @@ public class Response
     public required string Name { get; set; }
     public required string Language { get; set; }
     public required string ProjectManager { get; set; }
-    public required UserResponse ProjectManagerUser { get; set; }
+    public required UserDto ProjectManagerUser { get; set; }
     public required string Company { get; set; }
     public required string ProjectPlatform { get; set; }
     public required string? CompanyLead { get; set; }
-    public required UserResponse? CompanyLeadUser { get; set; }
+    public required UserDto? CompanyLeadUser { get; set; }
     public required int SourceWordCount { get; set; }
     public required int? EffectiveWordCount { get; set; }
     public required decimal? QuotedCost { get; set; }
@@ -24,13 +24,6 @@ public class Response
     public required IEnumerable<ProjectResourceItem> Items { get; set; }
 
     public ProjectResourceStatusCounts Counts { get; set; } = null!;
-}
-
-public class UserResponse
-{
-    public required UserEntity User { get; set; }
-    public string Name => $"{User.FirstName} {User.LastName}";
-    public int Id => User.Id;
 }
 
 public class ProjectResourceStatusCounts

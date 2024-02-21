@@ -5,7 +5,7 @@ using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.Content.List.AssignedToSelf;
+namespace Aquifer.API.Endpoints.Resources.Content.AssignedToSelf.List;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService) : EndpointWithoutRequest<List<Response>>
 {
@@ -26,11 +26,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                      rcv.ResourceContent.Status == ResourceContentStatus.TranslationInReview))
                 .Select(x => new Response
                 {
-                    ContentId = x.ResourceContentId,
+                    Id = x.ResourceContentId,
                     EnglishLabel = x.ResourceContent.Resource.EnglishLabel,
                     ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
                     LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
-                    Project = x.ResourceContent.Projects.First(),
+                    ProjectName = x.ResourceContent.Projects.First() == null ? null : x.ResourceContent.Projects.First()!.Name,
+                    ProjectProjectedDeliveryDate =
+                        x.ResourceContent.Projects.First() == null ? null : x.ResourceContent.Projects.First()!.ProjectedDeliveryDate,
                     HistoryCreated =
                         x.ResourceContentVersionAssignedUserHistories.Where(auh => auh.AssignedUserId == user.Id)
                             .Max(auh => auh.Created),
