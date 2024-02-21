@@ -50,6 +50,7 @@ public class AquiferDbContext : DbContext
         base.OnModelCreating(builder);
         SqlDefaultValueAttributeConvention.Apply(builder);
     }
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         configurationBuilder.Conventions.Remove(typeof(ForeignKeyIndexConvention));
@@ -63,6 +64,6 @@ public class AquiferDbContext : DbContext
     private async Task OnSavingChanges(object? sender, SavedChangesEventArgs e)
     {
         var entries = ChangeTracker.Entries();
-        await ProjectCompletionHandler.HandleAsync(_options, entries);
+        await ResourceStatusChangeHandler.HandleAsync(_options, entries);
     }
 }
