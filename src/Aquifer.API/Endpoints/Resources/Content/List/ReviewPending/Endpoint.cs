@@ -24,6 +24,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
                 {
                     ContentId = x.ResourceContentId,
                     DisplayName = x.DisplayName,
+                    LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
                     ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
                     HistoryCreated = x.ResourceContentVersionStatusHistories.Max(auh => auh.Created),
                     WordCount = x.WordCount
