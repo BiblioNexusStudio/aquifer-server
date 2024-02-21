@@ -42,7 +42,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         [
             ResourceContentStatus.AquiferizeInReview,
             ResourceContentStatus.AquiferizeReviewPending,
-            ResourceContentStatus.TranslationInProgress,
+            ResourceContentStatus.TranslationInReview,
             ResourceContentStatus.TranslationReviewPending
         ];
 
