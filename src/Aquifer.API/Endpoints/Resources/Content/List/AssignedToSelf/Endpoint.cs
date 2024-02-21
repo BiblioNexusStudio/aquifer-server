@@ -29,6 +29,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     ContentId = x.ResourceContentId,
                     DisplayName = x.DisplayName,
                     ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
+                    LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
                     HistoryCreated =
                         x.ResourceContentVersionAssignedUserHistories.Where(auh => auh.AssignedUserId == user.Id)
                             .Max(auh => auh.Created),
