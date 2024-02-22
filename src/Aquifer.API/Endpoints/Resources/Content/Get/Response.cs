@@ -18,10 +18,15 @@ public class Response
     public required LanguageResponse Language { get; set; }
     public IEnumerable<VersionResponse> ContentVersions { get; set; } = null!;
     public required IEnumerable<TranslationResponse> ContentTranslations { get; set; }
-    public required ProjectResponse? Project { get; set; }
+
+    public ProjectResponse? Project =>
+        ProjectEntity == null ? null : new ProjectResponse { Id = ProjectEntity.Id, Name = ProjectEntity.Name };
 
     [JsonIgnore]
     public int ResourceId { get; set; }
+
+    [JsonIgnore]
+    public ProjectEntity? ProjectEntity { get; set; }
 }
 
 public class LanguageResponse

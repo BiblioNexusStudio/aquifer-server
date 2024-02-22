@@ -5,7 +5,7 @@ using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.Content.List.AssignedToSelf;
+namespace Aquifer.API.Endpoints.Resources.Content.AssignedToSelf.List;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService) : EndpointWithoutRequest<List<Response>>
 {
@@ -26,17 +26,18 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                      rcv.ResourceContent.Status == ResourceContentStatus.TranslationInReview))
                 .Select(x => new Response
                 {
-                    ContentId = x.ResourceContentId,
-                    DisplayName = x.DisplayName,
+                    Id = x.ResourceContentId,
+                    EnglishLabel = x.ResourceContent.Resource.EnglishLabel,
                     ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
                     LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
+                    ProjectEntity = x.ResourceContent.Projects.FirstOrDefault(),
                     HistoryCreated =
                         x.ResourceContentVersionAssignedUserHistories.Where(auh => auh.AssignedUserId == user.Id)
                             .Max(auh => auh.Created),
                     WordCount = x.WordCount,
                     Status = x.ResourceContent.Status.GetDisplayName()
                 }).ToListAsync(ct))
-            .OrderByDescending(x => x.DaysSinceAssignment).ThenBy(x => x.DisplayName).ToList();
+            .OrderByDescending(x => x.DaysSinceAssignment).ThenBy(x => x.EnglishLabel).ToList();
 
         await SendOkAsync(resourceContents, ct);
     }

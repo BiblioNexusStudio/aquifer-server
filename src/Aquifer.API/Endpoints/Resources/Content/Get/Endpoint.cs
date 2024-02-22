@@ -51,9 +51,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                             ParentResourceName = ar.ParentResource.DisplayName,
                             MediaTypes = ar.ResourceContents.Select(arrc => arrc.MediaType)
                         }),
-                Project = rc.Projects.FirstOrDefault() == null
-                    ? null
-                    : new ProjectResponse { Id = rc.Projects.FirstOrDefault()!.Id, Name = rc.Projects.FirstOrDefault()!.Name },
+                ProjectEntity = rc.Projects.FirstOrDefault(),
                 ContentVersions =
                     rc.Versions.Select(v => new VersionResponse
                     {

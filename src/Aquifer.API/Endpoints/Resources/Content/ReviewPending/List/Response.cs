@@ -1,18 +1,18 @@
 using System.Text.Json.Serialization;
 
-namespace Aquifer.API.Endpoints.Resources.Content.List.ReviewPending;
+namespace Aquifer.API.Endpoints.Resources.Content.ReviewPending.List;
 
-public record Response
+public class Response
 {
-    public required int ContentId { get; set; }
-    public required string DisplayName { get; set; }
+    public required int Id { get; set; }
+    public required string EnglishLabel { get; set; }
     public required string ParentResourceName { get; set; }
     public required string LanguageEnglishDisplay { get; set; }
-
-    [JsonIgnore]
-    public DateTime? HistoryCreated { get; set; }
 
     public int DaysSinceStatusChange => HistoryCreated is null ? 0 : (DateTime.UtcNow - HistoryCreated.Value).Days;
 
     public required int? WordCount { get; set; }
+
+    [JsonIgnore]
+    public DateTime? HistoryCreated { get; set; }
 }
