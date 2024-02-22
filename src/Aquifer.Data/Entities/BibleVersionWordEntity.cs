@@ -10,7 +10,7 @@ public class BibleVersionWordEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
     public int BibleId { get; set; }
-    public int WordIdentifier { get; set; }
+    public long WordIdentifier { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
