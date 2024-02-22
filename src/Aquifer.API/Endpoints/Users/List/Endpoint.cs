@@ -20,7 +20,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         var users = await dbContext.Users.Where(x =>
             userService.HasPermission(PermissionName.ReadAllUsers) || (userService.HasPermission(PermissionName.ReadUsers) && self.CompanyId == x.CompanyId)
-            ).OrderBy(x => x.FirstName).Select(user => new Response
+            ).OrderBy(x => x.FirstName).ThenBy(x => x.LastName).Select(user => new Response
             {
                 Id = user.Id,
                 Name = $"{user.FirstName} {user.LastName}",

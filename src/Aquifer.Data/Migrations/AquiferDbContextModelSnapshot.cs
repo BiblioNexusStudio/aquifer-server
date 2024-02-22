@@ -129,6 +129,7 @@ namespace Aquifer.Data.Migrations
                     b.Property<long>("WordIdentifier")
                         .HasColumnType("bigint");
 
+
                     b.HasKey("Id");
 
                     b.HasIndex("BibleId", "WordIdentifier")

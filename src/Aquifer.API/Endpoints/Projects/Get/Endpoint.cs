@@ -42,11 +42,11 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         [
             ResourceContentStatus.AquiferizeInReview,
             ResourceContentStatus.AquiferizeReviewPending,
-            ResourceContentStatus.TranslationInProgress,
+            ResourceContentStatus.TranslationInReview,
             ResourceContentStatus.TranslationReviewPending
         ];
 
-        return await dbContext.Projects.Where(x => x.Id == req.ProjectId).Select(x => new Response
+        return await dbContext.Projects.Where(x => x.Id == req.ProjectId).Include(x => x.CompanyLeadUser).Select(x => new Response
         {
             Id = x.Id,
             Name = x.Name,
@@ -63,14 +63,15 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             ActualPublishDate = x.ActualPublishDate,
             ProjectedDeliveryDate = x.ProjectedDeliveryDate,
             ProjectedPublishDate = x.ProjectedPublishDate,
-            Items = x.ResourceContents.SelectMany(rc => rc.Versions.Where(v => v.IsDraft).Select(rcv => new ProjectResourceItem
-            {
-                ResourceContentId = rc.Id,
-                EnglishLabel = rc.Resource.EnglishLabel,
-                ParentResourceName = rc.Resource.ParentResource.DisplayName,
-                StatusDisplayName = rc.Status.GetDisplayName(),
-                AssignedUserName = rcv.AssignedUser == null ? null : $"{rcv.AssignedUser.FirstName} {rcv.AssignedUser.LastName}"
-            })),
+            Items = x.ResourceContents.SelectMany(rc => rc.Versions.OrderByDescending(v => v.Created).Take(1).Select(rcv =>
+                new ProjectResourceItem
+                {
+                    ResourceContentId = rc.Id,
+                    EnglishLabel = rc.Resource.EnglishLabel,
+                    ParentResourceName = rc.Resource.ParentResource.DisplayName,
+                    StatusDisplayName = rc.Status.GetDisplayName(),
+                    AssignedUserName = rcv.AssignedUser == null ? null : $"{rcv.AssignedUser.FirstName} {rcv.AssignedUser.LastName}"
+                })),
             Counts = new ProjectResourceStatusCounts
             {
                 InProgress = x.ResourceContents.Count(rc => inProgressStatuses.Contains(rc.Status)),

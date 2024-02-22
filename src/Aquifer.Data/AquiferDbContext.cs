@@ -55,6 +55,11 @@ public class AquiferDbContext : DbContext
         configurationBuilder.Conventions.Remove(typeof(ForeignKeyIndexConvention));
     }
 
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.Conventions.Remove(typeof(ForeignKeyIndexConvention));
+    }
+
     private static void OnStateChange(object? sender, EntityEntryEventArgs e)
     {
         UpdatedTimestampHandler.Handle(e.Entry);
@@ -63,6 +68,6 @@ public class AquiferDbContext : DbContext
     private async Task OnSavingChanges(object? sender, SavedChangesEventArgs e)
     {
         var entries = ChangeTracker.Entries();
-        await ProjectCompletionHandler.HandleAsync(_options, entries);
+        await ResourceStatusChangeHandler.HandleAsync(_options, entries);
     }
 }

@@ -34,7 +34,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
         [
             ResourceContentStatus.AquiferizeInReview,
             ResourceContentStatus.AquiferizeReviewPending,
-            ResourceContentStatus.TranslationInProgress,
+            ResourceContentStatus.TranslationInReview,
             ResourceContentStatus.TranslationReviewPending
         ];
 

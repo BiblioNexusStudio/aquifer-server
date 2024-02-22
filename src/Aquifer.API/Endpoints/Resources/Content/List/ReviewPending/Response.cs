@@ -7,6 +7,7 @@ public record Response
     public required int ContentId { get; set; }
     public required string DisplayName { get; set; }
     public required string ParentResourceName { get; set; }
+    public required string LanguageEnglishDisplay { get; set; }
 
     [JsonIgnore]
     public DateTime? HistoryCreated { get; set; }

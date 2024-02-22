@@ -47,6 +47,33 @@ public static class BibleUtilities
             : chapters.Select(c => (LowerBoundOfChapter(bookId, c), UpperBoundOfChapter(bookId, c))).ToList();
     }
 
+    public static (int, int)? VerseRangeForBookAndChapters(string? bookCode, int? startChapter, int? endChapter)
+    {
+        if (bookCode is null)
+        {
+            return null;
+        }
+
+        var bookId = BibleBookCodeUtilities.IdFromCode(bookCode);
+
+        if (startChapter is not null || endChapter is not null)
+        {
+            if (startChapter is null || endChapter is null)
+            {
+                throw new ArgumentException("startChapter and endChapter must be specified together.");
+            }
+
+            if (startChapter.Value > endChapter.Value)
+            {
+                throw new ArgumentException("startChapter must not be greater than endChapter.");
+            }
+
+            return (LowerBoundOfChapter(bookId, startChapter.Value), UpperBoundOfChapter(bookId, endChapter.Value));
+        }
+
+        return (LowerBoundOfBook(bookId), UpperBoundOfBook(bookId));
+    }
+
     public static (int startVerseId, int endVerseId) GetVerseIds(string bookCode,
         int startChapter,
         int endChapter,
