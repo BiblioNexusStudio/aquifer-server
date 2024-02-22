@@ -12,7 +12,6 @@ public class Response
     public required string LanguageEnglishDisplay { get; set; }
     public required UserDto AssignedUser { get; set; }
     public required int? WordCount { get; set; }
-    public required string Status { get; set; }
 
     public int? DaysUntilProjectDeadline => ProjectEntity?.ProjectedDeliveryDate == null
         ? null

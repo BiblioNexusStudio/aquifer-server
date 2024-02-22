@@ -34,7 +34,8 @@ public static class Constants
             PermissionName.CreateProject,
             PermissionName.CreateUser,
             PermissionName.ReadProject,
-            PermissionName.EditProject
+            PermissionName.EditProject,
+            PermissionName.ReadCompanyContentAssignments
         ]);
 }
 
@@ -42,6 +43,7 @@ public static class PermissionName
 {
     public const string ReadUsers = "read:users",
         ReadAllUsers = "read:all-users",
+        ReadCompanyContentAssignments = "read:company-content-assignments",
         EditContent = "edit:content",
         PublishContent = "publish:content",
         CreateContent = "create:content",
