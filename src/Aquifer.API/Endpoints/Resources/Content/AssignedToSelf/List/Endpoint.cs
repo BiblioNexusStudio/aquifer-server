@@ -30,9 +30,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     EnglishLabel = x.ResourceContent.Resource.EnglishLabel,
                     ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
                     LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
-                    ProjectName = x.ResourceContent.Projects.First() == null ? null : x.ResourceContent.Projects.First()!.Name,
-                    ProjectProjectedDeliveryDate =
-                        x.ResourceContent.Projects.First() == null ? null : x.ResourceContent.Projects.First()!.ProjectedDeliveryDate,
+                    ProjectEntity = x.ResourceContent.Projects.FirstOrDefault(),
                     HistoryCreated =
                         x.ResourceContentVersionAssignedUserHistories.Where(auh => auh.AssignedUserId == user.Id)
                             .Max(auh => auh.Created),

@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Aquifer.API.Common.Dtos;
+using Aquifer.Data.Entities;
 
 namespace Aquifer.API.Endpoints.Resources.Content.AssignedToOwnCompany.List;
 
@@ -13,12 +14,12 @@ public class Response
     public required int? WordCount { get; set; }
     public required string Status { get; set; }
 
-    public int? DaysUntilProjectDeadline => ProjectProjectedDeliveryDate.HasValue
-        ? (ProjectProjectedDeliveryDate.Value.ToDateTime(new TimeOnly(23, 59)) - DateTime.UtcNow).Days
-        : null;
+    public int? DaysUntilProjectDeadline => ProjectEntity?.ProjectedDeliveryDate == null
+        ? null
+        : (ProjectEntity.ProjectedDeliveryDate.Value.ToDateTime(new TimeOnly(23, 59)) - DateTime.UtcNow).Days;
 
-    public required string? ProjectName { get; set; }
+    public string? ProjectName => ProjectEntity?.Name;
 
     [JsonIgnore]
-    public DateOnly? ProjectProjectedDeliveryDate { get; set; }
+    public ProjectEntity? ProjectEntity { get; set; }
 }

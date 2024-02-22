@@ -24,9 +24,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     Id = x.ResourceContentId,
                     EnglishLabel = x.ResourceContent.Resource.EnglishLabel,
                     ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
-                    ProjectName = x.ResourceContent.Projects.First() == null ? null : x.ResourceContent.Projects.First()!.Name,
-                    ProjectProjectedDeliveryDate =
-                        x.ResourceContent.Projects.First() == null ? null : x.ResourceContent.Projects.First()!.ProjectedDeliveryDate,
+                    ProjectEntity = x.ResourceContent.Projects.FirstOrDefault(),
                     AssignedUser = UserDto.FromUserEntity(x.AssignedUser)!,
                     LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
                     WordCount = x.WordCount,
