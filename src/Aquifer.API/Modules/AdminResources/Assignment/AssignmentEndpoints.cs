@@ -38,7 +38,7 @@ public class AssignmentEndpoints
             return TypedResults.BadRequest(AdminResourcesHelpers.InvalidUserIdResponse);
         }
 
-        if (userToAssign.CompanyId != user.CompanyId && hasAssignOutsideCompanyPermission)
+        if (userToAssign.CompanyId != user.CompanyId && !hasAssignOutsideCompanyPermission)
         {
             return TypedResults.BadRequest("Unable to assign to a user outside your company");
         }
