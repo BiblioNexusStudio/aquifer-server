@@ -39,6 +39,7 @@ public class LanguageResponse
 
 public class VersionResponse
 {
+    public required int Id { get; set; }
     public required string DisplayName { get; set; }
     public required UserResponse? AssignedUser { get; set; }
 

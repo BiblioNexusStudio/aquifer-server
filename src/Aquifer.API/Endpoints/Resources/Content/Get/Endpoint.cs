@@ -55,6 +55,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 ContentVersions =
                     rc.Versions.Select(v => new VersionResponse
                     {
+                        Id = v.Id,
                         IsPublished = v.IsPublished,
                         IsDraft = v.IsDraft,
                         Version = v.Version,
