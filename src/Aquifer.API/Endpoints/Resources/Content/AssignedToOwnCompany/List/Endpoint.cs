@@ -1,6 +1,6 @@
+using Aquifer.API.Common;
 using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
-using Aquifer.Common.Extensions;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
@@ -12,13 +12,14 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override void Configure()
     {
         Get("/resources/content/assigned-to-own-company");
+        Permissions(PermissionName.ReadCompanyContentAssignments);
     }
 
     public override async Task HandleAsync(CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
         var resourceContents = (await dbContext.ResourceContentVersions
-                .Where(rcv => rcv.AssignedUser != null && rcv.AssignedUser.CompanyId == user.CompanyId)
+                .Where(rcv => rcv.IsDraft && rcv.AssignedUser != null && rcv.AssignedUser.CompanyId == user.CompanyId)
                 .Select(x => new Response
                 {
                     Id = x.ResourceContentId,
@@ -27,8 +28,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     ProjectEntity = x.ResourceContent.Projects.FirstOrDefault(),
                     AssignedUser = UserDto.FromUserEntity(x.AssignedUser)!,
                     LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
-                    WordCount = x.WordCount,
-                    Status = x.ResourceContent.Status.GetDisplayName()
+                    WordCount = x.WordCount
                 }).ToListAsync(ct))
             .OrderBy(x => x.DaysUntilProjectDeadline).ThenBy(x => x.EnglishLabel).ToList();
 
