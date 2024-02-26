@@ -13,7 +13,7 @@ public class Response
     [JsonIgnore]
     public string ContentValue { get; set; } = null!;
 
-    public object Content => JsonUtilities.DefaultDeserialize(ContentValue);
+    public object Content { get; set; } = null!;
 
     public ResourceTypeMetadata Grouping { get; set; } = null!;
     public ResourceContentLanguage Language { get; set; } = null!;
@@ -25,6 +25,11 @@ public class ResourceTypeMetadata
     public ResourceType Type { get; init; }
 
     public string Name { get; set; } = null!;
+
+    [JsonIgnore]
+    public ResourceContentMediaType MediatypeValue { get; set; }
+
+    public string MediaType => MediatypeValue.ToString();
 
     [JsonIgnore]
     public string? LicenseInfoValue { get; set; } = null!;

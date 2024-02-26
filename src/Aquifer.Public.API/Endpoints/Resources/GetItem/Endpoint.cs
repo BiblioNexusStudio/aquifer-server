@@ -1,10 +1,13 @@
-﻿using Aquifer.Data;
+﻿using Aquifer.Common.Tiptap;
+using Aquifer.Common.Utilities;
+using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Resources.GetItem;
 
-public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -27,7 +30,7 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
 
     private async Task<Response> GetResourceContentAsync(Request req, CancellationToken ct)
     {
-        var response = await _dbContext.ResourceContentVersions
+        var response = await dbContext.ResourceContentVersions
             .Where(x => x.ResourceContentId == req.ContentId && x.IsPublished).Select(x => new Response
             {
                 Id = x.ResourceContentId,
@@ -45,6 +48,7 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
                 {
                     Name = x.ResourceContent.Resource.ParentResource.DisplayName,
                     Type = x.ResourceContent.Resource.ParentResource.ResourceType,
+                    MediatypeValue = x.ResourceContent.MediaType,
                     LicenseInfoValue = x.ResourceContent.Resource.ParentResource.LicenseInfo
                 }
             }).SingleOrDefaultAsync(ct);
@@ -54,6 +58,8 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
             ThrowError($"No record found for {req.ContentId}", 404);
         }
 
+        response.Content = TiptapUtilities.ConvertFromJson(response.ContentValue,
+            response.Grouping.MediatypeValue == ResourceContentMediaType.Text ? req.ContentTextType : TiptapContentType.None);
         return response;
     }
 }
