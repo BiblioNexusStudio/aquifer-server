@@ -31,6 +31,7 @@ public class AdminResourcesModule : IModule
         group.MapPost("content/{contentId:int}/send-review", ResourceReviewEndpoints.SendToReview)
             .RequireAuthorization(PermissionName.SendReviewContent);
 
+        // TODO: deprecated
         group.MapPost("content/{contentId:int}/review", ResourceReviewEndpoints.Review)
             .RequireAuthorization(PermissionName.ReviewContent);
 
@@ -38,6 +39,7 @@ public class AdminResourcesModule : IModule
         group.MapGet("summary", GetResourcesSummaryEndpoints.Get)
             .CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
 
+        // TODO: deprecated
         group.MapGet("content/summary/{resourceContentId:int}",
             GetResourceContentSummaryEndpoints.GetByResourceContentId);
 
@@ -54,7 +56,9 @@ public class AdminResourcesModule : IModule
         group.MapGet("content/pending-review", ResourcesListEndpoints.GetPendingReview)
             .RequireAuthorization(PermissionName.ReviewContent);
 
+        // TODO: deprecated
         group.MapGet("list", ResourcesListEndpoints.Get);
+        // TODO: deprecated
         group.MapGet("list/count", ResourcesListEndpoints.GetCount);
 
         group.MapPost(CreateTranslationEndpoint.Path, CreateTranslationEndpoint.Handle)
@@ -63,6 +67,8 @@ public class AdminResourcesModule : IModule
             .RequireAuthorization(PermissionName.AssignContent);
         group.MapPost(SendTranslationReviewEndpoint.Path, SendTranslationReviewEndpoint.Handle)
             .RequireAuthorization(PermissionName.SendReviewContent);
+
+        // TODO: deprecated
         group.MapPost(ReviewTranslationEndpoint.Path, ReviewTranslationEndpoint.Handle)
             .RequireAuthorization(PermissionName.ReviewContent);
 
