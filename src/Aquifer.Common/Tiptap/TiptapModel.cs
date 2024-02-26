@@ -1,4 +1,4 @@
-﻿namespace Aquifer.Common.Models;
+﻿namespace Aquifer.Common.Tiptap;
 
 public class TiptapModel
 {

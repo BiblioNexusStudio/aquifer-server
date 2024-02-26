@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using Aquifer.Common.Extensions;
-using Aquifer.Common.Models;
 
 namespace Aquifer.Common.Tiptap;
 

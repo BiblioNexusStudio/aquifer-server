@@ -1,5 +1,4 @@
-﻿using Aquifer.Common.Models;
-using Aquifer.Common.Tiptap;
+﻿using Aquifer.Common.Tiptap;
 
 namespace Aquifer.Common.Utilities;
 
