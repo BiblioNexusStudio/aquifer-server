@@ -18,7 +18,7 @@ internal class TiptapToMarkdownConverter : BaseTiptapConverter
                 AppendText(sb, content);
             }
 
-            response.Add(sb.ToString().Replace("\"", "&quot;"));
+            response.Add(sb.Replace("\"", "&quot;").ToString());
         }
 
         return response;
