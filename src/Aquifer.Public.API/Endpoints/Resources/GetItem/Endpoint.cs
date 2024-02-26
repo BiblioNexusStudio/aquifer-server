@@ -48,7 +48,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 {
                     Name = x.ResourceContent.Resource.ParentResource.DisplayName,
                     Type = x.ResourceContent.Resource.ParentResource.ResourceType,
-                    MediatypeValue = x.ResourceContent.MediaType,
+                    MediaTypeValue = x.ResourceContent.MediaType,
                     LicenseInfoValue = x.ResourceContent.Resource.ParentResource.LicenseInfo
                 }
             }).SingleOrDefaultAsync(ct);
@@ -59,7 +59,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         }
 
         response.Content = TiptapUtilities.ConvertFromJson(response.ContentValue,
-            response.Grouping.MediatypeValue == ResourceContentMediaType.Text ? req.ContentTextType : TiptapContentType.None);
+            response.Grouping.MediaTypeValue == ResourceContentMediaType.Text ? req.ContentTextType : TiptapContentType.None);
         return response;
     }
 }

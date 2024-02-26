@@ -13,7 +13,8 @@ public static class TiptapUtilities
         {
             TiptapContentType.None => JsonUtilities.DefaultDeserialize(tiptapJson),
             TiptapContentType.Json => Deserialize(tiptapJson).Select(x => x.Tiptap.Content),
-            TiptapContentType.Markdown => new TiptapToMarkdownConverter().ConvertFromJson(Deserialize(tiptapJson)),
+            TiptapContentType.Markdown or TiptapContentType.Html =>
+                TiptapToMarkdownConverter.ConvertFromJson(Deserialize(tiptapJson)),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }

@@ -6,9 +6,7 @@ namespace Aquifer.Common.Tiptap;
 
 internal class TiptapToMarkdownConverter : BaseTiptapConverter
 {
-    private const string MdNewLine = "<br>";
-
-    internal override List<string> ConvertFromJson(List<TiptapModel> tiptaps)
+    internal static List<string> ConvertFromJson(List<TiptapModel> tiptaps)
     {
         List<string> response = [];
         foreach (var tiptap in tiptaps)
@@ -18,22 +16,22 @@ internal class TiptapToMarkdownConverter : BaseTiptapConverter
 
             foreach (var content in contents)
             {
-                AppendText(sb, content, "root", 0);
+                AppendText(sb, content);
             }
 
-            response.Add(TrimEndingNewLines(sb.ToString()));
+            response.Add(sb.ToString().Replace("\"", "&quot;"));
         }
 
         return response;
     }
 
-    private static void AppendText(StringBuilder sb, TiptapRootContent content, string parent, int depth, int listItem = 0)
+    private static void AppendText(StringBuilder sb, TiptapRootContent content)
     {
         var innerContents = content.Content ?? [];
 
         if (content.Type == HeadingType)
         {
-            int level = content.Attrs?.Level ?? 1;
+            var level = content.Attrs?.Level ?? 1;
             sb.Append("<h").Append(level).Append('>');
 
             foreach (var innerContent in innerContents)
@@ -50,47 +48,28 @@ internal class TiptapToMarkdownConverter : BaseTiptapConverter
         if (content.Type == ParagraphType)
         {
             AppendParagraph(sb, innerContents);
-            sb.Append(MdNewLine).AppendIf(MdNewLine, parent != ListItemType && content.Content?.Count > 0);
         }
 
         if (content.Type == BulletListType)
         {
-            ++depth;
-            foreach (var innerContent in innerContents)
-            {
-                AppendText(sb, innerContent, content.Type, depth);
-            }
-
-            sb.AppendIf(MdNewLine, parent != ListItemType);
+            AppendList(sb, innerContents, "ul");
         }
 
         if (content.Type == OrderedListType)
         {
-            ++depth;
-            foreach (var innerContent in innerContents)
-            {
-                AppendText(sb, innerContent, content.Type, depth, ++listItem);
-            }
-
-            sb.AppendIf(MdNewLine, parent != ListItemType);
+            AppendList(sb, innerContents, "ol");
         }
 
         if (content.Type == ListItemType)
         {
-            for (var i = 0; i < depth; i++)
-            {
-                sb.Append(parent == BulletListType ? "- " : $"{listItem}. ");
-            }
-
-            foreach (var innerContent in innerContents)
-            {
-                AppendText(sb, innerContent, content.Type, depth);
-            }
+            AppendList(sb, innerContents, "li");
         }
     }
 
     private static void AppendParagraph(StringBuilder sb, List<TiptapRootContent> contents)
     {
+        sb.Append("<p>");
+
         foreach (var innerContent in contents)
         {
             if (innerContent.Type != TextContentType)
@@ -99,49 +78,26 @@ internal class TiptapToMarkdownConverter : BaseTiptapConverter
             }
 
             var text = innerContent.Text;
-            var trimmedStart = innerContent.Text.StartsWith(' ');
-            if (trimmedStart)
-            {
-                text = text.TrimStart();
-                trimmedStart = true;
-            }
+            var isBoldText = innerContent.Marks?.Any(x => x.Type == BoldMarkType) == true;
+            var isItalicText = innerContent.Marks?.Any(x => x.Type == ItalicMarkType) == true;
 
-            var trimmedEnd = innerContent.Text.EndsWith(' ');
-            if (trimmedEnd)
-            {
-                text = text.TrimEnd();
-                trimmedEnd = true;
-            }
-
-            sb.AppendIf(' ', trimmedStart);
-            AppendItalic(sb, innerContent);
-            AppendBold(sb, innerContent);
-
-            sb.Append(text);
-
-            AppendItalic(sb, innerContent);
-            AppendBold(sb, innerContent);
-            sb.AppendIf(' ', trimmedEnd);
+            sb.AppendIf("<em>", isItalicText).AppendIf("<strong>", isBoldText)
+                .Append(text)
+                .AppendIf("</strong>", isBoldText).AppendIf("</em>", isItalicText);
         }
+
+        sb.Append("</p>");
     }
 
-    private static void AppendBold(StringBuilder sb, TiptapRootContent innerContent)
+    private static void AppendList(StringBuilder sb, List<TiptapRootContent> contents, string element)
     {
-        sb.AppendIf("**", innerContent.Marks?.Any(x => x.Type == BoldMarkType) == true);
-    }
+        sb.Append('<').Append(element).Append('>');
 
-    private static void AppendItalic(StringBuilder sb, TiptapRootContent innerContent)
-    {
-        sb.AppendIf('_', innerContent.Marks?.Any(x => x.Type == ItalicMarkType) == true);
-    }
-
-    private static string TrimEndingNewLines(string input)
-    {
-        while (input.Length > MdNewLine.Length && input[^MdNewLine.Length..input.Length] == MdNewLine)
+        foreach (var innerContent in contents)
         {
-            input = input[..^MdNewLine.Length];
+            AppendText(sb, innerContent);
         }
 
-        return input;
+        sb.Append("</").Append(element).Append('>');
     }
 }
