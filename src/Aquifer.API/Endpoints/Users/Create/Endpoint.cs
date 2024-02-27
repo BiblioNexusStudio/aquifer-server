@@ -9,12 +9,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Users.Create;
 
-public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderService, ILogger<Endpoint> logger, IUserService userService) : Endpoint<Request>
+public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderService, ILogger<Endpoint> logger, IUserService userService)
+    : Endpoint<Request>
 {
     public override void Configure()
     {
         Post("/users/create");
-        Permissions([PermissionName.CreateUser, PermissionName.CreateUsersInCompany]);
+        Permissions(PermissionName.CreateUser, PermissionName.CreateUsersInCompany);
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
@@ -42,10 +43,11 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         {
             ThrowError(x => x.CompanyId, "Invalid company id");
         }
+
         var self = await userService.GetUserFromJwtAsync(ct);
-        if (userService.HasPermission(PermissionName.CreateUsersInCompany) && self.CompanyId != newUserCompany.Id)
+        if (!userService.HasPermission(PermissionName.CreateUser) && self.CompanyId != newUserCompany.Id)
         {
-            ThrowError(x => x.CompanyId, "Not authorized to create user outside of company", StatusCodes.Status401Unauthorized);
+            ThrowError(x => x.CompanyId, "Not authorized to create user outside of company", StatusCodes.Status403Forbidden);
         }
     }
 
@@ -78,11 +80,6 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         {
             logger.LogWarning("Requested non-existent role: {requestedRole} - {response}", req.Role, responseContent);
             ThrowError("Requested role does not exist", 400);
-        }
-
-        if (userService.HasPermission(PermissionName.CreateUsersInCompany) && role.Name != UserRole.Editor.ToString().ToLower())
-        {
-            ThrowError("Not authorized to create a user with this role", StatusCodes.Status401Unauthorized);
         }
 
         return role.Id;
