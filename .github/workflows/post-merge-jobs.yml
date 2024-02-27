@@ -25,9 +25,9 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout source code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - name: Setup .NET
-              uses: actions/setup-dotnet@v3
+              uses: actions/setup-dotnet@v4
               with:
                   dotnet-version: '8.x'
             - name: Make build directory
@@ -38,7 +38,7 @@ jobs:
                 dotnet build --configuration Release --output ../../build --runtime win-x64
                 cd ../..
             - name: Publish artifact
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: build
                   path: build
@@ -51,7 +51,7 @@ jobs:
         environment:
             name: dev-qa-jobs
         steps:
-            - uses: actions/download-artifact@v3
+            - uses: actions/download-artifact@v4
               with:
                   name: build
                   path: build
@@ -70,7 +70,7 @@ jobs:
         environment:
             name: prod-jobs
         steps:
-            - uses: actions/download-artifact@v3
+            - uses: actions/download-artifact@v4
               with:
                   name: build
                   path: build
