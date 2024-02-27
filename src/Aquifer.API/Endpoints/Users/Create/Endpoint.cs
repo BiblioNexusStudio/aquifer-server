@@ -1,5 +1,6 @@
 ﻿using Aquifer.API.Clients.Http.Auth0;
 using Aquifer.API.Common;
+using Aquifer.API.Services;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -8,12 +9,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Users.Create;
 
-public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderService, ILogger<Endpoint> logger) : Endpoint<Request>
+public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderService, ILogger<Endpoint> logger, IUserService userService) : Endpoint<Request>
 {
     public override void Configure()
     {
         Post("/users/create");
-        Permissions(PermissionName.CreateUser);
+        Permissions([PermissionName.CreateUser, PermissionName.CreateUsersInCompany]);
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
@@ -36,9 +37,15 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
 
     private async Task ValidateCompanyIdAsync(int companyId, CancellationToken ct)
     {
-        if (await dbContext.Companies.SingleOrDefaultAsync(x => x.Id == companyId, ct) is null)
+        var newUserCompany = await dbContext.Companies.SingleOrDefaultAsync(x => x.Id == companyId, ct);
+        if (newUserCompany is null)
         {
             ThrowError(x => x.CompanyId, "Invalid company id");
+        }
+        var self = await userService.GetUserFromJwtAsync(ct);
+        if (userService.HasPermission(PermissionName.CreateUsersInCompany) && self.CompanyId != newUserCompany.Id)
+        {
+            ThrowError(x => x.CompanyId, "Not authorized to create user outside of company", StatusCodes.Status401Unauthorized);
         }
     }
 
@@ -71,6 +78,11 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         {
             logger.LogWarning("Requested non-existent role: {requestedRole} - {response}", req.Role, responseContent);
             ThrowError("Requested role does not exist", 400);
+        }
+
+        if (userService.HasPermission(PermissionName.CreateUsersInCompany) && role.Name != UserRole.Editor.ToString().ToLower())
+        {
+            ThrowError("Not authorized to create a user with this role", StatusCodes.Status401Unauthorized);
         }
 
         return role.Id;
