@@ -5,7 +5,7 @@ namespace Aquifer.Common.Tiptap;
 
 internal class TiptapToMarkdownConverter : BaseTiptapConverter
 {
-    internal static List<string> ConvertFromJson(List<TiptapModel> tiptaps)
+    internal static IEnumerable<string> ConvertFromJson(List<TiptapModel> tiptaps)
     {
         List<string> response = [];
         foreach (var tiptap in tiptaps)

@@ -1,4 +1,5 @@
 ﻿using Aquifer.Common.Tiptap;
+using ReverseMarkdown;
 
 namespace Aquifer.Common.Utilities;
 
@@ -12,8 +13,8 @@ public static class TiptapUtilities
         {
             TiptapContentType.None => JsonUtilities.DefaultDeserialize(tiptapJson),
             TiptapContentType.Json => Deserialize(tiptapJson).Select(x => x.Tiptap.Content),
-            TiptapContentType.Markdown or TiptapContentType.Html =>
-                TiptapToMarkdownConverter.ConvertFromJson(Deserialize(tiptapJson)),
+            TiptapContentType.Html => GetHtmlFromJson(tiptapJson),
+            TiptapContentType.Markdown => GetMarkdownFromJson(tiptapJson),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
@@ -21,5 +22,18 @@ public static class TiptapUtilities
     private static List<TiptapModel> Deserialize(string json)
     {
         return JsonUtilities.DefaultDeserialize<List<TiptapModel>>(json);
+    }
+
+    private static IEnumerable<string> GetMarkdownFromJson(string tiptapJson)
+    {
+        var html = GetHtmlFromJson(tiptapJson);
+        Converter converter = new();
+
+        return html.Select(x => converter.Convert(x));
+    }
+
+    private static IEnumerable<string> GetHtmlFromJson(string tiptapJson)
+    {
+        return TiptapToMarkdownConverter.ConvertFromJson(Deserialize(tiptapJson));
     }
 }

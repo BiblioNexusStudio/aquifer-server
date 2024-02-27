@@ -15,12 +15,9 @@ public record Request
     ///     whole by default). This parameter is optional and defaults to `None`.
     ///     <br />
     ///     If `None` is passed, it wil return JSON specifically for the Tiptap Editor, if `Json` is specified, it will return a simplified
-    ///     version with mention of Tiptap removed. `Markdown` and 'Html' can also be requested. Currently there is no difference between
-    ///     markdown and HTML output, but in the future the HTML may contain additional attributes. The markdown content is standard HTML
-    ///     that markdown viewers will render appropriately (this is less error prone than <em>pure</em> markdown when sending as part
-    ///     of a JSON response).
+    ///     version with mention of Tiptap removed. `Markdown` and 'Html' can also be requested.
     ///     <br />
-    ///     Also note that this will be ignored for non-text resources. Content such as images will always return as JSON.
+    ///     Note that this will be ignored for non-text resources. Content such as images will always return as JSON.
     /// </summary>
     [DefaultValue(TiptapContentType.None)]
     public TiptapContentType ContentTextType { get; init; }
