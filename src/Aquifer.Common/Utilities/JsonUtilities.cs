@@ -5,10 +5,16 @@ namespace Aquifer.Common.Utilities;
 
 public static class JsonUtilities
 {
+    private static readonly JsonSerializerOptions DefaultOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
     public static T DefaultDeserialize<T>(string json)
     {
-        return JsonSerializer.Deserialize<T>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase })!;
+        return JsonSerializer.Deserialize<T>(json, DefaultOptions)!;
     }
 
     public static object DefaultDeserialize(string json)
@@ -18,12 +24,6 @@ public static class JsonUtilities
 
     public static string DefaultSerialize(object value)
     {
-        return JsonSerializer.Serialize(value,
-            new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            });
+        return JsonSerializer.Serialize(value, DefaultOptions);
     }
 }

@@ -25,9 +25,9 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout source code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - name: Setup .NET
-              uses: actions/setup-dotnet@v3
+              uses: actions/setup-dotnet@v4
               with:
                   dotnet-version: '8.x'
             - name: Install NuGet packages (linux)
@@ -43,7 +43,7 @@ jobs:
             - name: Bundle migrations
               run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --output build/Migrate --self-contained
             - name: Publish artifact
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: build
                   path: build
@@ -58,7 +58,7 @@ jobs:
             url: ${{ vars.URL_DEV }}
         steps:
             - name: Checkout source code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - uses: ./.github/actions/deploy-to-env
               id: deploy
               with:
@@ -80,7 +80,7 @@ jobs:
             url: ${{ vars.URL_QA }}
         steps:
             - name: Checkout source code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - uses: ./.github/actions/deploy-to-env
               id: deploy
               with:
@@ -102,7 +102,7 @@ jobs:
             url: ${{ vars.URL_PROD }}
         steps:
             - name: Checkout source code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
               with:
                   ref: ${{ github.event.pull_request.head.sha }}
             - uses: ./.github/actions/deploy-to-env
@@ -122,7 +122,7 @@ jobs:
         needs: deploy_internal_api_to_dev
         steps:
             - name: Checkout E2E test code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
               with:
                   repository: BiblioNexusStudio/well-e2e
                   ssh-key: ${{ secrets.WELL_E2E_DEPLOY_KEY }}
