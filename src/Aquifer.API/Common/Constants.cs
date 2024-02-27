@@ -55,7 +55,8 @@ public static class PermissionName
         CreateProject = "create:project",
         EditProject = "edit:projects",
         ReadProject = "read:projects",
-        CreateUser = "create:user";
+        CreateUser = "create:user",
+        CreateUsersInCompany = "create:users-in-company";
 }
 
 public static class KeyVaultSecretName

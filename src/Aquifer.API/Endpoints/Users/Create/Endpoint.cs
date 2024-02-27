@@ -1,5 +1,6 @@
 ﻿using Aquifer.API.Clients.Http.Auth0;
 using Aquifer.API.Common;
+using Aquifer.API.Services;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -8,12 +9,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Users.Create;
 
-public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderService, ILogger<Endpoint> logger) : Endpoint<Request>
+public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderService, ILogger<Endpoint> logger, IUserService userService)
+    : Endpoint<Request>
 {
     public override void Configure()
     {
         Post("/users/create");
-        Permissions(PermissionName.CreateUser);
+        Permissions(PermissionName.CreateUser, PermissionName.CreateUsersInCompany);
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
@@ -36,9 +38,16 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
 
     private async Task ValidateCompanyIdAsync(int companyId, CancellationToken ct)
     {
-        if (await dbContext.Companies.SingleOrDefaultAsync(x => x.Id == companyId, ct) is null)
+        var newUserCompany = await dbContext.Companies.SingleOrDefaultAsync(x => x.Id == companyId, ct);
+        if (newUserCompany is null)
         {
             ThrowError(x => x.CompanyId, "Invalid company id");
+        }
+
+        var self = await userService.GetUserFromJwtAsync(ct);
+        if (!userService.HasPermission(PermissionName.CreateUser) && self.CompanyId != newUserCompany.Id)
+        {
+            ThrowError(x => x.CompanyId, "Not authorized to create user outside of company", StatusCodes.Status403Forbidden);
         }
     }
 
