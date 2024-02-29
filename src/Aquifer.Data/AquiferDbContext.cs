@@ -23,10 +23,12 @@ public class AquiferDbContext : DbContext
 
     public DbSet<BibleBookContentEntity> BibleBookContents { get; set; }
     public DbSet<BibleVersionWordEntity> BibleVersionWords { get; set; }
+    public DbSet<BibleVersionWordGroupEntity> BibleVersionWordGroups { get; set; }
     public DbSet<BibleEntity> Bibles { get; set; }
     public DbSet<CompanyEntity> Companies { get; set; }
     public DbSet<GreekNewTestamentEntity> GreekNewTestaments { get; set; }
     public DbSet<GreekNewTestamentWordEntity> GreekNewTestamentWords { get; set; }
+    public DbSet<GreekNewTestamentWordGroupEntity> GreekNewTestamentWordGroups { get; set; }
     public DbSet<GreekWordEntity> GreekWords { get; set; }
     public DbSet<LanguageEntity> Languages { get; set; }
     public DbSet<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; }
