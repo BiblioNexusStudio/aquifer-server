@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Aquifer.API.Clients;
 using Aquifer.API.Configuration;
 using Aquifer.API.Middleware;
 using Aquifer.API.Modules;
@@ -33,7 +34,7 @@ builder.Services
     .AddAquiferHttpServices()
     .AddScoped<IUserService, UserService>()
     .AddScoped<IAdminResourceHistoryService, AdminResourceHistoryService>()
-    .AddScoped<IAzureKeyVaultService, AzureKeyVaultService>()
+    .AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>()
     .AddSingleton<ITrackResourceContentRequestService, TrackResourceContentRequestService>()
     .AddAzureClient(builder.Environment.IsDevelopment())
     .AddFastEndpoints()

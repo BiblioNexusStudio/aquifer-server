@@ -3,7 +3,6 @@ using System.Net.Mime;
 using System.Text;
 using Aquifer.API.Common;
 using Aquifer.API.Configuration;
-using Aquifer.API.Services;
 using Aquifer.Common.Utilities;
 using Microsoft.Extensions.Options;
 
@@ -22,13 +21,13 @@ public class Auth0HttpClient : IAuth0HttpClient
 {
     private readonly Auth0Settings _authSettings;
     private readonly HttpClient _httpClient;
-    private readonly IAzureKeyVaultService _keyVaultService;
+    private readonly IAzureKeyVaultClient _keyVaultClient;
 
     public Auth0HttpClient(HttpClient httpClient,
         IOptions<ConfigurationOptions> options,
-        IAzureKeyVaultService keyVaultService)
+        IAzureKeyVaultClient keyVaultClient)
     {
-        _keyVaultService = keyVaultService;
+        _keyVaultClient = keyVaultClient;
         _authSettings = options.Value.Auth0Settings;
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(_authSettings.BaseUri);
@@ -46,7 +45,7 @@ public class Auth0HttpClient : IAuth0HttpClient
         var tokenRequest = new Auth0TokenRequest
         {
             ClientId = _authSettings.ApiClientId,
-            ClientSecret = await _keyVaultService.GetSecretAsync(KeyVaultSecretName.Auth0ClientSecret),
+            ClientSecret = await _keyVaultClient.GetSecretAsync(KeyVaultSecretName.Auth0ClientSecret),
             Audience = _authSettings.Audience,
             GrantType = Auth0Constants.ClientCredentials
         };

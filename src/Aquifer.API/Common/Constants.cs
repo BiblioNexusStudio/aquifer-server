@@ -9,16 +9,11 @@ public static class Constants
     public const string RolesClaim = "bnRoles";
 
     // this represents the resource types that we allow to be accessed as the starting point when viewing content
-    public static readonly ReadOnlyCollection<string> RootParentResourceNames = new([
-        "CBBTER"
-    ]);
+    public static readonly ReadOnlyCollection<string> RootParentResourceNames = new(["CBBTER"]);
 
     // this represents the media types that we default to English for
     public static readonly ReadOnlyCollection<ResourceContentMediaType> FallbackToEnglishForMediaTypes =
-        new([
-            ResourceContentMediaType.Image,
-            ResourceContentMediaType.Video
-        ]);
+        new([ResourceContentMediaType.Image, ResourceContentMediaType.Video]);
 
     public static readonly ReadOnlyCollection<string> AllPermissions =
         new([
@@ -56,12 +51,15 @@ public static class PermissionName
         EditProject = "edit:projects",
         ReadProject = "read:projects",
         CreateUser = "create:user",
-        CreateUsersInCompany = "create:users-in-company";
+        CreateUsersInCompany = "create:users-in-company",
+        AiSimplify = "ai:simplify",
+        AiTranslate = "ai:translate";
 }
 
 public static class KeyVaultSecretName
 {
-    public const string Auth0ClientSecret = "Auth0ClientSecret";
+    public const string Auth0ClientSecret = "Auth0ClientSecret",
+        OpenAiApiKey = "OpenAiApiKey";
 }
 
 public static class Auth0Constants
