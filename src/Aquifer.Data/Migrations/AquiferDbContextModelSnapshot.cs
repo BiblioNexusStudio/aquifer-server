@@ -124,12 +124,6 @@ namespace Aquifer.Data.Migrations
                     b.Property<int>("GroupId")
                         .HasColumnType("int");
 
-                    b.Property<int>("NewTestamentAlignmentBibleVersionWordGroupId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("NewTestamentAlignmentGreekNewTestamentWordGroupId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("Updated")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -144,24 +138,6 @@ namespace Aquifer.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("BibleVersionWords");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.BibleVersionWordGroupEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
-                    b.Property<int>("BibleVersionWordId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Created")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.HasKey("Id", "BibleVersionWordId");
-
-                    b.ToTable("BibleVersionWordGroups");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.CompanyEntity", b =>
@@ -230,12 +206,6 @@ namespace Aquifer.Data.Migrations
                     b.Property<int>("GroupId")
                         .HasColumnType("int");
 
-                    b.Property<int>("NewTestamentAlignmentBibleVersionWordGroupId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("NewTestamentAlignmentGreekNewTestamentWordGroupId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("Updated")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -250,27 +220,6 @@ namespace Aquifer.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("GreekNewTestamentWords");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.GreekNewTestamentWordGroupEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("Created")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.Property<int>("GreekNewTestamentWordId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("GreekNewTestamentWordGroups");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekWordEntity", b =>
@@ -889,8 +838,9 @@ namespace Aquifer.Data.Migrations
 
                     b.HasOne("Aquifer.Data.Entities.NewTestamentAlignmentEntity", "NewTestamentAlignment")
                         .WithMany("BibleVersionWords")
-                        .HasForeignKey("NewTestamentAlignmentBibleVersionWordGroupId", "NewTestamentAlignmentGreekNewTestamentWordGroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("GroupId")
+                        .HasPrincipalKey("BibleVersionWordGroupId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Bible");
@@ -914,8 +864,9 @@ namespace Aquifer.Data.Migrations
 
                     b.HasOne("Aquifer.Data.Entities.NewTestamentAlignmentEntity", "NewTestamentAlignment")
                         .WithMany("GreekNewTestamentWords")
-                        .HasForeignKey("NewTestamentAlignmentBibleVersionWordGroupId", "NewTestamentAlignmentGreekNewTestamentWordGroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("GroupId")
+                        .HasPrincipalKey("GreekNewTestamentWordGroupId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("GreekNewTestament");

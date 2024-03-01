@@ -23,6 +23,6 @@ public class GreekNewTestamentWordEntity : IHasUpdatedTimestamp
     public GreekWordEntity GreekWord { get; set; } = null!;
     public GreekNewTestamentEntity GreekNewTestament { get; set; } = null!;
 
-    //public GreekNewTestamentWordGroupEntity GreekNewTestamentWordGroup { get; set; } = null!;
     public NewTestamentAlignmentEntity NewTestamentAlignment { get; set; } = null!;
 }
+

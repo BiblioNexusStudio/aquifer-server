@@ -20,6 +20,5 @@ public class BibleVersionWordEntity : IHasUpdatedTimestamp
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 
     public BibleEntity Bible { get; set; } = null!;
-    //public BibleVersionWordGroupEntity BibleVersionWordGroup { get; set; } = null!;
     public NewTestamentAlignmentEntity NewTestamentAlignment { get; set; } = null!;
 }
