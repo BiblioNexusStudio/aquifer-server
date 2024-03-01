@@ -11,6 +11,7 @@ public class GreekNewTestamentWordEntity : IHasUpdatedTimestamp
     public int Id { get; set; }
     public int GreekNewTestamentId { get; set; }
     public int GreekWordId { get; set; }
+    public int GroupId { get; set; }
     public long WordIdentifier { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
@@ -22,5 +23,6 @@ public class GreekNewTestamentWordEntity : IHasUpdatedTimestamp
     public GreekWordEntity GreekWord { get; set; } = null!;
     public GreekNewTestamentEntity GreekNewTestament { get; set; } = null!;
 
-    public ICollection<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; } = new List<NewTestamentAlignmentEntity>();
+    public NewTestamentAlignmentEntity NewTestamentAlignment { get; set; } = null!;
 }
+

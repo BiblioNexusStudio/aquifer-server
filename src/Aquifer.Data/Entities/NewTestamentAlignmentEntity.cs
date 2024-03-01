@@ -1,16 +1,38 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
-[PrimaryKey(nameof(BibleVersionWordId), nameof(GreekNewTestamentWordId))]
+[PrimaryKey(nameof(BibleVersionWordGroupId), nameof(GreekNewTestamentWordGroupId))]
+[EntityTypeConfiguration(typeof(NewTestamentAlignmentConfiguration))]
 public class NewTestamentAlignmentEntity
 {
-    public int BibleVersionWordId { get; set; }
-    public int GreekNewTestamentWordId { get; set; }
+    public int BibleVersionWordGroupId { get; set; }
+    public int GreekNewTestamentWordGroupId { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    public BibleVersionWordEntity BibleVersionWord { get; set; } = null!;
-    public GreekNewTestamentWordEntity GreekNewTestamentWord { get; set; } = null!;
+    public ICollection<GreekNewTestamentWordEntity> GreekNewTestamentWords { get; set; } = new List<GreekNewTestamentWordEntity>();
+    public ICollection<BibleVersionWordEntity> BibleVersionWords { get; set; } = new List<BibleVersionWordEntity>();
+}
+
+public class NewTestamentAlignmentConfiguration : IEntityTypeConfiguration<NewTestamentAlignmentEntity>
+{
+    public void Configure(EntityTypeBuilder<NewTestamentAlignmentEntity> builder)
+    {
+        builder
+            .HasMany(p => p.BibleVersionWords)
+            .WithOne(c => c.NewTestamentAlignment)
+            .HasForeignKey(k => k.GroupId)
+            .HasPrincipalKey(p => p.BibleVersionWordGroupId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder
+            .HasMany(p => p.GreekNewTestamentWords)
+            .WithOne(c => c.NewTestamentAlignment)
+            .HasForeignKey(k => k.GroupId)
+            .HasPrincipalKey(p => p.GreekNewTestamentWordGroupId)
+            .OnDelete(DeleteBehavior.NoAction);
+    }
 }
