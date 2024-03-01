@@ -5,7 +5,7 @@ namespace Aquifer.Common.Utilities;
 
 public static class JsonUtilities
 {
-    private static readonly JsonSerializerOptions DefaultOptions = new()
+    public static readonly JsonSerializerOptions DefaultOptions = new()
     {
         PropertyNameCaseInsensitive = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
