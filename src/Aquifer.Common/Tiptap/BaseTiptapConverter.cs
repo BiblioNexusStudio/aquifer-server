@@ -10,4 +10,6 @@ internal class BaseTiptapConverter
     protected const string ItalicMarkType = "italic";
     protected const string BoldMarkType = "bold";
     protected const string TextContentType = "text";
+    protected const string BibleReferenceMarkType = "bibleReference";
+    protected const string ResourceReferenceMarkType = "resourceReference";
 }

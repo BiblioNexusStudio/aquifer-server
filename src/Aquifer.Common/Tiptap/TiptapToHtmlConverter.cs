@@ -3,7 +3,7 @@ using Aquifer.Common.Extensions;
 
 namespace Aquifer.Common.Tiptap;
 
-internal class TiptapToMarkdownConverter : BaseTiptapConverter
+internal class TiptapToHtmlConverter : BaseTiptapConverter
 {
     internal static IEnumerable<string> ConvertFromJson(List<TiptapModel> tiptaps)
     {
@@ -80,9 +80,37 @@ internal class TiptapToMarkdownConverter : BaseTiptapConverter
             var isBoldText = innerContent.Marks?.Any(x => x.Type == BoldMarkType) == true;
             var isItalicText = innerContent.Marks?.Any(x => x.Type == ItalicMarkType) == true;
 
+            var bibleReference = innerContent.Marks?.Where(x => x.Type == BibleReferenceMarkType).FirstOrDefault();
+            var resourceReference = innerContent.Marks?.Where(x => x.Type == ResourceReferenceMarkType).FirstOrDefault();
+            var hasBibleReference = bibleReference is not null;
+            var hasResourceReference = resourceReference is not null;
+
+            if (hasBibleReference)
+            {
+                var verses = bibleReference!.Attrs?.Verses?.FirstOrDefault();
+                var startVerse = verses?.StartVerse.ToString();
+                var endVerse = verses?.EndVerse.ToString();
+
+                var span = $"""
+                            <span data-bnType="bibleReference" data-startVerse="{startVerse}" data-endVerse="{endVerse}">
+                            """;
+
+                sb.Append(span);
+            }
+
+            if (hasResourceReference)
+            {
+                var span = $"""
+                            <span data-bnType="resourceReference" data-resourceType="{resourceReference!.Attrs?.ResourceType}" data-resourceId="{resourceReference.Attrs?.ResourceId}">
+                            """;
+
+                sb.Append(span);
+            }
+
             sb.AppendIf("<em>", isItalicText).AppendIf("<strong>", isBoldText)
                 .Append(text)
-                .AppendIf("</strong>", isBoldText).AppendIf("</em>", isItalicText);
+                .AppendIf("</strong>", isBoldText).AppendIf("</em>", isItalicText)
+                .AppendIf("</span>", hasBibleReference).AppendIf("</span>", hasResourceReference);
         }
 
         sb.Append("</p>");

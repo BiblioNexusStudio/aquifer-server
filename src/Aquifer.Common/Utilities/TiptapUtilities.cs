@@ -34,6 +34,6 @@ public static class TiptapUtilities
 
     private static IEnumerable<string> GetHtmlFromJson(string tiptapJson)
     {
-        return TiptapToMarkdownConverter.ConvertFromJson(Deserialize(tiptapJson));
+        return TiptapToHtmlConverter.ConvertFromJson(Deserialize(tiptapJson));
     }
 }
