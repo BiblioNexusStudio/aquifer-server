@@ -32,8 +32,8 @@ public class ResourceContentVersionEntity : IHasUpdatedTimestamp
     public IEnumerable<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistories { get; set; }
         = new List<ResourceContentVersionAssignedUserHistoryEntity>();
 
-    public ICollection<ResourceContentVersionSnapshotsEntity> ResourceConventVersionSnapshots { get; set; } =
-        new List<ResourceContentVersionSnapshotsEntity>();
+    public ICollection<ResourceContentVersionSnapshotEntity> ResourceConventVersionSnapshots { get; set; } =
+        new List<ResourceContentVersionSnapshotEntity>();
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;

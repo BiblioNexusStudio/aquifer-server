@@ -1,6 +1,6 @@
 namespace Aquifer.Data.Entities;
 
-public class ResourceContentVersionSnapshotsEntity
+public class ResourceContentVersionSnapshotEntity
 {
     public int Id { get; set; }
     public int ResourceContentVersionId { get; set; }
@@ -8,7 +8,7 @@ public class ResourceContentVersionSnapshotsEntity
     public string Content { get; set; } = null!;
     public int? WordCount { get; set; }
     public int? UserId { get; set; }
-    public int Status { get; set; }
+    public ResourceContentStatus Status { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;

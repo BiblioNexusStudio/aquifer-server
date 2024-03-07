@@ -39,7 +39,7 @@ public class AquiferDbContext : DbContext
     public DbSet<ResourceContentRequestEntity> ResourceContentRequests { get; set; }
     public DbSet<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistory { get; set; }
     public DbSet<ResourceContentVersionEntity> ResourceContentVersions { get; set; }
-    public DbSet<ResourceContentVersionSnapshotsEntity> ResourceContentVersionSnapshots { get; set; }
+    public DbSet<ResourceContentVersionSnapshotEntity> ResourceContentVersionSnapshots { get; set; }
     public DbSet<ResourceContentVersionStatusHistoryEntity> ResourceContentVersionStatusHistory { get; set; }
     public DbSet<ResourceEntity> Resources { get; set; }
     public DbSet<UserEntity> Users { get; set; }
