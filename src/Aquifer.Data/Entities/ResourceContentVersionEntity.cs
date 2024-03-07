@@ -23,14 +23,17 @@ public class ResourceContentVersionEntity : IHasUpdatedTimestamp
     public int? AssignedUserId { get; set; }
     public UserEntity? AssignedUser { get; set; }
 
+    [SqlDefaultValue("getutcdate()")]
+    public DateTime Created { get; set; } = DateTime.UtcNow;
+
     public IEnumerable<ResourceContentVersionStatusHistoryEntity> ResourceContentVersionStatusHistories { get; set; }
         = new List<ResourceContentVersionStatusHistoryEntity>();
 
     public IEnumerable<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistories { get; set; }
         = new List<ResourceContentVersionAssignedUserHistoryEntity>();
 
-    [SqlDefaultValue("getutcdate()")]
-    public DateTime Created { get; set; } = DateTime.UtcNow;
+    public ICollection<ResourceContentVersionSnapshotsEntity> ResourceConventVersionSnapshots { get; set; } =
+        new List<ResourceContentVersionSnapshotsEntity>();
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
