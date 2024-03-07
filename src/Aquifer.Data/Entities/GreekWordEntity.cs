@@ -6,7 +6,7 @@ public class GreekWordEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
     public string Word { get; set; } = null!;
-    public int? StrongNumber { get; set; }
+    public string? StrongNumber { get; set; }
     public string? Lemma { get; set; } = null!;
     public string? GrammarType { get; set; } = null!;
     public string? Sense { get; set; } = null!;
