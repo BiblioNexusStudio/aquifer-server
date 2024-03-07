@@ -2,9 +2,7 @@ using Aquifer.API.Common;
 using Aquifer.API.Modules.AdminResources.Aquiferization;
 using Aquifer.API.Modules.AdminResources.Assignment;
 using Aquifer.API.Modules.AdminResources.ResourceContent;
-using Aquifer.API.Modules.AdminResources.ResourceContentSummary;
 using Aquifer.API.Modules.AdminResources.ResourceReview;
-using Aquifer.API.Modules.AdminResources.ResourcesList;
 using Aquifer.API.Modules.AdminResources.ResourcesSummary;
 using Aquifer.API.Modules.AdminResources.Translation;
 
@@ -31,17 +29,9 @@ public class AdminResourcesModule : IModule
         group.MapPost("content/{contentId:int}/send-review", ResourceReviewEndpoints.SendToReview)
             .RequireAuthorization(PermissionName.SendReviewContent);
 
-        // TODO: deprecated
-        group.MapPost("content/{contentId:int}/review", ResourceReviewEndpoints.Review)
-            .RequireAuthorization(PermissionName.ReviewContent);
-
         // could add RequireAuthorization() with no policy on these to force a JWT for at least readonly.
         group.MapGet("summary", GetResourcesSummaryEndpoints.Get)
             .CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
-
-        // TODO: deprecated
-        group.MapGet("content/summary/{resourceContentId:int}",
-            GetResourceContentSummaryEndpoints.GetByResourceContentId);
 
         group.MapPut("content/summary/{resourceContentId:int}",
                 UpdateResourcesSummaryEndpoints.UpdateResourceContentSummaryItem)
@@ -50,27 +40,12 @@ public class AdminResourcesModule : IModule
         group.MapGet("content/statuses", ResourceContentStatusEndpoints.GetList)
             .CacheOutput(x => x.Expire(TimeSpan.FromHours(1)));
 
-        group.MapGet("content/assigned-to-self", ResourcesListEndpoints.GetAssignedToSelf)
-            .RequireAuthorization();
-
-        group.MapGet("content/pending-review", ResourcesListEndpoints.GetPendingReview)
-            .RequireAuthorization(PermissionName.ReviewContent);
-
-        // TODO: deprecated
-        group.MapGet("list", ResourcesListEndpoints.Get);
-        // TODO: deprecated
-        group.MapGet("list/count", ResourcesListEndpoints.GetCount);
-
         group.MapPost(CreateTranslationEndpoint.Path, CreateTranslationEndpoint.Handle)
             .RequireAuthorization(PermissionName.CreateContent);
         group.MapPost(AssignTranslatorEndpoint.Path, AssignTranslatorEndpoint.Handle)
             .RequireAuthorization(PermissionName.AssignContent);
         group.MapPost(SendTranslationReviewEndpoint.Path, SendTranslationReviewEndpoint.Handle)
             .RequireAuthorization(PermissionName.SendReviewContent);
-
-        // TODO: deprecated
-        group.MapPost(ReviewTranslationEndpoint.Path, ReviewTranslationEndpoint.Handle)
-            .RequireAuthorization(PermissionName.ReviewContent);
 
         return endpoints;
     }
