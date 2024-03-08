@@ -24,11 +24,10 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     {
         var (startVerseId, endVerseId) =
             BibleUtilities.GetVerseIds(req.BookCode, req.StartChapter, req.EndChapter, req.StartVerse, req.EndVerse);
-        var uppercaseCodes = req.LanguageCodes.Select(l => l.ToUpper()).ToArray();
 
         var response = await dbContext.ResourceContents.Where(x =>
                 x.Versions.Any(v => v.IsPublished) &&
-                (uppercaseCodes.Length == 0 || uppercaseCodes.Contains(x.Language.ISO6393Code.ToUpper())) &&
+                (req.LanguageCodes.Length == 0 || req.LanguageCodes.Contains(x.Language.ISO6393Code)) &&
                 (x.Resource.VerseResources.Any(vr =>
                      vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
                  x.Resource.PassageResources.Any(pr =>

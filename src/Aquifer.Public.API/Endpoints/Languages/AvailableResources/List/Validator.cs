@@ -25,5 +25,9 @@ public class Validator : Validator<Request>
 
         RuleFor(x => x).Must(x => x.StartChapter <= x.EndChapter)
             .WithMessage("startChapter cannot be greater than endChapter");
+
+        RuleForEach(x => x.LanguageCodes)
+            .Must(languageCode => languageCode.Length == 3)
+            .WithMessage("Language code '{PropertyValue}' must be 3 characters long.");
     }
 }
