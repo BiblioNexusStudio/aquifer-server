@@ -40,24 +40,25 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         ];
         var user = await userService.GetUserFromJwtAsync(ct);
 
-        return await dbContext.Projects.Where(p => p.ProjectManagerUserId == user.Id).Select(x => new Response
-        {
-            Id = x.Id,
-            Name = x.Name,
-            Company = x.Company.Name,
-            Language = x.Language.EnglishDisplay,
-            ProjectPlatform = x.ProjectPlatform.Name,
-            IsStarted = x.Started != null,
-            Days =
-                x.ProjectedDeliveryDate.HasValue
-                    ? x.ProjectedDeliveryDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber
-                    : null,
-            Counts = new ProjectResourceStatusCounts
+        return await dbContext.Projects.Where(p => p.ProjectManagerUserId == user.Id && p.ActualPublishDate == null).Select(x =>
+            new Response
             {
-                InProgress = x.ResourceContents.Count(rc => inProgressStatuses.Contains(rc.Status)),
-                InReview = x.ResourceContents.Count(rc => inReviewStatuses.Contains(rc.Status)),
-                Completed = x.ResourceContents.Count(rc => rc.Status == ResourceContentStatus.Complete)
-            }
-        }).ToListAsync(ct);
+                Id = x.Id,
+                Name = x.Name,
+                Company = x.Company.Name,
+                Language = x.Language.EnglishDisplay,
+                ProjectPlatform = x.ProjectPlatform.Name,
+                IsStarted = x.Started != null,
+                Days =
+                    x.ProjectedDeliveryDate.HasValue
+                        ? x.ProjectedDeliveryDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber
+                        : null,
+                Counts = new ProjectResourceStatusCounts
+                {
+                    InProgress = x.ResourceContents.Count(rc => inProgressStatuses.Contains(rc.Status)),
+                    InReview = x.ResourceContents.Count(rc => inReviewStatuses.Contains(rc.Status)),
+                    Completed = x.ResourceContents.Count(rc => rc.Status == ResourceContentStatus.Complete)
+                }
+            }).ToListAsync(ct);
     }
 }
