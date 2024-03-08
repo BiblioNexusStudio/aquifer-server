@@ -14,7 +14,15 @@ public static class JsonUtilities
 
     public static T DefaultDeserialize<T>(string json)
     {
-        return JsonSerializer.Deserialize<T>(json, DefaultOptions)!;
+        try
+        {
+            return JsonSerializer.Deserialize<T>(json, DefaultOptions)!;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw new Exception();
+        }
     }
 
     public static object DefaultDeserialize(string json)

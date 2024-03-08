@@ -20,6 +20,7 @@ builder.Services.AddFastEndpoints()
     .AddAzureClient(builder.Environment.IsDevelopment())
     .AddSwaggerDocumentSettings()
     .AddOutputCache()
+    .AddApplicationInsightsTelemetry()
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 
@@ -30,6 +31,7 @@ app.UseHealthChecks("/_health")
     .UseMiddleware<TrackResourceContentRequestMiddleware>()
     .UseResponseCaching()
     .UseOutputCache()
+    .UseDefaultExceptionHandler()
     .UseFastEndpoints(config =>
     {
         config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;

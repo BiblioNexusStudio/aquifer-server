@@ -23,7 +23,11 @@ public class TiptapRootContent
 public class TiptapAttributes
 {
     public int? Level { get; set; }
+
     public List<TiptapVersesAttribute>? Verses { get; set; }
+
+    // Some ResourceIds weren't properly set to an id in our db, and are still strings. This makes both string and int work.
+    // This isn't a good long term fix, the data needs to be corrected.
     public int? ResourceId { get; set; }
     public string? ResourceType { get; set; }
 }

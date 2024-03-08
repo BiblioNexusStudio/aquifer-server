@@ -11,17 +11,18 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Azure.Storage.Queues" Version="12.17.1" />
-        <PackageReference Include="FastEndpoints" Version="5.21.2" />
-        <PackageReference Include="FastEndpoints.Swagger" Version="5.21.2" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.1" />
-        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.2" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+        <PackageReference Include="Azure.Storage.Queues" Version="12.17.1"/>
+        <PackageReference Include="FastEndpoints" Version="5.21.2"/>
+        <PackageReference Include="FastEndpoints.Swagger" Version="5.21.2"/>
+        <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.1"/>
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.2"/>
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Aquifer.Common\Aquifer.Common.csproj" />
-        <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj" />
+        <ProjectReference Include="..\Aquifer.Common\Aquifer.Common.csproj"/>
+        <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj"/>
     </ItemGroup>
 
 </Project>
