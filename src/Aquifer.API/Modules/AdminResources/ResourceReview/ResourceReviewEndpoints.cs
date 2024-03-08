@@ -12,7 +12,7 @@ public static class ResourceReviewEndpoints
         AquiferDbContext dbContext,
         int contentId,
         IUserService userService,
-        IAdminResourceHistoryService historyService,
+        IResourceHistoryService historyService,
         CancellationToken ct)
     {
         var draftVersion = await dbContext.ResourceContentVersions
@@ -36,7 +36,8 @@ public static class ResourceReviewEndpoints
         await historyService.AddAssignedUserHistoryAsync(draftVersion.Id, null, user.Id, ct);
         await historyService.AddStatusHistoryAsync(draftVersion.Id,
             ResourceContentStatus.AquiferizeReviewPending,
-            user.Id, ct);
+            user.Id,
+            ct);
 
         await dbContext.SaveChangesAsync(ct);
         return TypedResults.Ok();

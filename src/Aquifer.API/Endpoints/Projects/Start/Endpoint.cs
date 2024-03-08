@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Projects.Start;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService, IAdminResourceHistoryService resourceHistoryService)
+public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService resourceHistoryService)
     : Endpoint<Request>
 {
     public override void Configure()

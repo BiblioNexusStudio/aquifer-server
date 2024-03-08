@@ -15,7 +15,7 @@ public class AssignmentEndpoints
         [FromBody] AssignEditorRequest postBody,
         AquiferDbContext dbContext,
         IUserService userService,
-        IAdminResourceHistoryService historyService,
+        IResourceHistoryService historyService,
         CancellationToken ct)
     {
         var draftVersion = await dbContext.ResourceContentVersions
@@ -68,7 +68,8 @@ public class AssignmentEndpoints
             draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeInProgress;
             await historyService.AddStatusHistoryAsync(draftVersion.Id,
                 ResourceContentStatus.AquiferizeInProgress,
-                user.Id, ct);
+                user.Id,
+                ct);
         }
 
         await dbContext.SaveChangesAsync(ct);

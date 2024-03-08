@@ -8,7 +8,7 @@ using static Aquifer.API.Helpers.EndpointHelpers;
 
 namespace Aquifer.API.Endpoints.Resources.Content.AssignReview;
 
-public class Endpoint(AquiferDbContext dbContext, IAdminResourceHistoryService historyService, IUserService userService) : Endpoint<Request>
+public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService historyService, IUserService userService) : Endpoint<Request>
 {
     public override void Configure()
     {

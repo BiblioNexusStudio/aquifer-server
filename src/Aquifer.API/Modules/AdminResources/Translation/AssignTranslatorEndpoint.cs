@@ -15,7 +15,7 @@ public static class AssignTranslatorEndpoint
     public static async Task<Results<Ok, BadRequest<string>>> Handle(int contentId,
         [FromBody] AssignTranslatorRequest request,
         AquiferDbContext dbContext,
-        IAdminResourceHistoryService historyService,
+        IResourceHistoryService historyService,
         IUserService userService,
         CancellationToken ct)
     {
@@ -76,7 +76,8 @@ public static class AssignTranslatorEndpoint
             translationDraft.ResourceContent.Status = ResourceContentStatus.TranslationInProgress;
             await historyService.AddStatusHistoryAsync(translationDraft.Id,
                 ResourceContentStatus.TranslationInProgress,
-                user.Id, ct);
+                user.Id,
+                ct);
         }
 
         translationDraft.AssignedUserId = request.AssignedUserId;
