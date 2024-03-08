@@ -31,7 +31,6 @@ app.UseHealthChecks("/_health")
     .UseMiddleware<TrackResourceContentRequestMiddleware>()
     .UseResponseCaching()
     .UseOutputCache()
-    .UseDefaultExceptionHandler()
     .UseFastEndpoints(config =>
     {
         config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
