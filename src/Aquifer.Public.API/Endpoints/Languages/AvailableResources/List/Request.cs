@@ -33,4 +33,11 @@ public record Request
     /// </summary>
     [DefaultValue(0)]
     public int EndVerse { get; init; }
+
+    /// <summary>
+    ///     Optional list of language codes to filter the results to.
+    /// </summary>
+    /// <example>eng</example>
+    [DefaultValue(null)]
+    public string[] LanguageCodes { get; init; } = [];
 }
