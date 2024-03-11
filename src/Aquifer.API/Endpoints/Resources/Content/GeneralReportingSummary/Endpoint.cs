@@ -1,11 +1,13 @@
+using Aquifer.API.Common;
+using Aquifer.API.Helpers;
 using Aquifer.API.Utilities;
 using Aquifer.Data;
-using Microsoft.AspNetCore.Http.HttpResults;
+using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Modules.AdminResources.ResourcesSummary;
+namespace Aquifer.API.Endpoints.Resources.Content.GeneralReportingSummary;
 
-public static class GetResourcesSummaryEndpoints
+public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Response>
 {
     private const string GetResourcesByParentResourceQuery =
         """
@@ -39,11 +41,17 @@ public static class GetResourcesSummaryEndpoints
         ) AS Subquery;
         """;
 
-    public static async Task<Ok<ResourcesSummaryResponse>> Get(AquiferDbContext dbContext,
-        CancellationToken cancellationToken)
+    public override void Configure()
+    {
+        Get("/admin/resources/summary", "/resources/content/general-reporting-summary");
+        Permissions(PermissionName.ReadReports);
+        Options(EndpointHelpers.SetCacheOption(60 * 60));
+    }
+
+    public override async Task HandleAsync(CancellationToken ct)
     {
         var (resourcesByParentResource, resourcesByLanguage, multiLanguageResourcesCount) =
-            await GetDataAsync(dbContext, cancellationToken);
+            await GetDataAsync(dbContext, ct);
 
         // resourcesByParentResource sum will be changed later, so keep this at the top
         var allResourcesCount = resourcesByParentResource.Select(x => x.ResourceCount).Sum();
@@ -59,20 +67,27 @@ public static class GetResourcesSummaryEndpoints
 
         var typeTotalsByMonth = resourcesByParentResourceResponse.GroupBy(x => x.Date)
             .Select(x =>
-                new ResourcesSummaryParentResourceTotalsByMonthResponse(x.Key,
-                    x.First().MonthAbbreviation,
-                    x.Sum(rc => rc.ResourceCount))).ToList();
+                new ParentResourceTotalsByMonthResponse
+                {
+                    Date = x.Key,
+                    MonthAbbreviation = x.First().MonthAbbreviation,
+                    ResourceCount = x.Sum(rc => rc.ResourceCount)
+                }).ToList();
 
-        return TypedResults.Ok(new ResourcesSummaryResponse(resourcesByParentResourceResponse,
-            resourcesByLanguageResponse,
-            typeTotalsByMonth,
-            allResourcesCount,
-            multiLanguageResourcesCount,
-            languages,
-            parentResources));
+        await SendOkAsync(
+            new Response
+            {
+                ResourcesByParentResource = resourcesByParentResourceResponse,
+                ResourcesByLanguage = resourcesByLanguageResponse,
+                TotalsByMonth = typeTotalsByMonth,
+                AllResourcesCount = allResourcesCount,
+                MultiLanguageResourcesCount = multiLanguageResourcesCount,
+                Languages = languages,
+                ParentResourceNames = parentResources
+            }, ct);
     }
 
-    private static List<ResourcesSummaryByParentResourceResponse> GetResourcesByParentResourceResponse(
+    private static List<ByParentResourceResponse> GetResourcesByParentResourceResponse(
         List<ResourcesSummaryCommon> resourcesByParentResource,
         List<DateTime> lastFiveMonths)
     {
@@ -109,11 +124,16 @@ public static class GetResourcesSummaryEndpoints
         }
 
         return resourcesByParentResource.Where(x => x.Date >= lastFiveMonths.Last()).OrderBy(x => x.Date)
-            .Select(x => new ResourcesSummaryByParentResourceResponse(x.ResourceCount, x.ParentResourceName, x.Date))
+            .Select(x => new ByParentResourceResponse
+            {
+                ResourceCount = x.ResourceCount,
+                ParentResourceName = x.ParentResourceName,
+                FullDateTime = x.Date
+            })
             .ToList();
     }
 
-    private static List<ResourcesSummaryByLanguageResponse> GetResourcesByLanguageResponse(
+    private static List<ByLanguageResponse> GetResourcesByLanguageResponse(
         List<ResourcesSummaryByLanguage> resourcesByLanguage,
         List<DateTime> lastFiveMonths,
         List<string> languages,
@@ -166,10 +186,13 @@ public static class GetResourcesSummaryEndpoints
         }
 
         return resourcesByLanguage.Where(x => x.Date >= lastFiveMonths.Last()).OrderBy(x => x.Date)
-            .Select(x => new ResourcesSummaryByLanguageResponse(x.LanguageName,
-                x.ResourceCount,
-                x.ParentResourceName,
-                x.Date))
+            .Select(x => new ByLanguageResponse
+            {
+                Language = x.LanguageName,
+                ResourceCount = x.ResourceCount,
+                ParentResourceName = x.ParentResourceName,
+                FullDateTime = x.Date
+            })
             .ToList();
     }
 
@@ -177,18 +200,18 @@ public static class GetResourcesSummaryEndpoints
         Task<(List<ResourcesSummaryCommon> resourcesByParentResource,
             List<ResourcesSummaryByLanguage> resourcesByLanguage,
             int multiLanguageResourcesCount)>
-        GetDataAsync(AquiferDbContext dbContext, CancellationToken cancellationToken)
+        GetDataAsync(AquiferDbContext dbContext, CancellationToken ct)
     {
         var resourcesByParentResource = await dbContext.Database
             .SqlQuery<ResourcesSummaryCommon>($"exec ({GetResourcesByParentResourceQuery})")
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
 
         var resourcesByLanguage = await dbContext.Database
             .SqlQuery<ResourcesSummaryByLanguage>($"exec ({GetResourcesByLanguageQuery})")
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
 
         var multiLanguageResourcesCount = (await dbContext.Database
-            .SqlQuery<int>($"exec ({GetMultiLanguageResourcesCountQuery})").ToListAsync(cancellationToken)).Single();
+            .SqlQuery<int>($"exec ({GetMultiLanguageResourcesCountQuery})").ToListAsync(ct)).Single();
 
         return (resourcesByParentResource, resourcesByLanguage, multiLanguageResourcesCount);
     }

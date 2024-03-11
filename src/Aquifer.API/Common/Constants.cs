@@ -15,6 +15,21 @@ public static class Constants
     public static readonly ReadOnlyCollection<ResourceContentMediaType> FallbackToEnglishForMediaTypes =
         new([ResourceContentMediaType.Image, ResourceContentMediaType.Video]);
 
+    public static readonly ReadOnlyCollection<ResourceContentStatus> AquiferizationStatuses =
+        new([
+            ResourceContentStatus.AquiferizeInProgress,
+            ResourceContentStatus.AquiferizeReviewPending,
+            ResourceContentStatus.AquiferizeInReview
+        ]);
+
+    public static readonly ReadOnlyCollection<ResourceContentStatus> TranslationStatuses =
+        new([
+            ResourceContentStatus.TranslationNotStarted,
+            ResourceContentStatus.TranslationInProgress,
+            ResourceContentStatus.TranslationReviewPending,
+            ResourceContentStatus.TranslationInReview
+        ]);
+
     public static readonly ReadOnlyCollection<string> AllPermissions =
         new([
             PermissionName.ReadUsers,
@@ -30,7 +45,8 @@ public static class Constants
             PermissionName.CreateUser,
             PermissionName.ReadProject,
             PermissionName.EditProject,
-            PermissionName.ReadCompanyContentAssignments
+            PermissionName.ReadCompanyContentAssignments,
+            PermissionName.ReadReports
         ]);
 }
 
@@ -52,6 +68,7 @@ public static class PermissionName
         ReadProject = "read:projects",
         CreateUser = "create:user",
         CreateUsersInCompany = "create:users-in-company",
+        ReadReports = "read:reports",
         AiSimplify = "ai:simplify",
         AiTranslate = "ai:translate";
 }

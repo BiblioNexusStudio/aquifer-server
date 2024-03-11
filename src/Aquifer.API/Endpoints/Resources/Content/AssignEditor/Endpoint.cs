@@ -1,0 +1,84 @@
+using Aquifer.API.Common;
+using Aquifer.API.Services;
+using Aquifer.Data;
+using Aquifer.Data.Entities;
+using FastEndpoints;
+using Microsoft.EntityFrameworkCore;
+
+namespace Aquifer.API.Endpoints.Resources.Content.AssignEditor;
+
+public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService) : Endpoint<Request>
+{
+    public override void Configure()
+    {
+        Post("/admin/resources/content/{ContentId}/assign-editor", "/admin/resources/content/{ContentId}/assign-translator",
+            "/resources/content/{ContentId}/assign-editor");
+        Permissions(PermissionName.AssignContent, PermissionName.AssignOverride, PermissionName.AssignOutsideCompany);
+    }
+
+    public override async Task HandleAsync(Request request, CancellationToken ct)
+    {
+        var draftVersion = await dbContext.ResourceContentVersions
+            .Where(rcv => rcv.ResourceContentId == request.ContentId && rcv.IsDraft).Include(rcv => rcv.ResourceContent)
+            .Include(rcv => rcv.AssignedUser)
+            .SingleOrDefaultAsync(ct);
+
+        if (draftVersion?.ResourceContent is null)
+        {
+            ThrowError("Resource content not found or not in draft status");
+        }
+
+        var user = await userService.GetUserFromJwtAsync(ct);
+        var userToAssign = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.AssignedUserId, ct);
+        var hasAssignOverridePermission = userService.HasPermission(PermissionName.AssignOverride);
+        var hasAssignOutsideCompanyPermission = userService.HasPermission(PermissionName.AssignOutsideCompany);
+
+        if (userToAssign is null)
+        {
+            ThrowError(Helpers.InvalidUserIdResponse);
+        }
+
+        if (userToAssign.CompanyId != user.CompanyId && !hasAssignOutsideCompanyPermission)
+        {
+            ThrowError("Unable to assign to a user outside your company");
+        }
+
+        var currentUserIsAssigned = draftVersion.AssignedUserId == user.Id;
+        var assignedUserIsInCompany = draftVersion.AssignedUser?.CompanyId == user.CompanyId;
+        var allowedToAssign = (hasAssignOverridePermission && (assignedUserIsInCompany || hasAssignOutsideCompanyPermission)) ||
+                              currentUserIsAssigned;
+
+        if (!allowedToAssign || draftVersion.AssignedUserId == request.AssignedUserId)
+        {
+            ThrowError("Unable to assign user");
+        }
+
+        var inReviewStatus = Constants.TranslationStatuses.Contains(draftVersion.ResourceContent.Status)
+            ? ResourceContentStatus.TranslationInReview
+            : ResourceContentStatus.AquiferizeInReview;
+
+        if (draftVersion.ResourceContent.Status == inReviewStatus && draftVersion.AssignedUserId != user.Id)
+        {
+            ThrowError("Must be assigned the in-review content in order to assign to another user");
+        }
+
+        await historyService.AddAssignedUserHistoryAsync(draftVersion, request.AssignedUserId, user.Id, ct);
+
+        draftVersion.AssignedUserId = request.AssignedUserId;
+        draftVersion.Updated = DateTime.UtcNow;
+
+        var inProgressStatus = Constants.TranslationStatuses.Contains(draftVersion.ResourceContent.Status)
+            ? ResourceContentStatus.TranslationInProgress
+            : ResourceContentStatus.AquiferizeInProgress;
+
+        if (draftVersion.ResourceContent.Status != inProgressStatus)
+        {
+            draftVersion.ResourceContent.Status = inProgressStatus;
+            await historyService.AddStatusHistoryAsync(draftVersion, inProgressStatus, user.Id, ct);
+        }
+
+        await dbContext.SaveChangesAsync(ct);
+
+        await SendNoContentAsync(ct);
+    }
+}
