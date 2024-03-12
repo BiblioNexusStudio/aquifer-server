@@ -29,25 +29,6 @@ public static class Constants
             ResourceContentStatus.TranslationReviewPending,
             ResourceContentStatus.TranslationInReview
         ]);
-
-    public static readonly ReadOnlyCollection<string> AllPermissions =
-        new([
-            PermissionName.ReadUsers,
-            PermissionName.EditContent,
-            PermissionName.PublishContent,
-            PermissionName.AssignContent,
-            PermissionName.AssignOverride,
-            PermissionName.AssignOutsideCompany,
-            PermissionName.CreateContent,
-            PermissionName.SendReviewContent,
-            PermissionName.ReviewContent,
-            PermissionName.CreateProject,
-            PermissionName.CreateUser,
-            PermissionName.ReadProject,
-            PermissionName.EditProject,
-            PermissionName.ReadCompanyContentAssignments,
-            PermissionName.ReadReports
-        ]);
 }
 
 public static class PermissionName
