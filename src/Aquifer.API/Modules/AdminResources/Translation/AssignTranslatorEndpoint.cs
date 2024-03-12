@@ -74,7 +74,7 @@ public static class AssignTranslatorEndpoint
         if (translationDraft.ResourceContent.Status != ResourceContentStatus.TranslationInProgress)
         {
             translationDraft.ResourceContent.Status = ResourceContentStatus.TranslationInProgress;
-            await historyService.AddStatusHistoryAsync(translationDraft.Id,
+            await historyService.AddStatusHistoryAsync(translationDraft,
                 ResourceContentStatus.TranslationInProgress,
                 user.Id,
                 ct);

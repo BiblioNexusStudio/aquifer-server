@@ -46,7 +46,7 @@ public class AssignmentEndpoints
         var currentUserIsAssigned = draftVersion.AssignedUserId == user.Id;
         var assignedUserIsInCompany = draftVersion.AssignedUser?.CompanyId == user.CompanyId;
         var allowedToAssign = (hasAssignOverridePermission && (assignedUserIsInCompany || hasAssignOutsideCompanyPermission)) ||
-            currentUserIsAssigned;
+                              currentUserIsAssigned;
 
         if (!allowedToAssign || draftVersion.AssignedUserId == postBody.AssignedUserId)
         {
@@ -66,7 +66,7 @@ public class AssignmentEndpoints
         if (draftVersion.ResourceContent.Status != ResourceContentStatus.AquiferizeInProgress)
         {
             draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeInProgress;
-            await historyService.AddStatusHistoryAsync(draftVersion.Id,
+            await historyService.AddStatusHistoryAsync(draftVersion,
                 ResourceContentStatus.AquiferizeInProgress,
                 user.Id,
                 ct);

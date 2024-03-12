@@ -6,8 +6,6 @@ namespace Aquifer.API.Services;
 
 public interface IResourceHistoryService
 {
-    Task AddStatusHistoryAsync(int resourceContentVersionId, ResourceContentStatus status, int changedByUserId, CancellationToken ct);
-
     Task AddAssignedUserHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
         int? assignedUserId,
         int changedByUserId,
@@ -24,22 +22,6 @@ public interface IResourceHistoryService
 
 public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHistoryService
 {
-    public async Task AddStatusHistoryAsync(int resourceContentVersionId,
-        ResourceContentStatus status,
-        int changedByUserId,
-        CancellationToken ct)
-    {
-        var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
-        {
-            ResourceContentVersionId = resourceContentVersionId,
-            Status = status,
-            ChangedByUserId = changedByUserId,
-            Created = DateTime.UtcNow
-        };
-
-        await _dbContext.ResourceContentVersionStatusHistory.AddAsync(resourceContentVersionStatusHistory, ct);
-    }
-
     public async Task AddStatusHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
         ResourceContentStatus status,
         int changedByUserId,

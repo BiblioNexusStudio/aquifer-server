@@ -34,7 +34,7 @@ public static class ResourceReviewEndpoints
         draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeReviewPending;
         draftVersion.AssignedUserId = null;
 
-        await historyService.AddStatusHistoryAsync(draftVersion.Id,
+        await historyService.AddStatusHistoryAsync(draftVersion,
             ResourceContentStatus.AquiferizeReviewPending,
             user.Id,
             ct);

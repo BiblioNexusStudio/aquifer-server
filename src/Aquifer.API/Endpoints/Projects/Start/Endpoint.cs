@@ -43,7 +43,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             if (resourceContentVersion.ResourceContent.Status != newStatus)
             {
                 resourceContentVersion.ResourceContent.Status = newStatus;
-                await resourceHistoryService.AddStatusHistoryAsync(resourceContentVersion.Id, newStatus, user.Id, ct);
+                await resourceHistoryService.AddStatusHistoryAsync(resourceContentVersion, newStatus, user.Id, ct);
             }
 
             if (project.CompanyLeadUserId is not null)

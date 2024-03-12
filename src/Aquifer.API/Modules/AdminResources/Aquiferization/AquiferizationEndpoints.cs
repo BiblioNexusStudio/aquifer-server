@@ -116,7 +116,7 @@ public static class AquiferizationEndpoints
             resourceContent.Status = ResourceContentStatus.Complete;
             resourceContent.Updated = DateTime.UtcNow;
 
-            await historyService.AddStatusHistoryAsync(mostRecentContentVersion.Id,
+            await historyService.AddStatusHistoryAsync(mostRecentContentVersion,
                 ResourceContentStatus.Complete,
                 user.Id,
                 ct);
@@ -161,7 +161,7 @@ public static class AquiferizationEndpoints
             resourceContent.Updated = DateTime.UtcNow;
 
             var user = await userService.GetUserFromJwtAsync(ct);
-            await historyService.AddStatusHistoryAsync(currentlyPublishedVersion.Id,
+            await historyService.AddStatusHistoryAsync(currentlyPublishedVersion,
                 ResourceContentStatus.New,
                 user.Id,
                 ct);
