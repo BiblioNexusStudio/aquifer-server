@@ -204,6 +204,10 @@ public static class AquiferizationEndpoints
         {
             await historyService.AddAssignedUserHistoryAsync(newResourceContentVersion, assignedUserId, user.Id, ct);
         }
+        else
+        {
+            await historyService.AddSnapshotHistoryAsync(newResourceContentVersion, ct);
+        }
 
         var resourceContent =
             await dbContext.ResourceContents.FindAsync([contentId], ct) ??
