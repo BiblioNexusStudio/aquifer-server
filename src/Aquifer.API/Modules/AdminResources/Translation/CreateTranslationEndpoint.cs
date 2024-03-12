@@ -57,16 +57,17 @@ public static class CreateTranslationEndpoint
             Version = 1
         };
 
-        await dbContext.ResourceContents.AddAsync(new ResourceContentEntity
-            {
-                LanguageId = language.Id,
-                ResourceId = baseContent.ResourceId,
-                MediaType = baseContent.MediaType,
-                Status = ResourceContentStatus.TranslationNotStarted,
-                Trusted = true,
-                Versions = [newResourceContentVersion]
-            },
-            ct);
+        var newResourceContent = new ResourceContentEntity
+        {
+            LanguageId = language.Id,
+            ResourceId = baseContent.ResourceId,
+            MediaType = baseContent.MediaType,
+            Status = ResourceContentStatus.TranslationNotStarted,
+            Trusted = true,
+            Versions = [newResourceContentVersion]
+        };
+
+        await dbContext.ResourceContents.AddAsync(newResourceContent, ct);
 
         var user = await userService.GetUserFromJwtAsync(ct);
         await historyService.AddStatusHistoryAsync(newResourceContentVersion,
