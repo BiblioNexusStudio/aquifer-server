@@ -15,7 +15,7 @@ public class AssignmentEndpoints
         [FromBody] AssignEditorRequest postBody,
         AquiferDbContext dbContext,
         IUserService userService,
-        IAdminResourceHistoryService historyService,
+        IResourceHistoryService historyService,
         CancellationToken ct)
     {
         var draftVersion = await dbContext.ResourceContentVersions
@@ -59,16 +59,17 @@ public class AssignmentEndpoints
             return TypedResults.BadRequest("Must be assigned the in-review content in order to assign to another user");
         }
 
+        await historyService.AddAssignedUserHistoryAsync(draftVersion, postBody.AssignedUserId, user.Id, ct);
         draftVersion.AssignedUserId = postBody.AssignedUserId;
         draftVersion.Updated = DateTime.UtcNow;
 
-        await historyService.AddAssignedUserHistoryAsync(draftVersion.Id, postBody.AssignedUserId, user.Id, ct);
         if (draftVersion.ResourceContent.Status != ResourceContentStatus.AquiferizeInProgress)
         {
             draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeInProgress;
-            await historyService.AddStatusHistoryAsync(draftVersion.Id,
+            await historyService.AddStatusHistoryAsync(draftVersion,
                 ResourceContentStatus.AquiferizeInProgress,
-                user.Id, ct);
+                user.Id,
+                ct);
         }
 
         await dbContext.SaveChangesAsync(ct);

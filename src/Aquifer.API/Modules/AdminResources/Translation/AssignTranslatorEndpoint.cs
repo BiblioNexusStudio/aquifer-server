@@ -15,7 +15,7 @@ public static class AssignTranslatorEndpoint
     public static async Task<Results<Ok, BadRequest<string>>> Handle(int contentId,
         [FromBody] AssignTranslatorRequest request,
         AquiferDbContext dbContext,
-        IAdminResourceHistoryService historyService,
+        IResourceHistoryService historyService,
         IUserService userService,
         CancellationToken ct)
     {
@@ -70,13 +70,14 @@ public static class AssignTranslatorEndpoint
             return TypedResults.BadRequest("Must be assigned the in-review content in order to assign to another user");
         }
 
-        await historyService.AddAssignedUserHistoryAsync(translationDraft.Id, request.AssignedUserId, user.Id, ct);
+        await historyService.AddAssignedUserHistoryAsync(translationDraft, request.AssignedUserId, user.Id, ct);
         if (translationDraft.ResourceContent.Status != ResourceContentStatus.TranslationInProgress)
         {
             translationDraft.ResourceContent.Status = ResourceContentStatus.TranslationInProgress;
-            await historyService.AddStatusHistoryAsync(translationDraft.Id,
+            await historyService.AddStatusHistoryAsync(translationDraft,
                 ResourceContentStatus.TranslationInProgress,
-                user.Id, ct);
+                user.Id,
+                ct);
         }
 
         translationDraft.AssignedUserId = request.AssignedUserId;

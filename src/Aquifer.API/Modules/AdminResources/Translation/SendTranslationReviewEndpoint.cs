@@ -13,7 +13,7 @@ public static class SendTranslationReviewEndpoint
     public static async Task<Results<Ok, BadRequest<string>>> Handle(int contentId,
         AquiferDbContext dbContext,
         IUserService userService,
-        IAdminResourceHistoryService historyService,
+        IResourceHistoryService historyService,
         CancellationToken ct)
     {
         var translationDraft = await dbContext.ResourceContentVersions
@@ -34,10 +34,11 @@ public static class SendTranslationReviewEndpoint
             return TypedResults.BadRequest("Only assigned users can send to review");
         }
 
-        await historyService.AddAssignedUserHistoryAsync(translationDraft.Id, null, user.Id, ct);
-        await historyService.AddStatusHistoryAsync(translationDraft.Id,
+        await historyService.AddAssignedUserHistoryAsync(translationDraft, null, user.Id, ct);
+        await historyService.AddStatusHistoryAsync(translationDraft,
             ResourceContentStatus.TranslationReviewPending,
-            user.Id, ct);
+            user.Id,
+            ct);
 
         translationDraft.ResourceContent.Status = ResourceContentStatus.TranslationReviewPending;
         translationDraft.AssignedUserId = null;

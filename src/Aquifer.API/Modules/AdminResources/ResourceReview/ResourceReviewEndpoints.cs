@@ -12,7 +12,7 @@ public static class ResourceReviewEndpoints
         AquiferDbContext dbContext,
         int contentId,
         IUserService userService,
-        IAdminResourceHistoryService historyService,
+        IResourceHistoryService historyService,
         CancellationToken ct)
     {
         var draftVersion = await dbContext.ResourceContentVersions
@@ -30,13 +30,14 @@ public static class ResourceReviewEndpoints
             return TypedResults.BadRequest("Unable to change status of resource content");
         }
 
+        await historyService.AddAssignedUserHistoryAsync(draftVersion, null, user.Id, ct);
         draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeReviewPending;
         draftVersion.AssignedUserId = null;
 
-        await historyService.AddAssignedUserHistoryAsync(draftVersion.Id, null, user.Id, ct);
-        await historyService.AddStatusHistoryAsync(draftVersion.Id,
+        await historyService.AddStatusHistoryAsync(draftVersion,
             ResourceContentStatus.AquiferizeReviewPending,
-            user.Id, ct);
+            user.Id,
+            ct);
 
         await dbContext.SaveChangesAsync(ct);
         return TypedResults.Ok();

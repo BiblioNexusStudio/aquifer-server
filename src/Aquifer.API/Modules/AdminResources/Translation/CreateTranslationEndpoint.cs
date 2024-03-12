@@ -14,7 +14,7 @@ public static class CreateTranslationEndpoint
     public static async Task<Results<Created, BadRequest<string>>> Handle(
         [FromBody] CreateTranslationRequest request,
         AquiferDbContext dbContext,
-        IAdminResourceHistoryService historyService,
+        IResourceHistoryService historyService,
         IUserService userService,
         CancellationToken ct)
     {
@@ -57,22 +57,23 @@ public static class CreateTranslationEndpoint
             Version = 1
         };
 
-        await dbContext.ResourceContents.AddAsync(
-            new ResourceContentEntity
-            {
-                LanguageId = language.Id,
-                ResourceId = baseContent.ResourceId,
-                MediaType = baseContent.MediaType,
-                Status = ResourceContentStatus.TranslationNotStarted,
-                Trusted = true,
-                Versions = [newResourceContentVersion]
-            },
-            ct);
+        var newResourceContent = new ResourceContentEntity
+        {
+            LanguageId = language.Id,
+            ResourceId = baseContent.ResourceId,
+            MediaType = baseContent.MediaType,
+            Status = ResourceContentStatus.TranslationNotStarted,
+            Trusted = true,
+            Versions = [newResourceContentVersion]
+        };
+
+        await dbContext.ResourceContents.AddAsync(newResourceContent, ct);
 
         var user = await userService.GetUserFromJwtAsync(ct);
         await historyService.AddStatusHistoryAsync(newResourceContentVersion,
             ResourceContentStatus.TranslationNotStarted,
-            user.Id, ct);
+            user.Id,
+            ct);
 
         await dbContext.SaveChangesAsync(ct);
         return TypedResults.Created();

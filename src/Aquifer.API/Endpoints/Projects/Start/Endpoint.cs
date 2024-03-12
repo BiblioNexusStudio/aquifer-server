@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Projects.Start;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService, IAdminResourceHistoryService resourceHistoryService)
+public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService resourceHistoryService)
     : Endpoint<Request>
 {
     public override void Configure()
@@ -43,7 +43,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IAdm
             if (resourceContentVersion.ResourceContent.Status != newStatus)
             {
                 resourceContentVersion.ResourceContent.Status = newStatus;
-                await resourceHistoryService.AddStatusHistoryAsync(resourceContentVersion.Id, newStatus, user.Id, ct);
+                await resourceHistoryService.AddStatusHistoryAsync(resourceContentVersion, newStatus, user.Id, ct);
             }
 
             if (project.CompanyLeadUserId is not null)

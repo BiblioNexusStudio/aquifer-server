@@ -1,12 +1,11 @@
 ﻿using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Services;
 
-public interface IAdminResourceHistoryService
+public interface IResourceHistoryService
 {
-    Task AddStatusHistoryAsync(int resourceContentVersionId, ResourceContentStatus status, int changedByUserId, CancellationToken ct);
-
     Task AddAssignedUserHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
         int? assignedUserId,
         int changedByUserId,
@@ -17,30 +16,12 @@ public interface IAdminResourceHistoryService
         int changedByUserId,
         CancellationToken ct);
 
-    Task AddAssignedUserHistoryAsync(int resourceContentVersionId,
-        int? assignedUserId,
-        int changedByUserId,
+    Task AddSnapshotHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
         CancellationToken ct);
 }
 
-public class AdminResourceHistoryService(AquiferDbContext _dbContext) : IAdminResourceHistoryService
+public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHistoryService
 {
-    public async Task AddStatusHistoryAsync(int resourceContentVersionId,
-        ResourceContentStatus status,
-        int changedByUserId,
-        CancellationToken ct)
-    {
-        var resourceContentVersionStatusHistory = new ResourceContentVersionStatusHistoryEntity
-        {
-            ResourceContentVersionId = resourceContentVersionId,
-            Status = status,
-            ChangedByUserId = changedByUserId,
-            Created = DateTime.UtcNow
-        };
-
-        await _dbContext.ResourceContentVersionStatusHistory.AddAsync(resourceContentVersionStatusHistory, ct);
-    }
-
     public async Task AddStatusHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
         ResourceContentStatus status,
         int changedByUserId,
@@ -62,6 +43,8 @@ public class AdminResourceHistoryService(AquiferDbContext _dbContext) : IAdminRe
         int changedByUserId,
         CancellationToken ct)
     {
+        await AddSnapshotHistoryAsync(contentVersionEntity, ct);
+
         var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
         {
             ResourceContentVersion = contentVersionEntity,
@@ -73,19 +56,33 @@ public class AdminResourceHistoryService(AquiferDbContext _dbContext) : IAdminRe
         await _dbContext.ResourceContentVersionAssignedUserHistory.AddAsync(resourceContentVersionAssignedUserHistory, ct);
     }
 
-    public async Task AddAssignedUserHistoryAsync(int resourceContentVersionId,
-        int? assignedUserId,
-        int changedByUserId,
+    public async Task AddSnapshotHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
         CancellationToken ct)
     {
-        var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
-        {
-            ResourceContentVersionId = resourceContentVersionId,
-            AssignedUserId = assignedUserId,
-            ChangedByUserId = changedByUserId,
-            Created = DateTime.UtcNow
-        };
+        var isNew = contentVersionEntity.Id == 0;
+        ResourceContentVersionSnapshotEntity? snapshotEntity = null;
 
-        await _dbContext.ResourceContentVersionAssignedUserHistory.AddAsync(resourceContentVersionAssignedUserHistory, ct);
+        if (!isNew)
+        {
+            snapshotEntity = await _dbContext.ResourceContentVersionSnapshots
+                .Where(rcvn => rcvn.ResourceContentVersionId == contentVersionEntity.Id)
+                .OrderByDescending(x => x.Created).FirstOrDefaultAsync(ct);
+        }
+
+        if (snapshotEntity?.Content != contentVersionEntity.Content)
+        {
+            var resourceContentVersionSnapshot = new ResourceContentVersionSnapshotEntity
+            {
+                ResourceContentVersion = contentVersionEntity,
+                Content = contentVersionEntity.Content,
+                DisplayName = contentVersionEntity.DisplayName,
+                WordCount = contentVersionEntity.WordCount,
+                UserId = contentVersionEntity.AssignedUserId,
+                Status = isNew ? ResourceContentStatus.New : contentVersionEntity.ResourceContent.Status,
+                Created = DateTime.UtcNow
+            };
+
+            await _dbContext.ResourceContentVersionSnapshots.AddAsync(resourceContentVersionSnapshot, ct);
+        }
     }
 }

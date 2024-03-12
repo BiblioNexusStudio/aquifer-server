@@ -12,7 +12,7 @@ public static class AquiferizationEndpoints
     public static async Task<Results<Ok, BadRequest<string>>> Aquiferize(int contentId,
         [FromBody] AquiferizationRequest postBody,
         AquiferDbContext dbContext,
-        IAdminResourceHistoryService historyService,
+        IResourceHistoryService historyService,
         IUserService userService,
         CancellationToken ct)
     {
@@ -53,7 +53,7 @@ public static class AquiferizationEndpoints
     public static async Task<Results<Ok, BadRequest<string>>> Publish(int contentId,
         [FromBody] PublishRequest postBody,
         AquiferDbContext dbContext,
-        IAdminResourceHistoryService historyService,
+        IResourceHistoryService historyService,
         IUserService userService,
         CancellationToken ct)
     {
@@ -116,9 +116,10 @@ public static class AquiferizationEndpoints
             resourceContent.Status = ResourceContentStatus.Complete;
             resourceContent.Updated = DateTime.UtcNow;
 
-            await historyService.AddStatusHistoryAsync(mostRecentContentVersion.Id,
+            await historyService.AddStatusHistoryAsync(mostRecentContentVersion,
                 ResourceContentStatus.Complete,
-                user.Id, ct);
+                user.Id,
+                ct);
         }
 
         await dbContext.SaveChangesAsync(ct);
@@ -128,7 +129,7 @@ public static class AquiferizationEndpoints
     public static async Task<Results<Ok, BadRequest<string>>> Unpublish(
         int contentId,
         AquiferDbContext dbContext,
-        IAdminResourceHistoryService historyService,
+        IResourceHistoryService historyService,
         IUserService userService,
         CancellationToken ct)
     {
@@ -160,9 +161,10 @@ public static class AquiferizationEndpoints
             resourceContent.Updated = DateTime.UtcNow;
 
             var user = await userService.GetUserFromJwtAsync(ct);
-            await historyService.AddStatusHistoryAsync(currentlyPublishedVersion.Id,
+            await historyService.AddStatusHistoryAsync(currentlyPublishedVersion,
                 ResourceContentStatus.New,
-                user.Id, ct);
+                user.Id,
+                ct);
         }
 
         await dbContext.SaveChangesAsync(ct);
@@ -176,7 +178,7 @@ public static class AquiferizationEndpoints
         bool resourceContentIsUpdating,
         IUserService userService,
         UserEntity? user,
-        IAdminResourceHistoryService historyService,
+        IResourceHistoryService historyService,
         CancellationToken ct)
     {
         // Create a duplicate of the most recent ResourceContentVersion with the given contentId, incrementing the Version and setting IsDraft = 1.
@@ -202,6 +204,10 @@ public static class AquiferizationEndpoints
         {
             await historyService.AddAssignedUserHistoryAsync(newResourceContentVersion, assignedUserId, user.Id, ct);
         }
+        else
+        {
+            await historyService.AddSnapshotHistoryAsync(newResourceContentVersion, ct);
+        }
 
         var resourceContent =
             await dbContext.ResourceContents.FindAsync([contentId], ct) ??
@@ -215,6 +221,7 @@ public static class AquiferizationEndpoints
 
         await historyService.AddStatusHistoryAsync(newResourceContentVersion,
             ResourceContentStatus.AquiferizeInProgress,
-            user.Id, ct);
+            user.Id,
+            ct);
     }
 }
