@@ -1058,7 +1058,7 @@ namespace Aquifer.Data.Migrations
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionSnapshotEntity", b =>
                 {
                     b.HasOne("Aquifer.Data.Entities.ResourceContentVersionEntity", "ResourceContentVersion")
-                        .WithMany("ResourceConventVersionSnapshots")
+                        .WithMany("ResourceContentVersionSnapshots")
                         .HasForeignKey("ResourceContentVersionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1200,9 +1200,9 @@ namespace Aquifer.Data.Migrations
                 {
                     b.Navigation("ResourceContentVersionAssignedUserHistories");
 
-                    b.Navigation("ResourceContentVersionStatusHistories");
+                    b.Navigation("ResourceContentVersionSnapshots");
 
-                    b.Navigation("ResourceConventVersionSnapshots");
+                    b.Navigation("ResourceContentVersionStatusHistories");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceEntity", b =>

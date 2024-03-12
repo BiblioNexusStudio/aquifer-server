@@ -32,7 +32,7 @@ public class ResourceContentVersionEntity : IHasUpdatedTimestamp
     public IEnumerable<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistories { get; set; }
         = new List<ResourceContentVersionAssignedUserHistoryEntity>();
 
-    public ICollection<ResourceContentVersionSnapshotEntity> ResourceConventVersionSnapshots { get; set; } =
+    public ICollection<ResourceContentVersionSnapshotEntity> ResourceContentVersionSnapshots { get; set; } =
         new List<ResourceContentVersionSnapshotEntity>();
 
     [SqlDefaultValue("getutcdate()")]

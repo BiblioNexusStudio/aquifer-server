@@ -1,4 +1,5 @@
-﻿using Aquifer.Data;
+﻿using Aquifer.API.Common.Dtos;
+using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,6 +25,9 @@ public interface IResourceHistoryService
         CancellationToken ct);
 
     Task AddSnapshotHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
+        CancellationToken ct);
+
+    Task AddSnapshotHistoryAsync(int contentVersionId,
         CancellationToken ct);
 }
 
@@ -66,6 +70,8 @@ public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHist
         int changedByUserId,
         CancellationToken ct)
     {
+        await AddSnapshotHistoryAsync(contentVersionEntity, ct);
+
         var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
         {
             ResourceContentVersion = contentVersionEntity,
@@ -82,6 +88,8 @@ public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHist
         int changedByUserId,
         CancellationToken ct)
     {
+        await AddSnapshotHistoryAsync(resourceContentVersionId, ct);
+
         var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
         {
             ResourceContentVersionId = resourceContentVersionId,
@@ -96,25 +104,45 @@ public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHist
     public async Task AddSnapshotHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
         CancellationToken ct)
     {
-        var currentSnapshot = await _dbContext.ResourceContentVersionSnapshots
-            .Where(rcvs => rcvs.ResourceContentVersionId == contentVersionEntity.Id)
-            .OrderByDescending(rcvs => rcvs.Created)
-            .FirstOrDefaultAsync(ct);
+        var resourceContentVersionSnapshot = new ResourceContentVersionSnapshotEntity
+        {
+            ResourceContentVersion = contentVersionEntity,
+            Content = contentVersionEntity.Content,
+            DisplayName = contentVersionEntity.DisplayName,
+            WordCount = contentVersionEntity.WordCount,
+            UserId = contentVersionEntity.AssignedUserId,
+            Status = ResourceContentStatus.New,
+            Created = DateTime.UtcNow
+        };
 
-        var resourceContent = await _dbContext.ResourceContents
-            .Where(rc => rc.Id == contentVersionEntity.ResourceContentId)
-            .FirstOrDefaultAsync(ct);
+        await _dbContext.ResourceContentVersionSnapshots.AddAsync(resourceContentVersionSnapshot, ct);
+    }
 
-        if (currentSnapshot is not null && resourceContent is not null && currentSnapshot.Content != contentVersionEntity.Content)
+    public async Task AddSnapshotHistoryAsync(int contentVersionId,
+        CancellationToken ct)
+    {
+        var resourceStatusSnapshot = await _dbContext.ResourceContentVersions
+            .Where(rcv => rcv.Id == contentVersionId)
+            .Select(rcv => new ResourceStatusSnapshotDto
+            {
+                ResourceContentVersion = rcv,
+                Status = rcv.ResourceContent.Status,
+                Snapshot = rcv.ResourceContentVersionSnapshots
+                    .OrderByDescending(rcvs => rcvs.Created)
+                    .FirstOrDefault()
+            })
+            .FirstAsync(ct);
+
+        if (resourceStatusSnapshot.Snapshot?.Content != resourceStatusSnapshot.ResourceContentVersion.Content)
         {
             var resourceContentVersionSnapshot = new ResourceContentVersionSnapshotEntity
             {
-                ResourceContentVersionId = contentVersionEntity.Id,
-                Content = contentVersionEntity.Content,
-                DisplayName = contentVersionEntity.DisplayName,
-                WordCount = contentVersionEntity.WordCount,
-                UserId = contentVersionEntity.AssignedUserId,
-                Status = resourceContent.Status,
+                ResourceContentVersionId = resourceStatusSnapshot.ResourceContentVersion.Id,
+                Content = resourceStatusSnapshot.ResourceContentVersion.Content,
+                DisplayName = resourceStatusSnapshot.ResourceContentVersion.DisplayName,
+                WordCount = resourceStatusSnapshot.ResourceContentVersion.WordCount,
+                UserId = resourceStatusSnapshot.ResourceContentVersion.AssignedUserId,
+                Status = resourceStatusSnapshot.Status,
                 Created = DateTime.UtcNow
             };
 
