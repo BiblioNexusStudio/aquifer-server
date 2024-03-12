@@ -20,6 +20,7 @@ builder.Services.AddFastEndpoints()
     .AddAzureClient(builder.Environment.IsDevelopment())
     .AddSwaggerDocumentSettings()
     .AddOutputCache()
+    .AddApplicationInsightsTelemetry()
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 
