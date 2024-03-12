@@ -46,7 +46,7 @@ public class AssignmentEndpoints
         var currentUserIsAssigned = draftVersion.AssignedUserId == user.Id;
         var assignedUserIsInCompany = draftVersion.AssignedUser?.CompanyId == user.CompanyId;
         var allowedToAssign = (hasAssignOverridePermission && (assignedUserIsInCompany || hasAssignOutsideCompanyPermission)) ||
-                              currentUserIsAssigned;
+            currentUserIsAssigned;
 
         if (!allowedToAssign || draftVersion.AssignedUserId == postBody.AssignedUserId)
         {
@@ -59,10 +59,10 @@ public class AssignmentEndpoints
             return TypedResults.BadRequest("Must be assigned the in-review content in order to assign to another user");
         }
 
+        await historyService.AddAssignedUserHistoryAsync(draftVersion, postBody.AssignedUserId, user.Id, ct);
         draftVersion.AssignedUserId = postBody.AssignedUserId;
         draftVersion.Updated = DateTime.UtcNow;
 
-        await historyService.AddAssignedUserHistoryAsync(draftVersion.Id, postBody.AssignedUserId, user.Id, ct);
         if (draftVersion.ResourceContent.Status != ResourceContentStatus.AquiferizeInProgress)
         {
             draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeInProgress;

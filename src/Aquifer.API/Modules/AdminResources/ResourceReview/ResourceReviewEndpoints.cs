@@ -30,10 +30,10 @@ public static class ResourceReviewEndpoints
             return TypedResults.BadRequest("Unable to change status of resource content");
         }
 
+        await historyService.AddAssignedUserHistoryAsync(draftVersion, null, user.Id, ct);
         draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeReviewPending;
         draftVersion.AssignedUserId = null;
 
-        await historyService.AddAssignedUserHistoryAsync(draftVersion.Id, null, user.Id, ct);
         await historyService.AddStatusHistoryAsync(draftVersion.Id,
             ResourceContentStatus.AquiferizeReviewPending,
             user.Id,

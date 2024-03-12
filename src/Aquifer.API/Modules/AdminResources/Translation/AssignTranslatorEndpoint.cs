@@ -70,7 +70,7 @@ public static class AssignTranslatorEndpoint
             return TypedResults.BadRequest("Must be assigned the in-review content in order to assign to another user");
         }
 
-        await historyService.AddAssignedUserHistoryAsync(translationDraft.Id, request.AssignedUserId, user.Id, ct);
+        await historyService.AddAssignedUserHistoryAsync(translationDraft, request.AssignedUserId, user.Id, ct);
         if (translationDraft.ResourceContent.Status != ResourceContentStatus.TranslationInProgress)
         {
             translationDraft.ResourceContent.Status = ResourceContentStatus.TranslationInProgress;

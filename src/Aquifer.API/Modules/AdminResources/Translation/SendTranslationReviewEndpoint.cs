@@ -18,8 +18,8 @@ public static class SendTranslationReviewEndpoint
     {
         var translationDraft = await dbContext.ResourceContentVersions
             .Where(x => x.ResourceContentId == contentId &&
-                        x.IsDraft &&
-                        x.ResourceContent.Status == ResourceContentStatus.TranslationInProgress)
+                x.IsDraft &&
+                x.ResourceContent.Status == ResourceContentStatus.TranslationInProgress)
             .Include(x => x.ResourceContent)
             .SingleOrDefaultAsync(ct);
 
@@ -34,7 +34,7 @@ public static class SendTranslationReviewEndpoint
             return TypedResults.BadRequest("Only assigned users can send to review");
         }
 
-        await historyService.AddAssignedUserHistoryAsync(translationDraft.Id, null, user.Id, ct);
+        await historyService.AddAssignedUserHistoryAsync(translationDraft, null, user.Id, ct);
         await historyService.AddStatusHistoryAsync(translationDraft.Id,
             ResourceContentStatus.TranslationReviewPending,
             user.Id,

@@ -23,7 +23,7 @@ public static class AdminResourcesHelpers
             CancellationToken cancellationToken)
     {
         var resourceContentVersions = await dbContext.ResourceContentVersions
-            .Where(x => x.ResourceContentId == contentId).ToListAsync(cancellationToken);
+            .Where(x => x.ResourceContentId == contentId).Include(x => x.ResourceContent).ToListAsync(cancellationToken);
 
         return (
             resourceContentVersions.MaxBy(x => x.Version),
