@@ -1,22 +1,21 @@
-﻿using Aquifer.API.Services;
+using Aquifer.API.Common;
+using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
+using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Modules.AdminResources.Translation;
+namespace Aquifer.API.Endpoints.Resources.Content.CreateTranslation;
 
-public static class CreateTranslationEndpoint
+public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService) : Endpoint<Request>
 {
-    public const string Path = "content/create-translation";
+    public override void Configure()
+    {
+        Post("/admin/resources/content/create-translation", "/resources/content/{BaseContentId}/create-translation");
+        Permissions(PermissionName.CreateContent);
+    }
 
-    public static async Task<Results<Created, BadRequest<string>>> Handle(
-        [FromBody] CreateTranslationRequest request,
-        AquiferDbContext dbContext,
-        IResourceHistoryService historyService,
-        IUserService userService,
-        CancellationToken ct)
+    public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var baseContent = await dbContext.ResourceContents.Where(x => x.Id == request.BaseContentId)
             .Include(x => x.Versions)
@@ -25,7 +24,7 @@ public static class CreateTranslationEndpoint
             !baseContent.Versions.Any(x => x.IsPublished) ||
             (request.UseDraft && !baseContent.Versions.Any(x => x.IsDraft)))
         {
-            return TypedResults.BadRequest("Base version not found");
+            ThrowError("Base version not found");
         }
 
         var isExistingTranslation = await dbContext.ResourceContents.AnyAsync(x =>
@@ -33,13 +32,13 @@ public static class CreateTranslationEndpoint
             ct);
         if (isExistingTranslation)
         {
-            return TypedResults.BadRequest("Translation already exists");
+            ThrowError("Translation already exists");
         }
 
         var language = await dbContext.Languages.FindAsync([request.LanguageId], ct);
         if (language is null)
         {
-            return TypedResults.BadRequest("Invalid language id");
+            ThrowError("Invalid language id");
         }
 
         var baseVersion = request.UseDraft
@@ -57,25 +56,25 @@ public static class CreateTranslationEndpoint
             Version = 1
         };
 
-        var newResourceContent = new ResourceContentEntity
-        {
-            LanguageId = language.Id,
-            ResourceId = baseContent.ResourceId,
-            MediaType = baseContent.MediaType,
-            Status = ResourceContentStatus.TranslationNotStarted,
-            Trusted = true,
-            Versions = [newResourceContentVersion]
-        };
-
-        await dbContext.ResourceContents.AddAsync(newResourceContent, ct);
+        await dbContext.ResourceContents.AddAsync(
+            new ResourceContentEntity
+            {
+                LanguageId = language.Id,
+                ResourceId = baseContent.ResourceId,
+                MediaType = baseContent.MediaType,
+                Status = ResourceContentStatus.TranslationNotStarted,
+                Trusted = true,
+                Versions = [newResourceContentVersion]
+            },
+            ct);
 
         var user = await userService.GetUserFromJwtAsync(ct);
         await historyService.AddStatusHistoryAsync(newResourceContentVersion,
             ResourceContentStatus.TranslationNotStarted,
-            user.Id,
-            ct);
+            user.Id, ct);
 
         await dbContext.SaveChangesAsync(ct);
-        return TypedResults.Created();
+
+        await SendNoContentAsync(ct);
     }
 }
