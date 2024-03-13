@@ -1,6 +1,5 @@
 using Aquifer.Common.Extensions;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,9 +25,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 Language = new LanguageResponse { EnglishDisplay = rc.Language.EnglishDisplay, ISO6393Code = rc.Language.ISO6393Code },
                 Status = rc.Status,
                 MediaType = rc.MediaType,
-                HasAudio = rc.Resource.ResourceContents.Any(orc =>
-                    orc.LanguageId == rc.LanguageId &&
-                    orc.MediaType == ResourceContentMediaType.Audio),
                 ContentTranslations = rc.Resource.ResourceContents
                     .Where(orc => orc.MediaType == rc.MediaType)
                     .Select(orc => new TranslationResponse
@@ -52,30 +48,10 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                             MediaTypes = ar.ResourceContents.Select(arrc => arrc.MediaType)
                         }),
                 ProjectEntity = rc.Projects.FirstOrDefault(),
-                ContentVersions =
-                    rc.Versions.Select(v => new VersionResponse
-                    {
-                        Id = v.Id,
-                        IsPublished = v.IsPublished,
-                        IsDraft = v.IsDraft,
-                        Version = v.Version,
-                        ContentValue = v.Content,
-                        ContentSize = v.ContentSize,
-                        WordCount = v.WordCount,
-                        DisplayName = v.DisplayName,
-                        AssignedUser =
-                            v.AssignedUser == null
-                                ? null
-                                : new UserResponse
-                                {
-                                    Id = v.AssignedUser.Id,
-                                    Name = $"{v.AssignedUser.FirstName} {v.AssignedUser.LastName}",
-                                    CompanyId = v.AssignedUser.CompanyId
-                                }
-                    })
+                HasPublishedVersion = rc.Versions.Any(rcv => rcv.IsPublished)
             }).FirstOrDefaultAsync(ct);
 
-        if (resourceContent?.ContentVersions.Any() != true)
+        if (resourceContent is null)
         {
             await SendNotFoundAsync(ct);
             return;
@@ -90,13 +66,41 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             .Select(pr => new PassageReferenceResponse { StartVerseId = pr.Passage.StartVerseId, EndVerseId = pr.Passage.EndVerseId })
             .ToListAsync(ct);
 
-        var contentVersions = resourceContent.ContentVersions.Where(x => x.IsPublished || x.IsDraft).ToList();
-        if (contentVersions.Count == 0)
+        var relevantContentVersion = await dbContext.ResourceContentVersions.Where(rcv => rcv.ResourceContentId == request.Id)
+            .OrderBy(rcv => rcv.IsDraft ? 0 : rcv.IsPublished ? 1 : 2).ThenByDescending(rcv => rcv.Version).Include(rcv => rcv.AssignedUser)
+            .FirstOrDefaultAsync(ct);
+
+        if (relevantContentVersion is null)
         {
-            contentVersions = resourceContent.ContentVersions.OrderByDescending(x => x.Version).Take(1).ToList();
+            ThrowError("Data integrity issue, no resource content version found.");
         }
 
-        resourceContent.ContentVersions = contentVersions;
+        var snapshots = await dbContext.ResourceContentVersionSnapshots
+            .Where(rcvs => rcvs.ResourceContentVersionId == relevantContentVersion.Id).OrderBy(rcvs => rcvs.Created).Select(rcvs =>
+                new SnapshotResponse
+                {
+                    Id = rcvs.Id,
+                    Created = rcvs.Created,
+                    AssignedUserName = rcvs.User == null ? null : $"{rcvs.User.FirstName} {rcvs.User.LastName}",
+                    Status = rcvs.Status.GetDisplayName()
+                }).ToListAsync(ct);
+
+        resourceContent.IsDraft = relevantContentVersion.IsDraft;
+        resourceContent.ContentValue = relevantContentVersion.Content;
+        resourceContent.ContentSize = relevantContentVersion.ContentSize;
+        resourceContent.DisplayName = relevantContentVersion.DisplayName;
+        resourceContent.WordCount = relevantContentVersion.WordCount;
+        resourceContent.Snapshots = snapshots;
+
+        if (relevantContentVersion.AssignedUser is not null)
+        {
+            resourceContent.AssignedUser = new UserResponse
+            {
+                Id = relevantContentVersion.AssignedUser.Id,
+                Name = $"{relevantContentVersion.AssignedUser.FirstName} {relevantContentVersion.AssignedUser.LastName}",
+                CompanyId = relevantContentVersion.AssignedUser.CompanyId
+            };
+        }
 
         await SendOkAsync(resourceContent, ct);
     }
