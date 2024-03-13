@@ -12,7 +12,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 {
     public override void Configure()
     {
-        Put("/admin/resources/summary/content/{ContentId}", "/resources/content/{ContentId}");
+        Put("/admin/resources/content/summary/{ContentId}", "/resources/content/{ContentId}");
         Permissions(PermissionName.EditContent);
     }
 
