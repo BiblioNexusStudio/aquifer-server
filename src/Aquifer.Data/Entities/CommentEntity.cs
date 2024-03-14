@@ -13,6 +13,7 @@ public class CommentEntity : IHasUpdatedTimestamp
     public DateTime Created { get; set; }
 
     public CommentThreadEntity Thread { get; set; } = null!;
+    public UserEntity User { get; set; } = null!;
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; }
