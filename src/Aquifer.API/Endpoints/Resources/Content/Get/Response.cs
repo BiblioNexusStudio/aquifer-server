@@ -12,15 +12,25 @@ public class Response
     public IEnumerable<PassageReferenceResponse> PassageReferences { get; set; } = null!;
     public required IEnumerable<AssociatedContentResponse> AssociatedResources { get; set; }
     public required int ResourceContentId { get; set; }
-    public required bool HasAudio { get; set; }
     public required ResourceContentMediaType MediaType { get; set; }
     public required ResourceContentStatus Status { get; set; }
     public required LanguageResponse Language { get; set; }
-    public IEnumerable<VersionResponse> ContentVersions { get; set; } = null!;
     public required IEnumerable<TranslationResponse> ContentTranslations { get; set; }
+    public required bool HasPublishedVersion { get; set; }
+
+    public bool IsDraft { get; set; }
+    public object Content => JsonUtilities.DefaultDeserialize(ContentValue);
+    public int ContentSize { get; set; }
+    public string DisplayName { get; set; } = null!;
+    public int? WordCount { get; set; }
+    public UserResponse? AssignedUser { get; set; }
+    public IEnumerable<SnapshotResponse> Snapshots { get; set; } = null!;
 
     public ProjectResponse? Project =>
         ProjectEntity == null ? null : new ProjectResponse { Id = ProjectEntity.Id, Name = ProjectEntity.Name };
+
+    [JsonIgnore]
+    public string ContentValue { get; set; } = null!;
 
     [JsonIgnore]
     public int ResourceId { get; set; }
@@ -35,25 +45,6 @@ public class LanguageResponse
 
     [JsonPropertyName("iso6393Code")]
     public required string ISO6393Code { get; set; }
-}
-
-public class VersionResponse
-{
-    public required int Id { get; set; }
-    public required string DisplayName { get; set; }
-    public required UserResponse? AssignedUser { get; set; }
-
-    [JsonIgnore]
-    public string ContentValue { get; set; } = null!;
-
-    [JsonIgnore]
-    public int Version { get; set; }
-
-    public object Content => JsonUtilities.DefaultDeserialize(ContentValue);
-    public required int ContentSize { get; set; }
-    public required int? WordCount { get; set; }
-    public required bool IsDraft { get; set; }
-    public required bool IsPublished { get; set; }
 }
 
 public class AssociatedContentResponse
@@ -103,6 +94,14 @@ public class PassageReferenceResponse
     public string EndBook => BibleBookCodeUtilities.FullNameFromId(EndTranslatedVerse.BookId);
     public int EndChapter => EndTranslatedVerse.Chapter;
     public int EndVerse => EndTranslatedVerse.Verse;
+}
+
+public class SnapshotResponse
+{
+    public required int Id { get; set; }
+    public required DateTime Created { get; set; }
+    public required string? AssignedUserName { get; set; }
+    public required string Status { get; set; }
 }
 
 public class UserResponse
