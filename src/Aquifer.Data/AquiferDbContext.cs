@@ -22,8 +22,10 @@ public class AquiferDbContext : DbContext
     }
 
     public DbSet<BibleBookContentEntity> BibleBookContents { get; set; }
-    public DbSet<BibleVersionWordEntity> BibleVersionWords { get; set; }
     public DbSet<BibleEntity> Bibles { get; set; }
+    public DbSet<BibleVersionWordEntity> BibleVersionWords { get; set; }
+    public DbSet<CommentEntity> Comments { get; set; }
+    public DbSet<CommentThreadEntity> CommentThreads { get; set; }
     public DbSet<CompanyEntity> Companies { get; set; }
     public DbSet<GreekNewTestamentEntity> GreekNewTestaments { get; set; }
     public DbSet<GreekNewTestamentWordEntity> GreekNewTestamentWords { get; set; }
@@ -38,6 +40,7 @@ public class AquiferDbContext : DbContext
     public DbSet<ResourceContentEntity> ResourceContents { get; set; }
     public DbSet<ResourceContentRequestEntity> ResourceContentRequests { get; set; }
     public DbSet<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistory { get; set; }
+    public DbSet<ResourceContentVersionCommentThreadEntity> ResourceContentVersionCommentThreads { get; set; }
     public DbSet<ResourceContentVersionEntity> ResourceContentVersions { get; set; }
     public DbSet<ResourceContentVersionSnapshotEntity> ResourceContentVersionSnapshots { get; set; }
     public DbSet<ResourceContentVersionStatusHistoryEntity> ResourceContentVersionStatusHistory { get; set; }
