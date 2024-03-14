@@ -16,4 +16,15 @@ public static class EndpointHelpers
     {
         ValidationContext<TRequest>.Instance.ThrowError(property, "No record found.");
     }
+
+    public static void ThrowErrorIfNull<TRequest>(object? value,
+        Expression<Func<TRequest, object?>> property,
+        string errorMessage,
+        int? statusCode = null)
+    {
+        if (value is null)
+        {
+            ValidationContext<TRequest>.Instance.ThrowError(property, errorMessage, statusCode);
+        }
+    }
 }
