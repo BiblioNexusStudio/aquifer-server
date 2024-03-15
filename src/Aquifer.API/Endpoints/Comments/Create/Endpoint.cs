@@ -20,12 +20,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         EndpointHelpers.ThrowErrorIfNull<Request>(thread, x => x.ThreadId, "No open thread found for id", 404);
 
         var user = await userService.GetUserFromJwtAsync(ct);
-
         var newComment = new CommentEntity
         {
             Comment = req.Comment,
             UserId = user.Id
         };
+
         thread!.Comments.Add(newComment);
 
         await dbContext.SaveChangesAsync(ct);

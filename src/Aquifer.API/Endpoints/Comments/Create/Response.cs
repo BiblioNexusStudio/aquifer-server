@@ -2,5 +2,5 @@
 
 public class Response
 {
-    public int CommentId { get; set; }
+    public required int CommentId { get; set; }
 }
