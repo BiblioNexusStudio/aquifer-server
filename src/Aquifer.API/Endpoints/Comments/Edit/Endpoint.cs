@@ -4,25 +4,24 @@ using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Comments.Threads.Resolve;
+namespace Aquifer.API.Endpoints.Comments.Edit;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request>
 {
     public override void Configure()
     {
-        Patch("/comments/threads/{threadId}/resolve");
+        Patch("/comments/{commentId}/edit");
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var thread = await dbContext.CommentThreads.SingleOrDefaultAsync(x => x.Id == req.ThreadId && !x.Resolved, ct);
-        EndpointHelpers.ThrowErrorIfNull<Request>(thread, x => x.ThreadId, "No unresolved thread found for given id.", 404);
-
         var user = await userService.GetUserFromJwtAsync(ct);
+        var comment = await dbContext.Comments
+            .SingleOrDefaultAsync(x => x.Id == req.CommentId && x.UserId == user.Id && !x.Thread.Resolved, ct);
 
-        thread!.Resolved = true;
-        thread.ResolvedByUserId = user.Id;
+        EndpointHelpers.ThrowErrorIfNull<Request>(comment, x => x.CommentId, "No owned, unresolved comment found", 404);
 
+        comment!.Comment = req.Comment;
         await dbContext.SaveChangesAsync(ct);
         await SendNoContentAsync(ct);
     }
