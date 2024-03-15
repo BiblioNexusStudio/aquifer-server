@@ -18,10 +18,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var user = await userService.GetUserFromJwtAsync(ct);
         var newThreadId = req.ThreadType switch
         {
-            CommentThreadType.ResourceContentVersion => await CreateResourceContentVersionCommentThread(req, user, ct),
+            CommentThreadType.ResourceContentVersion => await CreateResourceContentVersionCommentThreadAsync(req, ct),
             _ => throw new UnreachableException()
         };
 
@@ -29,13 +28,14 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         await SendOkAsync(response, ct);
     }
 
-    private async Task<int> CreateResourceContentVersionCommentThread(Request req, UserEntity user, CancellationToken ct)
+    private async Task<int> CreateResourceContentVersionCommentThreadAsync(Request req, CancellationToken ct)
     {
         var resourceContentVersion = await dbContext.ResourceContentVersions
             .Include(x => x.CommentThreads).SingleOrDefaultAsync(x => x.Id == req.TypeId, ct);
 
         EndpointHelpers.ThrowErrorIfNull<Request>(resourceContentVersion, x => x.TypeId, "No type found for given id.", 404);
 
+        var user = await userService.GetUserFromJwtAsync(ct);
         CommentThreadEntity newThread = new()
         {
             Comments =
