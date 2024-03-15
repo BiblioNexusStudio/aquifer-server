@@ -1,4 +1,6 @@
-﻿using Aquifer.API.Helpers;
+﻿using System.Diagnostics;
+using Aquifer.API.Common;
+using Aquifer.API.Helpers;
 using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -11,17 +13,17 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 {
     public override void Configure()
     {
-        Post("/comments/thread/create");
+        Post("/comments/threads/create");
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var newThreadId = 0;
-        if (req.ThreadType == CommentThreadType.ResourceContentVersion)
+        var newThreadId = req.ThreadType switch
         {
-            newThreadId = await CreateResourceContentVersionCommentThread(req, user, ct);
-        }
+            CommentThreadType.ResourceContentVersion => await CreateResourceContentVersionCommentThread(req, user, ct),
+            _ => throw new UnreachableException()
+        };
 
         Response response = new() { ThreadId = newThreadId };
         await SendOkAsync(response, ct);
@@ -36,7 +38,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         CommentThreadEntity newThread = new()
         {
-            ResourceComments =
+            Comments =
             [
                 new CommentEntity
                 {
