@@ -5,7 +5,6 @@ namespace Aquifer.Data.Entities;
 public class CommentThreadEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
-
     public bool Resolved { get; set; }
     public int? ResolvedByUserId { get; set; }
 
