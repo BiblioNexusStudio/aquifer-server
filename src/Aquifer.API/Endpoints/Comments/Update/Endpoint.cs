@@ -4,13 +4,13 @@ using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Comments.Edit;
+namespace Aquifer.API.Endpoints.Comments.Update;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request>
 {
     public override void Configure()
     {
-        Patch("/comments/{commentId}/edit");
+        Patch("/comments/{commentId}");
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)

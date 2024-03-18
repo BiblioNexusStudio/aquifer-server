@@ -1,4 +1,4 @@
-﻿namespace Aquifer.API.Endpoints.Comments.Edit;
+﻿namespace Aquifer.API.Endpoints.Comments.Update;
 
 public class Request
 {
