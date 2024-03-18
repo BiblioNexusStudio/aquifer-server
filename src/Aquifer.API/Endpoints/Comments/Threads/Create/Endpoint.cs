@@ -13,7 +13,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 {
     public override void Configure()
     {
-        Post("/comments/threads/create");
+        Post("/comments/threads");
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
