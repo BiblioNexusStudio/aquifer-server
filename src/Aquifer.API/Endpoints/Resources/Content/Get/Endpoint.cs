@@ -33,7 +33,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                         LanguageId = orc.LanguageId,
                         Status = orc.Status.GetDisplayName(),
                         HasDraft = orc.Versions.Any(x => x.IsDraft),
-                        HasPublished = orc.Versions.Any(x => x.IsPublished)
+                        HasPublished = orc.Versions.Any(x => x.IsPublished),
+                        ResourceContentStatus = orc.Status
                     }),
                 AssociatedResources =
                     rc.Resource.AssociatedResourceChildren.Select(ar =>

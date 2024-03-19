@@ -118,4 +118,5 @@ public class TranslationResponse
     public required string Status { get; set; }
     public required bool HasDraft { get; set; }
     public required bool HasPublished { get; set; }
+    public required ResourceContentStatus ResourceContentStatus { get; set; }
 }
