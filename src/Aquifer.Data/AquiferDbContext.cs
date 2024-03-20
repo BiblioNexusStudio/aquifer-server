@@ -24,11 +24,16 @@ public class AquiferDbContext : DbContext
     public DbSet<BibleBookContentEntity> BibleBookContents { get; set; }
     public DbSet<BibleEntity> Bibles { get; set; }
     public DbSet<BibleVersionWordEntity> BibleVersionWords { get; set; }
+    public DbSet<BibleVersionWordGroupEntity> BibleVersionWordGroups { get; set; }
+    public DbSet<BibleVersionWordGroupWordEntity> BibleVersionWordGroupWords { get; set; }
     public DbSet<CommentEntity> Comments { get; set; }
     public DbSet<CommentThreadEntity> CommentThreads { get; set; }
     public DbSet<CompanyEntity> Companies { get; set; }
     public DbSet<GreekNewTestamentEntity> GreekNewTestaments { get; set; }
     public DbSet<GreekNewTestamentWordEntity> GreekNewTestamentWords { get; set; }
+    public DbSet<GreekNewTestamentWordGroupEntity> GreekNewTestamentWordGroups { get; set; }
+    public DbSet<GreekNewTestamentWordGroupWordEntity> GreekNewTestamentWordGroupWords { get; set; }
+    public DbSet<GreekLemmaEntity> GreekLemmas { get; set; }
     public DbSet<GreekWordEntity> GreekWords { get; set; }
     public DbSet<LanguageEntity> Languages { get; set; }
     public DbSet<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; }
@@ -45,6 +50,7 @@ public class AquiferDbContext : DbContext
     public DbSet<ResourceContentVersionSnapshotEntity> ResourceContentVersionSnapshots { get; set; }
     public DbSet<ResourceContentVersionStatusHistoryEntity> ResourceContentVersionStatusHistory { get; set; }
     public DbSet<ResourceEntity> Resources { get; set; }
+    public DbSet<StrongNumberEntity> StrongNumbers { get; set; }
     public DbSet<UserEntity> Users { get; set; }
     public DbSet<VerseEntity> Verses { get; set; }
     public DbSet<VerseResourceEntity> VerseResources { get; set; }
