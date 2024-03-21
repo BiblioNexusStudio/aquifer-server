@@ -10,8 +10,8 @@ public class BibleVersionWordEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
     public int BibleId { get; set; }
-    public int GroupId { get; set; }
     public long WordIdentifier { get; set; }
+    public bool IsPunctuation { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
@@ -20,5 +20,6 @@ public class BibleVersionWordEntity : IHasUpdatedTimestamp
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 
     public BibleEntity Bible { get; set; } = null!;
-    public NewTestamentAlignmentEntity NewTestamentAlignment { get; set; } = null!;
+
+    public ICollection<BibleVersionWordGroupWordEntity> BibleVersionWordGroupWords { get; set; } = new List<BibleVersionWordGroupWordEntity>();
 }
