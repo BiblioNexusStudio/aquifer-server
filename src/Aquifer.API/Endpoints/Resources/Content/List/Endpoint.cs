@@ -100,7 +100,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
     {
         if (searchQuery is not null)
         {
-            query = query.Where(rc => rc.Resource.EnglishLabel.Contains(searchQuery));
+            query = searchQuery[0].Equals('"') && searchQuery[^1].Equals('"')
+                ? query.Where(rc => rc.Resource.EnglishLabel.Equals(searchQuery.Replace("\"", "")))
+                : query.Where(rc => rc.Resource.EnglishLabel.Contains(searchQuery));
         }
 
         return query;
