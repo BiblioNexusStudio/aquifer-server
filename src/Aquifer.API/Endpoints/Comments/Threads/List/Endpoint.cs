@@ -36,7 +36,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                 {
                     Id = c.Id,
                     Comment = c.Comment,
-                    User = UserDto.FromUserEntity(c.User)!
+                    User = UserDto.FromUserEntity(c.User)!,
+                    DateTime = c.Updated
                 }).OrderBy(o => o.Id).ToList()
             }).OrderBy(o => o.Id).ToListAsync(ct);
     }

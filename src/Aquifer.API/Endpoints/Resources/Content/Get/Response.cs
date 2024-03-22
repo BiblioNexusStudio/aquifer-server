@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Aquifer.API.Common.Dtos;
 using Aquifer.Common.Utilities;
 using Aquifer.Data.Entities;
 
@@ -27,7 +28,15 @@ public class Response
     public IEnumerable<SnapshotResponse> Snapshots { get; set; } = null!;
 
     public ProjectResponse? Project =>
-        ProjectEntity == null ? null : new ProjectResponse { Id = ProjectEntity.Id, Name = ProjectEntity.Name };
+        ProjectEntity == null
+            ? null
+            : new ProjectResponse
+            {
+                Id = ProjectEntity.Id,
+                Name = ProjectEntity.Name
+            };
+
+    public CommentThreadsResponse CommentThreads { get; set; } = null!;
 
     [JsonIgnore]
     public string ContentValue { get; set; } = null!;
@@ -119,4 +128,25 @@ public class TranslationResponse
     public required bool HasDraft { get; set; }
     public required bool HasPublished { get; set; }
     public required ResourceContentStatus ResourceContentStatus { get; set; }
+}
+
+public class CommentThreadsResponse
+{
+    public required int ThreadTypeId { get; set; }
+    public required List<ThreadResponse> Threads { get; set; } = [];
+}
+
+public class ThreadResponse
+{
+    public required int Id { get; set; }
+    public required bool Resolved { get; set; }
+    public required List<CommentResponse> Comments { get; set; } = [];
+}
+
+public class CommentResponse
+{
+    public required int Id { get; set; }
+    public required UserDto User { get; set; }
+    public required string Comment { get; set; }
+    public required DateTime DateTime { get; set; }
 }

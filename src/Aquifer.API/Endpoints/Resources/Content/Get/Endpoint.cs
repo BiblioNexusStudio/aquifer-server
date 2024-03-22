@@ -1,3 +1,4 @@
+using Aquifer.API.Common.Dtos;
 using Aquifer.Common.Extensions;
 using Aquifer.Data;
 using FastEndpoints;
@@ -22,7 +23,11 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 ParentResourceName = rc.Resource.ParentResource.DisplayName,
                 ResourceContentId = rc.Id,
                 ResourceId = rc.ResourceId,
-                Language = new LanguageResponse { EnglishDisplay = rc.Language.EnglishDisplay, ISO6393Code = rc.Language.ISO6393Code },
+                Language = new LanguageResponse
+                {
+                    EnglishDisplay = rc.Language.EnglishDisplay,
+                    ISO6393Code = rc.Language.ISO6393Code
+                },
                 Status = rc.Status,
                 MediaType = rc.MediaType,
                 ContentTranslations = rc.Resource.ResourceContents
@@ -64,11 +69,18 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
         resourceContent.PassageReferences = await dbContext.PassageResources
             .Where(x => x.ResourceId == resourceContent.ResourceId)
-            .Select(pr => new PassageReferenceResponse { StartVerseId = pr.Passage.StartVerseId, EndVerseId = pr.Passage.EndVerseId })
+            .Select(pr => new PassageReferenceResponse
+            {
+                StartVerseId = pr.Passage.StartVerseId,
+                EndVerseId = pr.Passage.EndVerseId
+            })
             .ToListAsync(ct);
 
         var relevantContentVersion = await dbContext.ResourceContentVersions.Where(rcv => rcv.ResourceContentId == request.Id)
-            .OrderBy(rcv => rcv.IsDraft ? 0 : rcv.IsPublished ? 1 : 2).ThenByDescending(rcv => rcv.Version).Include(rcv => rcv.AssignedUser)
+            .Include(rcv => rcv.CommentThreads).ThenInclude(cth => cth.CommentThread.Comments).ThenInclude(c => c.User)
+            .Include(rcv => rcv.CommentThreads).ThenInclude(cth => cth.CommentThread.ResolvedByUser)
+            .Include(rcv => rcv.AssignedUser)
+            .OrderBy(rcv => rcv.IsDraft ? 0 : rcv.IsPublished ? 1 : 2).ThenByDescending(rcv => rcv.Version)
             .FirstOrDefaultAsync(ct);
 
         if (relevantContentVersion is null)
@@ -93,16 +105,36 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         resourceContent.WordCount = relevantContentVersion.WordCount;
         resourceContent.Snapshots = snapshots;
 
-        if (relevantContentVersion.AssignedUser is not null)
+        if (resourceContent.IsDraft)
         {
-            resourceContent.AssignedUser = new UserResponse
+            resourceContent.CommentThreads = new CommentThreadsResponse
             {
-                Id = relevantContentVersion.AssignedUser.Id,
-                Name = $"{relevantContentVersion.AssignedUser.FirstName} {relevantContentVersion.AssignedUser.LastName}",
-                CompanyId = relevantContentVersion.AssignedUser.CompanyId
+                ThreadTypeId = relevantContentVersion.Id,
+                Threads = relevantContentVersion.CommentThreads.Select(x => new ThreadResponse
+                {
+                    Id = x.CommentThreadId,
+                    Resolved = x.CommentThread.Resolved,
+                    Comments = x.CommentThread.Comments.Select(c => new CommentResponse
+                    {
+                        Id = c.Id,
+                        Comment = c.Comment,
+                        User = UserDto.FromUserEntity(c.User)!,
+                        DateTime = c.Updated
+                    }).ToList()
+                }).ToList()
             };
-        }
 
-        await SendOkAsync(resourceContent, ct);
+            if (relevantContentVersion.AssignedUser is not null)
+            {
+                resourceContent.AssignedUser = new UserResponse
+                {
+                    Id = relevantContentVersion.AssignedUser.Id,
+                    Name = $"{relevantContentVersion.AssignedUser.FirstName} {relevantContentVersion.AssignedUser.LastName}",
+                    CompanyId = relevantContentVersion.AssignedUser.CompanyId
+                };
+            }
+
+            await SendOkAsync(resourceContent, ct);
+        }
     }
 }

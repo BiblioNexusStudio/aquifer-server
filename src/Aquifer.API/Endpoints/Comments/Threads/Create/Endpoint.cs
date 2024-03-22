@@ -18,17 +18,16 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var newThreadId = req.ThreadType switch
+        var response = req.ThreadType switch
         {
             CommentThreadType.ResourceContentVersion => await CreateResourceContentVersionCommentThreadAsync(req, ct),
             _ => throw new UnreachableException()
         };
 
-        Response response = new() { ThreadId = newThreadId };
         await SendOkAsync(response, ct);
     }
 
-    private async Task<int> CreateResourceContentVersionCommentThreadAsync(Request req, CancellationToken ct)
+    private async Task<Response> CreateResourceContentVersionCommentThreadAsync(Request req, CancellationToken ct)
     {
         var resourceContentVersion = await dbContext.ResourceContentVersions
             .Include(x => x.CommentThreads).SingleOrDefaultAsync(x => x.Id == req.TypeId, ct);
@@ -36,21 +35,22 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         EndpointHelpers.ThrowErrorIfNull<Request>(resourceContentVersion, x => x.TypeId, "No type found for given id.", 404);
 
         var user = await userService.GetUserFromJwtAsync(ct);
-        CommentThreadEntity newThread = new()
+
+        CommentEntity newComment = new()
         {
-            Comments =
-            [
-                new CommentEntity
-                {
-                    Comment = req.Comment,
-                    UserId = user.Id
-                }
-            ]
+            Comment = req.Comment,
+            UserId = user.Id
         };
+
+        CommentThreadEntity newThread = new() { Comments = [newComment] };
 
         resourceContentVersion!.CommentThreads.Add(new ResourceContentVersionCommentThreadEntity { CommentThread = newThread });
         await dbContext.SaveChangesAsync(ct);
 
-        return newThread.Id;
+        return new Response
+        {
+            ThreadId = newThread.Id,
+            CommentId = newComment.Id
+        };
     }
 }
