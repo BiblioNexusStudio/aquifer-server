@@ -14,4 +14,5 @@ public class CommentResponse
     public required int Id { get; set; }
     public required UserDto User { get; set; }
     public required string Comment { get; set; }
+    public required DateTime DateTime { get; set; }
 }
