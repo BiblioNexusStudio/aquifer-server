@@ -88,8 +88,8 @@ internal class TiptapToHtmlConverter : BaseTiptapConverter
             if (hasBibleReference)
             {
                 var verses = bibleReference!.Attrs?.Verses?.FirstOrDefault();
-                var startVerse = verses?.StartVerse.ToString();
-                var endVerse = verses?.EndVerse.ToString();
+                var startVerse = verses?.StartVerse?.ToString();
+                var endVerse = verses?.EndVerse?.ToString();
 
                 var span = $"""
                             <span data-bnType="bibleReference" data-startVerse="{startVerse}" data-endVerse="{endVerse}">

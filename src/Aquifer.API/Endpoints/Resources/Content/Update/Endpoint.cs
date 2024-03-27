@@ -81,9 +81,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         var newHtml = TiptapUtilities.ConvertFromJson(JsonUtilities.DefaultSerialize(request.Content), tiptapType);
 
-        var currentHtmlStrings = currentHtml as IEnumerable<string>;
-        var newHtmlStrings = newHtml as IEnumerable<string>;
-        if (currentHtmlStrings is not null && newHtmlStrings is not null)
+        if (currentHtml is IEnumerable<string> currentHtmlStrings && newHtml is IEnumerable<string> newHtmlStrings)
         {
             return !currentHtmlStrings.SequenceEqual(newHtmlStrings);
         }
