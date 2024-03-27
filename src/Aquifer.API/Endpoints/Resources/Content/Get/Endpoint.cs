@@ -23,11 +23,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 ParentResourceName = rc.Resource.ParentResource.DisplayName,
                 ResourceContentId = rc.Id,
                 ResourceId = rc.ResourceId,
-                Language = new LanguageResponse
-                {
-                    EnglishDisplay = rc.Language.EnglishDisplay,
-                    ISO6393Code = rc.Language.ISO6393Code
-                },
+                Language = new LanguageResponse { EnglishDisplay = rc.Language.EnglishDisplay, ISO6393Code = rc.Language.ISO6393Code },
                 Status = rc.Status,
                 MediaType = rc.MediaType,
                 ContentTranslations = rc.Resource.ResourceContents
@@ -69,11 +65,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
         resourceContent.PassageReferences = await dbContext.PassageResources
             .Where(x => x.ResourceId == resourceContent.ResourceId)
-            .Select(pr => new PassageReferenceResponse
-            {
-                StartVerseId = pr.Passage.StartVerseId,
-                EndVerseId = pr.Passage.EndVerseId
-            })
+            .Select(pr => new PassageReferenceResponse { StartVerseId = pr.Passage.StartVerseId, EndVerseId = pr.Passage.EndVerseId })
             .ToListAsync(ct);
 
         var relevantContentVersion = await dbContext.ResourceContentVersions.Where(rcv => rcv.ResourceContentId == request.Id)
@@ -133,8 +125,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                     CompanyId = relevantContentVersion.AssignedUser.CompanyId
                 };
             }
-
-            await SendOkAsync(resourceContent, ct);
         }
+
+        await SendOkAsync(resourceContent, ct);
     }
 }
