@@ -1,8 +1,10 @@
 using System.Text;
 using Aquifer.API.Common;
 using Aquifer.API.Services;
+using Aquifer.Common.Tiptap;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,6 +23,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var entity = await dbContext.ResourceContentVersions
             .Where(x => x.IsDraft)
             .Where(x => x.ResourceContentId == request.ContentId)
+            .Include(x => x.ResourceContent)
             .SingleOrDefaultAsync(ct);
 
         if (entity is null)
@@ -31,7 +34,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         var user = await userService.GetUserFromJwtAsync(ct);
 
-        if (user.Id != entity.AssignedUserId)
+        if (user.Id != entity.AssignedUserId && ChangesMade(request, entity))
         {
             ThrowError("Not allowed to edit this resource");
         }
@@ -52,5 +55,39 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         await dbContext.SaveChangesAsync(ct);
 
         await SendNoContentAsync(ct);
+    }
+
+    private bool ChangesMade(Request request, ResourceContentVersionEntity currentVersion)
+    {
+        if (request.DisplayName != currentVersion.DisplayName)
+        {
+            return true;
+        }
+
+        if (request.WordCount != currentVersion.WordCount)
+        {
+            return true;
+        }
+
+        if (request.Content is null)
+        {
+            return false;
+        }
+
+        var tiptapType = currentVersion.ResourceContent.MediaType == ResourceContentMediaType.Text
+            ? TiptapContentType.Html
+            : TiptapContentType.None;
+        var currentHtml = TiptapUtilities.ConvertFromJson(currentVersion.Content, tiptapType);
+
+        var newHtml = TiptapUtilities.ConvertFromJson(JsonUtilities.DefaultSerialize(request.Content), tiptapType);
+
+        var currentHtmlStrings = currentHtml as IEnumerable<string>;
+        var newHtmlStrings = newHtml as IEnumerable<string>;
+        if (currentHtmlStrings is not null && newHtmlStrings is not null)
+        {
+            return !currentHtmlStrings.SequenceEqual(newHtmlStrings);
+        }
+
+        return currentHtml != newHtml;
     }
 }
