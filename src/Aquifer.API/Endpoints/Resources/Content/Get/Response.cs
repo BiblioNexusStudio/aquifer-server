@@ -8,6 +8,7 @@ namespace Aquifer.API.Endpoints.Resources.Content.Get;
 public class Response
 {
     public required string ParentResourceName { get; set; }
+    public required object? ParentResourceLicenseInfo { get; set; }
     public required string EnglishLabel { get; set; }
     public IEnumerable<VerseReferenceResponse> VerseReferences { get; set; } = null!;
     public IEnumerable<PassageReferenceResponse> PassageReferences { get; set; } = null!;
@@ -30,11 +31,7 @@ public class Response
     public ProjectResponse? Project =>
         ProjectEntity == null
             ? null
-            : new ProjectResponse
-            {
-                Id = ProjectEntity.Id,
-                Name = ProjectEntity.Name
-            };
+            : new ProjectResponse { Id = ProjectEntity.Id, Name = ProjectEntity.Name };
 
     public CommentThreadsResponse CommentThreads { get; set; } = null!;
 
