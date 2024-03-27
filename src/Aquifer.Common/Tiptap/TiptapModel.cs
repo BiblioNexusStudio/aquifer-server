@@ -41,6 +41,6 @@ public class TiptapMark
 
 public class TiptapVersesAttribute
 {
-    public int StartVerse { get; set; }
-    public int EndVerse { get; set; }
+    public object? StartVerse { get; set; }
+    public object? EndVerse { get; set; }
 }
