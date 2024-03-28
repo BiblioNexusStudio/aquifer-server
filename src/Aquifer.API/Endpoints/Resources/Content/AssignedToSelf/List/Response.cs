@@ -11,6 +11,8 @@ public record Response
     public required string LanguageEnglishDisplay { get; set; }
     public required int? WordCount { get; set; }
     public required string Status { get; set; }
+    public required string StatusDisplayName { get; set; }
+    public required ResourceContentStatus StatusValue { get; set; }
 
     public int DaysSinceAssignment => HistoryCreated is null ? 0 : (DateTime.UtcNow - HistoryCreated.Value).Days;
 

@@ -12,14 +12,19 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
 {
     public override void Configure()
     {
-        Post("/resources/content/{ContentId}/assign-review");
+        Post("/resources/content/{ContentId}/assign-review", "/resources/content/assign-review");
         Permissions(PermissionName.ReviewContent);
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var draft = await dbContext.ResourceContentVersions
-            .Where(x => x.ResourceContentId == request.ContentId &&
+        await ValidateAssignedUser(request, ct);
+        var user = await userService.GetUserFromJwtAsync(ct);
+
+        var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
+
+        var draftVersions = await dbContext.ResourceContentVersions
+            .Where(x => contentIds.Contains(x.ResourceContentId) &&
                         x.IsDraft &&
                         (x.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
                          x.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview ||
@@ -27,31 +32,30 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
                          x.ResourceContent.Status == ResourceContentStatus.TranslationInReview))
             .Include(x => x.ResourceContent)
             .ThenInclude(x => x.Language)
-            .SingleOrDefaultAsync(ct);
+            .ToListAsync(ct);
 
-        if (draft is null)
+        if (draftVersions.Count != contentIds.Length)
         {
-            await SendStringAsync("No pending review or in review draft found", 404, cancellation: ct);
-            return;
+            ThrowError("One or more resources not found or not in draft status");
         }
 
-        await ValidateAssignedUser(request, ct);
-
-        var user = await userService.GetUserFromJwtAsync(ct);
-        var newStatus = draft.ResourceContent.Language.ISO6393Code == "eng"
-            ? ResourceContentStatus.AquiferizeInReview
-            : ResourceContentStatus.TranslationInReview;
-
-        if (newStatus != draft.ResourceContent.Status)
+        foreach (var draftVersion in draftVersions)
         {
-            await historyService.AddStatusHistoryAsync(draft, newStatus, user.Id, ct);
-            draft.ResourceContent.Status = newStatus;
-        }
+            var newStatus = draftVersion.ResourceContent.Language.ISO6393Code == "eng"
+                ? ResourceContentStatus.AquiferizeInReview
+                : ResourceContentStatus.TranslationInReview;
 
-        if (request.AssignedUserId != draft.AssignedUserId)
-        {
-            await historyService.AddAssignedUserHistoryAsync(draft, request.AssignedUserId, user.Id, ct);
-            draft.AssignedUserId = request.AssignedUserId;
+            if (newStatus != draftVersion.ResourceContent.Status)
+            {
+                await historyService.AddStatusHistoryAsync(draftVersion, newStatus, user.Id, ct);
+                draftVersion.ResourceContent.Status = newStatus;
+            }
+
+            if (request.AssignedUserId != draftVersion.AssignedUserId)
+            {
+                await historyService.AddAssignedUserHistoryAsync(draftVersion, request.AssignedUserId, user.Id, ct);
+                draftVersion.AssignedUserId = request.AssignedUserId;
+            }
         }
 
         await dbContext.SaveChangesAsync(ct);
