@@ -7,7 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.CreateTranslation;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService) : Endpoint<Request>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService)
+    : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -56,25 +57,22 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             Version = 1
         };
 
-        await dbContext.ResourceContents.AddAsync(
-            new ResourceContentEntity
-            {
-                LanguageId = language.Id,
-                ResourceId = baseContent.ResourceId,
-                MediaType = baseContent.MediaType,
-                Status = ResourceContentStatus.TranslationNotStarted,
-                Trusted = true,
-                Versions = [newResourceContentVersion]
-            },
-            ct);
+        var newResourceContent = new ResourceContentEntity
+        {
+            LanguageId = language.Id,
+            ResourceId = baseContent.ResourceId,
+            MediaType = baseContent.MediaType,
+            Status = ResourceContentStatus.TranslationNotStarted,
+            Trusted = true,
+            Versions = [newResourceContentVersion]
+        };
+
+        await dbContext.ResourceContents.AddAsync(newResourceContent, ct);
 
         var user = await userService.GetUserFromJwtAsync(ct);
-        await historyService.AddStatusHistoryAsync(newResourceContentVersion,
-            ResourceContentStatus.TranslationNotStarted,
-            user.Id, ct);
+        await historyService.AddStatusHistoryAsync(newResourceContentVersion, ResourceContentStatus.TranslationNotStarted, user.Id, ct);
 
         await dbContext.SaveChangesAsync(ct);
-
-        await SendNoContentAsync(ct);
+        await SendOkAsync(new Response(newResourceContent.Id), ct);
     }
 }
