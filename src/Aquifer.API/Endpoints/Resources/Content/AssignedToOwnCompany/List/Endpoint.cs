@@ -2,6 +2,7 @@ using Aquifer.API.Common;
 using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +21,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var user = await userService.GetUserFromJwtAsync(ct);
         var resourceContents = (await dbContext.ResourceContentVersions
                 .Where(rcv => rcv.IsDraft && rcv.AssignedUser != null && rcv.AssignedUser.CompanyId == user.CompanyId)
+                .Where(rcv => rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInProgress ||
+                              rcv.ResourceContent.Status == ResourceContentStatus.TranslationInProgress)
                 .Select(x => new Response
                 {
                     Id = x.ResourceContentId,

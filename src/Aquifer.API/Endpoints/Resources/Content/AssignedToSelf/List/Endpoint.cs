@@ -35,7 +35,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                         x.ResourceContentVersionAssignedUserHistories.Where(auh => auh.AssignedUserId == user.Id)
                             .Max(auh => auh.Created),
                     WordCount = x.WordCount,
-                    Status = x.ResourceContent.Status.GetDisplayName()
+                    Status = x.ResourceContent.Status.GetDisplayName(),
+                    StatusDisplayName = x.ResourceContent.Status.GetDisplayName(),
+                    StatusValue = x.ResourceContent.Status
                 }).ToListAsync(ct))
             .OrderByDescending(x => x.DaysSinceAssignment).ThenBy(x => x.EnglishLabel).ToList();
 
