@@ -27,11 +27,16 @@ public class Response
     public int? WordCount { get; set; }
     public UserResponse? AssignedUser { get; set; }
     public IEnumerable<SnapshotResponse> Snapshots { get; set; } = null!;
+    public bool? HadMachineTranslation { get; set; }
 
     public ProjectResponse? Project =>
         ProjectEntity == null
             ? null
-            : new ProjectResponse { Id = ProjectEntity.Id, Name = ProjectEntity.Name };
+            : new ProjectResponse
+            {
+                Id = ProjectEntity.Id,
+                Name = ProjectEntity.Name
+            };
 
     public CommentThreadsResponse CommentThreads { get; set; } = null!;
 

@@ -101,6 +101,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         resourceContent.DisplayName = relevantContentVersion.DisplayName;
         resourceContent.WordCount = relevantContentVersion.WordCount;
         resourceContent.Snapshots = snapshots;
+        resourceContent.HadMachineTranslation = relevantContentVersion.HadMachineTranslation;
 
         if (resourceContent.IsDraft)
         {
