@@ -49,6 +49,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             entity.WordCount = request.WordCount;
         }
 
+        if (request.HadMachineTranslation is not null)
+        {
+            entity.HadMachineTranslation = request.HadMachineTranslation;
+        }
+
         entity.DisplayName = request.DisplayName;
         entity.ContentSize = Encoding.UTF8.GetByteCount(entity.Content);
 
