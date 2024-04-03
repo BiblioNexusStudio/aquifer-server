@@ -19,6 +19,7 @@ public class ResourceContentVersionEntity : IHasUpdatedTimestamp
     public string Content { get; set; } = null!; // JSON
     public int ContentSize { get; set; }
     public int? WordCount { get; set; }
+    public bool? HadMachineTranslation { get; set; }
 
     public int? AssignedUserId { get; set; }
     public UserEntity? AssignedUser { get; set; }
