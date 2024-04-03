@@ -86,14 +86,21 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         }
 
         var snapshots = await dbContext.ResourceContentVersionSnapshots
-            .Where(rcvs => rcvs.ResourceContentVersionId == relevantContentVersion.Id).OrderBy(rcvs => rcvs.Created).Select(rcvs =>
-                new SnapshotResponse
-                {
-                    Id = rcvs.Id,
-                    Created = rcvs.Created,
-                    AssignedUserName = rcvs.User == null ? null : $"{rcvs.User.FirstName} {rcvs.User.LastName}",
-                    Status = rcvs.Status.GetDisplayName()
-                }).ToListAsync(ct);
+            .Where(rcvs => rcvs.ResourceContentVersionId == relevantContentVersion.Id).OrderByDescending(rcvs => rcvs.Created).Select(
+                rcvs =>
+                    new SnapshotResponse
+                    {
+                        Id = rcvs.Id,
+                        Created = rcvs.Created,
+                        AssignedUserName = rcvs.User == null ? null : $"{rcvs.User.FirstName} {rcvs.User.LastName}",
+                        Status = rcvs.Status.GetDisplayName()
+                    }).ToListAsync(ct);
+
+        var versions = await dbContext.ResourceContentVersions
+            .Where(rcv => rcv.Id != relevantContentVersion.Id && rcv.ResourceContentId == relevantContentVersion.ResourceContentId)
+            .OrderByDescending(rcv => rcv.Created).Select(rcv =>
+                new VersionResponse { Id = rcv.Id, Created = rcv.Created, Version = rcv.Version, IsPublished = rcv.IsPublished })
+            .ToListAsync(ct);
 
         resourceContent.IsDraft = relevantContentVersion.IsDraft;
         resourceContent.ContentValue = relevantContentVersion.Content;
@@ -101,6 +108,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         resourceContent.DisplayName = relevantContentVersion.DisplayName;
         resourceContent.WordCount = relevantContentVersion.WordCount;
         resourceContent.Snapshots = snapshots;
+        resourceContent.Versions = versions;
         resourceContent.HadMachineTranslation = relevantContentVersion.HadMachineTranslation;
 
         if (resourceContent.IsDraft)
