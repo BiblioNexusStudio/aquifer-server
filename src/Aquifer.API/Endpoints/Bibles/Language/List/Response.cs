@@ -1,38 +1,29 @@
 using System.Text.Json.Serialization;
 using Aquifer.Common.Utilities;
 
-namespace Aquifer.API.Modules.Bibles;
+namespace Aquifer.API.Endpoints.Bibles.Language.List;
 
-public class BibleResponse
+public record Response
 {
-    public int Id { get; set; }
+    public required int Id { get; set; }
     public required string Name { get; set; }
     public required string Abbreviation { get; set; }
-    public int LanguageId { get; set; }
+    public required int LanguageId { get; set; }
 
     public object? LicenseInfo =>
         SerializedLicenseInfo == null ? null : JsonUtilities.DefaultDeserialize(SerializedLicenseInfo);
 
     [JsonIgnore]
     public string? SerializedLicenseInfo { get; init; }
-}
 
-public class BibleWithBooksMetadataResponse : BibleResponse
-{
     public required IEnumerable<BibleBookMetadataResponse> Books { get; set; }
 }
 
-public class BibleBookMetadataResponse
+public record BibleBookMetadataResponse
 {
     public required string BookCode { get; set; }
     public required string DisplayName { get; set; }
-    public int TextSize { get; set; }
-    public int AudioSize { get; set; }
-    public int ChapterCount { get; set; }
-}
-
-public class BibleBookResponse : BibleBookMetadataResponse
-{
-    public string TextUrl { get; set; } = null!;
-    public object? AudioUrls { get; set; }
+    public required int TextSize { get; set; }
+    public required int AudioSize { get; set; }
+    public required int ChapterCount { get; set; }
 }
