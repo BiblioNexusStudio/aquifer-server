@@ -13,8 +13,11 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var parentResources = await _dbContext.ParentResources
-            .Where(pr => pr.ResourceType == req.ResourceType)
+        var parentResources = await _dbContext.ResourceContents
+            .Include(rc => rc.Resource.ParentResource)
+            .Where(rc => rc.LanguageId == req.LanguageId && rc.Resource.ParentResource.ResourceType == req.ResourceType)
+            .Select(rc => rc.Resource.ParentResource)
+            .Distinct()
             .ToListAsync(ct);
 
         await SendOkAsync(new Response { ParentResources = parentResources }, ct);
