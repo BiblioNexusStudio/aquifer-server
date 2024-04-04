@@ -2,24 +2,31 @@ using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.ParentResources.List;
+namespace Aquifer.API.Endpoints.Resources.ParentResources.List;
 
-public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Response>>
 {
     public override void Configure()
     {
-        Post("/resources/parent-resources");
+        Get("/resources/parent-resources");
+        AllowAnonymous();
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var parentResources = await _dbContext.ResourceContents
-            .Include(rc => rc.Resource.ParentResource)
-            .Where(rc => rc.LanguageId == req.LanguageId && rc.Resource.ParentResource.ResourceType == req.ResourceType)
-            .Select(rc => rc.Resource.ParentResource)
-            .Distinct()
+        var response = await dbContext.ParentResources
+            .Where(pr => (req.LanguageId == null || pr.Resources.Any(r => r.ResourceContents.Any(rc => rc.LanguageId == req.LanguageId))) &&
+                         (req.ResourceType == null || pr.ResourceType == req.ResourceType))
+            .Select(pr => new Response
+            {
+                ComplexityLevel = pr.ComplexityLevel,
+                DisplayName = pr.DisplayName,
+                LicenseInfoValue = pr.LicenseInfo,
+                ResourceType = pr.ResourceType,
+                ShortName = pr.ShortName
+            })
             .ToListAsync(ct);
 
-        await SendOkAsync(new Response { ParentResources = parentResources }, ct);
+        await SendOkAsync(response, ct);
     }
 }
