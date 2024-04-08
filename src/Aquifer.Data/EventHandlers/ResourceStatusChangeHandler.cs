@@ -29,8 +29,6 @@ public static class ResourceStatusChangeHandler
                         inReviewContentIds.Add(x.Id);
                         break;
                     case ResourceContentStatus.TranslationInProgress:
-                        inProgressIds.Add(x.Id);
-                        break;
                     case ResourceContentStatus.AquiferizeInProgress:
                         inProgressIds.Add(x.Id);
                         break;
