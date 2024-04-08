@@ -31,6 +31,9 @@ public static class ResourceStatusChangeHandler
                     case ResourceContentStatus.TranslationInProgress:
                         inProgressIds.Add(x.Id);
                         break;
+                    case ResourceContentStatus.AquiferizeInProgress:
+                        inProgressIds.Add(x.Id);
+                        break;
                 }
             });
 
@@ -57,15 +60,15 @@ public static class ResourceStatusChangeHandler
                     .SetProperty(p => p.ActualDeliveryDate, DateOnly.FromDateTime(DateTime.UtcNow))
                     .SetProperty(p => p.Updated, DateTime.UtcNow));
         }
-        
+
         if (inProgressIds.Count > 0)
         {
             await using var dbContext = new AquiferDbContext(dbContextOptions);
             await dbContext.Projects.Where(x =>
+                    x.ActualDeliveryDate != null &&
                     x.ResourceContents.Any(rc => inProgressIds.Contains(rc.Id)) &&
                     x.ResourceContents.Where(rc => !inProgressIds.Contains(rc.Id))
                         .All(rc => InReviewOrGreaterStatuses.Contains(rc.Status)))
-                .Where(p => p.ActualDeliveryDate != null)
                 .ExecuteUpdateAsync(x => x
                     .SetProperty(p => p.ActualDeliveryDate, null as DateOnly?)
                     .SetProperty(p => p.Updated, DateTime.UtcNow));
