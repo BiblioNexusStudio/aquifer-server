@@ -15,6 +15,7 @@ public static class ResourceStatusChangeHandler
     {
         List<int> completedContentIds = [];
         List<int> inReviewContentIds = [];
+        List<int> inProgressIds = [];
 
         entityEntries.Where(entry => entry is { State: EntityState.Unchanged, Entity: ResourceContentEntity })
             .Select(x => x.Entity as ResourceContentEntity).ToList().ForEach(x =>
@@ -26,6 +27,10 @@ public static class ResourceStatusChangeHandler
                         break;
                     case ResourceContentStatus.AquiferizeInReview or ResourceContentStatus.TranslationInReview:
                         inReviewContentIds.Add(x.Id);
+                        break;
+                    case ResourceContentStatus.TranslationInProgress:
+                    case ResourceContentStatus.AquiferizeInProgress:
+                        inProgressIds.Add(x.Id);
                         break;
                 }
             });
@@ -51,6 +56,19 @@ public static class ResourceStatusChangeHandler
                         .All(rc => InReviewOrGreaterStatuses.Contains(rc.Status)))
                 .ExecuteUpdateAsync(x => x
                     .SetProperty(p => p.ActualDeliveryDate, DateOnly.FromDateTime(DateTime.UtcNow))
+                    .SetProperty(p => p.Updated, DateTime.UtcNow));
+        }
+
+        if (inProgressIds.Count > 0)
+        {
+            await using var dbContext = new AquiferDbContext(dbContextOptions);
+            await dbContext.Projects.Where(x =>
+                    x.ActualDeliveryDate != null &&
+                    x.ResourceContents.Any(rc => inProgressIds.Contains(rc.Id)) &&
+                    x.ResourceContents.Where(rc => !inProgressIds.Contains(rc.Id))
+                        .All(rc => InReviewOrGreaterStatuses.Contains(rc.Status)))
+                .ExecuteUpdateAsync(x => x
+                    .SetProperty(p => p.ActualDeliveryDate, null as DateOnly?)
                     .SetProperty(p => p.Updated, DateTime.UtcNow));
         }
     }
