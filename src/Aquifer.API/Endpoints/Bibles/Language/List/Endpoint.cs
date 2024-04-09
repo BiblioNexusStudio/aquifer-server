@@ -9,7 +9,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 {
     public override void Configure()
     {
-        Get("/bibles/language/{LangageId}");
+        Get("/bibles/language/{LanguageId}");
         AllowAnonymous();
     }
 
