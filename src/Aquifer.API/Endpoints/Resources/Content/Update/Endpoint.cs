@@ -71,10 +71,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             return true;
         }
 
-        if (request.WordCount != currentVersion.WordCount)
-        {
-            return true;
-        }
+        // TODO: once our word counting is fixed this should be put back
+        // if (request.WordCount != currentVersion.WordCount)
+        // {
+        //     return true;
+        // }
 
         if (request.Content is null)
         {
