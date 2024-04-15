@@ -1,4 +1,3 @@
-using Aquifer.Common.Utilities;
 using Aquifer.Data.Enums;
 using FastEndpoints;
 using FluentValidation;
@@ -9,8 +8,8 @@ public class Validator : Validator<Request>
 {
     public Validator()
     {
-        RuleFor(x => x.BookCode)
-            .Must(code => BibleBookCodeUtilities.IdFromCode(code) != BookId.None)
-            .WithMessage("bookCode must be valid.");
+        RuleFor(x => x.BookId)
+            .Must(id => id != BookId.None)
+            .WithMessage("bookId must be valid.");
     }
 }
