@@ -38,8 +38,13 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             }).ToListAsync(ct);
 
         var total = await query.CountAsync(ct);
+        var response = new Response
+        {
+            ResourceContents = resourceContent,
+            Total = total
+        };
 
-        await SendOkAsync(new Response { ResourceContents = resourceContent, Total = total }, ct);
+        await SendOkAsync(response, ct);
     }
 
     private IQueryable<ResourceContentEntity> ApplyLanguageIdFilter(IQueryable<ResourceContentEntity> query, int? languageId)
@@ -62,8 +67,10 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         return query;
     }
 
-    private IQueryable<ResourceContentEntity> ApplyBookAndChapterFilter(IQueryable<ResourceContentEntity> query, string? bookCode,
-        int? startChapter, int? endChapter)
+    private IQueryable<ResourceContentEntity> ApplyBookAndChapterFilter(IQueryable<ResourceContentEntity> query,
+        string? bookCode,
+        int? startChapter,
+        int? endChapter)
     {
         var verseRange = BibleUtilities.VerseRangeForBookAndChapters(bookCode, startChapter, endChapter);
 
@@ -76,9 +83,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 rc.Resource.VerseResources.Any(vr =>
                     vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
                 rc.Resource.PassageResources.Any(pr =>
-                    (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
-                    (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
-                    (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId)));
+                    pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
+                rc.Resource.PassageResources.Any(pr => pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
+                rc.Resource.PassageResources.Any(pr => pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId));
         }
 
         return query;
