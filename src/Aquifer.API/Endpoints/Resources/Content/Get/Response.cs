@@ -27,16 +27,13 @@ public class Response
     public int? WordCount { get; set; }
     public UserResponse? AssignedUser { get; set; }
     public IEnumerable<SnapshotResponse> Snapshots { get; set; } = null!;
+    public IEnumerable<VersionResponse> Versions { get; set; } = null!;
     public bool? HadMachineTranslation { get; set; }
 
     public ProjectResponse? Project =>
         ProjectEntity == null
             ? null
-            : new ProjectResponse
-            {
-                Id = ProjectEntity.Id,
-                Name = ProjectEntity.Name
-            };
+            : new ProjectResponse { Id = ProjectEntity.Id, Name = ProjectEntity.Name };
 
     public CommentThreadsResponse CommentThreads { get; set; } = null!;
 
@@ -113,6 +110,14 @@ public class SnapshotResponse
     public required DateTime Created { get; set; }
     public required string? AssignedUserName { get; set; }
     public required string Status { get; set; }
+}
+
+public class VersionResponse
+{
+    public required int Id { get; set; }
+    public required DateTime Created { get; set; }
+    public required int Version { get; set; }
+    public required bool IsPublished { get; set; }
 }
 
 public class UserResponse

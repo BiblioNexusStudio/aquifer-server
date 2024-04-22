@@ -14,7 +14,7 @@ public class ParentResourceEntity : IHasUpdatedTimestamp
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    public ICollection<ResourceEntity> Resources { get; set; } = [];
+    public ICollection<ParentResourceLocalizationEntity> Localizations { get; set; } = [];
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;

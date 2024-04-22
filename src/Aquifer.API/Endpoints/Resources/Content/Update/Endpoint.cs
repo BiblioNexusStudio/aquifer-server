@@ -14,7 +14,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 {
     public override void Configure()
     {
-        Put("/admin/resources/content/summary/{ContentId}", "/resources/content/{ContentId}");
+        Patch("/resources/content/{ContentId}");
         Permissions(PermissionName.EditContent);
     }
 
@@ -42,6 +42,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         if (request.Content is not null)
         {
             entity.Content = JsonUtilities.DefaultSerialize(request.Content);
+            entity.ContentSize = Encoding.UTF8.GetByteCount(entity.Content);
         }
 
         if (request.WordCount is not null)
@@ -54,11 +55,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             entity.HadMachineTranslation = request.HadMachineTranslation;
         }
 
-        entity.DisplayName = request.DisplayName;
-        entity.ContentSize = Encoding.UTF8.GetByteCount(entity.Content);
+        if (request.DisplayName is not null)
+        {
+            entity.DisplayName = request.DisplayName;
+        }
 
         await dbContext.SaveChangesAsync(ct);
-
         await SendNoContentAsync(ct);
     }
 
@@ -69,10 +71,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             return true;
         }
 
-        if (request.WordCount != currentVersion.WordCount)
-        {
-            return true;
-        }
+        // TODO: once our word counting is fixed this should be put back
+        // if (request.WordCount != currentVersion.WordCount)
+        // {
+        //     return true;
+        // }
 
         if (request.Content is null)
         {

@@ -52,7 +52,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             var allowedToAssign = (hasAssignOverridePermission && (assignedUserIsInCompany || hasAssignOutsideCompanyPermission)) ||
                                   currentUserIsAssigned;
 
-            if (!allowedToAssign || draftVersion.AssignedUserId == request.AssignedUserId)
+            if (!allowedToAssign)
             {
                 ThrowError($"Unable to assign user for id {draftVersion.ResourceContentId}");
             }
@@ -67,7 +67,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                     $"Must be assigned the in-review content in order to assign to another user for id {draftVersion.ResourceContentId}");
             }
 
-            await historyService.AddAssignedUserHistoryAsync(draftVersion, request.AssignedUserId, user.Id, ct);
+            if (draftVersion.AssignedUserId != request.AssignedUserId)
+            {
+                await historyService.AddAssignedUserHistoryAsync(draftVersion, request.AssignedUserId, user.Id, ct);
+            }
 
             draftVersion.AssignedUserId = request.AssignedUserId;
             draftVersion.Updated = DateTime.UtcNow;

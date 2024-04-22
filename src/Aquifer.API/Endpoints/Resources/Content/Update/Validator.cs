@@ -7,6 +7,7 @@ public class Validator : Validator<Request>
 {
     public Validator()
     {
-        RuleFor(r => r.DisplayName).NotEmpty();
+        RuleFor(x => x).Must(x =>
+            x.DisplayName is not null || x.Content is not null || x.WordCount is not null || x.HadMachineTranslation is not null);
     }
 }

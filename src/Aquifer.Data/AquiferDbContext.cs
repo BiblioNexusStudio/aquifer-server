@@ -38,6 +38,7 @@ public class AquiferDbContext : DbContext
     public DbSet<LanguageEntity> Languages { get; set; }
     public DbSet<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; }
     public DbSet<ParentResourceEntity> ParentResources { get; set; }
+    public DbSet<ParentResourceLocalizationEntity> ParentResourceLocalizations { get; set; }
     public DbSet<PassageEntity> Passages { get; set; }
     public DbSet<PassageResourceEntity> PassageResources { get; set; }
     public DbSet<ProjectEntity> Projects { get; set; }

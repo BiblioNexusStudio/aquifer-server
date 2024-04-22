@@ -4,7 +4,7 @@ public record Request
 {
     public int ContentId { get; set; }
     public List<object>? Content { get; init; }
-    public string DisplayName { get; init; } = null!;
+    public string? DisplayName { get; init; } = null!;
     public int? WordCount { get; init; }
     public bool? HadMachineTranslation { get; set; }
 }
