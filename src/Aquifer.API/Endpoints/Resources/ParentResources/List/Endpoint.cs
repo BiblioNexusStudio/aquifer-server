@@ -15,12 +15,15 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         var response = await dbContext.ParentResources
-            .Where(pr => (req.LanguageId == null || pr.Resources.Any(r => r.ResourceContents.Any(rc => rc.LanguageId == req.LanguageId))) &&
+            .Where(pr => (req.LanguageId == null || pr.Localizations.Any(r => r.LanguageId == req.LanguageId)) &&
                          (req.ResourceType == null || pr.ResourceType == req.ResourceType))
             .Select(pr => new Response
             {
                 ComplexityLevel = pr.ComplexityLevel,
-                DisplayName = pr.DisplayName,
+                DisplayName =
+                    req.LanguageId == null
+                        ? pr.DisplayName
+                        : pr.Localizations.FirstOrDefault(l => l.LanguageId == req.LanguageId)!.DisplayName,
                 LicenseInfoValue = pr.LicenseInfo,
                 ResourceType = pr.ResourceType,
                 ShortName = pr.ShortName
