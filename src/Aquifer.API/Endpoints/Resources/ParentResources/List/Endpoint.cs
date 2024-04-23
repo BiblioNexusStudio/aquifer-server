@@ -28,7 +28,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                         : pr.Localizations.Single(l => l.LanguageId == req.LanguageId).DisplayName,
                 LicenseInfoValue = pr.LicenseInfo,
                 ResourceType = pr.ResourceType,
-                ShortName = pr.ShortName
+                ShortName = pr.ShortName,
+                Id = pr.Id
             })
             .ToListAsync(ct);
 
