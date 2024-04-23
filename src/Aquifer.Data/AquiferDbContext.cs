@@ -21,7 +21,10 @@ public class AquiferDbContext : DbContext
         SavedChanges += async (s, e) => await OnSavingChanges(s, e);
     }
 
+    public DbSet<BibleBookChapterEntity> BibleBookChapters { get; set; }
+    public DbSet<BibleBookChapterVerseEntity> BibleBookChapterVerses { get; set; }
     public DbSet<BibleBookContentEntity> BibleBookContents { get; set; }
+    public DbSet<BibleBookEntity> BibleBooks { get; set; }
     public DbSet<BibleEntity> Bibles { get; set; }
     public DbSet<BibleVersionWordEntity> BibleVersionWords { get; set; }
     public DbSet<BibleVersionWordGroupEntity> BibleVersionWordGroups { get; set; }
@@ -29,11 +32,11 @@ public class AquiferDbContext : DbContext
     public DbSet<CommentEntity> Comments { get; set; }
     public DbSet<CommentThreadEntity> CommentThreads { get; set; }
     public DbSet<CompanyEntity> Companies { get; set; }
+    public DbSet<GreekLemmaEntity> GreekLemmas { get; set; }
     public DbSet<GreekNewTestamentEntity> GreekNewTestaments { get; set; }
     public DbSet<GreekNewTestamentWordEntity> GreekNewTestamentWords { get; set; }
     public DbSet<GreekNewTestamentWordGroupEntity> GreekNewTestamentWordGroups { get; set; }
     public DbSet<GreekNewTestamentWordGroupWordEntity> GreekNewTestamentWordGroupWords { get; set; }
-    public DbSet<GreekLemmaEntity> GreekLemmas { get; set; }
     public DbSet<GreekWordEntity> GreekWords { get; set; }
     public DbSet<LanguageEntity> Languages { get; set; }
     public DbSet<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; }
