@@ -1,5 +1,4 @@
 using Aquifer.API.Modules.Resources.LanguageResources;
-using Aquifer.API.Modules.Resources.ParentResources;
 using Aquifer.API.Modules.Resources.ResourceContentBatch;
 using Aquifer.API.Modules.Resources.ResourceContentItem;
 
@@ -16,8 +15,6 @@ public class ResourcesModule : IModule
         group.MapGet("batch/metadata", ResourceContentBatchEndpoints.GetResourceMetadataByIds);
         group.MapGet("batch/content/text", ResourceContentBatchEndpoints.GetResourceTextContentByIds);
         group.MapGet("language/{languageId:int}/book/{bookCode}", LanguageResourcesEndpoints.GetBookByLanguage);
-        group.MapGet("parent-resources", ParentResourcesEndpoints.Get)
-            .CacheOutput(x => x.Expire(TimeSpan.FromMinutes(5)));
 
         return endpoints;
     }

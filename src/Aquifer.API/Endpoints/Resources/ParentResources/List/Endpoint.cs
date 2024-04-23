@@ -1,3 +1,4 @@
+using Aquifer.API.Helpers;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     public override void Configure()
     {
         Get("/resources/parent-resources");
+        Options(EndpointHelpers.SetCacheOption(5));
         AllowAnonymous();
     }
 
@@ -23,7 +25,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                 DisplayName =
                     req.LanguageId == null
                         ? pr.DisplayName
-                        : pr.Localizations.FirstOrDefault(l => l.LanguageId == req.LanguageId)!.DisplayName,
+                        : pr.Localizations.Single(l => l.LanguageId == req.LanguageId).DisplayName,
                 LicenseInfoValue = pr.LicenseInfo,
                 ResourceType = pr.ResourceType,
                 ShortName = pr.ShortName
