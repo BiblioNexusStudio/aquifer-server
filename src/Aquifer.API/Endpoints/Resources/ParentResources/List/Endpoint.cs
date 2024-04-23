@@ -10,7 +10,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     public override void Configure()
     {
         Get("/resources/parent-resources");
-        Options(EndpointHelpers.SetCacheOption(5));
+        Options(EndpointHelpers.SetCacheOption());
         AllowAnonymous();
     }
 
