@@ -15,7 +15,11 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var companies = await dbContext.Companies.Select(company => new Response { Id = company.Id, Name = company.Name }).ToListAsync(ct);
+        var companies = await dbContext.Companies.OrderBy(x => x.Name).Select(company => new Response
+        {
+            Id = company.Id,
+            Name = company.Name
+        }).ToListAsync(ct);
 
         await SendOkAsync(companies, ct);
     }
