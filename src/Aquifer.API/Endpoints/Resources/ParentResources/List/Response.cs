@@ -6,6 +6,7 @@ namespace Aquifer.API.Endpoints.Resources.ParentResources.List;
 
 public class Response
 {
+    public required int Id { get; set; }
     public required string ShortName { get; set; }
     public required string DisplayName { get; set; }
 
