@@ -19,6 +19,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
         var response = await dbContext.ParentResources
             .Where(pr => (req.LanguageId == 1 || pr.Localizations.Any(r => r.LanguageId == req.LanguageId)) &&
                 (req.ResourceType == null || pr.ResourceType == req.ResourceType))
+            .OrderBy(x => x.DisplayName)
             .Select(pr => new Response
             {
                 ComplexityLevel = pr.ComplexityLevel,
