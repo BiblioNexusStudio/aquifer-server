@@ -9,10 +9,10 @@ public class Response
     public required string ParentResourceName { get; set; }
     public required string LanguageEnglishDisplay { get; set; }
 
-    public int DaysSinceStatusChange => HistoryCreated is null ? 0 : (DateTime.UtcNow - HistoryCreated.Value).Days;
+    public int DaysSinceStatusChange => (DateTime.UtcNow - LastStatusUpdate).Days;
 
     public required int? WordCount { get; set; }
 
     [JsonIgnore]
-    public DateTime? HistoryCreated { get; set; }
+    public DateTime LastStatusUpdate { get; set; }
 }
