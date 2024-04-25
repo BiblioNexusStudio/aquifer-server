@@ -18,15 +18,15 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     {
         var resourceContents = (await dbContext.ResourceContentVersions
                 .Where(rcv => rcv.IsDraft &&
-                              (rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
-                               rcv.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending))
+                    (rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
+                        rcv.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending))
                 .Select(x => new Response
                 {
                     Id = x.ResourceContentId,
                     EnglishLabel = x.ResourceContent.Resource.EnglishLabel,
                     LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
                     ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
-                    HistoryCreated = x.ResourceContentVersionStatusHistories.Max(auh => auh.Created),
+                    LastStatusUpdate = x.ResourceContent.Updated,
                     WordCount = x.WordCount
                 }).ToListAsync(ct))
             .OrderByDescending(x => x.DaysSinceStatusChange).ThenBy(x => x.EnglishLabel).ToList();
