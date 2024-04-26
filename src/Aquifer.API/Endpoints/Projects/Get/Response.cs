@@ -28,6 +28,7 @@ public class Response
 
 public class ProjectResourceStatusCounts
 {
+    public required int NotStarted { get; set; }
     public required int InProgress { get; set; }
     public required int InReview { get; set; }
     public required int Completed { get; set; }
