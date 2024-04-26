@@ -24,10 +24,11 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
 
     private async Task<List<Response>> GetProjectsAsync(CancellationToken ct)
     {
+        List<ResourceContentStatus> notStartedStatuses = [ResourceContentStatus.New, ResourceContentStatus.TranslationNotStarted];
+
         List<ResourceContentStatus> inProgressStatuses =
         [
-            ResourceContentStatus.AquiferizeInProgress,
-            ResourceContentStatus.TranslationInProgress
+            ResourceContentStatus.AquiferizeInProgress, ResourceContentStatus.TranslationInProgress
         ];
 
         List<ResourceContentStatus> inReviewStatuses =
@@ -53,6 +54,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
                     : null,
             Counts = new ProjectResourceStatusCounts
             {
+                NotStarted = x.ResourceContents.Count(rc => notStartedStatuses.Contains(rc.Status)),
                 InProgress = x.ResourceContents.Count(rc => inProgressStatuses.Contains(rc.Status)),
                 InReview = x.ResourceContents.Count(rc => inReviewStatuses.Contains(rc.Status)),
                 Completed = x.ResourceContents.Count(rc => rc.Status == ResourceContentStatus.Complete)

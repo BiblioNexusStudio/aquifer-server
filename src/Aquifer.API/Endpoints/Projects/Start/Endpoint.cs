@@ -36,16 +36,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         foreach (var resourceContentVersion in resourceContentVersions)
         {
-            var newStatus = resourceContentVersion.ResourceContent.Language.ISO6393Code == "eng"
-                ? ResourceContentStatus.AquiferizeInProgress
-                : ResourceContentStatus.TranslationInProgress;
-
-            if (resourceContentVersion.ResourceContent.Status != newStatus)
-            {
-                resourceContentVersion.ResourceContent.Status = newStatus;
-                await resourceHistoryService.AddStatusHistoryAsync(resourceContentVersion, newStatus, user.Id, ct);
-            }
-
             if (project.CompanyLeadUserId is not null)
             {
                 resourceContentVersion.AssignedUserId = project.CompanyLeadUserId;
