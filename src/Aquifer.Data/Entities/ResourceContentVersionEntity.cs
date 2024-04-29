@@ -19,13 +19,15 @@ public class ResourceContentVersionEntity : IHasUpdatedTimestamp
     public string Content { get; set; } = null!; // JSON
     public int ContentSize { get; set; }
     public int? WordCount { get; set; }
-    public bool? HadMachineTranslation { get; set; }
+    public bool? HadMachineTranslation { get; set; } // delete this after moving data to new table
 
     public int? AssignedUserId { get; set; }
     public UserEntity? AssignedUser { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
+
+    public ICollection<ResourceContentVersionMachineTranslationEntity> MachineTranslations { get; set; } = [];
 
     public IEnumerable<ResourceContentVersionStatusHistoryEntity> ResourceContentVersionStatusHistories { get; set; }
         = new List<ResourceContentVersionStatusHistoryEntity>();
