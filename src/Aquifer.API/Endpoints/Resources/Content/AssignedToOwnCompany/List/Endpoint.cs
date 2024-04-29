@@ -1,8 +1,6 @@
 using Aquifer.API.Common;
-using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +8,22 @@ namespace Aquifer.API.Endpoints.Resources.Content.AssignedToOwnCompany.List;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService) : EndpointWithoutRequest<List<Response>>
 {
+    private const string Query = """
+                                 SELECT RCV.ResourceContentId AS Id, R.EnglishLabel, PR.DisplayName AS ParentResourceName, U.Id AS UserId,
+                                        U.FirstName AS UserFirstName, U.LastName AS UserLastName,
+                                        L.EnglishDisplay AS LanguageEnglishDisplay, RCV.WordCount, P.Name AS ProjectName,
+                                        P.ProjectedDeliveryDate AS ProjectProjectedDeliveryDate
+                                 FROM ResourceContentVersions AS RCV
+                                          INNER JOIN Users AS U ON RCV.AssignedUserId = U.Id
+                                          INNER JOIN ResourceContents AS RC ON RCV.ResourceContentId = RC.Id
+                                          INNER JOIN Resources AS R ON RC.ResourceId = R.Id
+                                          INNER JOIN ParentResources AS PR ON R.ParentResourceId = PR.Id
+                                          INNER JOIN Languages AS L ON RC.LanguageId = L.Id
+                                          INNER JOIN ProjectResourceContents PRC ON PRC.ResourceContentId = RC.Id
+                                          INNER JOIN Projects P ON P.Id = PRC.ProjectId
+                                 WHERE RCV.IsDraft = 1 AND U.CompanyId = {0} AND RC.Status IN (1, 6, 2, 7)
+                                 """;
+
     public override void Configure()
     {
         Get("/resources/content/assigned-to-own-company");
@@ -19,24 +33,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override async Task HandleAsync(CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var resourceContents = (await dbContext.ResourceContentVersions
-                .Where(rcv => rcv.IsDraft && rcv.AssignedUser != null && rcv.AssignedUser.CompanyId == user.CompanyId)
-                .Where(rcv => rcv.ResourceContent.Status == ResourceContentStatus.New ||
-                    rcv.ResourceContent.Status == ResourceContentStatus.TranslationNotStarted ||
-                    rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInProgress ||
-                    rcv.ResourceContent.Status == ResourceContentStatus.TranslationInProgress)
-                .Select(x => new Response
-                {
-                    Id = x.ResourceContentId,
-                    EnglishLabel = x.ResourceContent.Resource.EnglishLabel,
-                    ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
-                    ProjectEntity = x.ResourceContent.Projects.FirstOrDefault(),
-                    AssignedUser = UserDto.FromUserEntity(x.AssignedUser)!,
-                    LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
-                    WordCount = x.WordCount
-                }).ToListAsync(ct))
-            .OrderBy(x => x.DaysUntilProjectDeadline).ThenBy(x => x.EnglishLabel).ToList();
+        var userCompanyId = user.CompanyId;
 
-        await SendOkAsync(resourceContents, ct);
+        var queryResponse = (await dbContext.Database.SqlQueryRaw<Response>(Query, userCompanyId).ToListAsync(ct))
+            .OrderBy(x => x.DaysUntilProjectDeadline).ThenBy(x => x.ProjectName).ThenBy(x => x.EnglishLabel).ToList();
+
+        await SendOkAsync(queryResponse, ct);
     }
 }
