@@ -1,7 +1,6 @@
 using Aquifer.API.Services;
 using Aquifer.Common.Extensions;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,12 +17,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         var user = await userService.GetUserFromJwtAsync(ct);
         var resourceContents = (await dbContext.ResourceContentVersions
-                .Where(rcv =>
-                    rcv.AssignedUserId == user.Id &&
-                    (rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInProgress ||
-                     rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview ||
-                     rcv.ResourceContent.Status == ResourceContentStatus.TranslationInProgress ||
-                     rcv.ResourceContent.Status == ResourceContentStatus.TranslationInReview))
+                .Where(rcv => rcv.AssignedUserId == user.Id)
                 .Select(x => new Response
                 {
                     Id = x.ResourceContentId,
