@@ -8,7 +8,7 @@ public class ResourceContentVersionMachineTranslationEntity : IHasUpdatedTimesta
     public int Id { get; set; }
     public int ResourceContentVersionId { get; set; }
     public MachineTranslationSourceId SourceId { get; set; }
-    public string Content { get; set; } // JSON
+    public string Content { get; set; } = null!; // JSON
     public int UserId { get; set; }
     public byte UserRating { get; set; }
     public bool ImproveClarity { get; set; }
