@@ -21,8 +21,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var user = await userService.GetUserFromJwtAsync(ct);
         var resourceContents = (await dbContext.ResourceContentVersions
                 .Where(rcv => rcv.IsDraft && rcv.AssignedUser != null && rcv.AssignedUser.CompanyId == user.CompanyId)
-                .Where(rcv => rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInProgress ||
-                              rcv.ResourceContent.Status == ResourceContentStatus.TranslationInProgress)
+                .Where(rcv => rcv.ResourceContent.Status == ResourceContentStatus.New ||
+                    rcv.ResourceContent.Status == ResourceContentStatus.TranslationNotStarted ||
+                    rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeInProgress ||
+                    rcv.ResourceContent.Status == ResourceContentStatus.TranslationInProgress)
                 .Select(x => new Response
                 {
                     Id = x.ResourceContentId,
