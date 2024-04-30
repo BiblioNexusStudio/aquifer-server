@@ -33,7 +33,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     StatusDisplayName = x.ResourceContent.Status.GetDisplayName(),
                     StatusValue = x.ResourceContent.Status
                 }).ToListAsync(ct))
-            .OrderByDescending(x => x.DaysSinceAssignment).ThenBy(x => x.EnglishLabel).ToList();
+            .OrderByDescending(x => x.DaysSinceAssignment).ThenBy(x => x.ProjectName).ThenBy(x => x.EnglishLabel).ToList();
 
         await SendOkAsync(resourceContents, ct);
     }
