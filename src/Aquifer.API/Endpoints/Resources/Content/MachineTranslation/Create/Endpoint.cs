@@ -1,0 +1,43 @@
+﻿using Aquifer.API.Common;
+using Aquifer.API.Services;
+using Aquifer.Data;
+using Aquifer.Data.Entities;
+using FastEndpoints;
+using Microsoft.EntityFrameworkCore;
+
+namespace Aquifer.API.Endpoints.Resources.Content.MachineTranslation.Create;
+
+public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request>
+{
+    public override void Configure()
+    {
+        Post("/resources/content/{ResourceContentVersionId}/machine-translation");
+        Permissions(PermissionName.AiTranslate);
+    }
+
+    public override async Task HandleAsync(Request req, CancellationToken ct)
+    {
+        var existingMt =
+            await dbContext.ResourceContentVersionMachineTranslations
+                .FirstOrDefaultAsync(x => x.ResourceContentVersionId == req.ResourceContentVersionId, ct);
+
+        if (existingMt is not null)
+        {
+            ThrowError(x => x.ResourceContentVersionId, "Machine translation already exists for this resource content version id");
+        }
+
+        var user = await userService.GetUserFromJwtAsync(ct);
+        var mt = new ResourceContentVersionMachineTranslationEntity
+        {
+            ResourceContentVersionId = req.ResourceContentVersionId,
+            Content = req.Content,
+            UserId = user.Id,
+            SourceId = req.SourceId
+        };
+
+        await dbContext.ResourceContentVersionMachineTranslations.AddAsync(mt, ct);
+        await dbContext.SaveChangesAsync(ct);
+
+        await SendNoContentAsync(ct);
+    }
+}
