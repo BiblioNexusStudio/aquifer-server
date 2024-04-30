@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Aquifer.Common.Extensions;
 using Aquifer.Data.Entities;
 
 namespace Aquifer.API.Endpoints.Resources.Content.AssignedToSelf.List;
@@ -10,21 +11,20 @@ public record Response
     public required string ParentResourceName { get; set; }
     public required string LanguageEnglishDisplay { get; set; }
     public required int? WordCount { get; set; }
-    public required string Status { get; set; }
-    public required string StatusDisplayName { get; set; }
     public required ResourceContentStatus StatusValue { get; set; }
+    public string? ProjectName { get; set; }
 
-    public int DaysSinceAssignment => HistoryCreated is null ? 0 : (DateTime.UtcNow - HistoryCreated.Value).Days;
+    public string Status => StatusValue.GetDisplayName();
+    public string StatusDisplayName => StatusValue.GetDisplayName();
+    public int DaysSinceAssignment => (DateTime.UtcNow - HistoryCreated).Days;
 
-    public int? DaysUntilProjectDeadline => ProjectEntity?.ProjectedDeliveryDate == null
+    public int? DaysUntilProjectDeadline => ProjectedDeliveryDate == null
         ? null
-        : (ProjectEntity.ProjectedDeliveryDate.Value.ToDateTime(new TimeOnly(23, 59)) - DateTime.UtcNow).Days;
-
-    public string? ProjectName => ProjectEntity?.Name;
+        : (ProjectedDeliveryDate.Value.ToDateTime(new TimeOnly(23, 59)) - DateTime.UtcNow).Days;
 
     [JsonIgnore]
-    public ProjectEntity? ProjectEntity { get; set; }
+    public DateOnly? ProjectedDeliveryDate { get; set; }
 
     [JsonIgnore]
-    public DateTime? HistoryCreated { get; set; }
+    public DateTime HistoryCreated { get; set; }
 }
