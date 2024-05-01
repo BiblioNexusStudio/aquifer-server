@@ -10,20 +10,18 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 {
     public override void Configure()
     {
-        Patch("/resources/content/{ResourceContentVersionId}/machine-translation");
+        Patch("/resources/content/machine-translation/{Id}");
         Permissions(PermissionName.AiTranslate);
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var existingMt =
-            await dbContext.ResourceContentVersionMachineTranslations
-                .FirstOrDefaultAsync(x => x.ResourceContentVersionId == req.ResourceContentVersionId, ct);
+        var existingMt = await dbContext.ResourceContentVersionMachineTranslations.FirstOrDefaultAsync(x => x.Id == req.Id, ct);
 
         if (existingMt is null || existingMt.UserId != user.Id)
         {
-            ThrowError(x => x.ResourceContentVersionId, "No machine translation exists for user");
+            ThrowError(x => x.Id, "No machine translation exists for user");
         }
 
         if (req.UserRating.HasValue)

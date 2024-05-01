@@ -50,11 +50,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             entity.WordCount = request.WordCount;
         }
 
-        if (request.HadMachineTranslation is not null)
-        {
-            entity.HadMachineTranslation = request.HadMachineTranslation;
-        }
-
         if (request.DisplayName is not null)
         {
             entity.DisplayName = request.DisplayName;

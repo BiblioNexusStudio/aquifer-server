@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.MachineTranslation.Create;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
-        Post("/resources/content/{ResourceContentVersionId}/machine-translation");
+        Post("/resources/content/machine-translation");
         Permissions(PermissionName.AiTranslate);
     }
 
@@ -38,6 +38,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         await dbContext.ResourceContentVersionMachineTranslations.AddAsync(mt, ct);
         await dbContext.SaveChangesAsync(ct);
 
-        await SendNoContentAsync(ct);
+        await SendOkAsync(new Response(mt.Id), ct);
     }
 }

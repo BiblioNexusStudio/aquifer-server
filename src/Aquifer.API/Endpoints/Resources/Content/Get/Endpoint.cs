@@ -28,7 +28,11 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                         : JsonUtilities.DefaultDeserialize(rc.Resource.ParentResource.LicenseInfo),
                 ResourceContentId = rc.Id,
                 ResourceId = rc.ResourceId,
-                Language = new LanguageResponse { EnglishDisplay = rc.Language.EnglishDisplay, ISO6393Code = rc.Language.ISO6393Code },
+                Language = new LanguageResponse
+                {
+                    EnglishDisplay = rc.Language.EnglishDisplay,
+                    ISO6393Code = rc.Language.ISO6393Code
+                },
                 Status = rc.Status,
                 MediaType = rc.MediaType,
                 ContentTranslations = rc.Resource.ResourceContents
@@ -70,13 +74,18 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
         resourceContent.PassageReferences = await dbContext.PassageResources
             .Where(x => x.ResourceId == resourceContent.ResourceId)
-            .Select(pr => new PassageReferenceResponse { StartVerseId = pr.Passage.StartVerseId, EndVerseId = pr.Passage.EndVerseId })
+            .Select(pr => new PassageReferenceResponse
+            {
+                StartVerseId = pr.Passage.StartVerseId,
+                EndVerseId = pr.Passage.EndVerseId
+            })
             .ToListAsync(ct);
 
         var relevantContentVersion = await dbContext.ResourceContentVersions.Where(rcv => rcv.ResourceContentId == request.Id)
             .Include(rcv => rcv.CommentThreads).ThenInclude(cth => cth.CommentThread.Comments).ThenInclude(c => c.User)
             .Include(rcv => rcv.CommentThreads).ThenInclude(cth => cth.CommentThread.ResolvedByUser)
             .Include(rcv => rcv.AssignedUser)
+            .Include(rcv => rcv.MachineTranslations)
             .OrderBy(rcv => rcv.IsDraft ? 0 : rcv.IsPublished ? 1 : 2).ThenByDescending(rcv => rcv.Version)
             .FirstOrDefaultAsync(ct);
 
@@ -99,8 +108,24 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         var versions = await dbContext.ResourceContentVersions
             .Where(rcv => rcv.Id != relevantContentVersion.Id && rcv.ResourceContentId == relevantContentVersion.ResourceContentId)
             .OrderByDescending(rcv => rcv.Created).Select(rcv =>
-                new VersionResponse { Id = rcv.Id, Created = rcv.Created, Version = rcv.Version, IsPublished = rcv.IsPublished })
+                new VersionResponse
+                {
+                    Id = rcv.Id,
+                    Created = rcv.Created,
+                    Version = rcv.Version,
+                    IsPublished = rcv.IsPublished
+                })
             .ToListAsync(ct);
+
+        resourceContent.MachineTranslation = relevantContentVersion.MachineTranslations.Select(mt => new MachineTranslationResponse
+        {
+            Id = mt.Id,
+            UserId = mt.UserId,
+            UserRating = mt.UserRating,
+            ImproveClarity = mt.ImproveClarity,
+            ImproveConsistency = mt.ImproveConsistency,
+            ImproveTone = mt.ImproveTone
+        }).FirstOrDefault();
 
         resourceContent.IsDraft = relevantContentVersion.IsDraft;
         resourceContent.ContentValue = relevantContentVersion.Content;
@@ -109,7 +134,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         resourceContent.WordCount = relevantContentVersion.WordCount;
         resourceContent.Snapshots = snapshots;
         resourceContent.Versions = versions;
-        resourceContent.HadMachineTranslation = relevantContentVersion.HadMachineTranslation;
 
         if (resourceContent.IsDraft)
         {
