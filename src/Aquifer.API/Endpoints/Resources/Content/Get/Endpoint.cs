@@ -128,6 +128,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         }).FirstOrDefault();
 
         resourceContent.IsDraft = relevantContentVersion.IsDraft;
+        resourceContent.ResourceContentVersionId = relevantContentVersion.Id;
         resourceContent.ContentValue = relevantContentVersion.Content;
         resourceContent.ContentSize = relevantContentVersion.ContentSize;
         resourceContent.DisplayName = relevantContentVersion.DisplayName;
