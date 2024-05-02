@@ -98,7 +98,8 @@ public class PassagesModule : IModule
                             MediaTypeName = rc.MediaType,
                             rc.LanguageId,
                             pr.ResourceId,
-                            ParentResourceName = pr.Resource.ParentResource.ShortName
+                            ParentResourceName = pr.Resource.ParentResource.ShortName,
+                            ParentResourceId = pr.Resource.ParentResource.Id
                         })))
             .ToListAsync(cancellationToken);
 
@@ -118,7 +119,8 @@ public class PassagesModule : IModule
                             MediaTypeName = rc.MediaType,
                             rc.LanguageId,
                             vr.ResourceId,
-                            ParentResourceName = vr.Resource.ParentResource.ShortName
+                            ParentResourceName = vr.Resource.ParentResource.ShortName,
+                            ParentResourceId = vr.Resource.ParentResource.Id
                         })))
             .ToListAsync(cancellationToken);
 
@@ -137,7 +139,8 @@ public class PassagesModule : IModule
                                 MediaTypeName = rc.MediaType,
                                 rc.LanguageId,
                                 ResourceId = sr.Id,
-                                ParentResourceName = sr.ParentResource.ShortName
+                                ParentResourceName = sr.ParentResource.ShortName,
+                                ParentResourceId = sr.ParentResource.Id
                             }))))
             .ToListAsync(cancellationToken);
 
@@ -158,7 +161,8 @@ public class PassagesModule : IModule
                     ContentId = first.ContentId,
                     ContentSize = first.ContentSize,
                     MediaTypeName = first.MediaTypeName,
-                    ParentResourceName = first.ParentResourceName
+                    ParentResourceName = first.ParentResourceName,
+                    ParentResourceId = first.ParentResourceId
                 };
             });
 
