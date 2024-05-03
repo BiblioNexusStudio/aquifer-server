@@ -19,7 +19,7 @@ public class Response
     public required LanguageResponse Language { get; set; }
     public required IEnumerable<TranslationResponse> ContentTranslations { get; set; }
     public required bool HasPublishedVersion { get; set; }
-
+    public int ResourceContentVersionId { get; set; }
     public bool IsDraft { get; set; }
     public object Content => JsonUtilities.DefaultDeserialize(ContentValue);
     public int ContentSize { get; set; }
@@ -28,12 +28,16 @@ public class Response
     public UserResponse? AssignedUser { get; set; }
     public IEnumerable<SnapshotResponse> Snapshots { get; set; } = null!;
     public IEnumerable<VersionResponse> Versions { get; set; } = null!;
-    public bool? HadMachineTranslation { get; set; }
+    public MachineTranslationResponse? MachineTranslation { get; set; }
 
     public ProjectResponse? Project =>
         ProjectEntity == null
             ? null
-            : new ProjectResponse { Id = ProjectEntity.Id, Name = ProjectEntity.Name };
+            : new ProjectResponse
+            {
+                Id = ProjectEntity.Id,
+                Name = ProjectEntity.Name
+            };
 
     public CommentThreadsResponse CommentThreads { get; set; } = null!;
 
@@ -156,4 +160,14 @@ public class CommentResponse
     public required UserDto User { get; set; }
     public required string Comment { get; set; }
     public required DateTime DateTime { get; set; }
+}
+
+public class MachineTranslationResponse
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public byte UserRating { get; set; }
+    public bool ImproveClarity { get; set; }
+    public bool ImproveTone { get; set; }
+    public bool ImproveConsistency { get; set; }
 }
