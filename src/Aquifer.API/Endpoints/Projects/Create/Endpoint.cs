@@ -71,7 +71,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
         var resourceContents = await CreateOrFindResourceContentFromResourceIds(language, request, user, ct);
 
         var wordCount = await dbContext.ResourceContentVersions
-            .Where(rcv => request.ResourceIds.Contains(rcv.ResourceContent.ResourceId) && rcv.IsPublished)
+            .Where(rcv => request.ResourceIds.Contains(rcv.ResourceContent.ResourceId) &&
+                rcv.IsPublished &&
+                rcv.ResourceContent.LanguageId == 1)
             .Select(rcv => rcv.WordCount ?? 0)
             .SumAsync(ct);
 
