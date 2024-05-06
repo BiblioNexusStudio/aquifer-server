@@ -70,7 +70,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
 
         var resourceContents = await CreateOrFindResourceContentFromResourceIds(language, request, user, ct);
 
-        var wordCount = resourceContents.Sum(rc => rc.Versions.FirstOrDefault(v => v.IsDraft)?.WordCount ?? 0);
+        var wordCount = await dbContext.ResourceContentVersions
+            .Where(rcv => request.ResourceIds.Contains(rcv.ResourceContent.ResourceId) &&
+                rcv.IsPublished &&
+                rcv.ResourceContent.LanguageId == 1)
+            .Select(rcv => rcv.WordCount ?? 0)
+            .SumAsync(ct);
 
         return new ProjectEntity
         {
@@ -106,7 +111,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
         return null;
     }
 
-    private async Task<List<ResourceContentEntity>> CreateOrFindResourceContentFromResourceIds(LanguageEntity language, Request request,
+    private async Task<List<ResourceContentEntity>> CreateOrFindResourceContentFromResourceIds(LanguageEntity language,
+        Request request,
         UserEntity user,
         CancellationToken ct)
     {
@@ -118,12 +124,14 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
         return await CreateOrFindTranslationResourceContent(language, request, user, ct);
     }
 
-    private async Task<List<ResourceContentEntity>> CreateOrFindAquiferizationResourceContent(LanguageEntity language, Request request,
+    private async Task<List<ResourceContentEntity>> CreateOrFindAquiferizationResourceContent(LanguageEntity language,
+        Request request,
         CancellationToken ct)
     {
         var resourceContents = await dbContext.ResourceContents
-            .Where(rc => request.ResourceIds.Contains(rc.ResourceId) && rc.LanguageId == language.Id &&
-                         rc.MediaType != ResourceContentMediaType.Audio)
+            .Where(rc => request.ResourceIds.Contains(rc.ResourceId) &&
+                rc.LanguageId == language.Id &&
+                rc.MediaType != ResourceContentMediaType.Audio)
             .Include(rc => rc.Versions.OrderByDescending(v => v.Created)).Include(rc => rc.Projects).ToListAsync(ct);
 
         if (resourceContents.Count < request.ResourceIds.Length)
@@ -164,13 +172,16 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
         return resourceContents;
     }
 
-    private async Task<List<ResourceContentEntity>> CreateOrFindTranslationResourceContent(LanguageEntity language, Request request,
-        UserEntity user, CancellationToken ct)
+    private async Task<List<ResourceContentEntity>> CreateOrFindTranslationResourceContent(LanguageEntity language,
+        Request request,
+        UserEntity user,
+        CancellationToken ct)
     {
         var englishOrLanguageResourceContents = await dbContext.ResourceContents
             .Where(rc => request.ResourceIds.Contains(rc.ResourceId) && rc.MediaType != ResourceContentMediaType.Audio)
-            .Where(rc => rc.LanguageId == language.Id || (rc.Resource.ResourceContents.All(rci => rci.LanguageId != language.Id) &&
-                                                          rc.Language.ISO6393Code == "eng"))
+            .Where(rc => rc.LanguageId == language.Id ||
+                (rc.Resource.ResourceContents.All(rci => rci.LanguageId != language.Id) &&
+                    rc.Language.ISO6393Code == "eng"))
             .Include(rc => rc.Versions).Include(rc => rc.Projects).Include(rc => rc.Language).ToListAsync(ct);
 
         List<ResourceContentEntity> resourceContents = [];
