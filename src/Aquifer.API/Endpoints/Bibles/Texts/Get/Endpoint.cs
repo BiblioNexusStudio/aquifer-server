@@ -27,7 +27,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                     new ResponseChapters
                     {
                         Number = ch.Number,
-                        Verses = ch.Verses.Where(v => v.Number >= req.StartVerse && v.Number <= req.EndVerse)
+                        Verses = ch.Verses.Where(v => v.Number >= (ch.Number == req.StartChapter ? req.StartVerse : 1)
+                                && v.Number <= (ch.Number == req.EndChapter ? req.EndVerse : 999))
                             .Select(v => new ResponseChapterVerses
                             {
                                 Number = v.Number,
