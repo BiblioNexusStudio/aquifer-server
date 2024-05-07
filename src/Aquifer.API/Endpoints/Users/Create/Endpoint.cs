@@ -26,7 +26,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
 
     private async Task CreateUserAsync(Request req, CancellationToken ct)
     {
-        await ValidateCompanyIdAsync(req, ct);
+        await ValidateCompanyIdAsync(req.CompanyId, ct);
         var accessToken = await GetAccessTokenAsync(ct);
         var roleId = await GetRoleIdAsync(req, accessToken, ct);
         var newUserId = await CreateAuth0UserAsync(req, accessToken, ct);
@@ -36,9 +36,9 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         await SaveUserToDatabaseAsync(req, newUserId, ct);
     }
 
-    private async Task ValidateCompanyIdAsync(Request req, CancellationToken ct)
+    private async Task ValidateCompanyIdAsync(int companyId, CancellationToken ct)
     {
-        var newUserCompany = await dbContext.Companies.SingleOrDefaultAsync(x => x.Id == req.CompanyId, ct);
+        var newUserCompany = await dbContext.Companies.SingleOrDefaultAsync(x => x.Id == companyId, ct);
         if (newUserCompany is null)
         {
             ThrowError(x => x.CompanyId, "Invalid company id");
