@@ -26,7 +26,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
 
     private async Task CreateUserAsync(Request req, CancellationToken ct)
     {
-        await ValidateCompanyIdAsync(req.CompanyId, ct);
+        await ValidateCompanyIdAsync(req, ct);
         var accessToken = await GetAccessTokenAsync(ct);
         var roleId = await GetRoleIdAsync(req, accessToken, ct);
         var newUserId = await CreateAuth0UserAsync(req, accessToken, ct);
@@ -36,18 +36,23 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         await SaveUserToDatabaseAsync(req, newUserId, ct);
     }
 
-    private async Task ValidateCompanyIdAsync(int companyId, CancellationToken ct)
+    private async Task ValidateCompanyIdAsync(Request req, CancellationToken ct)
     {
-        var newUserCompany = await dbContext.Companies.SingleOrDefaultAsync(x => x.Id == companyId, ct);
+        var newUserCompany = await dbContext.Companies.SingleOrDefaultAsync(x => x.Id == req.CompanyId, ct);
         if (newUserCompany is null)
         {
             ThrowError(x => x.CompanyId, "Invalid company id");
         }
 
         var self = await userService.GetUserFromJwtAsync(ct);
-        if (!userService.HasPermission(PermissionName.CreateUser) && self.CompanyId != newUserCompany.Id)
+        if (!userService.HasPermission(PermissionName.CreateUser) && (self.CompanyId != newUserCompany.Id || req.Role != UserRole.Editor))
         {
             ThrowError(x => x.CompanyId, "Not authorized to create user outside of company", StatusCodes.Status403Forbidden);
+        }
+
+        if (req.Role == UserRole.Admin)
+        {
+            ThrowError(x => x.Role, "Admins cannot be created from this endpoint.");
         }
     }
 

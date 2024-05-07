@@ -30,5 +30,6 @@ public enum UserRole
     Editor = 1,
     Manager = 2,
     Publisher = 3,
-    Admin = 4
+    Admin = 4,
+    ReportViewer = 5
 }
