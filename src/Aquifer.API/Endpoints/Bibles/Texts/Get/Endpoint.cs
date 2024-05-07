@@ -18,6 +18,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             .Where(x => x.Bible.Id == req.BibleId && ((int)x.Number == req.BookNumber || x.Code == req.BookCode))
             .Select(x => new Response
             {
+                BibleId = x.Bible.Id,
                 BibleName = x.Bible.Name,
                 BibleAbbreviation = x.Bible.Abbreviation,
                 BookCode = x.Code,

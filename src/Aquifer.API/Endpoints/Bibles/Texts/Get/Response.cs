@@ -2,6 +2,7 @@
 
 public class Response
 {
+    public required int BibleId { get; set; }
     public required string BibleName { get; set; }
     public required string BibleAbbreviation { get; set; }
     public required string BookName { get; set; }
