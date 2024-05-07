@@ -20,5 +20,7 @@ public class Validator : Validator<Request>
             var userService = Resolve<IUserService>();
             return userService.HasPermission(PermissionName.CreateUser) || role == UserRole.Editor;
         }).WithMessage("Managers can only create editors within their own company.");
+
+        RuleFor(x => x.Role).Must(role => role != UserRole.Admin).WithMessage("Admins cannot be created from this endpoint.");
     }
 }

@@ -45,14 +45,9 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         }
 
         var self = await userService.GetUserFromJwtAsync(ct);
-        if (!userService.HasPermission(PermissionName.CreateUser) && (self.CompanyId != newUserCompany.Id || req.Role != UserRole.Editor))
+        if (!userService.HasPermission(PermissionName.CreateUser) && self.CompanyId != newUserCompany.Id)
         {
             ThrowError(x => x.CompanyId, "Not authorized to create user outside of company", StatusCodes.Status403Forbidden);
-        }
-
-        if (req.Role == UserRole.Admin)
-        {
-            ThrowError(x => x.Role, "Admins cannot be created from this endpoint.");
         }
     }
 
