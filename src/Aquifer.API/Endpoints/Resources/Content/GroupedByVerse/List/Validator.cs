@@ -13,6 +13,6 @@ public class Validator : Validator<Request>
         RuleFor(x => x.BookCode)
             .Must(code => code != null && BibleBookCodeUtilities.IdFromCode(code) != BookId.None)
             .WithMessage("bookCode must be valid.");
-        RuleFor(x => x.Chapter).GreaterThan(0).LessThan(151);
+        RuleFor(x => x.Chapter).InclusiveBetween(1, 150);
     }
 }
