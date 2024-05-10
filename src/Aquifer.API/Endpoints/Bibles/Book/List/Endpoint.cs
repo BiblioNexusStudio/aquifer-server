@@ -14,7 +14,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var response = await dbContext.BibleBooks.Where(x => x.BibleId == req.BibleId).Select(x => new Response
+        var response = await dbContext.BibleBooks.Where(x => x.Bible.Enabled && x.BibleId == req.BibleId).Select(x => new Response
         {
             Id = x.Id,
             Code = x.Code,

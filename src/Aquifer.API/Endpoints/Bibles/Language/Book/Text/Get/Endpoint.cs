@@ -16,7 +16,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var textUrl = await dbContext.BibleBookContents
-            .Where(bbc => bbc.Bible.LanguageId == request.LanguageId && bbc.BookId == request.BookId)
+            .Where(bbc => bbc.Bible.Enabled && bbc.Bible.LanguageId == request.LanguageId && bbc.BookId == request.BookId)
             .Select(bbc => bbc.TextUrl)
             .FirstOrDefaultAsync(ct);
 
