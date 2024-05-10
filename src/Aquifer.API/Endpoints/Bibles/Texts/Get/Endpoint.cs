@@ -15,7 +15,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         var response = await dbContext.BibleBooks
-            .Where(x => x.Bible.Id == req.BibleId && ((int)x.Number == req.BookNumber || x.Code == req.BookCode))
+            .Where(x => x.Bible.Enabled && x.Bible.Id == req.BibleId && ((int)x.Number == req.BookNumber || x.Code == req.BookCode))
             .Select(x => new Response
             {
                 BibleId = x.Bible.Id,
@@ -29,12 +29,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                     {
                         Number = ch.Number,
                         Verses = ch.Verses.Where(v => v.Number >= (ch.Number == req.StartChapter ? req.StartVerse : 1)
-                                && v.Number <= (ch.Number == req.EndChapter ? req.EndVerse : 999))
-                            .Select(v => new ResponseChapterVerses
-                            {
-                                Number = v.Number,
-                                Text = v.Text
-                            })
+                                                      && v.Number <= (ch.Number == req.EndChapter ? req.EndVerse : 999))
+                            .Select(v => new ResponseChapterVerses { Number = v.Number, Text = v.Text })
                     })
             }).FirstOrDefaultAsync(ct);
 

@@ -18,7 +18,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         var bookCodeEnum = BibleBookCodeUtilities.IdFromCode(request.BookCode);
 
         var book = await dbContext.BibleBookContents
-            .SingleOrDefaultAsync(b => b.BibleId == request.BibleId && b.BookId == bookCodeEnum, ct);
+            .SingleOrDefaultAsync(b => b.Bible.Enabled && b.BibleId == request.BibleId && b.BookId == bookCodeEnum, ct);
 
         if (book == null)
         {
