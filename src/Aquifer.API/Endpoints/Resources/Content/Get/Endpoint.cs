@@ -68,6 +68,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             return;
         }
 
+        resourceContent.AssociatedResources = resourceContent.AssociatedResources.OrderBy(x => x.EnglishLabel);
+
         resourceContent.VerseReferences = await dbContext.VerseResources
             .Where(x => x.ResourceId == resourceContent.ResourceId)
             .Select(vr => new VerseReferenceResponse { VerseId = vr.VerseId }).ToListAsync(ct);
