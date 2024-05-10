@@ -18,7 +18,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     {
         var response = await dbContext.ParentResources
             .Where(pr => (req.LanguageId == 1 || pr.Localizations.Any(r => r.LanguageId == req.LanguageId)) &&
-                (req.ResourceType == null || pr.ResourceType == req.ResourceType))
+                         (req.ResourceType == null || pr.ResourceType == req.ResourceType))
             .OrderBy(x => x.DisplayName)
             .Select(pr => new Response
             {
@@ -30,6 +30,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                 LicenseInfoValue = pr.LicenseInfo,
                 ResourceType = pr.ResourceType,
                 ShortName = pr.ShortName,
+                ResourceCountForLanguage = pr.Resources.Where(r =>
+                    r.ResourceContents.Any(rc => rc.LanguageId == req.LanguageId && rc.Versions.Any(v => v.IsPublished))).Count(),
                 Id = pr.Id
             })
             .ToListAsync(ct);
