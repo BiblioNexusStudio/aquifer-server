@@ -9,6 +9,7 @@ public class Response
     public required int Id { get; set; }
     public required string ShortName { get; set; }
     public required string DisplayName { get; set; }
+    public required int ResourceCountForLanguage { get; set; }
 
     [JsonIgnore]
     public string? LicenseInfoValue { get; set; }

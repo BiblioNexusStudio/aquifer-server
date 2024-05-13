@@ -1,6 +1,8 @@
 using Aquifer.API.Helpers;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.ParentResources.List;
@@ -16,22 +18,31 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var response = await dbContext.ParentResources
-            .Where(pr => (req.LanguageId == 1 || pr.Localizations.Any(r => r.LanguageId == req.LanguageId)) &&
-                (req.ResourceType == null || pr.ResourceType == req.ResourceType))
-            .OrderBy(x => x.DisplayName)
-            .Select(pr => new Response
-            {
-                ComplexityLevel = pr.ComplexityLevel,
-                DisplayName =
-                    req.LanguageId == 1
-                        ? pr.DisplayName
-                        : pr.Localizations.Single(l => l.LanguageId == req.LanguageId).DisplayName,
-                LicenseInfoValue = pr.LicenseInfo,
-                ResourceType = pr.ResourceType,
-                ShortName = pr.ShortName,
-                Id = pr.Id
-            })
+        var query = $"""
+            SELECT
+                COALESCE(prl.DisplayName, pr.DisplayName) AS DisplayName,
+                (
+                    SELECT
+                        COUNT(rcv.Id)
+                    FROM
+                        ResourceContentVersions rcv
+                        INNER JOIN ResourceContents rc ON rc.Id = rcv.ResourceContentId
+                        INNER JOIN Resources r ON r.Id = rc.ResourceId
+                    WHERE
+                        r.ParentResourceId = pr.Id AND rc.LanguageId = @LanguageId AND rcv.IsPublished = 1
+                ) AS ResourceCountForLanguage,
+                pr.ComplexityLevel, pr.LicenseInfo AS LicenseInfoValue, pr.ShortName, pr.Id, pr.ResourceType
+            FROM
+                ParentResources pr
+            LEFT JOIN ParentResourceLocalizations prl ON prl.ParentResourceId = pr.Id AND prl.LanguageId = @LanguageId
+            WHERE @ResourceType = {(int)ResourceType.None} OR pr.ResourceType = @ResourceType
+            ORDER BY COALESCE(prl.DisplayName, pr.DisplayName)
+        """;
+
+        var response = await dbContext.Database
+            .SqlQueryRaw<Response>(query,
+                new SqlParameter("LanguageId", req.LanguageId),
+                new SqlParameter("ResourceType", req.ResourceType))
             .ToListAsync(ct);
 
         await SendOkAsync(response, ct);
