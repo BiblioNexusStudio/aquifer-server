@@ -1,8 +1,7 @@
-using Aquifer.Common.Extensions;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using FastEndpoints;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.List;
@@ -14,30 +13,20 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         Get("/resources/content");
     }
 
-    public override async Task HandleAsync(Request request, CancellationToken ct)
+    public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var query = dbContext.ResourceContents.Where(rc => rc.MediaType != ResourceContentMediaType.Audio);
+        var (hasSearchQuery, isExactSearch) = GetSearchParams(req.SearchQuery);
+        var likeKey = isExactSearch ? "" : "%";
+        var searchParameter = new SqlParameter("SearchQuery", hasSearchQuery ? $"{likeKey}{req.SearchQuery!.Trim('"')}{likeKey}" : "");
 
-        query = ApplyLanguageIdFilter(query, request.LanguageId);
-        query = ApplyParentResourceIdFilter(query, request.ParentResourceId);
-        query = ApplyBookAndChapterFilter(query, request.BookCode, request.StartChapter, request.EndChapter);
-        query = ApplyIsPublishedFilter(query, request.IsPublished);
-        query = ApplySearchQueryFilter(query, request.SearchQuery);
+        var total = (await dbContext.Database.SqlQueryRaw<int>(BuildQuery(req, true, hasSearchQuery, isExactSearch), searchParameter)
+            .ToListAsync(ct)).Single();
+        var resourceContent = total == 0
+            ? []
+            : await dbContext.Database
+                .SqlQueryRaw<ResourceContentResponse>(BuildQuery(req, false, hasSearchQuery, isExactSearch), searchParameter)
+                .ToListAsync(ct);
 
-        var resourceContent = await query
-            .OrderBy(rc => rc.Resource.EnglishLabel)
-            .Skip(request.Offset).Take(request.Limit)
-            .Select(rc => new ResourceContentResponse
-            {
-                Id = rc.Id,
-                EnglishLabel = rc.Resource.EnglishLabel,
-                ParentResourceName = rc.Resource.ParentResource.DisplayName,
-                LanguageEnglishDisplay = rc.Language.EnglishDisplay,
-                Status = rc.Status.GetDisplayName(),
-                IsPublished = rc.Versions.Any(v => v.IsPublished)
-            }).ToListAsync(ct);
-
-        var total = await query.CountAsync(ct);
         var response = new Response
         {
             ResourceContents = resourceContent,
@@ -47,71 +36,106 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         await SendOkAsync(response, ct);
     }
 
-    private IQueryable<ResourceContentEntity> ApplyLanguageIdFilter(IQueryable<ResourceContentEntity> query, int? languageId)
+    private static string BuildQuery(Request req, bool getTotalCount, bool hasSearchQuery, bool isExactSearch)
     {
-        if (languageId.HasValue)
-        {
-            query = query.Where(rc => rc.LanguageId == languageId);
-        }
+        const string selectCount = "SELECT COUNT(DISTINCT(RC.Id)) AS Count";
+        const string selectProperties = """
+                                        SELECT RC.Id AS Id, R.EnglishLabel, PR.DisplayName AS ParentResourceName,
+                                        L.EnglishDisplay AS LanguageEnglishDisplay, RC.Status AS StatusValue,
+                                        IIF(MAX(CAST(RCV.IsPublished as INT)) = 1, 1, 0) AS IsPublishedValue
+                                        """;
 
-        return query;
+        var groupingWithOffset = $"""
+                                  GROUP BY RC.Id, R.EnglishLabel, PR.DisplayName, L.EnglishDisplay, RC.Status
+                                  ORDER BY R.EnglishLabel
+                                  OFFSET {req.Offset} ROWS FETCH NEXT {req.Limit} ROWS ONLY
+                                  """;
+
+        return $"""
+                {(getTotalCount ? selectCount : selectProperties)}
+                FROM ResourceContents RC
+                    INNER JOIN Resources R ON R.Id = RC.ResourceId
+                    INNER JOIN ParentResources PR ON PR.id =R.ParentResourceId
+                    INNER JOIN Languages L ON L.Id = RC.LanguageId
+                    INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
+                WHERE RC.MediaType != 2
+                {ApplyLanguageIdFilter(req.LanguageId)}
+                {ApplyParentResourceIdFilter(req.ParentResourceId)}
+                {ApplyIsPublishedFilter(req.IsPublished)}
+                {ApplySearchQueryFilter(hasSearchQuery, isExactSearch)}
+                {ApplyBookAndChapterFilter(req.BookCode, req.StartChapter, req.EndChapter)}
+                {(getTotalCount ? "" : groupingWithOffset)}
+                """;
     }
 
-    private IQueryable<ResourceContentEntity> ApplyParentResourceIdFilter(IQueryable<ResourceContentEntity> query, int? parentResourceId)
+    private static string ApplyLanguageIdFilter(int? languageId)
     {
-        if (parentResourceId.HasValue)
-        {
-            query = query.Where(rc => rc.Resource.ParentResourceId == parentResourceId);
-        }
-
-        return query;
+        return languageId.HasValue ? $"AND RC.LanguageId = {languageId.Value}" : "";
     }
 
-    private IQueryable<ResourceContentEntity> ApplyBookAndChapterFilter(IQueryable<ResourceContentEntity> query,
-        string? bookCode,
-        int? startChapter,
-        int? endChapter)
+    private static string ApplyParentResourceIdFilter(int? parentResourceId)
+    {
+        return parentResourceId.HasValue ? $"AND R.ParentResourceId = {parentResourceId.Value}" : "";
+    }
+
+    private static string ApplyBookAndChapterFilter(string? bookCode, int? startChapter, int? endChapter)
     {
         var verseRange = BibleUtilities.VerseRangeForBookAndChapters(bookCode, startChapter, endChapter);
-
-        if (verseRange is not null)
+        if (verseRange is null)
         {
-            var startVerseId = verseRange.Value.Item1;
-            var endVerseId = verseRange.Value.Item2;
-
-            query = query.Where(rc =>
-                rc.Resource.VerseResources.Any(vr =>
-                    vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
-                rc.Resource.PassageResources.Any(pr =>
-                    pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
-                rc.Resource.PassageResources.Any(pr => pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
-                rc.Resource.PassageResources.Any(pr => pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId));
+            return "";
         }
 
-        return query;
+        var startVerseId = verseRange.Value.Item1;
+        var endVerseId = verseRange.Value.Item2;
+
+        return $"""
+                AND (
+                EXISTS (SELECT 1
+                    FROM [VerseResources] AS [v]
+                    WHERE [R].[Id] = [v].[ResourceId] AND [v].[VerseId] >= {startVerseId} AND [v].[VerseId] <= {endVerseId})
+                OR
+                EXISTS (SELECT 1
+                    FROM [PassageResources] AS [p]
+                    INNER JOIN [Passages] AS [p0] ON [p].[PassageId] = [p0].[Id]
+                    WHERE [R].[Id] = [p].[ResourceId] AND [p0].[StartVerseId] >= {startVerseId} AND [p0].[StartVerseId] <= {endVerseId})
+                OR
+                EXISTS (SELECT 1
+                    FROM [PassageResources] AS [p1]
+                    INNER JOIN [Passages] AS [p2] ON [p1].[PassageId] = [p2].[Id]
+                    WHERE [R].[Id] = [p1].[ResourceId] AND [p2].[EndVerseId] >= {startVerseId} AND [p2].[EndVerseId] <= {endVerseId})
+                OR
+                EXISTS (SELECT 1
+                    FROM [PassageResources] AS [p3]
+                    INNER JOIN [Passages] AS [p4] ON [p3].[PassageId] = [p4].[Id]
+                    WHERE [R].[Id] = [p3].[ResourceId] AND [p4].[StartVerseId] <= {startVerseId} AND [p4].[EndVerseId] >= {endVerseId})
+                )
+                """;
     }
 
-    private IQueryable<ResourceContentEntity> ApplyIsPublishedFilter(IQueryable<ResourceContentEntity> query, bool? isPublished)
+    private static string ApplyIsPublishedFilter(bool? isPublished)
     {
-        if (isPublished.HasValue)
+        if (!isPublished.HasValue)
         {
-            query = isPublished.Value
-                ? query.Where(rc => rc.Versions.Any(v => v.IsPublished))
-                : query.Where(rc => rc.Versions.All(v => !v.IsPublished));
+            return "";
         }
 
-        return query;
+        return isPublished.Value ? "AND RCV.IsPublished = 1" : "AND RCV.IsDraft = 1";
     }
 
-    private IQueryable<ResourceContentEntity> ApplySearchQueryFilter(IQueryable<ResourceContentEntity> query, string? searchQuery)
+    private static string ApplySearchQueryFilter(bool hasSearchQuery, bool isExactSearch)
     {
-        if (searchQuery is not null)
+        if (!hasSearchQuery)
         {
-            query = searchQuery[0].Equals('"') && searchQuery[^1].Equals('"')
-                ? query.Where(rc => rc.Resource.EnglishLabel.Equals(searchQuery.Replace("\"", "")))
-                : query.Where(rc => rc.Resource.EnglishLabel.Contains(searchQuery));
+            return "";
         }
 
-        return query;
+        return isExactSearch ? "AND R.EnglishLabel = @SearchQuery" : "AND R.EnglishLabel LIKE @SearchQuery";
+    }
+
+    private static (bool hasSearchQuery, bool isExactQuery) GetSearchParams(string? searchQuery)
+    {
+        var hasSearchQuery = searchQuery is not null;
+        return (hasSearchQuery, hasSearchQuery && searchQuery![0].Equals('"') && searchQuery[^1].Equals('"'));
     }
 }
