@@ -1,3 +1,4 @@
+using Aquifer.API.Common;
 using Aquifer.API.Helpers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -18,6 +19,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
+        var fallbackMediaTypesSqlArray = string.Join(", ", Constants.FallbackToEnglishForMediaTypes.Select(t => (int)t));
+
         var query = $"""
             SELECT
                 COALESCE(prl.DisplayName, pr.DisplayName) AS DisplayName,
@@ -25,11 +28,12 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                     SELECT
                         COUNT(rcv.Id)
                     FROM
-                        ResourceContentVersions rcv
-                        INNER JOIN ResourceContents rc ON rc.Id = rcv.ResourceContentId
-                        INNER JOIN Resources r ON r.Id = rc.ResourceId
+                        Resources r
+                        LEFT JOIN ResourceContents rc ON rc.ResourceId = r.Id AND rc.LanguageId = @LanguageId
+                        LEFT JOIN ResourceContents rce ON rce.ResourceId = r.Id AND rce.LanguageId = 1 AND rce.MediaType IN ({fallbackMediaTypesSqlArray})
+                        INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = COALESCE(rc.Id, rce.Id)
                     WHERE
-                        r.ParentResourceId = pr.Id AND rc.LanguageId = @LanguageId AND rcv.IsPublished = 1
+                        r.ParentResourceId = pr.Id AND rcv.IsPublished = 1
                 ) AS ResourceCountForLanguage,
                 pr.ComplexityLevel, pr.LicenseInfo AS LicenseInfoValue, pr.ShortName, pr.Id, pr.ResourceType
             FROM
