@@ -12,6 +12,7 @@ public class BibleVersionWordEntity : IHasUpdatedTimestamp
     public int BibleId { get; set; }
     public long WordIdentifier { get; set; }
     public bool IsPunctuation { get; set; }
+    public string Text { get; set; } = null!;
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
