@@ -73,5 +73,11 @@ public enum ResourceContentStatus
     TranslationInReview = 9,
 
     [Display(Name = "On Hold")]
-    OnHold = 10
+    OnHold = 10,
+
+    [Display(Name = "Aquiferize - Manager Review")]
+    AquiferizeManagerReview = 11,
+
+    [Display(Name = "Translation - Manager Review")]
+    TranslationManagerReview = 12
 }
