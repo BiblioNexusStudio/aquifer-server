@@ -1,5 +1,7 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
+using Aquifer.Common.Tiptap;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -21,32 +23,29 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var contentIds = request.ContentId is not null ? [request.ContentId.Value] : request.ContentIds!;
+        List<ResourceContentStatus> allowedStatuses =
+        [
+            ResourceContentStatus.AquiferizeInProgress,
+            ResourceContentStatus.TranslationInProgress,
+            ResourceContentStatus.AquiferizeManagerReview,
+            ResourceContentStatus.TranslationManagerReview
+        ];
+
         var draftVersions = await dbContext.ResourceContentVersions
-            .Where(x => contentIds.Contains(x.ResourceContentId) && x.IsDraft).Include(x => x.ResourceContent).ToListAsync(ct);
+            .Where(x => contentIds.Contains(x.ResourceContentId) && allowedStatuses.Contains(x.ResourceContent.Status) && x.IsDraft)
+            .Include(x => x.ResourceContent).ToListAsync(ct);
 
         if (draftVersions.Count != contentIds.Count)
         {
-            ThrowError("Resource content not found");
+            ThrowError("One or more resources not found or not in correct status");
         }
 
         foreach (var draftVersion in draftVersions)
         {
-            var inProgressStatus = Constants.TranslationStatuses.Contains(draftVersion.ResourceContent.Status)
-                ? ResourceContentStatus.TranslationInProgress
-                : ResourceContentStatus.AquiferizeInProgress;
-
-            if (draftVersion.ResourceContent.Status is not ResourceContentStatus.AquiferizeInProgress
-                and not ResourceContentStatus.TranslationInProgress
-                and not ResourceContentStatus.AquiferizeManagerReview
-                and not ResourceContentStatus.TranslationManagerReview)
-            {
-                ThrowError("Resource content not in progress");
-            }
-
             var user = await userService.GetUserFromJwtAsync(ct);
             if (user.Id != draftVersion.AssignedUserId)
             {
-                ThrowError("Unable to change status of resource content");
+                ThrowError("User must be assigned to content to send for review.");
             }
 
             var reviewPendingStatus = Constants.TranslationStatuses.Contains(draftVersion.ResourceContent.Status)
@@ -55,6 +54,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
             await historyService.AddAssignedUserHistoryAsync(draftVersion, null, user.Id, ct);
 
+            // Remove inline comments or anything else that needs to be sanitized at this point.
+            var deserializedContent = JsonUtilities.DefaultDeserialize<List<TiptapModel<TiptapRootContentFiltered>>>(draftVersion.Content);
+
+            draftVersion.Content = JsonUtilities.DefaultSerialize(deserializedContent);
             draftVersion.ResourceContent.Status = reviewPendingStatus;
             draftVersion.AssignedUserId = null;
 
