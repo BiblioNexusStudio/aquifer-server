@@ -19,7 +19,8 @@ public static class Constants
         new([
             ResourceContentStatus.AquiferizeInProgress,
             ResourceContentStatus.AquiferizeReviewPending,
-            ResourceContentStatus.AquiferizeInReview
+            ResourceContentStatus.AquiferizeInReview,
+            ResourceContentStatus.AquiferizeManagerReview
         ]);
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> TranslationStatuses =
@@ -27,7 +28,8 @@ public static class Constants
             ResourceContentStatus.TranslationNotStarted,
             ResourceContentStatus.TranslationInProgress,
             ResourceContentStatus.TranslationReviewPending,
-            ResourceContentStatus.TranslationInReview
+            ResourceContentStatus.TranslationInReview,
+            ResourceContentStatus.TranslationManagerReview
         ]);
 }
 
