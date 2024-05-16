@@ -7,22 +7,26 @@ using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.Content.SendForReview;
+namespace Aquifer.API.Endpoints.Resources.Content.SendForPublisherReview;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService) : Endpoint<Request>
 {
+    // TODO: Remove admin and send-for-review endpoints after prod deploy
     public override void Configure()
     {
         Post("/admin/resources/content/{ContentId}/send-review",
             "/admin/resources/content/{ContentId}/send-translation-review",
             "/resources/content/{ContentId}/send-for-review",
-            "/resources/content/send-for-review");
+            "/resources/content/send-for-review",
+            "/resources/content/{ContentId}/send-for-publisher-review",
+            "/resources/content/send-for-publisher-review");
         Permissions(PermissionName.SendReviewContent);
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var contentIds = request.ContentId is not null ? [request.ContentId.Value] : request.ContentIds!;
+        // TODO: Remove InProgressStatuses after prod deploy
         List<ResourceContentStatus> allowedStatuses =
         [
             ResourceContentStatus.AquiferizeInProgress,
@@ -40,12 +44,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ThrowError("One or more resources not found or not in correct status");
         }
 
+        var user = await userService.GetUserFromJwtAsync(ct);
         foreach (var draftVersion in draftVersions)
         {
-            var user = await userService.GetUserFromJwtAsync(ct);
             if (user.Id != draftVersion.AssignedUserId)
             {
-                ThrowError("User must be assigned to content to send for review.");
+                ThrowError("User must be assigned to content to send for publisher review.");
             }
 
             var reviewPendingStatus = Constants.TranslationStatuses.Contains(draftVersion.ResourceContent.Status)

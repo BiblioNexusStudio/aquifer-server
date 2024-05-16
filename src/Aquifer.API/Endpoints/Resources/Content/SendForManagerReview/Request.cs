@@ -1,4 +1,4 @@
-namespace Aquifer.API.Endpoints.Resources.Content.SendForReview;
+namespace Aquifer.API.Endpoints.Resources.Content.SendForManagerReview;
 
 public record Request
 {

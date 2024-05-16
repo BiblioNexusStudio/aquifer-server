@@ -11,8 +11,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 {
     public override void Configure()
     {
-        Post("/admin/resources/content/{ContentId}/assign-editor", "/admin/resources/content/{ContentId}/assign-translator",
-            "/resources/content/{ContentId}/assign-editor", "/resources/content/assign-editor");
+        Post("/admin/resources/content/{ContentId}/assign-editor",
+            "/admin/resources/content/{ContentId}/assign-translator",
+            "/resources/content/{ContentId}/assign-editor",
+            "/resources/content/assign-editor");
         Permissions(PermissionName.AssignContent, PermissionName.AssignOverride, PermissionName.AssignOutsideCompany);
     }
 
@@ -50,7 +52,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             var currentUserIsAssigned = draftVersion.AssignedUserId == user.Id;
             var assignedUserIsInCompany = draftVersion.AssignedUser?.CompanyId == user.CompanyId;
             var allowedToAssign = (hasAssignOverridePermission && (assignedUserIsInCompany || hasAssignOutsideCompanyPermission)) ||
-                                  currentUserIsAssigned;
+                currentUserIsAssigned;
 
             if (!allowedToAssign)
             {
@@ -67,22 +69,32 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                     $"Must be assigned the in-review content in order to assign to another user for id {draftVersion.ResourceContentId}");
             }
 
-            if (draftVersion.AssignedUserId != request.AssignedUserId)
-            {
-                await historyService.AddAssignedUserHistoryAsync(draftVersion, request.AssignedUserId, user.Id, ct);
-            }
-
-            draftVersion.AssignedUserId = request.AssignedUserId;
-            draftVersion.Updated = DateTime.UtcNow;
-
             var inProgressStatus = Constants.TranslationStatuses.Contains(draftVersion.ResourceContent.Status)
                 ? ResourceContentStatus.TranslationInProgress
                 : ResourceContentStatus.AquiferizeInProgress;
 
-            if (draftVersion.ResourceContent.Status != inProgressStatus)
+            var originalStatus = draftVersion.ResourceContent.Status;
+            if (userToAssign.Role is UserRole.Editor &&
+                draftVersion.ResourceContent.Status is ResourceContentStatus.AquiferizeManagerReview
+                    or ResourceContentStatus.TranslationManagerReview)
             {
                 draftVersion.ResourceContent.Status = inProgressStatus;
-                await historyService.AddStatusHistoryAsync(draftVersion, inProgressStatus, user.Id, ct);
+            }
+            else if (draftVersion.ResourceContent.Status is ResourceContentStatus.New or ResourceContentStatus.TranslationNotStarted
+                or ResourceContentStatus.AquiferizeInReview or ResourceContentStatus.TranslationInReview)
+            {
+                draftVersion.ResourceContent.Status = inProgressStatus;
+            }
+
+            if (draftVersion.AssignedUserId != request.AssignedUserId)
+            {
+                draftVersion.AssignedUserId = request.AssignedUserId;
+                await historyService.AddAssignedUserHistoryAsync(draftVersion, request.AssignedUserId, user.Id, ct);
+            }
+
+            if (draftVersion.ResourceContent.Status != originalStatus)
+            {
+                await historyService.AddStatusHistoryAsync(draftVersion, draftVersion.ResourceContent.Status, user.Id, ct);
             }
         }
 
