@@ -37,11 +37,15 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
         List<ResourceContentStatus> inProgressStatuses =
         [
-            ResourceContentStatus.AquiferizeInProgress,
-            ResourceContentStatus.TranslationInProgress
+            ResourceContentStatus.AquiferizeInProgress, ResourceContentStatus.TranslationInProgress
         ];
 
-        List<ResourceContentStatus> inReviewStatuses =
+        List<ResourceContentStatus> inManagerReviewStatuses =
+        [
+            ResourceContentStatus.AquiferizeManagerReview, ResourceContentStatus.TranslationManagerReview
+        ];
+
+        List<ResourceContentStatus> inPublisherReviewStatuses =
         [
             ResourceContentStatus.AquiferizeInReview,
             ResourceContentStatus.AquiferizeReviewPending,
@@ -81,7 +85,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             {
                 NotStarted = x.ResourceContents.Count(rc => notStartedStatuses.Contains(rc.Status)),
                 InProgress = x.ResourceContents.Count(rc => inProgressStatuses.Contains(rc.Status)),
-                InReview = x.ResourceContents.Count(rc => inReviewStatuses.Contains(rc.Status)),
+                InManagerReview = x.ResourceContents.Count(rc => inManagerReviewStatuses.Contains(rc.Status)),
+                InPublisherReview = x.ResourceContents.Count(rc => inPublisherReviewStatuses.Contains(rc.Status)),
                 Completed = x.ResourceContents.Count(rc => rc.Status == ResourceContentStatus.Complete)
             }
         }).SingleOrDefaultAsync(ct);
