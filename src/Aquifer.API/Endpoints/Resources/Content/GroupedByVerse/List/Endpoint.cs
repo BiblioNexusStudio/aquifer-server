@@ -18,7 +18,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var (startVerseId, endVerseId) =
-                    BibleUtilities.VerseRangeForBookAndChapters(request.BookCode, request.Chapter, request.Chapter)!.Value;
+            BibleUtilities.VerseRangeForBookAndChapters(request.BookCode, request.Chapter, request.Chapter)!.Value;
 
         var fallbackMediaTypesSqlArray = string.Join(',', Constants.FallbackToEnglishForMediaTypes.Select(t => (int)t));
 
@@ -28,7 +28,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 vr.VerseId,
                 COALESCE(rc.MediaType, rce.MediaType) AS MediaType,
                 pr.ResourceType,
-                pr.ShortName
+                pr.Id AS ParentResourceId
             FROM
                 VerseResources vr
                 INNER JOIN Resources r ON vr.ResourceId = r.Id
@@ -47,7 +47,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 v.Id AS VerseId,
                 COALESCE(rc.MediaType, rce.MediaType) AS MediaType,
                 parr.ResourceType,
-                parr.ShortName
+                parr.Id AS ParentResourceId
             FROM
                 Resources r
                 INNER JOIN ParentResources parr ON parr.Id = r.ParentResourceId
@@ -80,7 +80,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                     {
                         Id = row.Id,
                         MediaType = row.MediaType.ToString(),
-                        ParentResource = row.ShortName,
+                        ParentResourceId = row.ParentResourceId,
                         ResourceType = row.ResourceType.ToString()
                     })
                         .DistinctBy(row => row.Id)
@@ -98,5 +98,5 @@ public record ResourceContentRow
     public required int VerseId { get; set; }
     public required ResourceContentMediaType MediaType { get; set; }
     public required ResourceType ResourceType { get; set; }
-    public required string ShortName { get; set; }
+    public required int ParentResourceId { get; set; }
 }
