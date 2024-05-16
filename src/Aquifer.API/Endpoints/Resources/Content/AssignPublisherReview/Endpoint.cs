@@ -6,13 +6,16 @@ using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 using static Aquifer.API.Helpers.EndpointHelpers;
 
-namespace Aquifer.API.Endpoints.Resources.Content.AssignReview;
+namespace Aquifer.API.Endpoints.Resources.Content.AssignPublisherReview;
 
 public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService historyService, IUserService userService) : Endpoint<Request>
 {
     public override void Configure()
     {
-        Post("/resources/content/{ContentId}/assign-review", "/resources/content/assign-review");
+        Post("/resources/content/{ContentId}/assign-review",
+            "/resources/content/assign-review",
+            "/resources/content/{ContentId}/assign-publisher-review",
+            "/resources/content/assign-publisher-review");
         Permissions(PermissionName.ReviewContent);
     }
 
@@ -25,11 +28,11 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
 
         var draftVersions = await dbContext.ResourceContentVersions
             .Where(x => contentIds.Contains(x.ResourceContentId) &&
-                        x.IsDraft &&
-                        (x.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
-                         x.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview ||
-                         x.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending ||
-                         x.ResourceContent.Status == ResourceContentStatus.TranslationInReview))
+                x.IsDraft &&
+                (x.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
+                    x.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview ||
+                    x.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending ||
+                    x.ResourceContent.Status == ResourceContentStatus.TranslationInReview))
             .Include(x => x.ResourceContent)
             .ThenInclude(x => x.Language)
             .ToListAsync(ct);

@@ -18,6 +18,7 @@ public class ProjectResourceStatusCounts
 {
     public int NotStarted { get; set; }
     public int InProgress { get; set; }
-    public int InReview { get; set; }
+    public int InManagerReview { get; set; }
+    public int InPublisherReview { get; set; }
     public int Completed { get; set; }
 }

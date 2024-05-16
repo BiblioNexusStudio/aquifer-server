@@ -9,6 +9,7 @@ namespace Aquifer.API.Services;
 public interface IUserService
 {
     Task<UserEntity> GetUserFromJwtAsync(CancellationToken cancellationToken);
+    Task<UserEntity> GetUserWithCompanyUsersFromJwtAsync(CancellationToken cancellationToken);
     List<string> GetAllJwtPermissions();
     List<string> GetAllJwtRoles();
     bool HasPermission(string permission);
@@ -17,10 +18,17 @@ public interface IUserService
 
 public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpContextAccessor) : IUserService
 {
+    private string ProviderId => httpContextAccessor.HttpContext!.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+
     public async Task<UserEntity> GetUserFromJwtAsync(CancellationToken cancellationToken)
     {
-        var providerId = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
-        return await dbContext.Users.SingleAsync(u => u.ProviderId == providerId, cancellationToken);
+        return await dbContext.Users.SingleAsync(u => u.ProviderId == ProviderId, cancellationToken);
+    }
+
+    public async Task<UserEntity> GetUserWithCompanyUsersFromJwtAsync(CancellationToken cancellationToken)
+    {
+        return await dbContext.Users.Include(x => x.Company).ThenInclude(x => x.Users)
+            .SingleAsync(u => u.ProviderId == ProviderId, cancellationToken);
     }
 
     public List<string> GetAllJwtRoles()
@@ -38,8 +46,8 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
     public bool HasPermission(string permission)
     {
         return httpContextAccessor.HttpContext?.User.HasClaim(c =>
-                   c.Type == Constants.PermissionsClaim && c.Value == permission) ??
-               false;
+                c.Type == Constants.PermissionsClaim && c.Value == permission) ??
+            false;
     }
 
     public async Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken)

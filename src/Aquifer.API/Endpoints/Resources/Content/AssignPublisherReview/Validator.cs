@@ -1,7 +1,7 @@
 using FastEndpoints;
 using FluentValidation;
 
-namespace Aquifer.API.Endpoints.Resources.Content.AssignReview;
+namespace Aquifer.API.Endpoints.Resources.Content.AssignPublisherReview;
 
 public class Validator : Validator<Request>
 {
