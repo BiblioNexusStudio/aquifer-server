@@ -74,14 +74,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 : ResourceContentStatus.AquiferizeInProgress;
 
             var originalStatus = draftVersion.ResourceContent.Status;
-            if (userToAssign.Role is UserRole.Editor &&
+            var keepCurrentStatus = userToAssign.Role is UserRole.Manager &&
                 draftVersion.ResourceContent.Status is ResourceContentStatus.AquiferizeManagerReview
-                    or ResourceContentStatus.TranslationManagerReview)
-            {
-                draftVersion.ResourceContent.Status = inProgressStatus;
-            }
-            else if (draftVersion.ResourceContent.Status is ResourceContentStatus.New or ResourceContentStatus.TranslationNotStarted
-                or ResourceContentStatus.AquiferizeInReview or ResourceContentStatus.TranslationInReview)
+                    or ResourceContentStatus.TranslationManagerReview;
+
+            if (!keepCurrentStatus)
             {
                 draftVersion.ResourceContent.Status = inProgressStatus;
             }
