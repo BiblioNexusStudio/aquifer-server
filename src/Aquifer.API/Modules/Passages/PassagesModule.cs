@@ -23,7 +23,7 @@ public class PassagesModule : IModule
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        if (!Constants.RootParentResourceIds.Contains(parentResourceId))
+        if (!Constants.PredeterminedPassageGuideIds.Contains(parentResourceId))
         {
             return TypedResults.NotFound();
         }

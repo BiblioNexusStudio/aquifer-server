@@ -88,39 +88,9 @@ public static class LanguageResourcesEndpoints
                         })))
             .ToListAsync(cancellationToken);
 
-        // for resource types that are used as the "root", we want to be sure to grab their associated resources
-        var associatedResourceContent = await dbContext.PassageResources
-            // find all passages that overlap with the current book
-            .Where(pr => Constants.RootParentResourceIds.Contains(pr.Resource.ParentResourceId) &&
-                         ((pr.Passage.StartVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
-                           pr.Passage.StartVerseId < BibleUtilities.UpperBoundOfBook(bookId)) ||
-                          (pr.Passage.EndVerseId > BibleUtilities.LowerBoundOfBook(bookId) &&
-                           pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
-            .SelectMany(pr => pr.Resource.AssociatedResourceChildren
-                .Where(ar => parentResourceEntities.Contains(ar.ParentResource))
-                .SelectMany(sr => sr.ResourceContents
-                    .Where(rc => rc.LanguageId == languageId ||
-                                 (rc.LanguageId == englishLanguageId &&
-                                  Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
-                    .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
-                        .Select(rcv =>
-                            new
-                            {
-                                StartChapter = pr.Passage.StartVerseId / 1000 % 1000,
-                                EndChapter = pr.Passage.EndVerseId / 1000 % 1000,
-                                ContentId = rc.Id,
-                                rcv.ContentSize,
-                                rc.MediaType,
-                                rc.LanguageId,
-                                ResourceId = sr.Id,
-                                sr.ParentResource
-                            }))))
-            .ToListAsync(cancellationToken);
-
         // The above queries return resource contents in English + the current language (if available).
         // This filters them by grouping appropriately and selecting the current language resource (if available) then falling back to English.
         var filteredDownToOneLanguage = passageResourceContent.Concat(verseResourceContent)
-            .Concat(associatedResourceContent)
             .GroupBy(rc => new { rc.StartChapter, rc.EndChapter, rc.MediaType, rc.ResourceId })
             .Select(grc =>
             {
