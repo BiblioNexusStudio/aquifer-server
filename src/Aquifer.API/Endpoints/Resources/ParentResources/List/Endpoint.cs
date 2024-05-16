@@ -1,7 +1,6 @@
 using Aquifer.API.Common;
 using Aquifer.API.Helpers;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -39,14 +38,12 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             FROM
                 ParentResources pr
             LEFT JOIN ParentResourceLocalizations prl ON prl.ParentResourceId = pr.Id AND prl.LanguageId = @LanguageId
-            WHERE @ResourceType = {(int)ResourceType.None} OR pr.ResourceType = @ResourceType
             ORDER BY COALESCE(prl.DisplayName, pr.DisplayName)
         """;
 
         var response = await dbContext.Database
             .SqlQueryRaw<Response>(query,
-                new SqlParameter("LanguageId", req.LanguageId),
-                new SqlParameter("ResourceType", req.ResourceType))
+                new SqlParameter("LanguageId", req.LanguageId))
             .ToListAsync(ct);
 
         await SendOkAsync(response, ct);
