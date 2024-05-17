@@ -10,6 +10,7 @@ public class ParentResourceEntity : IHasUpdatedTimestamp
     public string? LicenseInfo { get; set; }
     public ResourceTypeComplexityLevel ComplexityLevel { get; set; }
     public ResourceType ResourceType { get; set; }
+    public bool Enabled { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
