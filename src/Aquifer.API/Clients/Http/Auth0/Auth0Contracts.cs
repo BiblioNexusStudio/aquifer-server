@@ -47,6 +47,12 @@ public class Auth0AssignUserRolesResponse
     public string Name { get; set; } = null!;
 }
 
+public class Auth0PermissionsForRolesResponse
+{
+    [JsonPropertyName("permission_name")]
+    public string PermissionName { get; set; } = null!;
+}
+
 public class Auth0PasswordResetRequest
 {
     [JsonPropertyName("client_id")]

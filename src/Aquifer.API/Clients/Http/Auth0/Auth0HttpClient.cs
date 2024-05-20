@@ -13,6 +13,7 @@ public interface IAuth0HttpClient
     Task<HttpResponseMessage> CreateUser(string name, string email, string authToken, CancellationToken cancellationToken);
     Task<HttpResponseMessage> GetAuth0Token(CancellationToken cancellationToken);
     Task<HttpResponseMessage> GetUserRoles(string auth0Token, CancellationToken cancellationToken);
+    Task<HttpResponseMessage> GetPermissionsForRole(string auth0Token, CancellationToken cancellationToken, string roleId);
     Task<HttpResponseMessage> AssignUserToRole(string roleId, string userId, string auth0Token, CancellationToken cancellationToken);
     Task<HttpResponseMessage> ResetPassword(string email, string authToken, CancellationToken cancellationToken);
 }
@@ -38,6 +39,12 @@ public class Auth0HttpClient : IAuth0HttpClient
         SetAuthHeader(auth0Token);
 
         return await _httpClient.GetAsync("/api/v2/roles", cancellationToken);
+    }
+
+    public async Task<HttpResponseMessage> GetPermissionsForRole(string auth0Token, CancellationToken cancellationToken, string roleId)
+    {
+        SetAuthHeader(auth0Token);
+        return await _httpClient.GetAsync($"/api/v2/roles/{roleId}/permissions", cancellationToken);
     }
 
     public async Task<HttpResponseMessage> GetAuth0Token(CancellationToken cancellationToken)
@@ -95,11 +102,7 @@ public class Auth0HttpClient : IAuth0HttpClient
         const string endpointPath = "/dbconnections/change_password";
         SetAuthHeader(authToken);
 
-        var requestModel = new Auth0PasswordResetRequest
-        {
-            Email = email,
-            ClientId = _authSettings.ApplicationClientId
-        };
+        var requestModel = new Auth0PasswordResetRequest { Email = email, ClientId = _authSettings.ApplicationClientId };
 
         var request = new StringContent(JsonUtilities.DefaultSerialize(requestModel), Encoding.UTF8, MediaTypeNames.Application.Json);
         return await _httpClient.PostAsync(endpointPath, request, cancellationToken);
