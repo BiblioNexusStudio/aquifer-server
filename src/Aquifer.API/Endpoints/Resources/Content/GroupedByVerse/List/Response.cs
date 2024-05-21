@@ -15,6 +15,6 @@ public record ResourceContentResponse
 {
     public required int Id { get; set; }
     public required string MediaType { get; set; }
-    public required int ParentResourceId { get; set; }
+    public required string ParentResource { get; set; }
     public required string ResourceType { get; set; }
 }
