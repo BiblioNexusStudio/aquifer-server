@@ -24,7 +24,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                                          WHERE RCV.Id = RCVAUH.ResourceContentVersionId AND RCVAUH.AssignedUserId = {0}
                                          ORDER BY RCVAUH.Id DESC
                                      ) AS History
-                                 WHERE RCV.AssignedUserId = {0}
+                                 WHERE RCV.AssignedUserId = {0} AND RC.Status != 6
                                  """;
 
     public override void Configure()
