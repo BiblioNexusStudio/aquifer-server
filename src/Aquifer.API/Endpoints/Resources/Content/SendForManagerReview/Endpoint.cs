@@ -83,7 +83,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             var lastAssignmentHistory = await dbContext.ResourceContentVersionAssignedUserHistory
                 .Where(x =>
                     x.ResourceContentVersionId == draftVersion.Id &&
-                    x.AssignedUserId == user.Id &&
                     managers.Contains(x.ChangedByUserId))
                 .OrderByDescending(x => x.Id).FirstOrDefaultAsync();
 
