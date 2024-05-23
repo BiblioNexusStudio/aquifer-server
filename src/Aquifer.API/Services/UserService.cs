@@ -58,6 +58,6 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
 
     public async Task<UserEntity> GetUserWithCompanyFromJwtAsync(CancellationToken cancellationToken)
     {
-        return  await dbContext.Users.Include(x => x.Company).SingleAsync(u => u.ProviderId == ProviderId, cancellationToken);
+        return await dbContext.Users.Include(x => x.Company).SingleAsync(u => u.ProviderId == ProviderId, cancellationToken);
     }
 }
