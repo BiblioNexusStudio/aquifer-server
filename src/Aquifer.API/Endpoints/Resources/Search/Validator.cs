@@ -1,4 +1,3 @@
-using Aquifer.Data.Entities;
 using FastEndpoints;
 using FluentValidation;
 
@@ -11,8 +10,6 @@ public class Validator : Validator<Request>
         RuleFor(x => x.LanguageId).NotEmpty();
         RuleFor(x => x.Query).NotEmpty().MinimumLength(3);
         RuleFor(x => x.ResourceTypes).NotEmpty();
-        RuleForEach(x => x.ResourceTypes)
-            .Must(resourceType => resourceType != ResourceType.None)
-            .WithMessage("resourceTypes must be valid.");
+        RuleForEach(x => x.ResourceTypes).IsInEnum();
     }
 }
