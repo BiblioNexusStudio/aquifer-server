@@ -58,7 +58,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     ProjectPlatform = x.ProjectPlatform.Name,
                     ProjectLead = $"{x.ProjectManagerUser.FirstName} {x.ProjectManagerUser.LastName}",
                     Manager = x.CompanyLeadUser != null ? $"{x.CompanyLeadUser.FirstName} {x.CompanyLeadUser.LastName}" : null,
-                    Resource = $"{x.ResourceContents.First().Resource.ParentResource.DisplayName}",
+                    Resource = x.ResourceContents.First().Resource.ParentResource.DisplayName,
                     ItemCount = x.ResourceContents.Count,
                     WordCount = x.SourceWordCount,
                     IsStarted = x.Started != null,
