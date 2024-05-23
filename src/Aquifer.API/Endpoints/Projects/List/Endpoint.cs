@@ -47,8 +47,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         ];
 
         return await dbContext.Projects
-            .Where(x => userService.HasPermission(PermissionName.ReadProject) ||
-                        (userService.HasPermission(PermissionName.ReadProjectsInCompany) && self.CompanyId == x.CompanyId)).Select(x =>
+            .Where(x =>
+                (x.ActualPublishDate == null || x.ActualPublishDate.Value > DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-30))
+                && (userService.HasPermission(PermissionName.ReadProject) ||
+                    (userService.HasPermission(PermissionName.ReadProjectsInCompany) && self.CompanyId == x.CompanyId))).Select(x =>
                 new Response
                 {
                     Id = x.Id,
@@ -62,7 +64,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     ItemCount = x.ResourceContents.Count,
                     WordCount = x.SourceWordCount,
                     IsStarted = x.Started != null,
-                    IsRecentlyPublished = x.ActualPublishDate.HasValue && DateOnly.FromDateTime(DateTime.UtcNow).DayNumber - x.ActualPublishDate.Value.DayNumber < 30,
                     Days =
                         x.ProjectedDeliveryDate.HasValue
                             ? x.ProjectedDeliveryDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber
