@@ -14,6 +14,7 @@ public class Response
     public required string ProjectPlatform { get; set; }
     public required int? Days { get; set; }
     public required bool IsStarted { get; set; }
+    public required bool IsRecentlyPublished { get; set; }
 
     public required ProjectResourceStatusCounts Counts { get; set; }
 }
