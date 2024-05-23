@@ -38,7 +38,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
                 Type = type.GetDisplayName(),
                 Collections = parentResources.Where(x => x.ResourceType == type).Select(x => new AvailableResourceCollection
                 {
-                    Code = x.ShortName,
+                    Code = x.Code,
                     Title = x.DisplayName,
                     LicenseInformation = x.LicenseInfo != null ? JsonUtilities.DefaultDeserialize(x.LicenseInfo) : null
                 }).ToList()

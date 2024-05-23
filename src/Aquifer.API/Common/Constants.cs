@@ -8,8 +8,9 @@ public static class Constants
     public const string PermissionsClaim = "permissions";
     public const string RolesClaim = "bnRoles";
 
-    // this represents the resource types that we allow to be accessed as the starting point when viewing content
-    public static readonly ReadOnlyCollection<string> RootParentResourceNames = new(["CBBTER"]);
+    // Some guide types have predetermined passages (rather than freeform "select any Bible section").
+    // ID 1 = FIA (formerly known as CBBT-ER)
+    public static readonly ReadOnlyCollection<int> PredeterminedPassageGuideIds = new([1]);
 
     // this represents the media types that we default to English for
     public static readonly ReadOnlyCollection<ResourceContentMediaType> FallbackToEnglishForMediaTypes =

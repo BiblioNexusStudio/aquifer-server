@@ -19,7 +19,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
             INNER JOIN ParentResources pr ON pr.Id = r.ParentResourceId
             INNER JOIN VerseResources vr ON vr.ResourceId = r.Id
         WHERE
-            rc.LanguageId = @LanguageId AND pr.ShortName = @ParentResourceName
+            rc.LanguageId = @LanguageId AND pr.Id = @ParentResourceId
 
         UNION
 
@@ -34,7 +34,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
             INNER JOIN Passages p ON p.Id = pasr.PassageId
             INNER JOIN Verses v ON v.Id BETWEEN p.StartVerseId AND p.EndVerseId
         WHERE
-            rc.LanguageId = @LanguageId AND parr.ShortName = @ParentResourceName
+            rc.LanguageId = @LanguageId AND parr.Id = @ParentResourceId
 
         ORDER BY
             Book, Chapter
@@ -51,7 +51,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
         var rows = await dbContext.Database
             .SqlQueryRaw<BookAndChapterRow>(Query,
                 new SqlParameter("LanguageId", request.LanguageId),
-                new SqlParameter("ParentResourceName", request.ParentResourceName))
+                new SqlParameter("ParentResourceId", request.ParentResourceId))
             .ToListAsync(ct);
 
         var response = rows.GroupBy(row => row.Book).Select(row => new Response

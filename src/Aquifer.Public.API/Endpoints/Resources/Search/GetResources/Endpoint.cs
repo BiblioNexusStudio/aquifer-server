@@ -69,7 +69,7 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
                  (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
             (req.ResourceType == default || x.ResourceContent.Resource.ParentResource.ResourceType == req.ResourceType) &&
             (req.ResourceCollectionCode == null ||
-             x.ResourceContent.Resource.ParentResource.ShortName.ToLower() == req.ResourceCollectionCode.ToLower()
+             x.ResourceContent.Resource.ParentResource.Code.ToLower() == req.ResourceCollectionCode.ToLower()
             ) &&
             (x.ResourceContent.LanguageId == req.LanguageId || x.ResourceContent.Language.ISO6393Code == req.LanguageCode));
     }
@@ -103,7 +103,7 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
                 {
                     Name = x.ResourceContent.Resource.ParentResource.DisplayName,
                     CollectionTitle = x.ResourceContent.Resource.ParentResource.DisplayName,
-                    CollectionCode = x.ResourceContent.Resource.ParentResource.ShortName,
+                    CollectionCode = x.ResourceContent.Resource.ParentResource.Code,
                     Type = x.ResourceContent.Resource.ParentResource.ResourceType
                 }
             })
