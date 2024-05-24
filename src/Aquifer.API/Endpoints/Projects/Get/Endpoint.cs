@@ -22,7 +22,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         if (userService.HasPermission(PermissionName.ReadProjectsInCompany) && !await HasSameCompanyAsProject(req.ProjectId, ct))
         {
             await SendForbiddenAsync(ct);
+            return;
         }
+
         var project = await GetProjectAsync(req, ct);
 
         if (project is null)
@@ -99,6 +101,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     private async Task<bool> HasSameCompanyAsProject(int projectId, CancellationToken ct)
     {
         var self = await userService.GetUserWithCompanyFromJwtAsync(ct);
-        return dbContext.Projects.Any((x) => x.Id == projectId && self.CompanyId == x.CompanyId);
+        return dbContext.Projects.Any(x => x.Id == projectId && self.CompanyId == x.CompanyId);
     }
 }
