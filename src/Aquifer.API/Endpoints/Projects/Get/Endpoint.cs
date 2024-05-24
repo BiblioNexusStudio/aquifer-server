@@ -6,6 +6,7 @@ using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
 
 namespace Aquifer.API.Endpoints.Projects.Get;
 
@@ -19,6 +20,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
+        if (userService.HasPermission(PermissionName.ReadProjectsInCompany) && !await HasSameCompanyAsProject(req.ProjectId, ct))
+        {
+            await SendForbiddenAsync(ct);
+        }
         var project = await GetProjectAsync(req, ct);
 
         if (project is null)
@@ -26,8 +31,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             await SendNotFoundAsync(ct);
             return;
         }
-
-        await ValidateRequest(project, ct);
 
         await SendOkAsync(project, ct);
     }
@@ -94,12 +97,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             }).SingleOrDefaultAsync(ct);
     }
 
-    private async Task ValidateRequest(Response project, CancellationToken ct)
+    private async Task<bool> HasSameCompanyAsProject(int projectId, CancellationToken ct)
     {
         var self = await userService.GetUserWithCompanyFromJwtAsync(ct);
-        if (userService.HasPermission(PermissionName.ReadProjectsInCompany) && self.Company.Name != project.Company)
-        {
-            ThrowError(r => r.ProjectId, "Not allowed to view project outside of your company");
-        }
+        return dbContext.Projects.Any((x) => x.Id == projectId && self.CompanyId == x.CompanyId);
     }
 }
