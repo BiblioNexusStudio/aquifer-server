@@ -50,6 +50,7 @@ public static class PermissionName
         CreateProject = "create:project",
         EditProject = "edit:projects",
         ReadProject = "read:projects",
+        ReadProjectsInCompany = "read:projects-in-company",
         CreateUser = "create:user",
         CreateUsersInCompany = "create:users-in-company",
         ReadReports = "read:reports",
