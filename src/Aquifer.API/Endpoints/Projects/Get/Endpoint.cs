@@ -1,6 +1,5 @@
 ﻿using Aquifer.API.Common;
 using Aquifer.API.Common.Dtos;
-using Aquifer.API.Helpers;
 using Aquifer.API.Services;
 using Aquifer.Common.Extensions;
 using Aquifer.Data;
@@ -16,7 +15,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         Get("/projects/{ProjectId}");
         Permissions(PermissionName.ReadProject, PermissionName.ReadProjectsInCompany);
-        Options(EndpointHelpers.SetCacheOption(1));
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
