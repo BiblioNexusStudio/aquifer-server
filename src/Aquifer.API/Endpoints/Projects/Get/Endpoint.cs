@@ -6,7 +6,6 @@ using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
 
 namespace Aquifer.API.Endpoints.Projects.Get;
 
