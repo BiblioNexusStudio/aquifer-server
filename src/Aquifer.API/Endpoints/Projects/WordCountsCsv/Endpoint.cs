@@ -27,7 +27,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
     public override void Configure()
     {
         Get("/projects/{ProjectId}/word-counts.csv");
-        Permissions(PermissionName.ReadProject);
+        Permissions(PermissionName.ReadProject, PermissionName.ReadProjectsInCompany);
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
@@ -40,7 +40,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
         }
 
         var rows = await dbContext.Database.SqlQueryRaw<EnglishLabelAndCount>(Query, request.ProjectId).ToListAsync(ct);
-        var csvText = "Title,Word Count\n" + string.Join('\n', rows.Select(tc => $"\"{tc.EnglishLabel.Replace("\"", "\"\"")}\",{tc.WordCount}"));
+        var csvText = "Title,Word Count\n" +
+                      string.Join('\n', rows.Select(tc => $"\"{tc.EnglishLabel.Replace("\"", "\"\"")}\",{tc.WordCount}"));
 
         await SendStreamAsync(new MemoryStream(Encoding.UTF8.GetBytes(csvText)),
             $"{project.Name} - {DateTime.Now:yyyy-MM-dd} - WordCounts.csv", null, "text/csv", null, false, ct);
