@@ -38,7 +38,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
             ThrowEntityNotFoundError<Request>(r => r.LanguageId);
         }
 
-        var projectManagerUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.ProjectManagerUserId, ct);
+        var projectManagerUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.ProjectManagerUserId && u.Enabled, ct);
         if (projectManagerUser is null)
         {
             ThrowEntityNotFoundError<Request>(r => r.ProjectManagerUserId);
@@ -94,7 +94,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
     {
         if (projectPlatform?.Name == "Aquifer")
         {
-            var companyLeadUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.CompanyLeadUserId, ct);
+            var companyLeadUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.CompanyLeadUserId && u.Enabled, ct);
             if (companyLeadUser is null)
             {
                 ThrowEntityNotFoundError<Request>(r => r.CompanyLeadUserId);

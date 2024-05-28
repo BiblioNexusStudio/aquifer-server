@@ -21,7 +21,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var userToAssign = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.AssignedUserId, ct);
+        var userToAssign = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.AssignedUserId && u.Enabled, ct);
         var hasAssignOverridePermission = userService.HasPermission(PermissionName.AssignOverride);
         var hasAssignOutsideCompanyPermission = userService.HasPermission(PermissionName.AssignOutsideCompany);
 

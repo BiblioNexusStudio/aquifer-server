@@ -66,14 +66,15 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
 
     private async Task ValidateRequest(ProjectEntity project, Request request, CancellationToken ct)
     {
-        if (project.Started is not null && ((request.QuotedCost.HasValue && project.QuotedCost != request.QuotedCost) ||
-                                            (request.EffectiveWordCount.HasValue &&
-                                             project.EffectiveWordCount != request.EffectiveWordCount) ||
-                                            (request.ProjectedDeliveryDate.HasValue &&
-                                             project.ProjectedDeliveryDate != request.ProjectedDeliveryDate) ||
-                                            (request.ProjectedPublishDate.HasValue &&
-                                             project.ProjectedPublishDate != request.ProjectedPublishDate) ||
-                                            (request.CompanyLeadUserId.HasValue && project.CompanyLeadUserId != request.CompanyLeadUserId)))
+        if (project.Started is not null &&
+            ((request.QuotedCost.HasValue && project.QuotedCost != request.QuotedCost) ||
+                (request.EffectiveWordCount.HasValue &&
+                    project.EffectiveWordCount != request.EffectiveWordCount) ||
+                (request.ProjectedDeliveryDate.HasValue &&
+                    project.ProjectedDeliveryDate != request.ProjectedDeliveryDate) ||
+                (request.ProjectedPublishDate.HasValue &&
+                    project.ProjectedPublishDate != request.ProjectedPublishDate) ||
+                (request.CompanyLeadUserId.HasValue && project.CompanyLeadUserId != request.CompanyLeadUserId)))
         {
             ThrowError(r => r.Id, "Can only update Project Manager after a project has been started.");
         }
@@ -84,14 +85,14 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
         }
 
         if (request.CompanyLeadUserId is not null &&
-            await dbContext.Users.SingleOrDefaultAsync(p => p.Id == request.CompanyLeadUserId, ct) is null)
+            await dbContext.Users.SingleOrDefaultAsync(p => p.Id == request.CompanyLeadUserId && p.Enabled, ct) is null)
         {
             ThrowEntityNotFoundError<Request>(r => r.CompanyLeadUserId);
         }
 
         if (request.ProjectManagerUserId is not null)
         {
-            var projectManagerUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.ProjectManagerUserId, ct);
+            var projectManagerUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.ProjectManagerUserId && u.Enabled, ct);
             if (projectManagerUser is null)
             {
                 ThrowEntityNotFoundError<Request>(r => r.ProjectManagerUserId);

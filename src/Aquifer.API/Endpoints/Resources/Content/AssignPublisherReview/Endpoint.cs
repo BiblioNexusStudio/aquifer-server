@@ -68,7 +68,7 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
 
     private async Task ValidateAssignedUser(Request request, CancellationToken ct)
     {
-        var assignedUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.AssignedUserId, ct);
+        var assignedUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.AssignedUserId && u.Enabled, ct);
         if (assignedUser is null)
         {
             ThrowEntityNotFoundError<Request>(r => r.AssignedUserId);
