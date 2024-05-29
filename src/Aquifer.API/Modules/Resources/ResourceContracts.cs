@@ -26,14 +26,3 @@ public class ResourceItemTextContentResponse
     public int Id { get; set; }
     public object? Content { get; set; }
 }
-
-public class ResourceItemMetadataResponse
-{
-    public string? DisplayName { get; set; }
-    public object? Metadata { get; set; }
-}
-
-public class ResourceItemMetadataWithIdResponse : ResourceItemMetadataResponse
-{
-    public int Id { get; set; }
-}
