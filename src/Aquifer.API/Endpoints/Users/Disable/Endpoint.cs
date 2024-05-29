@@ -44,9 +44,12 @@ public class Endpoint(
         var responseContent = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
         {
-            await HandleErrorAsync(response, responseContent, "Error getting Auth0 access token", ct);
+            await HandleErrorAsync(response, responseContent, "Error blocking user on Auth0", ct);
             return;
         }
+
+        userToDisable.Enabled = false;
+        await dbContext.SaveChangesAsync(ct);
 
         await SendOkAsync(ct);
     }
