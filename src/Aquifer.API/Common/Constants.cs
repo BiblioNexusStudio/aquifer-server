@@ -55,7 +55,9 @@ public static class PermissionName
         CreateUsersInCompany = "create:users-in-company",
         ReadReports = "read:reports",
         AiSimplify = "ai:simplify",
-        AiTranslate = "ai:translate";
+        AiTranslate = "ai:translate",
+        DisableUser = "disable:users",
+        DisableUsersInCompany = "disable:users-in-company";
 }
 
 public static class KeyVaultSecretName

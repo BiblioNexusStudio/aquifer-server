@@ -55,3 +55,8 @@ public class Auth0PasswordResetRequest
     public required string Email { get; set; }
     public string Connection { get; } = "Username-Password-Authentication";
 }
+
+public class Auth0BlockUserRequest
+{
+    public bool Blocked { get; set; } = true;
+}
