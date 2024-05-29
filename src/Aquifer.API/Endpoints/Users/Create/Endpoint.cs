@@ -152,7 +152,8 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
             LastName = req.LastName,
             ProviderId = providerUserId,
             CompanyId = req.CompanyId,
-            Role = req.Role
+            Role = req.Role,
+            Enabled = true
         };
 
         await dbContext.Users.AddAsync(user, ct);

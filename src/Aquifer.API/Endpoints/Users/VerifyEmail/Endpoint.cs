@@ -25,7 +25,7 @@ public class Endpoint(AquiferDbContext dbContext, ILogger<Endpoint> logger) : En
             return;
         }
 
-        var user = await dbContext.Users.SingleOrDefaultAsync(x => x.ProviderId == req.ProviderId, ct);
+        var user = await dbContext.Users.SingleOrDefaultAsync(x => x.ProviderId == req.ProviderId && x.Enabled, ct);
         if (user is null || user.EmailVerified)
         {
             logger.LogWarning("Tried to log update email verification but no user found or already set: {providerId}", req.ProviderId);

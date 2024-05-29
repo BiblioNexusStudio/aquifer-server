@@ -15,6 +15,7 @@ public interface IAuth0HttpClient
     Task<HttpResponseMessage> GetUserRoles(string auth0Token, CancellationToken cancellationToken);
     Task<HttpResponseMessage> AssignUserToRole(string roleId, string userId, string auth0Token, CancellationToken cancellationToken);
     Task<HttpResponseMessage> ResetPassword(string email, string authToken, CancellationToken cancellationToken);
+    Task<HttpResponseMessage> BlockUser(string auth0Id, string authToken, CancellationToken cancellationToken);
 }
 
 public class Auth0HttpClient : IAuth0HttpClient
@@ -50,10 +51,9 @@ public class Auth0HttpClient : IAuth0HttpClient
             GrantType = Auth0Constants.ClientCredentials
         };
 
-        var jsonContent = JsonUtilities.DefaultSerialize(tokenRequest);
-        var httpContent = new StringContent(jsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
+        var request = GetRequestAsStringContent(tokenRequest);
 
-        return await _httpClient.PostAsync("/oauth/token", httpContent, cancellationToken);
+        return await _httpClient.PostAsync("/oauth/token", request, cancellationToken);
     }
 
     public async Task<HttpResponseMessage> AssignUserToRole(string roleId,
@@ -66,10 +66,9 @@ public class Auth0HttpClient : IAuth0HttpClient
         var postUri = $"/api/v2/roles/{roleId}/users";
 
         var requestBody = new Auth0AssignUserRolesRequest { Users = [userId] };
-        var jsonContent = JsonUtilities.DefaultSerialize(requestBody);
-        var httpContent = new StringContent(jsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
+        var request = GetRequestAsStringContent(requestBody);
 
-        return await _httpClient.PostAsync(postUri, httpContent, cancellationToken);
+        return await _httpClient.PostAsync(postUri, request, cancellationToken);
     }
 
     public async Task<HttpResponseMessage> CreateUser(string name, string email, string authToken, CancellationToken cancellationToken)
@@ -84,10 +83,9 @@ public class Auth0HttpClient : IAuth0HttpClient
             Name = name
         };
 
-        var createUserJsonContent = JsonUtilities.DefaultSerialize(createUserRequest);
-        var createUserHttpContent = new StringContent(createUserJsonContent, Encoding.UTF8, MediaTypeNames.Application.Json);
+        var request = GetRequestAsStringContent(createUserRequest);
 
-        return await _httpClient.PostAsync("/api/v2/users", createUserHttpContent, cancellationToken);
+        return await _httpClient.PostAsync("/api/v2/users", request, cancellationToken);
     }
 
     public async Task<HttpResponseMessage> ResetPassword(string email, string authToken, CancellationToken cancellationToken)
@@ -101,12 +99,27 @@ public class Auth0HttpClient : IAuth0HttpClient
             ClientId = _authSettings.ApplicationClientId
         };
 
-        var request = new StringContent(JsonUtilities.DefaultSerialize(requestModel), Encoding.UTF8, MediaTypeNames.Application.Json);
+        var request = GetRequestAsStringContent(requestModel);
         return await _httpClient.PostAsync(endpointPath, request, cancellationToken);
+    }
+
+    public async Task<HttpResponseMessage> BlockUser(string auth0Id, string authToken, CancellationToken cancellationToken)
+    {
+        var endpointPath = $"/api/v2/users/{auth0Id}";
+        SetAuthHeader(authToken);
+        Auth0BlockUserRequest requestModel = new();
+        var request = GetRequestAsStringContent(requestModel);
+
+        return await _httpClient.PatchAsync(endpointPath, request, cancellationToken);
     }
 
     private void SetAuthHeader(string token)
     {
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    }
+
+    private StringContent GetRequestAsStringContent(object content)
+    {
+        return new StringContent(JsonUtilities.DefaultSerialize(content), Encoding.UTF8, MediaTypeNames.Application.Json);
     }
 }
