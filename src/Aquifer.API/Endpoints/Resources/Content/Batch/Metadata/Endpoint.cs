@@ -20,14 +20,14 @@ public class Endpoint(AquiferDbContext dbContext, TelemetryClient telemetry) : E
     {
         var contentVersions = await dbContext.ResourceContentVersions
             .Where(rcv => request.Ids.Contains(rcv.ResourceContentId) && rcv.IsPublished)
-            .Select(rcv => new
+            .Select(rcv => new IntermediateContentVersion
             {
                 Id = rcv.ResourceContentId,
-                rcv.ResourceContent.ResourceId,
-                rcv.DisplayName,
-                rcv.ResourceContent.MediaType,
-                rcv.Content,
-                rcv.ResourceContent.LanguageId
+                ResourceId = rcv.ResourceContent.ResourceId,
+                DisplayName = rcv.DisplayName,
+                MediaType = rcv.ResourceContent.MediaType,
+                Content = rcv.Content,
+                LanguageId = rcv.ResourceContent.LanguageId
             })
             .ToListAsync(ct);
 
@@ -87,5 +87,15 @@ public class Endpoint(AquiferDbContext dbContext, TelemetryClient telemetry) : E
 public record AssociatedResourceResponseWithLanguageAndAssociatedTo : AssociatedResourceResponse
 {
     public int AssociatedToResourceId { get; set; }
+    public int LanguageId { get; set; }
+}
+
+public record IntermediateContentVersion
+{
+    public int Id { get; set; }
+    public int ResourceId { get; set; }
+    public string DisplayName { get; set; } = null!;
+    public ResourceContentMediaType MediaType { get; set; }
+    public string Content { get; set; } = null!;
     public int LanguageId { get; set; }
 }

@@ -1,3 +1,4 @@
+using Aquifer.API.Helpers;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -8,7 +9,7 @@ namespace Aquifer.API.Endpoints.Resources.Content.Metadata;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 {
-    public const string AssociatedResourceQuery = """
+    private const string AssociatedResourceQuery = """
                                                       SELECT
                                                           r.ExternalId,
                                                           r.Id AS ResourceId,
@@ -20,12 +21,12 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                                                           INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = rc.Id AND rcv.IsPublished = 1
                                                       WHERE
                                                           ar.ResourceId = {1}
-                                                  """;
+                                                   """;
 
     public override void Configure()
     {
         Get("/resources/{ContentId}/metadata");
-        Options(x => x.CacheOutput(c => c.Expire(TimeSpan.FromMinutes(5))));
+        Options(EndpointHelpers.SetCacheOption(5));
         AllowAnonymous();
     }
 
