@@ -4,7 +4,7 @@ namespace Aquifer.API.Clients.Http.OpenAI;
 
 public class OpenAiChatCompletionRequest
 {
-    public string Model { get; set; } = "gpt-3.5-turbo";
+    public string Model { get; set; } = "gpt-4o";
     public float Temperature { get; set; } = 0.2f;
     public List<OpenAiChatCompletionRequestMessage> Messages { get; set; } = [];
 }
