@@ -64,33 +64,6 @@ public static class ResourceContentItemEndpoints
         return TypedResults.NotFound();
     }
 
-    public static async Task<Results<Ok<ResourceItemMetadataResponse>, NotFound>> GetResourceMetadataById(
-        int contentId,
-        AquiferDbContext dbContext,
-        CancellationToken cancellationToken
-    )
-    {
-        var contentVersion = await dbContext.ResourceContentVersions
-            .Where(rcv => rcv.ResourceContentId == contentId && rcv.IsPublished)
-            .Include(rcv => rcv.ResourceContent)
-            .SingleOrDefaultAsync(cancellationToken);
-
-        if (contentVersion == null)
-        {
-            return TypedResults.NotFound();
-        }
-
-        var response = new ResourceItemMetadataResponse
-        {
-            DisplayName = contentVersion.DisplayName,
-            Metadata = contentVersion.ResourceContent.MediaType == ResourceContentMediaType.Text
-                ? null
-                : JsonUtilities.DefaultDeserialize(contentVersion.Content)
-        };
-
-        return TypedResults.Ok(response);
-    }
-
     public static async Task<Results<RedirectHttpResult, NotFound>> GetResourceThumbnailById(
         int contentId,
         AquiferDbContext dbContext,
