@@ -45,7 +45,7 @@ public class Endpoint(
             {
                 HasError = true,
                 Error = "Cannot remove a user with assigned items",
-                AssignedResources = assignedResources.Select(x => new DisableUserAssignedResourcesResponse
+                AssignedResources = assignedResources.Select(x => new DisableUserAssignedResourceResponse
                 {
                     ResourceContentId = x.ResourceContentId,
                     DisplayName = x.DisplayName
