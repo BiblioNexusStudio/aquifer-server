@@ -35,7 +35,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         var user = await userService.GetUserWithCompanyUsersFromJwtAsync(ct);
         var shouldSelfAssign = user.Role is UserRole.Manager or UserRole.Publisher;
-        var managerIds = user.Company.Users.Where(x => x.Role == UserRole.Manager).Select(x => x.Id).ToList();
+        var managerIds = user.Company.Users.Where(x => x.Role == UserRole.Manager && user.Enabled).Select(x => x.Id).ToList();
         foreach (var draftVersion in draftVersions)
         {
             if (user.Id != draftVersion.AssignedUserId)

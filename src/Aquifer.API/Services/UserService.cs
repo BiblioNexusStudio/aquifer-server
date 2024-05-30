@@ -10,6 +10,7 @@ public interface IUserService
 {
     Task<UserEntity> GetUserFromJwtAsync(CancellationToken cancellationToken);
     Task<UserEntity> GetUserWithCompanyUsersFromJwtAsync(CancellationToken cancellationToken);
+    Task<UserEntity> GetUserWithCompanyFromJwtAsync(CancellationToken cancellationToken);
     List<string> GetAllJwtPermissions();
     List<string> GetAllJwtRoles();
     bool HasPermission(string permission);
@@ -22,13 +23,13 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
 
     public async Task<UserEntity> GetUserFromJwtAsync(CancellationToken cancellationToken)
     {
-        return await dbContext.Users.SingleAsync(u => u.ProviderId == ProviderId, cancellationToken);
+        return await dbContext.Users.SingleAsync(u => u.ProviderId == ProviderId && u.Enabled, cancellationToken);
     }
 
     public async Task<UserEntity> GetUserWithCompanyUsersFromJwtAsync(CancellationToken cancellationToken)
     {
         return await dbContext.Users.Include(x => x.Company).ThenInclude(x => x.Users)
-            .SingleAsync(u => u.ProviderId == ProviderId, cancellationToken);
+            .SingleAsync(u => u.ProviderId == ProviderId && u.Enabled, cancellationToken);
     }
 
     public List<string> GetAllJwtRoles()
@@ -52,6 +53,12 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
 
     public async Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken)
     {
-        return userId is null || await dbContext.Users.FindAsync([userId], cancellationToken) is not null;
+        return userId is null ||
+            await dbContext.Users.SingleOrDefaultAsync(u => u.Id == userId && u.Enabled, cancellationToken) is not null;
+    }
+
+    public async Task<UserEntity> GetUserWithCompanyFromJwtAsync(CancellationToken cancellationToken)
+    {
+        return await dbContext.Users.Include(x => x.Company).SingleAsync(u => u.ProviderId == ProviderId && u.Enabled, cancellationToken);
     }
 }

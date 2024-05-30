@@ -1,5 +1,6 @@
 using Aquifer.API.Services;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,7 +25,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                                          WHERE RCV.Id = RCVAUH.ResourceContentVersionId AND RCVAUH.AssignedUserId = {0}
                                          ORDER BY RCVAUH.Id DESC
                                      ) AS History
-                                 WHERE RCV.AssignedUserId = {0}
+                                 WHERE RCV.AssignedUserId = {0} AND RC.Status != {1}
                                  """;
 
     public override void Configure()
@@ -35,7 +36,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override async Task HandleAsync(CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var resourceContents = (await dbContext.Database.SqlQueryRaw<Response>(Query, user.Id).ToListAsync(ct))
+        var resourceContents = (await dbContext.Database
+                .SqlQueryRaw<Response>(Query, user.Id, (int)ResourceContentStatus.TranslationNotStarted).ToListAsync(ct))
             .OrderByDescending(x => x.DaysSinceAssignment).ThenBy(x => x.ProjectName).ThenBy(x => x.EnglishLabel).ToList();
 
         await SendOkAsync(resourceContents, ct);

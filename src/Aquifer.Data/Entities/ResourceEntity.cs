@@ -14,6 +14,7 @@ public class ResourceEntity : IHasUpdatedTimestamp
     public ParentResourceEntity ParentResource { get; set; } = null!;
     public string EnglishLabel { get; set; } = null!;
     public string? ExternalId { get; set; }
+    public int SortOrder { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
@@ -52,5 +53,7 @@ public class ResourceEntityConfiguration : IEntityTypeConfiguration<ResourceEnti
                     .HasOne(typeof(ResourceEntity))
                     .WithMany()
                     .HasForeignKey("ResourceId"));
+
+        builder.Property(r => r.SortOrder).HasDefaultValue(0);
     }
 }

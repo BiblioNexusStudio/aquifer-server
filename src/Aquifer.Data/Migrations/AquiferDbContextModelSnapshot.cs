@@ -562,6 +562,10 @@ namespace Aquifer.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("ComplexityLevel")
                         .HasColumnType("int");
 
@@ -1064,6 +1068,11 @@ namespace Aquifer.Data.Migrations
                     b.Property<int>("ParentResourceId")
                         .HasColumnType("int");
 
+                    b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTime>("Updated")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -1127,6 +1136,11 @@ namespace Aquifer.Data.Migrations
 
                     b.Property<bool>("EmailVerified")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("Enabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("FirstName")
                         .IsRequired()
