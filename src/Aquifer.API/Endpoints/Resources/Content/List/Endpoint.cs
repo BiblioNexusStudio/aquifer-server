@@ -46,8 +46,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                                         """;
 
         var groupingWithOffset = $"""
-                                  GROUP BY RC.Id, R.EnglishLabel, PR.DisplayName, L.EnglishDisplay, RC.Status
-                                  ORDER BY R.EnglishLabel
+                                  GROUP BY RC.Id, R.EnglishLabel, PR.DisplayName, L.EnglishDisplay, RC.Status, R.SortOrder
+                                  ORDER BY PR.DisplayName, R.SortOrder, R.EnglishLabel
                                   OFFSET {req.Offset} ROWS FETCH NEXT {req.Limit} ROWS ONLY
                                   """;
 

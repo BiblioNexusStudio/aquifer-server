@@ -12,7 +12,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                                  SELECT RCV.ResourceContentId AS Id, R.EnglishLabel, PR.DisplayName AS ParentResourceName, U.Id AS UserId,
                                         U.FirstName AS UserFirstName, U.LastName AS UserLastName,
                                         L.EnglishDisplay AS LanguageEnglishDisplay, RCV.WordCount, P.Name AS ProjectName,
-                                        P.ProjectedDeliveryDate AS ProjectProjectedDeliveryDate
+                                        P.ProjectedDeliveryDate AS ProjectProjectedDeliveryDate, R.SortOrder
                                  FROM ResourceContentVersions AS RCV
                                           INNER JOIN Users AS U ON RCV.AssignedUserId = U.Id
                                           INNER JOIN ResourceContents AS RC ON RCV.ResourceContentId = RC.Id
@@ -36,7 +36,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var userCompanyId = user.CompanyId;
 
         var queryResponse = (await dbContext.Database.SqlQueryRaw<Response>(Query, userCompanyId).ToListAsync(ct))
-            .OrderBy(x => x.DaysUntilProjectDeadline).ThenBy(x => x.ProjectName).ThenBy(x => x.EnglishLabel).ToList();
+            .OrderBy(x => x.DaysUntilProjectDeadline).ThenBy(x => x.ProjectName).ThenBy(x => x.ParentResourceName)
+            .ThenBy(x => x.SortOrder).ThenBy(x => x.EnglishLabel).ToList();
 
         await SendOkAsync(queryResponse, ct);
     }

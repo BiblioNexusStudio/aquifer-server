@@ -27,7 +27,8 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
                     LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
                     ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
                     LastStatusUpdate = x.ResourceContent.Updated,
-                    WordCount = x.WordCount
+                    WordCount = x.WordCount,
+                    SortOrder = x.ResourceContent.Resource.SortOrder
                 }).ToListAsync(ct))
             .OrderByDescending(x => x.DaysSinceStatusChange).ThenBy(x => x.EnglishLabel).ToList();
 

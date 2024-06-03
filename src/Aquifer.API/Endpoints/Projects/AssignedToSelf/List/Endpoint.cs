@@ -14,7 +14,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         Get("/projects/assigned-to-self");
         Permissions(PermissionName.ReadProject);
-        Options(EndpointHelpers.SetCacheOption(1));
     }
 
     public override async Task HandleAsync(CancellationToken ct)
