@@ -1,6 +1,7 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -62,11 +63,19 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var nextUpForEditor = (await dbContext.Database.SqlQueryRaw<int?>(NextUpForEditorQuery, user.Id, request.Id).ToListAsync(ct))
-            .FirstOrDefault();
-        var nextUpForManager = (await dbContext.Database.SqlQueryRaw<int?>(NextUpForManagerQuery, user.Id, request.Id).ToListAsync(ct))
-            .FirstOrDefault();
-
-        await SendOkAsync(new Response { NextUpForEditor = nextUpForEditor, NextUpForManager = nextUpForManager }, ct);
+        var response = user.Role == UserRole.Manager
+            ? new Response
+            {
+                NextUpResourceContentId =
+                    (await dbContext.Database.SqlQueryRaw<int?>(NextUpForManagerQuery, user.Id, request.Id).ToListAsync(ct))
+                    .FirstOrDefault()
+            }
+            : new Response
+            {
+                NextUpResourceContentId =
+                    (await dbContext.Database.SqlQueryRaw<int?>(NextUpForEditorQuery, user.Id, request.Id).ToListAsync(ct))
+                    .FirstOrDefault()
+            };
+        await SendOkAsync(response, ct);
     }
 }
