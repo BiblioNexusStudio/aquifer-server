@@ -1,40 +1,14 @@
 using Aquifer.API.Common.Dtos;
-using Aquifer.API.Services;
 using Aquifer.Common.Extensions;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.Get;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 {
-    private const string NextUpResourceQuery = """
-                                               WITH UserAssignedResources AS (
-                                                  SELECT RCV.ResourceContentId,
-                                                         ROW_NUMBER() OVER (ORDER BY DATEDIFF(DAY, History.Created, GETDATE()) DESC, R.SortOrder ASC, R.EnglishLabel ASC) AS RowNum
-                                                  FROM ResourceContentVersions AS RCV
-                                                      INNER JOIN ResourceContents AS RC ON RCV.ResourceContentId = RC.Id
-                                                      INNER JOIN Resources AS R ON RC.ResourceId = R.Id
-                                                      CROSS APPLY (
-                                                          SELECT TOP 1 RCVAUH.Created AS Created
-                                                          FROM ResourceContentVersionAssignedUserHistory AS RCVAUH
-                                                          WHERE RCV.Id = RCVAUH.ResourceContentVersionId AND RCVAUH.AssignedUserId = {0}
-                                                          ORDER BY RCVAUH.Id DESC
-                                                      ) AS History
-                                                  WHERE RCV.AssignedUserId = {0} AND RC.Status != {1}
-                                               )
-                                               SELECT ResourceContentId AS Value
-                                               FROM UserAssignedResources
-                                               WHERE RowNum = (
-                                                   SELECT RowNum + 1
-                                                   FROM UserAssignedResources
-                                                   WHERE ResourceContentId = {2}
-                                               );
-                                               """;
-
     public override void Configure()
     {
         Get("/resources/content/{Id}");
@@ -42,7 +16,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var user = await userService.GetUserFromJwtAsync(ct);
         var englishLanguageId = await dbContext.Languages.Where(l => l.ISO6393Code == "eng").Select(l => l.Id).SingleAsync(ct);
         var resourceContent = await dbContext.ResourceContents.Where(x => x.Id == request.Id)
             .Select(rc => new Response
@@ -55,7 +28,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                         : JsonUtilities.DefaultDeserialize(rc.Resource.ParentResource.LicenseInfo),
                 ResourceContentId = rc.Id,
                 ResourceId = rc.ResourceId,
-                Language = new LanguageResponse { EnglishDisplay = rc.Language.EnglishDisplay, ISO6393Code = rc.Language.ISO6393Code },
+                Language = new LanguageResponse
+                {
+                    EnglishDisplay = rc.Language.EnglishDisplay,
+                    ISO6393Code = rc.Language.ISO6393Code
+                },
                 Status = rc.Status,
                 MediaType = rc.MediaType,
                 ContentTranslations = rc.Resource.ResourceContents
@@ -99,7 +76,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         resourceContent.PassageReferences = await dbContext.PassageResources
             .Where(x => x.ResourceId == resourceContent.ResourceId)
-            .Select(pr => new PassageReferenceResponse { StartVerseId = pr.Passage.StartVerseId, EndVerseId = pr.Passage.EndVerseId })
+            .Select(pr => new PassageReferenceResponse
+            {
+                StartVerseId = pr.Passage.StartVerseId,
+                EndVerseId = pr.Passage.EndVerseId
+            })
             .ToListAsync(ct);
 
         var relevantContentVersion = await dbContext.ResourceContentVersions.Where(rcv => rcv.ResourceContentId == request.Id)
@@ -129,7 +110,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var versions = await dbContext.ResourceContentVersions
             .Where(rcv => rcv.Id != relevantContentVersion.Id && rcv.ResourceContentId == relevantContentVersion.ResourceContentId)
             .OrderByDescending(rcv => rcv.Created).Select(rcv =>
-                new VersionResponse { Id = rcv.Id, Created = rcv.Created, Version = rcv.Version, IsPublished = rcv.IsPublished })
+                new VersionResponse
+                {
+                    Id = rcv.Id,
+                    Created = rcv.Created,
+                    Version = rcv.Version,
+                    IsPublished = rcv.IsPublished
+                })
             .ToListAsync(ct);
 
         resourceContent.MachineTranslation = relevantContentVersion.MachineTranslations.Select(mt => new MachineTranslationResponse
@@ -141,12 +128,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ImproveConsistency = mt.ImproveConsistency,
             ImproveTone = mt.ImproveTone
         }).FirstOrDefault();
-
-        resourceContent.NextUpResourceContentId = (await dbContext.Database.SqlQueryRaw<int>(
-            NextUpResourceQuery, user.Id,
-            (int)ResourceContentStatus.TranslationNotStarted,
-            resourceContent.ResourceContentId
-        ).ToListAsync(ct)).FirstOrDefault();
 
         resourceContent.IsDraft = relevantContentVersion.IsDraft;
         resourceContent.ResourceContentVersionId = relevantContentVersion.Id;
