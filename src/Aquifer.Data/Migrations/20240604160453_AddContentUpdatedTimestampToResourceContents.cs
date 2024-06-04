@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,13 +6,13 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Aquifer.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddContentEditedTimestampToResourceContents : Migration
+    public partial class AddContentUpdatedTimestampToResourceContents : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<DateTime>(
-                name: "ContentEdited",
+                name: "ContentUpdated",
                 table: "ResourceContents",
                 type: "datetime2",
                 nullable: true);
@@ -22,7 +22,7 @@ namespace Aquifer.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "ContentEdited",
+                name: "ContentUpdated",
                 table: "ResourceContents");
         }
     }

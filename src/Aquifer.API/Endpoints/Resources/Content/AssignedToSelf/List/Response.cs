@@ -24,10 +24,10 @@ public record Response
         ? null
         : (ProjectedDeliveryDate.Value.ToDateTime(new TimeOnly(23, 59)) - DateTime.UtcNow).Days;
 
-    public int? DaysSinceContentEdit => ContentEdited == null ? null : (DateTime.UtcNow - (DateTime)ContentEdited).Days;
+    public int? DaysSinceContentUpdated => ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)ContentUpdated).Days;
 
     [JsonIgnore]
-    public DateTime? ContentEdited { get; set; }
+    public DateTime? ContentUpdated { get; set; }
 
     [JsonIgnore]
     public DateOnly? ProjectedDeliveryDate { get; set; }

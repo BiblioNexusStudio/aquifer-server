@@ -20,10 +20,10 @@ public class Response
 
     public UserDto AssignedUser => new() { Id = UserId, Name = $"{UserFirstName} {UserLastName}" };
 
-    public int? DaysSinceContentEdit => ContentEdited == null ? null : (DateTime.UtcNow - (DateTime)ContentEdited).Days;
+    public int? DaysSinceContentUpdated => ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)ContentUpdated).Days;
 
     [JsonIgnore]
-    public DateTime? ContentEdited { get; set; }
+    public DateTime? ContentUpdated { get; set; }
 
     [JsonIgnore]
     public DateOnly? ProjectProjectedDeliveryDate { get; set; }

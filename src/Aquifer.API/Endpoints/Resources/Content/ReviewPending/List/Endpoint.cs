@@ -29,7 +29,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
                     LastStatusUpdate = x.ResourceContent.Updated,
                     WordCount = x.WordCount,
                     SortOrder = x.ResourceContent.Resource.SortOrder,
-                    ContentEdited = x.ResourceContent.ContentEdited
+                    ContentUpdated = x.ResourceContent.ContentUpdated
                 }).ToListAsync(ct))
             .OrderByDescending(x => x.DaysSinceStatusChange).ThenBy(x => x.EnglishLabel).ToList();
 
