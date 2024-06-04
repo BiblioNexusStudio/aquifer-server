@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Aquifer.Data.EventHandlers;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,6 +27,8 @@ public class ResourceContentEntity : IHasUpdatedTimestamp
     public ICollection<ProjectEntity> Projects { get; set; } = new List<ProjectEntity>();
     public int Id { get; set; }
     public ResourceContentStatus Status { get; set; }
+
+    public DateTime? ContentUpdated { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
