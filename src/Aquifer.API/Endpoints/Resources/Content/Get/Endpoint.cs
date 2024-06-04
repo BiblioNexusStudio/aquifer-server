@@ -11,28 +11,29 @@ namespace Aquifer.API.Endpoints.Resources.Content.Get;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request, Response>
 {
-    private const string NextUpResourceContentQuery = """
-                                                      WITH UserAssignedResources AS (
-                                                         SELECT RCV.ResourceContentId, ROW_NUMBER() OVER (ORDER BY DATEDIFF(DAY, History.Created, GETDATE()) DESC, R.SortOrder ASC, R.EnglishLabel ASC) AS RowNum
-                                                         FROM ResourceContentVersions AS RCV
-                                                             INNER JOIN ResourceContents AS RC ON RCV.ResourceContentId = RC.Id
-                                                             INNER JOIN Resources AS R ON RC.ResourceId = R.Id
-                                                             CROSS APPLY (
-                                                                 SELECT TOP 1 RCVAUH.Created AS Created
-                                                                 FROM ResourceContentVersionAssignedUserHistory AS RCVAUH
-                                                                 WHERE RCV.Id = RCVAUH.ResourceContentVersionId AND RCVAUH.AssignedUserId = {0}
-                                                                 ORDER BY RCVAUH.Id DESC
-                                                             ) AS History
-                                                         WHERE RCV.AssignedUserId = {0} AND RC.Status != {1}
-                                                      )
-                                                      SELECT ResourceContentId AS Value
-                                                      FROM UserAssignedResources
-                                                      WHERE RowNum = (
-                                                          SELECT RowNum + 1
-                                                          FROM UserAssignedResources
-                                                          WHERE ResourceContentId = {2}
-                                                      );
-                                                      """;
+    private const string NextUpResourceQuery = """
+                                               WITH UserAssignedResources AS (
+                                                  SELECT RCV.ResourceContentId,
+                                                         ROW_NUMBER() OVER (ORDER BY DATEDIFF(DAY, History.Created, GETDATE()) DESC, R.SortOrder ASC, R.EnglishLabel ASC) AS RowNum
+                                                  FROM ResourceContentVersions AS RCV
+                                                      INNER JOIN ResourceContents AS RC ON RCV.ResourceContentId = RC.Id
+                                                      INNER JOIN Resources AS R ON RC.ResourceId = R.Id
+                                                      CROSS APPLY (
+                                                          SELECT TOP 1 RCVAUH.Created AS Created
+                                                          FROM ResourceContentVersionAssignedUserHistory AS RCVAUH
+                                                          WHERE RCV.Id = RCVAUH.ResourceContentVersionId AND RCVAUH.AssignedUserId = {0}
+                                                          ORDER BY RCVAUH.Id DESC
+                                                      ) AS History
+                                                  WHERE RCV.AssignedUserId = {0} AND RC.Status != {1}
+                                               )
+                                               SELECT ResourceContentId AS Value
+                                               FROM UserAssignedResources
+                                               WHERE RowNum = (
+                                                   SELECT RowNum + 1
+                                                   FROM UserAssignedResources
+                                                   WHERE ResourceContentId = {2}
+                                               );
+                                               """;
 
     public override void Configure()
     {
@@ -141,7 +142,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ImproveTone = mt.ImproveTone
         }).FirstOrDefault();
 
-        resourceContent.NextUpResourceContentId = (await dbContext.Database.SqlQueryRaw<int>(NextUpResourceContentQuery, user.Id,
+        resourceContent.NextUpResourceContentId = (await dbContext.Database.SqlQueryRaw<int>(
+            NextUpResourceQuery, user.Id,
             (int)ResourceContentStatus.TranslationNotStarted,
             resourceContent.ResourceContentId
         ).ToListAsync(ct)).FirstOrDefault();
