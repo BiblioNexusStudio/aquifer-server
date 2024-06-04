@@ -63,19 +63,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var response = user.Role == UserRole.Manager
-            ? new Response
-            {
-                NextUpResourceContentId =
-                    (await dbContext.Database.SqlQueryRaw<int?>(NextUpForManagerQuery, user.Id, request.Id).ToListAsync(ct))
-                    .FirstOrDefault()
-            }
-            : new Response
-            {
-                NextUpResourceContentId =
-                    (await dbContext.Database.SqlQueryRaw<int?>(NextUpForEditorQuery, user.Id, request.Id).ToListAsync(ct))
-                    .FirstOrDefault()
-            };
+        var response = new Response
+        {
+            NextUpResourceContentId =
+                (await dbContext.Database
+                    .SqlQueryRaw<int?>(user.Role == UserRole.Manager ? NextUpForManagerQuery : NextUpForEditorQuery, user.Id,
+                        request.Id).ToListAsync(ct)).FirstOrDefault()
+        };
         await SendOkAsync(response, ct);
     }
 }
