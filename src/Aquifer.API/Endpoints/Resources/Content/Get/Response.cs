@@ -29,15 +29,12 @@ public class Response
     public IEnumerable<SnapshotResponse> Snapshots { get; set; } = null!;
     public IEnumerable<VersionResponse> Versions { get; set; } = null!;
     public MachineTranslationResponse? MachineTranslation { get; set; }
+    public int? NextUpResourceContentId { get; set; }
 
     public ProjectResponse? Project =>
         ProjectEntity == null
             ? null
-            : new ProjectResponse
-            {
-                Id = ProjectEntity.Id,
-                Name = ProjectEntity.Name
-            };
+            : new ProjectResponse { Id = ProjectEntity.Id, Name = ProjectEntity.Name };
 
     public CommentThreadsResponse CommentThreads { get; set; } = null!;
 
