@@ -32,6 +32,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             return;
         }
 
+        var wordCounts = await GetWordCounts(req.ProjectId, ct);
+        foreach (var item in project.Items)
+        {
+            item.WordCount = wordCounts.SingleOrDefault(x => x.Id == item.ResourceContentId)?.WordCount ?? 0;
+        }
+
         project.Items = project.Items.OrderBy(x => x.SortOrder).ThenBy(x => x.EnglishLabel);
         await SendOkAsync(project, ct);
     }
@@ -104,4 +110,29 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var self = await userService.GetUserWithCompanyFromJwtAsync(ct);
         return dbContext.Projects.Any(x => x.Id == projectId && self.CompanyId == x.CompanyId);
     }
+
+    private async Task<List<ResourceContentWordCount>> GetWordCounts(int projectId, CancellationToken ct)
+    {
+        const string query = """
+                             SELECT
+                                 RC.Id, Snapshots.WordCount
+                             FROM ResourceContents RC
+                                 INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
+                                 CROSS APPLY (
+                                     SELECT TOP 1 WordCount
+                                     FROM ResourceContentVersionSnapshots
+                                     WHERE ResourceContentVersionId = RCV.Id
+                                     ORDER BY Created ASC
+                                 ) Snapshots
+                             WHERE RC.Id IN (SELECT ResourceContentId FROM ProjectResourceContents WHERE ProjectId = {0})
+                             """;
+
+        return await dbContext.Database.SqlQueryRaw<ResourceContentWordCount>(query, projectId).ToListAsync(ct);
+    }
+}
+
+public class ResourceContentWordCount
+{
+    public required int Id { get; set; }
+    public required int WordCount { get; set; }
 }
