@@ -12,7 +12,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                                  SELECT RCV.ResourceContentId AS Id, R.EnglishLabel, PR.DisplayName AS ParentResourceName, U.Id AS UserId,
                                         U.FirstName AS UserFirstName, U.LastName AS UserLastName,
                                         L.EnglishDisplay AS LanguageEnglishDisplay, RCV.WordCount, P.Name AS ProjectName,
-                                        P.ProjectedDeliveryDate AS ProjectProjectedDeliveryDate, R.SortOrder
+                                        P.ProjectedDeliveryDate AS ProjectProjectedDeliveryDate, R.SortOrder, RC.ContentUpdated
                                  FROM ResourceContentVersions AS RCV
                                           INNER JOIN Users AS U ON RCV.AssignedUserId = U.Id
                                           INNER JOIN ResourceContents AS RC ON RCV.ResourceContentId = RC.Id

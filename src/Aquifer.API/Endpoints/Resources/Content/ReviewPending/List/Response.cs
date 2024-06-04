@@ -14,6 +14,11 @@ public class Response
 
     public required int? WordCount { get; set; }
 
+    public int? DaysSinceContentUpdated => ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)ContentUpdated).Days;
+
+    [JsonIgnore]
+    public DateTime? ContentUpdated { get; set; }
+
     [JsonIgnore]
     public DateTime LastStatusUpdate { get; set; }
 }

@@ -18,11 +18,12 @@ public class Response
             ? null
             : (ProjectProjectedDeliveryDate.Value.ToDateTime(new TimeOnly(23, 59)) - DateTime.UtcNow).Days;
 
-    public UserDto AssignedUser => new()
-    {
-        Id = UserId,
-        Name = $"{UserFirstName} {UserLastName}"
-    };
+    public UserDto AssignedUser => new() { Id = UserId, Name = $"{UserFirstName} {UserLastName}" };
+
+    public int? DaysSinceContentUpdated => ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)ContentUpdated).Days;
+
+    [JsonIgnore]
+    public DateTime? ContentUpdated { get; set; }
 
     [JsonIgnore]
     public DateOnly? ProjectProjectedDeliveryDate { get; set; }
