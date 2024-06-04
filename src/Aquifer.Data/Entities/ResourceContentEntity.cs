@@ -28,6 +28,8 @@ public class ResourceContentEntity : IHasUpdatedTimestamp
     public int Id { get; set; }
     public ResourceContentStatus Status { get; set; }
 
+    public DateTime? ContentEdited { get; set; }
+
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 }

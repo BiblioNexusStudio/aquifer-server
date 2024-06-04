@@ -33,6 +33,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         }
 
         var user = await userService.GetUserFromJwtAsync(ct);
+        var didUpdate = false;
 
         if (user.Id != entity.AssignedUserId && ChangesMade(request, entity))
         {
@@ -43,6 +44,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         {
             entity.Content = JsonUtilities.DefaultSerialize(request.Content);
             entity.ContentSize = Encoding.UTF8.GetByteCount(entity.Content);
+            didUpdate = true;
         }
 
         if (request.WordCount is not null)
@@ -53,6 +55,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         if (request.DisplayName is not null)
         {
             entity.DisplayName = request.DisplayName;
+            didUpdate = true;
+        }
+
+        if (didUpdate)
+        {
+            entity.ResourceContent.ContentEdited = DateTime.Now;
         }
 
         await dbContext.SaveChangesAsync(ct);
