@@ -26,13 +26,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         }
 
         var project = await GetProjectAsync(req, ct);
-
         if (project is null)
         {
             await SendNotFoundAsync(ct);
             return;
         }
 
+        project.Items = project.Items.OrderBy(x => x.SortOrder).ThenBy(x => x.EnglishLabel);
         await SendOkAsync(project, ct);
     }
 
@@ -85,7 +85,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                         EnglishLabel = rc.Resource.EnglishLabel,
                         ParentResourceName = rc.Resource.ParentResource.DisplayName,
                         StatusDisplayName = rc.Status.GetDisplayName(),
-                        AssignedUserName = rcv.AssignedUser == null ? null : $"{rcv.AssignedUser.FirstName} {rcv.AssignedUser.LastName}"
+                        AssignedUserName = rcv.AssignedUser == null ? null : $"{rcv.AssignedUser.FirstName} {rcv.AssignedUser.LastName}",
+                        SortOrder = rc.Resource.SortOrder
                     })),
                 Counts = new ProjectResourceStatusCounts
                 {

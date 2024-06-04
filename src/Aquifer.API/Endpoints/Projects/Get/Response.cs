@@ -42,4 +42,5 @@ public class ProjectResourceItem
     public required string ParentResourceName { get; set; }
     public required string? AssignedUserName { get; set; }
     public required string StatusDisplayName { get; set; }
+    public required int SortOrder { get; set; }
 }

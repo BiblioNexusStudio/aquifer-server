@@ -21,7 +21,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var query = $"""
                      SELECT RCV.ResourceContentId AS Id, R.EnglishLabel, PR.DisplayName AS ParentResourceName,
                             L.EnglishDisplay AS LanguageEnglishDisplay, RCV.WordCount, P.Name AS ProjectName,
-                            P.ProjectedDeliveryDate AS ProjectProjectedDeliveryDate
+                            P.ProjectedDeliveryDate AS ProjectProjectedDeliveryDate, R.SortOrder
                      FROM ResourceContentVersions AS RCV
                               INNER JOIN ResourceContents AS RC ON RCV.ResourceContentId = RC.Id
                               INNER JOIN Resources AS R ON RC.ResourceId = R.Id

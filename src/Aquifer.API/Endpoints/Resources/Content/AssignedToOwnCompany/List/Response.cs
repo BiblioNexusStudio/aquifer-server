@@ -11,6 +11,7 @@ public class Response
     public required string LanguageEnglishDisplay { get; set; }
     public required int? WordCount { get; set; }
     public required string ProjectName { get; set; }
+    public required int SortOrder { get; set; }
 
     public int? DaysUntilProjectDeadline =>
         ProjectProjectedDeliveryDate == null

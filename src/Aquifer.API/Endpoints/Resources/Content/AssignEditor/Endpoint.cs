@@ -88,6 +88,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 draftVersion.AssignedUserId = request.AssignedUserId;
                 await historyService.AddAssignedUserHistoryAsync(draftVersion, request.AssignedUserId, user.Id, ct);
             }
+            else
+            {
+                await historyService.AddSnapshotHistoryAsync(draftVersion, ct);
+            }
 
             if (draftVersion.ResourceContent.Status != originalStatus)
             {

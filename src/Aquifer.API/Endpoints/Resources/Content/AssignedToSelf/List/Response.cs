@@ -12,10 +12,12 @@ public record Response
     public required string LanguageEnglishDisplay { get; set; }
     public required int? WordCount { get; set; }
     public required ResourceContentStatus StatusValue { get; set; }
+    public required int SortOrder { get; set; }
     public string? ProjectName { get; set; }
 
     public string Status => StatusValue.GetDisplayName();
     public string StatusDisplayName => StatusValue.GetDisplayName();
+
     public int DaysSinceAssignment => (DateTime.UtcNow - HistoryCreated).Days;
 
     public int? DaysUntilProjectDeadline => ProjectedDeliveryDate == null
