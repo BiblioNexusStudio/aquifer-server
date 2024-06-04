@@ -32,6 +32,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             return;
         }
 
+        var wordCounts = await GetWordCounts(req.ProjectId, ct);
+        foreach (var item in project.Items)
+        {
+            item.WordCount = wordCounts.SingleOrDefault(x => x.EnglishLabel == item.EnglishLabel)?.WordCount ?? 0;
+        }
+
         project.Items = project.Items.OrderBy(x => x.SortOrder).ThenBy(x => x.EnglishLabel);
         await SendOkAsync(project, ct);
     }
@@ -104,4 +110,31 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var self = await userService.GetUserWithCompanyFromJwtAsync(ct);
         return dbContext.Projects.Any(x => x.Id == projectId && self.CompanyId == x.CompanyId);
     }
+
+    private async Task<List<EnglishLabelAndCount>> GetWordCounts(int projectId, CancellationToken ct)
+    {
+        const string query = """
+                             SELECT
+                                 R.EnglishLabel, Snapshots.WordCount
+                             FROM ResourceContents RC
+                                 INNER JOIN Resources R ON R.Id = RC.ResourceId
+                                 INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
+                                 CROSS APPLY (
+                                     SELECT TOP 1 WordCount
+                                     FROM ResourceContentVersionSnapshots
+                                     WHERE ResourceContentVersionId = RCV.Id
+                                     ORDER BY Created ASC
+                                 ) Snapshots
+                             WHERE RC.Id IN (SELECT ResourceContentId FROM ProjectResourceContents WHERE ProjectId = {0})
+                             ORDER BY R.EnglishLabel
+                             """;
+
+        return await dbContext.Database.SqlQueryRaw<EnglishLabelAndCount>(query, projectId).ToListAsync(ct);
+    }
+}
+
+public class EnglishLabelAndCount
+{
+    public required string EnglishLabel { get; set; }
+    public required int WordCount { get; set; }
 }
