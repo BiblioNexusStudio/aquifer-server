@@ -1,7 +1,6 @@
 ﻿using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,30 +23,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     private async Task<List<Response>> GetProjectsAsync(CancellationToken ct)
     {
         var self = await userService.GetUserFromJwtAsync(ct);
-        List<ResourceContentStatus> notStartedStatuses = [ResourceContentStatus.New, ResourceContentStatus.TranslationNotStarted];
-
-        List<ResourceContentStatus> inProgressStatuses =
-        [
-            ResourceContentStatus.AquiferizeInProgress, ResourceContentStatus.TranslationInProgress
-        ];
-
-        List<ResourceContentStatus> inManagerReviewStatuses =
-        [
-            ResourceContentStatus.AquiferizeManagerReview, ResourceContentStatus.TranslationManagerReview
-        ];
-
-        List<ResourceContentStatus> inPublisherReviewStatuses =
-        [
-            ResourceContentStatus.AquiferizePublisherReview,
-            ResourceContentStatus.AquiferizeReviewPending,
-            ResourceContentStatus.TranslationPublisherReview,
-            ResourceContentStatus.TranslationReviewPending
-        ];
 
         return await dbContext.Projects
             .Where(x =>
-                (x.ActualPublishDate == null || x.ActualPublishDate.Value > DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-30))
-                && (userService.HasPermission(PermissionName.ReadProject) ||
+                (x.ActualPublishDate == null || x.ActualPublishDate.Value > DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-30)) &&
+                (userService.HasPermission(PermissionName.ReadProject) ||
                     (userService.HasPermission(PermissionName.ReadProjectsInCompany) && self.CompanyId == x.CompanyId))).Select(x =>
                 new Response
                 {
@@ -66,14 +46,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                         x.ProjectedDeliveryDate.HasValue
                             ? x.ProjectedDeliveryDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber
                             : null,
-                    Counts = new ProjectResourceStatusCounts
-                    {
-                        NotStarted = x.ResourceContents.Count(rc => notStartedStatuses.Contains(rc.Status)),
-                        InProgress = x.ResourceContents.Count(rc => inProgressStatuses.Contains(rc.Status)),
-                        InManagerReview = x.ResourceContents.Count(rc => inManagerReviewStatuses.Contains(rc.Status)),
-                        InPublisherReview = x.ResourceContents.Count(rc => inPublisherReviewStatuses.Contains(rc.Status)),
-                        Completed = x.ResourceContents.Count(rc => rc.Status == ResourceContentStatus.Complete)
-                    }
+                    Counts = new ProjectResourceStatusCounts(x.ResourceContents)
                 }).ToListAsync(ct);
     }
 }
