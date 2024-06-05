@@ -252,7 +252,7 @@ resharper_max_formal_parameters_on_line = 6
 resharper_csharp_max_formal_parameters_on_line = 6
 resharper_csharp_continuous_indent_multiplier = 1
 resharper_csharp_max_invocation_arguments_on_line = 6
-resharper_csharp_wrap_list_pattern = chop_if_long
+resharper_csharp_wrap_list_pattern = chop_always
 
 [src/Aquifer.Data/Migrations/*.cs]
 generated_code = true

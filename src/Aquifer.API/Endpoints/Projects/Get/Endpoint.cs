@@ -3,7 +3,6 @@ using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
 using Aquifer.Common.Extensions;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,26 +43,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     private async Task<Response?> GetProjectAsync(Request req, CancellationToken ct)
     {
-        List<ResourceContentStatus> notStartedStatuses = [ResourceContentStatus.New, ResourceContentStatus.TranslationNotStarted];
-
-        List<ResourceContentStatus> inProgressStatuses =
-        [
-            ResourceContentStatus.AquiferizeInProgress, ResourceContentStatus.TranslationInProgress
-        ];
-
-        List<ResourceContentStatus> inManagerReviewStatuses =
-        [
-            ResourceContentStatus.AquiferizeManagerReview, ResourceContentStatus.TranslationManagerReview
-        ];
-
-        List<ResourceContentStatus> inPublisherReviewStatuses =
-        [
-            ResourceContentStatus.AquiferizePublisherReview,
-            ResourceContentStatus.AquiferizeReviewPending,
-            ResourceContentStatus.TranslationPublisherReview,
-            ResourceContentStatus.TranslationReviewPending
-        ];
-
         return await dbContext.Projects
             .Where(x => x.Id == req.ProjectId).Include(x => x.CompanyLeadUser).Select(x => new Response
             {
@@ -94,14 +73,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                         AssignedUserName = rcv.AssignedUser == null ? null : $"{rcv.AssignedUser.FirstName} {rcv.AssignedUser.LastName}",
                         SortOrder = rc.Resource.SortOrder
                     })),
-                Counts = new ProjectResourceStatusCounts
-                {
-                    NotStarted = x.ResourceContents.Count(rc => notStartedStatuses.Contains(rc.Status)),
-                    InProgress = x.ResourceContents.Count(rc => inProgressStatuses.Contains(rc.Status)),
-                    InManagerReview = x.ResourceContents.Count(rc => inManagerReviewStatuses.Contains(rc.Status)),
-                    InPublisherReview = x.ResourceContents.Count(rc => inPublisherReviewStatuses.Contains(rc.Status)),
-                    Completed = x.ResourceContents.Count(rc => rc.Status == ResourceContentStatus.Complete)
-                }
+                Counts = new ProjectResourceStatusCounts(x.ResourceContents)
             }).SingleOrDefaultAsync(ct);
     }
 
