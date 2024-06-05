@@ -60,8 +60,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             }
 
             var inReviewStatus = Constants.TranslationStatuses.Contains(draftVersion.ResourceContent.Status)
-                ? ResourceContentStatus.TranslationInReview
-                : ResourceContentStatus.AquiferizeInReview;
+                ? ResourceContentStatus.TranslationPublisherReview
+                : ResourceContentStatus.AquiferizePublisherReview;
 
             if (draftVersion.ResourceContent.Status == inReviewStatus && draftVersion.AssignedUserId != user.Id)
             {

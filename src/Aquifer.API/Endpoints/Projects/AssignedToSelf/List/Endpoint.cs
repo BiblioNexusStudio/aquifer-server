@@ -31,9 +31,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         List<ResourceContentStatus> inReviewStatuses =
         [
-            ResourceContentStatus.AquiferizeInReview,
+            ResourceContentStatus.AquiferizePublisherReview,
             ResourceContentStatus.AquiferizeReviewPending,
-            ResourceContentStatus.TranslationInReview,
+            ResourceContentStatus.TranslationPublisherReview,
             ResourceContentStatus.TranslationReviewPending
         ];
         var user = await userService.GetUserFromJwtAsync(ct);

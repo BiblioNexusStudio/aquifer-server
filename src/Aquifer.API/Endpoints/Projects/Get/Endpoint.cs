@@ -58,9 +58,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         List<ResourceContentStatus> inPublisherReviewStatuses =
         [
-            ResourceContentStatus.AquiferizeInReview,
+            ResourceContentStatus.AquiferizePublisherReview,
             ResourceContentStatus.AquiferizeReviewPending,
-            ResourceContentStatus.TranslationInReview,
+            ResourceContentStatus.TranslationPublisherReview,
             ResourceContentStatus.TranslationReviewPending
         ];
 
