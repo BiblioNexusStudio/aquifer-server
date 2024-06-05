@@ -48,16 +48,20 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
                 ? ResourceContentStatus.AquiferizePublisherReview
                 : ResourceContentStatus.TranslationPublisherReview;
 
+            if (request.AssignedUserId != draftVersion.AssignedUserId)
+            {
+                await historyService.AddSnapshotHistoryAsync(draftVersion,
+                    draftVersion.AssignedUserId ?? user.Id,
+                    draftVersion.ResourceContent.Status,
+                    ct);
+                await historyService.AddAssignedUserHistoryAsync(draftVersion, request.AssignedUserId, user.Id, ct);
+                draftVersion.AssignedUserId = request.AssignedUserId;
+            }
+
             if (newStatus != draftVersion.ResourceContent.Status)
             {
                 await historyService.AddStatusHistoryAsync(draftVersion, newStatus, user.Id, ct);
                 draftVersion.ResourceContent.Status = newStatus;
-            }
-
-            if (request.AssignedUserId != draftVersion.AssignedUserId)
-            {
-                await historyService.AddAssignedUserHistoryAsync(draftVersion, request.AssignedUserId, user.Id, ct);
-                draftVersion.AssignedUserId = request.AssignedUserId;
             }
         }
 

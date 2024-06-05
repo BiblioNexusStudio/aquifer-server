@@ -56,6 +56,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 ? ResourceContentStatus.TranslationReviewPending
                 : ResourceContentStatus.AquiferizeReviewPending;
 
+            await historyService.AddSnapshotHistoryAsync(draftVersion,
+                draftVersion.AssignedUserId ?? user.Id,
+                draftVersion.ResourceContent.Status,
+                ct);
             await historyService.AddAssignedUserHistoryAsync(draftVersion, null, user.Id, ct);
 
             // Remove inline comments or anything else that needs to be sanitized at this point.

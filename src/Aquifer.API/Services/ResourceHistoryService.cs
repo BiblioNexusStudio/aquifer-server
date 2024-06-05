@@ -17,6 +17,8 @@ public interface IResourceHistoryService
         CancellationToken ct);
 
     Task AddSnapshotHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
+        int oldUserId,
+        ResourceContentStatus oldStatus,
         CancellationToken ct);
 }
 
@@ -43,8 +45,6 @@ public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHist
         int changedByUserId,
         CancellationToken ct)
     {
-        await AddSnapshotHistoryAsync(contentVersionEntity, ct);
-
         var resourceContentVersionAssignedUserHistory = new ResourceContentVersionAssignedUserHistoryEntity
         {
             ResourceContentVersion = contentVersionEntity,
@@ -57,6 +57,8 @@ public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHist
     }
 
     public async Task AddSnapshotHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
+        int oldUserId,
+        ResourceContentStatus oldStatus,
         CancellationToken ct)
     {
         var isNew = contentVersionEntity.Id == 0;
@@ -77,8 +79,8 @@ public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHist
                 Content = contentVersionEntity.Content,
                 DisplayName = contentVersionEntity.DisplayName,
                 WordCount = contentVersionEntity.WordCount,
-                UserId = contentVersionEntity.AssignedUserId,
-                Status = isNew ? ResourceContentStatus.New : contentVersionEntity.ResourceContent.Status,
+                UserId = oldUserId,
+                Status = oldStatus,
                 Created = DateTime.UtcNow
             };
 

@@ -67,7 +67,7 @@ public static class Helpers
         }
         else
         {
-            await historyService.AddSnapshotHistoryAsync(newResourceContentVersion, ct);
+            await historyService.AddSnapshotHistoryAsync(newResourceContentVersion, user.Id, ResourceContentStatus.New, ct);
         }
 
         var resourceContent =
@@ -82,6 +82,7 @@ public static class Helpers
 
         await historyService.AddStatusHistoryAsync(newResourceContentVersion,
             ResourceContentStatus.AquiferizeInProgress,
-            user.Id, ct);
+            user.Id,
+            ct);
     }
 }

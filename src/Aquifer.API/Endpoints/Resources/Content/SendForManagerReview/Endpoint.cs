@@ -43,6 +43,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 ThrowError("User must be assigned to content to send for manager review.");
             }
 
+            await historyService.AddSnapshotHistoryAsync(draftVersion,
+                draftVersion.AssignedUserId ?? user.Id,
+                draftVersion.ResourceContent.Status,
+                ct);
+
             var reviewPendingStatus = draftVersion.ResourceContent.Status == ResourceContentStatus.TranslationInProgress
                 ? ResourceContentStatus.TranslationManagerReview
                 : ResourceContentStatus.AquiferizeManagerReview;
