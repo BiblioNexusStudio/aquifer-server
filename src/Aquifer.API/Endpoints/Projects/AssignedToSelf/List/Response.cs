@@ -12,10 +12,3 @@ public class Response
 
     public required ProjectResourceStatusCounts Counts { get; set; }
 }
-
-public class ProjectResourceStatusCounts
-{
-    public int InProgress { get; set; }
-    public int InReview { get; set; }
-    public int Completed { get; set; }
-}
