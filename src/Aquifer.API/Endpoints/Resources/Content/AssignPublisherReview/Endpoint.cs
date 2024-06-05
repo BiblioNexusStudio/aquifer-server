@@ -30,9 +30,9 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
             .Where(x => contentIds.Contains(x.ResourceContentId) &&
                 x.IsDraft &&
                 (x.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
-                    x.ResourceContent.Status == ResourceContentStatus.AquiferizeInReview ||
+                    x.ResourceContent.Status == ResourceContentStatus.AquiferizePublisherReview ||
                     x.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending ||
-                    x.ResourceContent.Status == ResourceContentStatus.TranslationInReview))
+                    x.ResourceContent.Status == ResourceContentStatus.TranslationPublisherReview))
             .Include(x => x.ResourceContent)
             .ThenInclude(x => x.Language)
             .ToListAsync(ct);
@@ -45,8 +45,8 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
         foreach (var draftVersion in draftVersions)
         {
             var newStatus = draftVersion.ResourceContent.Language.ISO6393Code == "eng"
-                ? ResourceContentStatus.AquiferizeInReview
-                : ResourceContentStatus.TranslationInReview;
+                ? ResourceContentStatus.AquiferizePublisherReview
+                : ResourceContentStatus.TranslationPublisherReview;
 
             if (newStatus != draftVersion.ResourceContent.Status)
             {

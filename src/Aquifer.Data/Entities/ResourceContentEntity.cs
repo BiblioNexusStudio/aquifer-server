@@ -59,8 +59,8 @@ public enum ResourceContentStatus
     [Display(Name = "Aquiferize - Review Pending")]
     AquiferizeReviewPending = 4,
 
-    [Display(Name = "Aquiferize - In Review")]
-    AquiferizeInReview = 5,
+    [Display(Name = "Aquiferize - Publisher Review")]
+    AquiferizePublisherReview = 5,
 
     [Display(Name = "Translation - Not Started")]
     TranslationNotStarted = 6,
@@ -71,8 +71,8 @@ public enum ResourceContentStatus
     [Display(Name = "Translation - Review Pending")]
     TranslationReviewPending = 8,
 
-    [Display(Name = "Translation - In Review")]
-    TranslationInReview = 9,
+    [Display(Name = "Translation - Publisher Review")]
+    TranslationPublisherReview = 9,
 
     [Display(Name = "On Hold")]
     OnHold = 10,

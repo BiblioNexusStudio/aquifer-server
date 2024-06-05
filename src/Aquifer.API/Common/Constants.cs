@@ -20,7 +20,7 @@ public static class Constants
         new([
             ResourceContentStatus.AquiferizeInProgress,
             ResourceContentStatus.AquiferizeReviewPending,
-            ResourceContentStatus.AquiferizeInReview,
+            ResourceContentStatus.AquiferizePublisherReview,
             ResourceContentStatus.AquiferizeManagerReview
         ]);
 
@@ -29,7 +29,7 @@ public static class Constants
             ResourceContentStatus.TranslationNotStarted,
             ResourceContentStatus.TranslationInProgress,
             ResourceContentStatus.TranslationReviewPending,
-            ResourceContentStatus.TranslationInReview,
+            ResourceContentStatus.TranslationPublisherReview,
             ResourceContentStatus.TranslationManagerReview
         ]);
 }
