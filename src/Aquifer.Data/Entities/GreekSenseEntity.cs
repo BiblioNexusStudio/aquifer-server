@@ -21,5 +21,7 @@ public class GreekSenseEntity : IHasUpdatedTimestamp
 
     public GreekLemmaEntity GreekLemma { get; set; } = null!;
     public StrongNumberEntity StrongNumber { get; set; } = null!;
-    public ICollection<GreekSenseGlossEntity> GreekSenseGlosses { get; set; } = new List<GreekSenseGlossEntity>();
+    public ICollection<GreekSenseGlossEntity> GreekSenseGlosses { get; set; } = [];
+    public ICollection<GreekNewTestamentWordSenseEntity> GreekNewTestamentWords { get; set; } = new List<GreekNewTestamentWordSenseEntity>();
+
 }
