@@ -40,6 +40,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             {
                 resourceContentVersion.AssignedUserId = project.CompanyLeadUserId;
                 await resourceHistoryService.AddAssignedUserHistoryAsync(resourceContentVersion, project.CompanyLeadUserId, user.Id, ct);
+                await resourceHistoryService.AddSnapshotHistoryAsync(resourceContentVersion, user.Id, ResourceContentStatus.New, ct);
             }
         }
 

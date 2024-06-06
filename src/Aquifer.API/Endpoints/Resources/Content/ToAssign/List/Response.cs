@@ -8,7 +8,7 @@ public class Response
     public required string EnglishLabel { get; set; }
     public required string ParentResourceName { get; set; }
     public required string LanguageEnglishDisplay { get; set; }
-    public required int WordCount { get; set; }
+    public required int? WordCount { get; set; }
     public required string ProjectName { get; set; }
     public required int SortOrder { get; set; }
 

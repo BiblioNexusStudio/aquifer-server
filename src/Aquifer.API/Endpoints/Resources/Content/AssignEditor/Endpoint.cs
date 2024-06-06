@@ -39,7 +39,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         var draftVersions = await dbContext.ResourceContentVersions
             .Where(rcv => contentIds.Contains(rcv.ResourceContentId) && rcv.IsDraft).Include(rcv => rcv.ResourceContent)
-            .Include(rcv => rcv.AssignedUser)
+            .Include(rcv => rcv.AssignedUser).Include(rcv => rcv.ResourceContentVersionSnapshots)
             .ToListAsync(ct);
 
         if (draftVersions.Count != contentIds.Length)
@@ -83,14 +83,15 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 draftVersion.ResourceContent.Status = inProgressStatus;
             }
 
+            if (draftVersion.AssignedUserId != request.AssignedUserId || draftVersion.ResourceContentVersionSnapshots.Count == 0)
+            {
+                await historyService.AddSnapshotHistoryAsync(draftVersion, draftVersion.AssignedUserId, originalStatus, ct);
+            }
+
             if (draftVersion.AssignedUserId != request.AssignedUserId)
             {
                 draftVersion.AssignedUserId = request.AssignedUserId;
                 await historyService.AddAssignedUserHistoryAsync(draftVersion, request.AssignedUserId, user.Id, ct);
-            }
-            else
-            {
-                await historyService.AddSnapshotHistoryAsync(draftVersion, ct);
             }
 
             if (draftVersion.ResourceContent.Status != originalStatus)

@@ -51,6 +51,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var user = await userService.GetUserFromJwtAsync(ct);
         if (mostRecentContentVersion.AssignedUserId is not null)
         {
+            await historyService.AddSnapshotHistoryAsync(mostRecentContentVersion,
+                mostRecentContentVersion.AssignedUserId,
+                mostRecentContentVersion.ResourceContent.Status,
+                ct);
             mostRecentContentVersion.AssignedUserId = null;
             await historyService.AddAssignedUserHistoryAsync(mostRecentContentVersion, null, user.Id, ct);
         }
@@ -78,7 +82,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
             await historyService.AddStatusHistoryAsync(mostRecentContentVersion,
                 ResourceContentStatus.Complete,
-                user.Id, ct);
+                user.Id,
+                ct);
         }
 
         await dbContext.SaveChangesAsync(ct);
