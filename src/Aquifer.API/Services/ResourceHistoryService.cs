@@ -17,7 +17,7 @@ public interface IResourceHistoryService
         CancellationToken ct);
 
     Task AddSnapshotHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
-        int oldUserId,
+        int? oldUserId,
         ResourceContentStatus oldStatus,
         CancellationToken ct);
 }
@@ -57,7 +57,7 @@ public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHist
     }
 
     public async Task AddSnapshotHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
-        int oldUserId,
+        int? oldUserId,
         ResourceContentStatus oldStatus,
         CancellationToken ct)
     {

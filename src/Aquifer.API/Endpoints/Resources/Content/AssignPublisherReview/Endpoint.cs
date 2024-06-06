@@ -51,7 +51,7 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
             if (request.AssignedUserId != draftVersion.AssignedUserId)
             {
                 await historyService.AddSnapshotHistoryAsync(draftVersion,
-                    draftVersion.AssignedUserId ?? user.Id,
+                    draftVersion.AssignedUserId,
                     draftVersion.ResourceContent.Status,
                     ct);
                 await historyService.AddAssignedUserHistoryAsync(draftVersion, request.AssignedUserId, user.Id, ct);

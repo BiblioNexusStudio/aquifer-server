@@ -52,7 +52,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         if (mostRecentContentVersion.AssignedUserId is not null)
         {
             await historyService.AddSnapshotHistoryAsync(mostRecentContentVersion,
-                mostRecentContentVersion.AssignedUserId.Value,
+                mostRecentContentVersion.AssignedUserId,
                 mostRecentContentVersion.ResourceContent.Status,
                 ct);
             mostRecentContentVersion.AssignedUserId = null;
@@ -82,7 +82,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
             await historyService.AddStatusHistoryAsync(mostRecentContentVersion,
                 ResourceContentStatus.Complete,
-                user.Id, ct);
+                user.Id,
+                ct);
         }
 
         await dbContext.SaveChangesAsync(ct);
