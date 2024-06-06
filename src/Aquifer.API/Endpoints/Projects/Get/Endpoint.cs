@@ -34,7 +34,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var wordCounts = await GetWordCounts(req.ProjectId, ct);
         foreach (var item in project.Items)
         {
-            item.WordCount = wordCounts.SingleOrDefault(x => x.Id == item.ResourceContentId)?.WordCount ?? 0;
+            item.WordCount = wordCounts.SingleOrDefault(x => x.Id == item.ResourceContentId)?.WordCount;
         }
 
         project.Items = project.Items.OrderBy(x => x.SortOrder).ThenBy(x => x.EnglishLabel);
@@ -106,5 +106,5 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 public class ResourceContentWordCount
 {
     public required int Id { get; set; }
-    public required int WordCount { get; set; }
+    public required int? WordCount { get; set; }
 }

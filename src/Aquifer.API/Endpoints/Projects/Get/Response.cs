@@ -34,5 +34,5 @@ public class ProjectResourceItem
     public required string? AssignedUserName { get; set; }
     public required string StatusDisplayName { get; set; }
     public required int SortOrder { get; set; }
-    public int WordCount { get; set; }
+    public int? WordCount { get; set; }
 }
