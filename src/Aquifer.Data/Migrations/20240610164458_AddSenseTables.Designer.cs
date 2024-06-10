@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    [Migration("20240605132704_AddSenseTables")]
+    [Migration("20240610164458_AddSenseTables")]
     partial class AddSenseTables
     {
         /// <inheritdoc />
@@ -471,7 +471,9 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
 
                     b.HasKey("GreekNewTestamentWordId", "GreekSenseId");
 

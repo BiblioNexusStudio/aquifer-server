@@ -7,6 +7,8 @@ public class GreekNewTestamentWordSenseEntity
 {
     public int GreekNewTestamentWordId { get; set; }
     public int GreekSenseId { get; set; }
+
+    [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
     public GreekNewTestamentWordEntity GreekNewTestamentWord { get; set; } = null!;

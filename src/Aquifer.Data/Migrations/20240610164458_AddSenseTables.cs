@@ -51,7 +51,7 @@ namespace Aquifer.Data.Migrations
                 {
                     GreekNewTestamentWordId = table.Column<int>(type: "int", nullable: false),
                     GreekSenseId = table.Column<int>(type: "int", nullable: false),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Created = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "getutcdate()")
                 },
                 constraints: table =>
                 {

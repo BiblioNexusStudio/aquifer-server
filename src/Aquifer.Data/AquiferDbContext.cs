@@ -17,8 +17,8 @@ public class AquiferDbContext : DbContext
         // Note the issue here. I don't want to seal the class because there are situations where we want to put
         // a wrapper around it. https://www.jetbrains.com/help/resharper/VirtualMemberCallInConstructor.html
         // It's likely irrelevant anyway, because the events are additive.
-        ChangeTracker.StateChanged += OnStateChange;
-        SavedChanges += async (s, e) => await OnSavingChanges(s, e);
+        //ChangeTracker.StateChanged += OnStateChange;
+        //SavedChanges += async (s, e) => await OnSavingChanges(s, e);
     }
 
     public DbSet<BibleBookChapterEntity> BibleBookChapters { get; set; }
@@ -33,10 +33,13 @@ public class AquiferDbContext : DbContext
     public DbSet<CommentThreadEntity> CommentThreads { get; set; }
     public DbSet<CompanyEntity> Companies { get; set; }
     public DbSet<GreekLemmaEntity> GreekLemmas { get; set; }
+    public DbSet<GreekSenseEntity> GreekSenses { get; set; }
+    public DbSet<GreekSenseGlossEntity> GreekSenseGlosses { get; set; }
     public DbSet<GreekNewTestamentEntity> GreekNewTestaments { get; set; }
     public DbSet<GreekNewTestamentWordEntity> GreekNewTestamentWords { get; set; }
     public DbSet<GreekNewTestamentWordGroupEntity> GreekNewTestamentWordGroups { get; set; }
     public DbSet<GreekNewTestamentWordGroupWordEntity> GreekNewTestamentWordGroupWords { get; set; }
+    public DbSet<GreekNewTestamentWordSenseEntity> GreekNewTestamentWordSenses { get; set; }
     public DbSet<GreekWordEntity> GreekWords { get; set; }
     public DbSet<LanguageEntity> Languages { get; set; }
     public DbSet<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; }
