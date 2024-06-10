@@ -33,7 +33,7 @@ public static class SwaggerDocumentSettings
                                   a collection of associated study notes. A collection of resources is a group of individual resources belonging
                                   to the same collection. A resource type is the category to which a collection of resources can belong.
 
-                                  As an example, for the Tyndale Bible Dictionary article for "Aaronn", the resource is "Aaronn", the
+                                  As an example, for the Tyndale Bible Dictionary article for "Aaron", the resource is "Aaron", the
                                   title of the collection to which it belongs is "Bible Dictionary (Tyndale)", and the resource type
                                   is "Dictionary".
                                   """;

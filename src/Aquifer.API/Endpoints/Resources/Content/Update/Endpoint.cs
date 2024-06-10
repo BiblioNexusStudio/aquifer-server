@@ -33,8 +33,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         }
 
         var user = await userService.GetUserFromJwtAsync(ct);
+        var changesMade = ChangesMade(request, entity);
 
-        if (user.Id != entity.AssignedUserId && ChangesMade(request, entity))
+        if (user.Id != entity.AssignedUserId && changesMade)
         {
             ThrowError("Not allowed to edit this resource");
         }
@@ -53,6 +54,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         if (request.DisplayName is not null)
         {
             entity.DisplayName = request.DisplayName;
+        }
+
+        if (changesMade)
+        {
+            entity.ResourceContent.ContentUpdated = DateTime.Now;
         }
 
         await dbContext.SaveChangesAsync(ct);

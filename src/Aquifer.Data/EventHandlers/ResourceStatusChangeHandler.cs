@@ -8,7 +8,7 @@ public static class ResourceStatusChangeHandler
 {
     private static readonly List<ResourceContentStatus> InReviewOrGreaterStatuses =
     [
-        ResourceContentStatus.Complete, ResourceContentStatus.AquiferizeInReview, ResourceContentStatus.TranslationInReview
+        ResourceContentStatus.Complete, ResourceContentStatus.AquiferizePublisherReview, ResourceContentStatus.TranslationPublisherReview
     ];
 
     public static async Task HandleAsync(DbContextOptions<AquiferDbContext> dbContextOptions, IEnumerable<EntityEntry> entityEntries)
@@ -25,7 +25,7 @@ public static class ResourceStatusChangeHandler
                     case ResourceContentStatus.Complete:
                         completedContentIds.Add(x.Id);
                         break;
-                    case ResourceContentStatus.AquiferizeInReview or ResourceContentStatus.TranslationInReview:
+                    case ResourceContentStatus.AquiferizePublisherReview or ResourceContentStatus.TranslationPublisherReview:
                         inReviewContentIds.Add(x.Id);
                         break;
                     case ResourceContentStatus.TranslationInProgress:

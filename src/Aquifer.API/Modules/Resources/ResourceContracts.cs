@@ -16,7 +16,6 @@ public class ResourceItemsWithChapterNumberResponse
 public class ResourceItemResponse
 {
     public int ContentId { get; set; }
-    public string ParentResourceName { get; set; } = null!;
     public int ParentResourceId { get; set; }
     public ResourceContentMediaType MediaTypeName { get; set; }
     public int ContentSize { get; set; }
@@ -26,15 +25,4 @@ public class ResourceItemTextContentResponse
 {
     public int Id { get; set; }
     public object? Content { get; set; }
-}
-
-public class ResourceItemMetadataResponse
-{
-    public string? DisplayName { get; set; }
-    public object? Metadata { get; set; }
-}
-
-public class ResourceItemMetadataWithIdResponse : ResourceItemMetadataResponse
-{
-    public int Id { get; set; }
 }

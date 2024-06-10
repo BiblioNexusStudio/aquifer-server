@@ -19,14 +19,20 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var self = await userService.GetUserFromJwtAsync(ct);
 
         var users = await dbContext.Users.Where(x =>
-            userService.HasPermission(PermissionName.ReadAllUsers) || (userService.HasPermission(PermissionName.ReadUsers) && self.CompanyId == x.CompanyId)
-            ).OrderBy(x => x.FirstName).ThenBy(x => x.LastName).Select(user => new Response
+                userService.HasPermission(PermissionName.ReadAllUsers) ||
+                (userService.HasPermission(PermissionName.ReadUsers) && self.CompanyId == x.CompanyId && x.Enabled))
+            .OrderBy(x => x.FirstName)
+            .ThenBy(x => x.LastName).Select(user => new Response
             {
                 Id = user.Id,
                 Name = $"{user.FirstName} {user.LastName}",
                 Role = user.Role,
                 CompanyName = user.Company.Name,
-                Company = new CompanyResponse { Id = user.CompanyId, Name = user.Company.Name },
+                Company = new CompanyResponse
+                {
+                    Id = user.CompanyId,
+                    Name = user.Company.Name
+                },
                 Email = user.Email,
                 IsEmailVerified = user.EmailVerified
             }).ToListAsync(ct);

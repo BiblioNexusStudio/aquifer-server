@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Aquifer.Data.EventHandlers;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,6 +27,8 @@ public class ResourceContentEntity : IHasUpdatedTimestamp
     public ICollection<ProjectEntity> Projects { get; set; } = new List<ProjectEntity>();
     public int Id { get; set; }
     public ResourceContentStatus Status { get; set; }
+
+    public DateTime? ContentUpdated { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
@@ -57,8 +59,8 @@ public enum ResourceContentStatus
     [Display(Name = "Aquiferize - Review Pending")]
     AquiferizeReviewPending = 4,
 
-    [Display(Name = "Aquiferize - In Review")]
-    AquiferizeInReview = 5,
+    [Display(Name = "Aquiferize - Publisher Review")]
+    AquiferizePublisherReview = 5,
 
     [Display(Name = "Translation - Not Started")]
     TranslationNotStarted = 6,
@@ -69,9 +71,15 @@ public enum ResourceContentStatus
     [Display(Name = "Translation - Review Pending")]
     TranslationReviewPending = 8,
 
-    [Display(Name = "Translation - In Review")]
-    TranslationInReview = 9,
+    [Display(Name = "Translation - Publisher Review")]
+    TranslationPublisherReview = 9,
 
     [Display(Name = "On Hold")]
-    OnHold = 10
+    OnHold = 10,
+
+    [Display(Name = "Aquiferize - Manager Review")]
+    AquiferizeManagerReview = 11,
+
+    [Display(Name = "Translation - Manager Review")]
+    TranslationManagerReview = 12
 }

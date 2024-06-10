@@ -1,4 +1,4 @@
-namespace Aquifer.API.Endpoints.Resources.Content.AssignReview;
+namespace Aquifer.API.Endpoints.Resources.Content.AssignPublisherReview;
 
 public record Request
 {

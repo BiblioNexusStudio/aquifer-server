@@ -9,6 +9,8 @@ namespace Aquifer.API.Services;
 public interface IUserService
 {
     Task<UserEntity> GetUserFromJwtAsync(CancellationToken cancellationToken);
+    Task<UserEntity> GetUserWithCompanyUsersFromJwtAsync(CancellationToken cancellationToken);
+    Task<UserEntity> GetUserWithCompanyFromJwtAsync(CancellationToken cancellationToken);
     List<string> GetAllJwtPermissions();
     List<string> GetAllJwtRoles();
     bool HasPermission(string permission);
@@ -17,10 +19,17 @@ public interface IUserService
 
 public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpContextAccessor) : IUserService
 {
+    private string ProviderId => httpContextAccessor.HttpContext!.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+
     public async Task<UserEntity> GetUserFromJwtAsync(CancellationToken cancellationToken)
     {
-        var providerId = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
-        return await dbContext.Users.SingleAsync(u => u.ProviderId == providerId, cancellationToken);
+        return await dbContext.Users.SingleAsync(u => u.ProviderId == ProviderId && u.Enabled, cancellationToken);
+    }
+
+    public async Task<UserEntity> GetUserWithCompanyUsersFromJwtAsync(CancellationToken cancellationToken)
+    {
+        return await dbContext.Users.Include(x => x.Company).ThenInclude(x => x.Users)
+            .SingleAsync(u => u.ProviderId == ProviderId && u.Enabled, cancellationToken);
     }
 
     public List<string> GetAllJwtRoles()
@@ -38,12 +47,18 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
     public bool HasPermission(string permission)
     {
         return httpContextAccessor.HttpContext?.User.HasClaim(c =>
-                   c.Type == Constants.PermissionsClaim && c.Value == permission) ??
-               false;
+                c.Type == Constants.PermissionsClaim && c.Value == permission) ??
+            false;
     }
 
     public async Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken)
     {
-        return userId is null || await dbContext.Users.FindAsync([userId], cancellationToken) is not null;
+        return userId is null ||
+            await dbContext.Users.SingleOrDefaultAsync(u => u.Id == userId && u.Enabled, cancellationToken) is not null;
+    }
+
+    public async Task<UserEntity> GetUserWithCompanyFromJwtAsync(CancellationToken cancellationToken)
+    {
+        return await dbContext.Users.Include(x => x.Company).SingleAsync(u => u.ProviderId == ProviderId && u.Enabled, cancellationToken);
     }
 }

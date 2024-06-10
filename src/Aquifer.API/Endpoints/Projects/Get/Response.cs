@@ -26,14 +26,6 @@ public class Response
     public ProjectResourceStatusCounts Counts { get; set; } = null!;
 }
 
-public class ProjectResourceStatusCounts
-{
-    public required int NotStarted { get; set; }
-    public required int InProgress { get; set; }
-    public required int InReview { get; set; }
-    public required int Completed { get; set; }
-}
-
 public class ProjectResourceItem
 {
     public required int ResourceContentId { get; set; }
@@ -41,4 +33,6 @@ public class ProjectResourceItem
     public required string ParentResourceName { get; set; }
     public required string? AssignedUserName { get; set; }
     public required string StatusDisplayName { get; set; }
+    public required int SortOrder { get; set; }
+    public int? WordCount { get; set; }
 }
