@@ -1,4 +1,6 @@
 using Aquifer.API.Services;
+using Aquifer.Common.Tiptap;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -9,26 +11,20 @@ public static class Helpers
 {
     public const string InvalidUserIdResponse = "The AssignedUserId was not valid.";
 
-    public const string NoResourceFoundForContentIdResponse =
-        "There is no ResourceContentVersion with the given contentId.";
+    public const string NoResourceFoundForContentIdResponse = "There is no ResourceContentVersion with the given contentId.";
 
     public const string DraftAlreadyExistsResponse = "This resource is already being aquiferized.";
     public const string NoDraftExistsResponse = "No draft currently exists for this resource.";
     public const string NotInReviewPendingResponse = "This resource is not in review pending status";
 
     public static async
-        Task<(ResourceContentVersionEntity? latestVersion, ResourceContentVersionEntity? publishedVersion,
-            ResourceContentVersionEntity? draftVersion)> GetResourceContentVersions(
-            int contentId,
-            AquiferDbContext dbContext,
-            CancellationToken cancellationToken)
+        Task<(ResourceContentVersionEntity? latestVersion, ResourceContentVersionEntity? publishedVersion, ResourceContentVersionEntity?
+            draftVersion)> GetResourceContentVersions(int contentId, AquiferDbContext dbContext, CancellationToken cancellationToken)
     {
-        var resourceContentVersions = await dbContext.ResourceContentVersions
-            .Where(x => x.ResourceContentId == contentId).Include(x => x.ResourceContent).ToListAsync(cancellationToken);
+        var resourceContentVersions = await dbContext.ResourceContentVersions.Where(x => x.ResourceContentId == contentId)
+            .Include(x => x.ResourceContent).ToListAsync(cancellationToken);
 
-        return (
-            resourceContentVersions.MaxBy(x => x.Version),
-            resourceContentVersions.SingleOrDefault(x => x.IsPublished),
+        return (resourceContentVersions.MaxBy(x => x.Version), resourceContentVersions.SingleOrDefault(x => x.IsPublished),
             resourceContentVersions.SingleOrDefault(x => x.IsDraft));
     }
 
@@ -70,9 +66,7 @@ public static class Helpers
             await historyService.AddSnapshotHistoryAsync(newResourceContentVersion, user.Id, ResourceContentStatus.New, ct);
         }
 
-        var resourceContent =
-            await dbContext.ResourceContents.FindAsync([contentId], ct) ??
-            throw new ArgumentNullException();
+        var resourceContent = await dbContext.ResourceContents.FindAsync([contentId], ct) ?? throw new ArgumentNullException();
 
         resourceContent.Status = ResourceContentStatus.AquiferizeInProgress;
         if (resourceContentIsUpdating)
@@ -80,9 +74,13 @@ public static class Helpers
             resourceContent.Updated = DateTime.UtcNow;
         }
 
-        await historyService.AddStatusHistoryAsync(newResourceContentVersion,
-            ResourceContentStatus.AquiferizeInProgress,
-            user.Id,
-            ct);
+        await historyService.AddStatusHistoryAsync(newResourceContentVersion, ResourceContentStatus.AquiferizeInProgress, user.Id, ct);
+    }
+
+    public static void SanitizeTiptapContent(ResourceContentVersionEntity version)
+    {
+        // Remove inline comments or anything else that needs to be sanitized.
+        var deserializedContent = JsonUtilities.DefaultDeserialize<List<TiptapModel<TiptapRootContentFiltered>>>(version.Content);
+        version.Content = JsonUtilities.DefaultSerialize(deserializedContent);
     }
 }

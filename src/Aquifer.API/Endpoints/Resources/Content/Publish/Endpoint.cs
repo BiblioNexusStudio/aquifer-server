@@ -23,9 +23,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
 
         var (mostRecentContentVersion, currentlyPublishedVersion, currentDraftVersion) =
-            await Helpers.GetResourceContentVersions(request.ContentId,
-                dbContext,
-                ct);
+            await Helpers.GetResourceContentVersions(request.ContentId, dbContext, ct);
 
         if (mostRecentContentVersion is null)
         {
@@ -38,15 +36,14 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
 
         // If there is currently a published version, then unpublish so this new one can become published
-        if (currentlyPublishedVersion is not null &&
-            currentlyPublishedVersion.Id != mostRecentContentVersion.Id)
+        if (currentlyPublishedVersion is not null && currentlyPublishedVersion.Id != mostRecentContentVersion.Id)
         {
             currentlyPublishedVersion.IsPublished = false;
         }
 
         mostRecentContentVersion.IsDraft = false;
         mostRecentContentVersion.IsPublished = true;
-        mostRecentContentVersion.Updated = DateTime.UtcNow;
+        Helpers.SanitizeTiptapContent(mostRecentContentVersion);
 
         var user = await userService.GetUserFromJwtAsync(ct);
         if (mostRecentContentVersion.AssignedUserId is not null)
@@ -74,16 +71,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
         else
         {
-            var resourceContent =
-                await dbContext.ResourceContents.FirstOrDefaultAsync(x => x.Id == request.ContentId, ct) ??
+            var resourceContent = await dbContext.ResourceContents.FirstOrDefaultAsync(x => x.Id == request.ContentId, ct) ??
                 throw new ArgumentNullException();
             resourceContent.Status = ResourceContentStatus.Complete;
-            resourceContent.Updated = DateTime.UtcNow;
 
-            await historyService.AddStatusHistoryAsync(mostRecentContentVersion,
-                ResourceContentStatus.Complete,
-                user.Id,
-                ct);
+            await historyService.AddStatusHistoryAsync(mostRecentContentVersion, ResourceContentStatus.Complete, user.Id, ct);
         }
 
         await dbContext.SaveChangesAsync(ct);
