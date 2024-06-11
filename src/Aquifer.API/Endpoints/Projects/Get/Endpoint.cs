@@ -89,13 +89,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                              SELECT
                                  RC.Id, Snapshots.WordCount
                              FROM ResourceContents RC
-                                 INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
-                                 CROSS APPLY (
-                                     SELECT TOP 1 WordCount
-                                     FROM ResourceContentVersionSnapshots
-                                     WHERE ResourceContentVersionId = RCV.Id
-                                     ORDER BY Created ASC
-                                 ) Snapshots
+                                      CROSS APPLY (
+                                 SELECT TOP 1 RCV.WordCount
+                                 FROM ResourceContentVersionSnapshots SNAP
+                                          INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
+                                 WHERE ResourceContentVersionId = RCV.Id
+                                 ORDER BY SNAP.Created ASC
+                             ) Snapshots
                              WHERE RC.Id IN (SELECT ResourceContentId FROM ProjectResourceContents WHERE ProjectId = {0})
                              """;
 
