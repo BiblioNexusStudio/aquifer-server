@@ -1,7 +1,5 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
-using Aquifer.Common.Tiptap;
-using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -11,26 +9,17 @@ namespace Aquifer.API.Endpoints.Resources.Content.SendForPublisherReview;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService) : Endpoint<Request>
 {
-    // TODO: Remove admin and send-for-review endpoints after prod deploy
     public override void Configure()
     {
-        Post("/admin/resources/content/{ContentId}/send-review",
-            "/admin/resources/content/{ContentId}/send-translation-review",
-            "/resources/content/{ContentId}/send-for-review",
-            "/resources/content/send-for-review",
-            "/resources/content/{ContentId}/send-for-publisher-review",
-            "/resources/content/send-for-publisher-review");
+        Post("/resources/content/{ContentId}/send-for-publisher-review", "/resources/content/send-for-publisher-review");
         Permissions(PermissionName.SendReviewContent);
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var contentIds = request.ContentId is not null ? [request.ContentId.Value] : request.ContentIds!;
-        // TODO: Remove InProgressStatuses after prod deploy
         List<ResourceContentStatus> allowedStatuses =
         [
-            ResourceContentStatus.AquiferizeInProgress,
-            ResourceContentStatus.TranslationInProgress,
             ResourceContentStatus.AquiferizeManagerReview,
             ResourceContentStatus.TranslationManagerReview
         ];
@@ -62,10 +51,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 ct);
             await historyService.AddAssignedUserHistoryAsync(draftVersion, null, user.Id, ct);
 
-            // Remove inline comments or anything else that needs to be sanitized at this point.
-            var deserializedContent = JsonUtilities.DefaultDeserialize<List<TiptapModel<TiptapRootContentFiltered>>>(draftVersion.Content);
-
-            draftVersion.Content = JsonUtilities.DefaultSerialize(deserializedContent);
+            Helpers.SanitizeTiptapContent(draftVersion);
             draftVersion.ResourceContent.Status = reviewPendingStatus;
             draftVersion.AssignedUserId = null;
 

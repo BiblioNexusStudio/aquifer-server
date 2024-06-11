@@ -17,8 +17,8 @@ public class AquiferDbContext : DbContext
         // Note the issue here. I don't want to seal the class because there are situations where we want to put
         // a wrapper around it. https://www.jetbrains.com/help/resharper/VirtualMemberCallInConstructor.html
         // It's likely irrelevant anyway, because the events are additive.
-        //ChangeTracker.StateChanged += OnStateChange;
-        //SavedChanges += async (s, e) => await OnSavingChanges(s, e);
+        ChangeTracker.StateChanged += OnStateChange;
+        SavedChanges += async (s, e) => await OnSavingChanges(s, e);
     }
 
     public DbSet<BibleBookChapterEntity> BibleBookChapters { get; set; }
