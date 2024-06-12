@@ -21,7 +21,10 @@ public class GreekNewTestamentWordEntity : IHasUpdatedTimestamp
 
     public GreekWordEntity GreekWord { get; set; } = null!;
     public GreekNewTestamentEntity GreekNewTestament { get; set; } = null!;
-    public ICollection<GreekNewTestamentWordGroupWordEntity> GreekNewTestamentWordGroupWords { get; set; } = new List<GreekNewTestamentWordGroupWordEntity>();
-    public ICollection<GreekNewTestamentWordSenseEntity> GreekSenses { get; set; } = new List<GreekNewTestamentWordSenseEntity>();
-}
 
+    public ICollection<GreekNewTestamentWordGroupWordEntity> GreekNewTestamentWordGroupWords { get; set; } =
+        new List<GreekNewTestamentWordGroupWordEntity>();
+
+    public ICollection<GreekNewTestamentWordSenseEntity> GreekNewTestamentWordSenses { get; set; } =
+        new List<GreekNewTestamentWordSenseEntity>();
+}

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    [Migration("20240610164458_AddSenseTables")]
-    partial class AddSenseTables
+    [Migration("20240612142315_AddGreekSenseTables")]
+    partial class AddGreekSenseTables
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -212,6 +212,10 @@ namespace Aquifer.Data.Migrations
 
                     b.Property<bool>("IsPunctuation")
                         .HasColumnType("bit");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("Updated")
                         .ValueGeneratedOnAdd()
@@ -657,6 +661,10 @@ namespace Aquifer.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("ComplexityLevel")
                         .HasColumnType("int");
 
@@ -668,6 +676,9 @@ namespace Aquifer.Data.Migrations
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("bit");
 
                     b.Property<string>("LicenseInfo")
                         .HasColumnType("nvarchar(max)");
@@ -855,6 +866,9 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ContentUpdated")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
@@ -1156,6 +1170,11 @@ namespace Aquifer.Data.Migrations
                     b.Property<int>("ParentResourceId")
                         .HasColumnType("int");
 
+                    b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTime>("Updated")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -1219,6 +1238,11 @@ namespace Aquifer.Data.Migrations
 
                     b.Property<bool>("EmailVerified")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("Enabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -1455,15 +1479,15 @@ namespace Aquifer.Data.Migrations
             modelBuilder.Entity("Aquifer.Data.Entities.GreekNewTestamentWordSenseEntity", b =>
                 {
                     b.HasOne("Aquifer.Data.Entities.GreekNewTestamentWordEntity", "GreekNewTestamentWord")
-                        .WithMany("GreekSenses")
+                        .WithMany("GreekNewTestamentWordSenses")
                         .HasForeignKey("GreekNewTestamentWordId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("Aquifer.Data.Entities.GreekSenseEntity", "GreekSense")
-                        .WithMany("GreekNewTestamentWords")
+                        .WithMany("GreekNewTestamentWordSenses")
                         .HasForeignKey("GreekSenseId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("GreekNewTestamentWord");
@@ -1779,7 +1803,7 @@ namespace Aquifer.Data.Migrations
             modelBuilder.Entity("Aquifer.Data.Entities.UserEntity", b =>
                 {
                     b.HasOne("Aquifer.Data.Entities.CompanyEntity", "Company")
-                        .WithMany()
+                        .WithMany("Users")
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1872,6 +1896,11 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("Comments");
                 });
 
+            modelBuilder.Entity("Aquifer.Data.Entities.CompanyEntity", b =>
+                {
+                    b.Navigation("Users");
+                });
+
             modelBuilder.Entity("Aquifer.Data.Entities.GreekLemmaEntity", b =>
                 {
                     b.Navigation("GreekWords");
@@ -1886,7 +1915,7 @@ namespace Aquifer.Data.Migrations
                 {
                     b.Navigation("GreekNewTestamentWordGroupWords");
 
-                    b.Navigation("GreekSenses");
+                    b.Navigation("GreekNewTestamentWordSenses");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekNewTestamentWordGroupEntity", b =>
@@ -1898,7 +1927,7 @@ namespace Aquifer.Data.Migrations
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekSenseEntity", b =>
                 {
-                    b.Navigation("GreekNewTestamentWords");
+                    b.Navigation("GreekNewTestamentWordSenses");
 
                     b.Navigation("GreekSenseGlosses");
                 });

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Aquifer.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddSenseTables : Migration
+    public partial class AddGreekSenseTables : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -60,14 +60,12 @@ namespace Aquifer.Data.Migrations
                         name: "FK_GreekNewTestamentWordSenses_GreekNewTestamentWords_GreekNewTestamentWordId",
                         column: x => x.GreekNewTestamentWordId,
                         principalTable: "GreekNewTestamentWords",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_GreekNewTestamentWordSenses_GreekSenses_GreekSenseId",
                         column: x => x.GreekSenseId,
                         principalTable: "GreekSenses",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(

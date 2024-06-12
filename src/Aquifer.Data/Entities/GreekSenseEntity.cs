@@ -1,6 +1,7 @@
 ﻿using Aquifer.Data.EventHandlers;
 
 namespace Aquifer.Data.Entities;
+
 public class GreekSenseEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
@@ -22,6 +23,7 @@ public class GreekSenseEntity : IHasUpdatedTimestamp
     public GreekLemmaEntity GreekLemma { get; set; } = null!;
     public StrongNumberEntity StrongNumber { get; set; } = null!;
     public ICollection<GreekSenseGlossEntity> GreekSenseGlosses { get; set; } = [];
-    public ICollection<GreekNewTestamentWordSenseEntity> GreekNewTestamentWords { get; set; } = new List<GreekNewTestamentWordSenseEntity>();
 
+    public ICollection<GreekNewTestamentWordSenseEntity> GreekNewTestamentWordSenses { get; set; } =
+        new List<GreekNewTestamentWordSenseEntity>();
 }
