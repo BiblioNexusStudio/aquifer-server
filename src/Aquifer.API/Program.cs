@@ -5,9 +5,11 @@ using Aquifer.API.Configuration;
 using Aquifer.API.Middleware;
 using Aquifer.API.Modules;
 using Aquifer.API.Services;
+using Aquifer.API.Telemetry;
 using Aquifer.Common.Services;
 using Aquifer.Data;
 using FastEndpoints;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
@@ -15,14 +17,13 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration.Get<ConfigurationOptions>();
 
-builder.Services
-    .AddAuth(configuration?.JwtSettings)
+builder.Services.AddAuth(configuration?.JwtSettings)
     .AddCors()
     .AddOutputCache()
     .AddApplicationInsightsTelemetry()
+    .AddSingleton<ITelemetryInitializer, RequestTelemetryInitializer>()
     .AddDbContext<AquiferDbContext>(options =>
-        options.UseSqlServer(configuration?.ConnectionStrings.BiblioNexusDb,
-            providerOptions => providerOptions.EnableRetryOnFailure(3)))
+        options.UseSqlServer(configuration?.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3)))
     .RegisterModules()
     .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))
     .AddHttpLogging(logging =>
