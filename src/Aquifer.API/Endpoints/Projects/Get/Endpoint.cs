@@ -70,7 +70,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                         EnglishLabel = rc.Resource.EnglishLabel,
                         ParentResourceName = rc.Resource.ParentResource.DisplayName,
                         StatusDisplayName = rc.Status.GetDisplayName(),
-                        AssignedUserName = rcv.AssignedUser == null ? null : $"{rcv.AssignedUser.FirstName} {rcv.AssignedUser.LastName}",
+                        AssignedUserName =
+                            rcv.AssignedUser == null ? null : $"{rcv.AssignedUser.FirstName} {rcv.AssignedUser.LastName}",
                         SortOrder = rc.Resource.SortOrder
                     })),
                 Counts = new ProjectResourceStatusCounts(x.ResourceContents)
@@ -90,7 +91,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                                  RC.Id, Snapshots.WordCount
                              FROM ResourceContents RC
                                       CROSS APPLY (
-                                 SELECT TOP 1 RCV.WordCount
+                                 SELECT TOP 1 SNAP.WordCount
                                  FROM ResourceContentVersionSnapshots SNAP
                                           INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
                                  WHERE ResourceContentVersionId = RCV.Id
