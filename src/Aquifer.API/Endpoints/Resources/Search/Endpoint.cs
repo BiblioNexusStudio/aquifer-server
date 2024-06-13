@@ -24,6 +24,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                     DisplayName = rcv.DisplayName,
                     MediaType = rcv.ResourceContent.MediaType.ToString(),
                     ParentResourceId = rcv.ResourceContent.Resource.ParentResourceId,
+                    Version = rcv.Version,
                     ResourceType = rcv.ResourceContent.Resource.ParentResource.ResourceType.ToString()
                 })
             .OrderBy(r => r.DisplayName)
