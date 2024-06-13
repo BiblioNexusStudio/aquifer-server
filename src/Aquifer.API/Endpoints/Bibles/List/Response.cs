@@ -9,6 +9,7 @@ public record Response
     public required string Name { get; set; }
     public required string Abbreviation { get; set; }
     public required int LanguageId { get; set; }
+    public required bool IsLanguageDefault { get; set; }
 
     public object? LicenseInfo =>
         SerializedLicenseInfo == null ? null : JsonUtilities.DefaultDeserialize(SerializedLicenseInfo);

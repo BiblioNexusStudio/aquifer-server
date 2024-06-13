@@ -53,6 +53,7 @@ public class Response
 
 public class LanguageResponse
 {
+    public required int Id { get; set; }
     public required string EnglishDisplay { get; set; }
 
     [JsonPropertyName("iso6393Code")]

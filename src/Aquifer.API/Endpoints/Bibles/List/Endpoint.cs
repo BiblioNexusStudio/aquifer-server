@@ -20,7 +20,8 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
             Abbreviation = bible.Abbreviation,
             Id = bible.Id,
             SerializedLicenseInfo = bible.LicenseInfo,
-            LanguageId = bible.LanguageId
+            LanguageId = bible.LanguageId,
+            IsLanguageDefault = true
         }).ToListAsync(ct);
 
         await SendOkAsync(bibles, ct);
