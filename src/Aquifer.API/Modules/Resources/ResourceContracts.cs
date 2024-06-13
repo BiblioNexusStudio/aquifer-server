@@ -17,6 +17,7 @@ public class ResourceItemResponse
 {
     public int ContentId { get; set; }
     public int ParentResourceId { get; set; }
+    public int Version { get; set; }
     public ResourceContentMediaType MediaTypeName { get; set; }
     public int ContentSize { get; set; }
 }

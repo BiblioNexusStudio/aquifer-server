@@ -1,6 +1,7 @@
 ﻿using Aquifer.API.Common;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -51,16 +52,17 @@ public static class LanguageResourcesEndpoints
                               Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
                 .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
                     .Select(rcv =>
-                        new
+                        new IntermediateResourceItem
                         {
                             StartChapter = pr.Passage.StartVerseId / 1000 % 1000,
                             EndChapter = pr.Passage.EndVerseId / 1000 % 1000,
                             ContentId = rc.Id,
-                            rcv.ContentSize,
-                            rc.MediaType,
-                            rc.LanguageId,
-                            pr.ResourceId,
-                            pr.Resource.ParentResource
+                            Version = rcv.Version,
+                            ContentSize = rcv.ContentSize,
+                            MediaType = rc.MediaType,
+                            LanguageId = rc.LanguageId,
+                            ResourceId = pr.ResourceId,
+                            ParentResource = pr.Resource.ParentResource
                         })))
             .ToListAsync(cancellationToken);
 
@@ -75,16 +77,17 @@ public static class LanguageResourcesEndpoints
                               Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
                 .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
                     .Select(rcv =>
-                        new
+                        new IntermediateResourceItem
                         {
                             StartChapter = vr.VerseId / 1000 % 1000,
                             EndChapter = vr.VerseId / 1000 % 1000,
                             ContentId = rc.Id,
-                            rcv.ContentSize,
-                            rc.MediaType,
-                            rc.LanguageId,
-                            vr.ResourceId,
-                            vr.Resource.ParentResource
+                            Version = rcv.Version,
+                            ContentSize = rcv.ContentSize,
+                            MediaType = rc.MediaType,
+                            LanguageId = rc.LanguageId,
+                            ResourceId = vr.ResourceId,
+                            ParentResource = vr.Resource.ParentResource
                         })))
             .ToListAsync(cancellationToken);
 
@@ -92,19 +95,7 @@ public static class LanguageResourcesEndpoints
         // This filters them by grouping appropriately and selecting the current language resource (if available) then falling back to English.
         var filteredDownToOneLanguage = passageResourceContent.Concat(verseResourceContent)
             .GroupBy(rc => new { rc.StartChapter, rc.EndChapter, rc.MediaType, rc.ResourceId })
-            .Select(grc =>
-            {
-                var first = grc.OrderBy(rc => rc.LanguageId == languageId ? 0 : 1).First();
-                return new
-                {
-                    first.StartChapter,
-                    first.EndChapter,
-                    first.ContentId,
-                    first.ContentSize,
-                    first.MediaType,
-                    first.ParentResource
-                };
-            });
+            .Select(grc => grc.OrderBy(rc => rc.LanguageId == languageId ? 0 : 1).First());
 
         var groupedContent = filteredDownToOneLanguage
             .SelectMany(content => Enumerable.Range(content.StartChapter, content.EndChapter - content.StartChapter + 1)
@@ -115,6 +106,7 @@ public static class LanguageResourcesEndpoints
                     {
                         ContentId = content.ContentId,
                         ContentSize = content.ContentSize,
+                        Version = content.Version,
                         MediaTypeName = content.MediaType,
                         ParentResourceId = content.ParentResource.Id
                     }
@@ -132,4 +124,17 @@ public static class LanguageResourcesEndpoints
 
         return TypedResults.Ok(new ResourceItemsByChapterResponse { Chapters = groupedContent });
     }
+}
+
+public record IntermediateResourceItem
+{
+    public int StartChapter { get; set; }
+    public int EndChapter { get; set; }
+    public int ContentId { get; set; }
+    public int Version { get; set; }
+    public int ContentSize { get; set; }
+    public ResourceContentMediaType MediaType { get; set; }
+    public int LanguageId { get; set; }
+    public int ResourceId { get; set; }
+    public ParentResourceEntity ParentResource { get; set; } = null!;
 }
