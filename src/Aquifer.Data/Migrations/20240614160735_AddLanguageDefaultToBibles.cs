@@ -5,7 +5,7 @@
 namespace Aquifer.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class GreekSenseStrongNumberNullable : Migration
+    public partial class AddLanguageDefaultToBibles : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -22,6 +22,20 @@ namespace Aquifer.Data.Migrations
                 oldClrType: typeof(int),
                 oldType: "int");
 
+            migrationBuilder.AddColumn<bool>(
+                name: "LanguageDefault",
+                table: "Bibles",
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Bibles_LanguageId_LanguageDefault",
+                table: "Bibles",
+                column: "LanguageId",
+                unique: true,
+                filter: "LanguageDefault = 1");
+
             migrationBuilder.AddForeignKey(
                 name: "FK_GreekSenses_StrongNumbers_StrongNumberId",
                 table: "GreekSenses",
@@ -36,6 +50,14 @@ namespace Aquifer.Data.Migrations
             migrationBuilder.DropForeignKey(
                 name: "FK_GreekSenses_StrongNumbers_StrongNumberId",
                 table: "GreekSenses");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Bibles_LanguageId_LanguageDefault",
+                table: "Bibles");
+
+            migrationBuilder.DropColumn(
+                name: "LanguageDefault",
+                table: "Bibles");
 
             migrationBuilder.AlterColumn<int>(
                 name: "StrongNumberId",

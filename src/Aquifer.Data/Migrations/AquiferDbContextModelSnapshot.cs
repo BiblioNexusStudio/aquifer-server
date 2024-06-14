@@ -193,8 +193,10 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LanguageId", "LanguageDefault")
-                        .IsUnique();
+                    b.HasIndex("LanguageId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Bibles_LanguageId_LanguageDefault")
+                        .HasFilter("LanguageDefault = 1");
 
                     b.ToTable("Bibles");
                 });

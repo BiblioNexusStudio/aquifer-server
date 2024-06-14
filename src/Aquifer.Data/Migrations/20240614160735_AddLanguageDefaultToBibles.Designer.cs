@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    [Migration("20240614143843_GreekSenseStrongNumberNullable")]
-    partial class GreekSenseStrongNumberNullable
+    [Migration("20240614160735_AddLanguageDefaultToBibles")]
+    partial class AddLanguageDefaultToBibles
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -196,8 +196,10 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LanguageId", "LanguageDefault")
-                        .IsUnique();
+                    b.HasIndex("LanguageId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Bibles_LanguageId_LanguageDefault")
+                        .HasFilter("LanguageDefault = 1");
 
                     b.ToTable("Bibles");
                 });
