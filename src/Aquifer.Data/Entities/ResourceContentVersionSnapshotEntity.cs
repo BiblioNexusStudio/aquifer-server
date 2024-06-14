@@ -1,5 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace Aquifer.Data.Entities;
 
+[Index(nameof(ResourceContentVersionId))]
 public class ResourceContentVersionSnapshotEntity
 {
     public int Id { get; set; }

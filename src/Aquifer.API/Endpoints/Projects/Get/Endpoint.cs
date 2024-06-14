@@ -1,7 +1,6 @@
 ﻿using Aquifer.API.Common;
 using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
-using Aquifer.Common.Extensions;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
@@ -31,13 +30,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             return;
         }
 
-        var wordCounts = await GetWordCounts(req.ProjectId, ct);
-        foreach (var item in project.Items)
-        {
-            item.WordCount = wordCounts.SingleOrDefault(x => x.Id == item.ResourceContentId)?.WordCount;
-        }
+        var items = await GetProjectItems(req.ProjectId, ct);
 
-        project.Items = project.Items.OrderBy(x => x.SortOrder).ThenBy(x => x.EnglishLabel);
+        project.Items = items.OrderBy(x => x.SortOrder).ThenBy(x => x.EnglishLabel);
         await SendOkAsync(project, ct);
     }
 
@@ -63,17 +58,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 ActualPublishDate = x.ActualPublishDate,
                 ProjectedDeliveryDate = x.ProjectedDeliveryDate,
                 ProjectedPublishDate = x.ProjectedPublishDate,
-                Items = x.ResourceContents.SelectMany(rc => rc.Versions.OrderByDescending(v => v.Created).Take(1).Select(rcv =>
-                    new ProjectResourceItem
-                    {
-                        ResourceContentId = rc.Id,
-                        EnglishLabel = rc.Resource.EnglishLabel,
-                        ParentResourceName = rc.Resource.ParentResource.DisplayName,
-                        StatusDisplayName = rc.Status.GetDisplayName(),
-                        AssignedUserName =
-                            rcv.AssignedUser == null ? null : $"{rcv.AssignedUser.FirstName} {rcv.AssignedUser.LastName}",
-                        SortOrder = rc.Resource.SortOrder
-                    })),
                 Counts = new ProjectResourceStatusCounts(x.ResourceContents)
             }).SingleOrDefaultAsync(ct);
     }
@@ -84,28 +68,40 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         return dbContext.Projects.Any(x => x.Id == projectId && self.CompanyId == x.CompanyId);
     }
 
-    private async Task<List<ResourceContentWordCount>> GetWordCounts(int projectId, CancellationToken ct)
+    private async Task<List<ProjectResourceItem>> GetProjectItems(int projectId, CancellationToken ct)
     {
         const string query = """
                              SELECT
-                                 RC.Id, Snapshots.WordCount
+                                 RC.Id AS ResourceContentId,
+                                 Snapshots.WordCount,
+                                 R.EnglishLabel,
+                                 PR.DisplayName AS ParentResourceName,
+                                 RC.Status,
+                                 Snapshots.AssignedUserName,
+                                 R.SortOrder
                              FROM ResourceContents RC
-                                      CROSS APPLY (
-                                 SELECT TOP 1 SNAP.WordCount
+                             INNER JOIN Resources R ON R.Id = RC.ResourceId
+                             INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
+                             CROSS APPLY (
+                                 SELECT TOP 1
+                                     SNAP.WordCount,
+                                     CASE
+                                         WHEN RCV.AssignedUserId IS NULL THEN NULL
+                                         ELSE U.FirstName + ' ' + U.LastName
+                                     END AS AssignedUserName
                                  FROM ResourceContentVersionSnapshots SNAP
-                                          INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
+                                 INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
+                                 LEFT JOIN Users U ON U.Id = RCV.AssignedUserId
                                  WHERE ResourceContentVersionId = RCV.Id
                                  ORDER BY SNAP.Created ASC
                              ) Snapshots
-                             WHERE RC.Id IN (SELECT ResourceContentId FROM ProjectResourceContents WHERE ProjectId = {0})
+                             WHERE RC.Id IN (
+                                 SELECT ResourceContentId
+                                 FROM ProjectResourceContents
+                                 WHERE ProjectId = {0}
+                             )
                              """;
 
-        return await dbContext.Database.SqlQueryRaw<ResourceContentWordCount>(query, projectId).ToListAsync(ct);
+        return await dbContext.Database.SqlQueryRaw<ProjectResourceItem>(query, projectId).ToListAsync(ct);
     }
-}
-
-public class ResourceContentWordCount
-{
-    public required int Id { get; set; }
-    public required int? WordCount { get; set; }
 }
