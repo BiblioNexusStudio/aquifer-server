@@ -31,5 +31,11 @@ public class BibleEntityConfiguration : IEntityTypeConfiguration<BibleEntity>
     public void Configure(EntityTypeBuilder<BibleEntity> builder)
     {
         builder.Property(b => b.LanguageDefault).HasDefaultValue(false);
+
+        builder
+            .HasIndex(x => x.LanguageId)
+            .HasFilter($"{nameof(BibleEntity.LanguageDefault)} = 1")
+            .HasDatabaseName("IX_Bibles_LanguageId_LanguageDefault")
+            .IsUnique();
     }
 }
