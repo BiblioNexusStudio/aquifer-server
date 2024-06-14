@@ -4,9 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
-[Index(nameof(LanguageId),
-     nameof(LanguageDefault),
-     IsUnique = true), EntityTypeConfiguration(typeof(BibleEntityConfiguration))]
+[EntityTypeConfiguration(typeof(BibleEntityConfiguration))]
 public class BibleEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
