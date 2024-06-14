@@ -84,16 +84,16 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                              INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
                              CROSS APPLY (
                                  SELECT TOP 1
-                                     SNAP.WordCount,
+                                     COALESCE(RCVS.WordCount, RCV.WordCount) AS WordCount,
                                      CASE
                                          WHEN RCV.AssignedUserId IS NULL THEN NULL
                                          ELSE U.FirstName + ' ' + U.LastName
                                      END AS AssignedUserName
-                                 FROM ResourceContentVersionSnapshots SNAP
-                                 INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
+                                 FROM ResourceContentVersions RCV
+                                 LEFT JOIN ResourceContentVersionSnapshots RCVS ON RCVS.ResourceContentVersionId = RCV.Id
                                  LEFT JOIN Users U ON U.Id = RCV.AssignedUserId
-                                 WHERE ResourceContentVersionId = RCV.Id
-                                 ORDER BY SNAP.Created ASC
+                                 WHERE RCV.ResourceContentId = RC.Id
+                                 ORDER BY RCVS.Created ASC, RCV.Version DESC
                              ) Snapshots
                              WHERE RC.Id IN (
                                  SELECT ResourceContentId
