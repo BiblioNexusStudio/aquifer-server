@@ -12,13 +12,10 @@ public class GreekSenseEntity : IHasUpdatedTimestamp
     public string Domain { get; set; } = null!;
     public string SubDomain { get; set; } = null!;
     public int GreekLemmaId { get; set; }
-    public int StrongNumberId { get; set; }
+    public int? StrongNumberId { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
-
-    [SqlDefaultValue("getutcdate()")]
-    public DateTime Updated { get; set; } = DateTime.UtcNow;
 
     public GreekLemmaEntity GreekLemma { get; set; } = null!;
     public StrongNumberEntity StrongNumber { get; set; } = null!;
@@ -26,4 +23,7 @@ public class GreekSenseEntity : IHasUpdatedTimestamp
 
     public ICollection<GreekNewTestamentWordSenseEntity> GreekNewTestamentWordSenses { get; set; } =
         new List<GreekNewTestamentWordSenseEntity>();
+
+    [SqlDefaultValue("getutcdate()")]
+    public DateTime Updated { get; set; } = DateTime.UtcNow;
 }

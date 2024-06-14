@@ -1,7 +1,12 @@
 ﻿using Aquifer.Data.EventHandlers;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
+[Index(nameof(LanguageId),
+     nameof(LanguageDefault),
+     IsUnique = true), EntityTypeConfiguration(typeof(BibleEntityConfiguration))]
 public class BibleEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
@@ -10,6 +15,7 @@ public class BibleEntity : IHasUpdatedTimestamp
     public string Abbreviation { get; set; } = null!;
     public string? LicenseInfo { get; set; }
     public bool Enabled { get; set; }
+    public bool LanguageDefault { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
@@ -20,4 +26,12 @@ public class BibleEntity : IHasUpdatedTimestamp
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
+}
+
+public class BibleEntityConfiguration : IEntityTypeConfiguration<BibleEntity>
+{
+    public void Configure(EntityTypeBuilder<BibleEntity> builder)
+    {
+        builder.Property(b => b.LanguageDefault).HasDefaultValue(false);
+    }
 }

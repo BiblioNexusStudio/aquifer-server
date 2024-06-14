@@ -30,6 +30,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 ResourceId = rc.ResourceId,
                 Language = new LanguageResponse
                 {
+                    Id = rc.LanguageId,
                     EnglishDisplay = rc.Language.EnglishDisplay,
                     ISO6393Code = rc.Language.ISO6393Code
                 },
