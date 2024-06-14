@@ -1,4 +1,7 @@
-﻿using Aquifer.API.Common.Dtos;
+﻿using System.Text.Json.Serialization;
+using Aquifer.API.Common.Dtos;
+using Aquifer.Common.Extensions;
+using Aquifer.Data.Entities;
 
 namespace Aquifer.API.Endpoints.Projects.Get;
 
@@ -21,7 +24,7 @@ public class Response
     public required DateOnly? ActualDeliveryDate { get; set; }
     public required DateOnly? ProjectedPublishDate { get; set; }
     public required DateOnly? ActualPublishDate { get; set; }
-    public required IEnumerable<ProjectResourceItem> Items { get; set; }
+    public IEnumerable<ProjectResourceItem> Items { get; set; } = null!;
 
     public ProjectResourceStatusCounts Counts { get; set; } = null!;
 }
@@ -32,7 +35,10 @@ public class ProjectResourceItem
     public required string EnglishLabel { get; set; }
     public required string ParentResourceName { get; set; }
     public required string? AssignedUserName { get; set; }
-    public required string StatusDisplayName { get; set; }
+    public string StatusDisplayName => Status.GetDisplayName();
     public required int SortOrder { get; set; }
-    public int? WordCount { get; set; }
+    public required int? WordCount { get; set; }
+
+    [JsonIgnore]
+    public ResourceContentStatus Status { get; set; }
 }

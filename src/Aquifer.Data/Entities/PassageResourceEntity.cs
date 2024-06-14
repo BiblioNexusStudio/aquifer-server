@@ -3,6 +3,7 @@
 namespace Aquifer.Data.Entities;
 
 [PrimaryKey(nameof(PassageId), nameof(ResourceId))]
+[Index(nameof(ResourceId))]
 public class PassageResourceEntity
 {
     public int PassageId { get; set; }

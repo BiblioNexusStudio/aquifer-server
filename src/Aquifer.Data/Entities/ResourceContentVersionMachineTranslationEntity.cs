@@ -1,8 +1,10 @@
 ﻿using Aquifer.Data.Enums;
 using Aquifer.Data.EventHandlers;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
 
+[Index(nameof(ResourceContentVersionId))]
 public class ResourceContentVersionMachineTranslationEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }

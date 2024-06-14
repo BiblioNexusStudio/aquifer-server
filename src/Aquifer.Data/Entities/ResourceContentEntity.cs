@@ -8,6 +8,7 @@ namespace Aquifer.Data.Entities;
     nameof(LanguageId),
     nameof(MediaType),
     IsUnique = true)]
+[Index(nameof(LanguageId), nameof(MediaType))]
 public class ResourceContentEntity : IHasUpdatedTimestamp
 {
     public int ResourceId { get; set; }

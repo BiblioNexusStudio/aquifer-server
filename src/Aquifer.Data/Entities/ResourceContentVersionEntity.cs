@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
+[Index(nameof(AssignedUserId))]
 [EntityTypeConfiguration(typeof(ResourceContentVersionEntityConfiguration))]
 public class ResourceContentVersionEntity : IHasUpdatedTimestamp
 {
@@ -53,11 +54,7 @@ public class ResourceContentVersionEntityConfiguration : IEntityTypeConfiguratio
                 "IsPublished = 0 OR IsDraft = 0"));
 
         builder
-            .HasIndex(x => new
-            {
-                x.ResourceContentId,
-                x.Version
-            })
+            .HasIndex(x => new { x.ResourceContentId, x.Version })
             .IsUnique();
 
         builder
