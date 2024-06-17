@@ -6,6 +6,8 @@ namespace Aquifer.API.Helpers;
 
 public static class EndpointHelpers
 {
+    public const int OneDayInSeconds = 86400;
+
     public static Action<RouteHandlerBuilder> SetCacheOption(int minutes = 5)
     {
         return x => x.CacheOutput(c => c.Expire(TimeSpan.FromMinutes(minutes)));

@@ -1,3 +1,4 @@
+using Aquifer.API.Helpers;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
@@ -9,20 +10,24 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     public override void Configure()
     {
         Get("/bibles");
+        Options(EndpointHelpers.SetCacheOption(60));
+        ResponseCache(EndpointHelpers.OneDayInSeconds);
         AllowAnonymous();
     }
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var bibles = await dbContext.Bibles.Where(b => b.Enabled).Select(bible => new Response
-        {
-            Name = bible.Name,
-            Abbreviation = bible.Abbreviation,
-            Id = bible.Id,
-            SerializedLicenseInfo = bible.LicenseInfo,
-            LanguageId = bible.LanguageId,
-            IsLanguageDefault = bible.LanguageDefault
-        }).ToListAsync(ct);
+        var bibles = await dbContext.Bibles.Where(b => b.Enabled)
+            .Select(bible => new Response
+            {
+                Name = bible.Name,
+                Abbreviation = bible.Abbreviation,
+                Id = bible.Id,
+                SerializedLicenseInfo = bible.LicenseInfo,
+                LanguageId = bible.LanguageId,
+                IsLanguageDefault = bible.LanguageDefault
+            })
+            .ToListAsync(ct);
 
         await SendOkAsync(bibles, ct);
     }
