@@ -39,6 +39,7 @@ builder.Services.AddAuth(configuration?.JwtSettings)
     .AddSingleton<ITrackResourceContentRequestService, TrackResourceContentRequestService>()
     .AddAzureClient(builder.Environment.IsDevelopment())
     .AddFastEndpoints()
+    .AddResponseCaching()
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 
@@ -56,7 +57,7 @@ if (app.Environment.IsDevelopment())
     app.UseHttpLogging();
 }
 
-app.UseFastEndpoints(config => config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase);
+app.UseResponseCaching().UseFastEndpoints(config => config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase);
 
 app.MapEndpoints();
 app.Run();
