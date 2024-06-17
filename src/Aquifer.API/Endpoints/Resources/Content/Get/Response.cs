@@ -33,11 +33,7 @@ public class Response
     public ProjectResponse? Project =>
         ProjectEntity == null
             ? null
-            : new ProjectResponse
-            {
-                Id = ProjectEntity.Id,
-                Name = ProjectEntity.Name
-            };
+            : new ProjectResponse { Id = ProjectEntity.Id, Name = ProjectEntity.Name };
 
     public CommentThreadsResponse CommentThreads { get; set; } = null!;
 
@@ -55,6 +51,7 @@ public class LanguageResponse
 {
     public required int Id { get; set; }
     public required string EnglishDisplay { get; set; }
+    public required ScriptDirection ScriptDirection { get; set; }
 
     [JsonPropertyName("iso6393Code")]
     public required string ISO6393Code { get; set; }
