@@ -10,6 +10,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     public override void Configure()
     {
         Get("/companies");
+        ResponseCache(600);
         Permissions(PermissionName.ReadUsers);
     }
 
