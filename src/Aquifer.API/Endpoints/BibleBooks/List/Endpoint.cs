@@ -10,6 +10,7 @@ public class Endpoint : EndpointWithoutRequest<IEnumerable<Response>>
     {
         Get("/bible-books");
         Options(EndpointHelpers.SetCacheOption(60));
+        ResponseCache(EndpointHelpers.OneDayInSeconds);
         AllowAnonymous();
     }
 

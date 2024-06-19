@@ -1,4 +1,5 @@
-﻿using Aquifer.Data;
+﻿using Aquifer.API.Helpers;
+using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     public override void Configure()
     {
         Get("/bibles/{BibleId}/books");
+        ResponseCache(EndpointHelpers.OneDayInSeconds);
         AllowAnonymous();
     }
 
