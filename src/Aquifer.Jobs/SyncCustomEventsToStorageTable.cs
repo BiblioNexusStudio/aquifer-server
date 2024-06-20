@@ -55,7 +55,9 @@ public class SyncCustomEventsToStorageTable(
                     partitionKey,
                     $"{invertedTimestamp}_{itemId}")
                 {
-                    { "RealTimestamp", timestamp }, // Storage Tables include a non-configurable Timestamp attribute so this lets us have our own
+                    {
+                        "RealTimestamp", timestamp
+                    }, // Storage Tables include a non-configurable Timestamp attribute so this lets us have our own
                     { "Name", row.Name },
                     { "Url", row.Url },
                     { "UserId", row.UserId },
@@ -75,7 +77,8 @@ public class SyncCustomEventsToStorageTable(
                     if (error.Message.Contains("already exists"))
                     {
                         _logger.LogError(
-                            "Tried to insert an entity that already exists. This could be the result of items with identical timestamps but most likely indicates an error with filtering logs to the correct time range.");
+                            "Tried to insert an entity that already exists. This could be the result of items with identical timestamps but most likely indicates an error with filtering logs to the correct time range. Source: {0}. Partition Key: {1} ",
+                            source, partitionKey);
                     }
                     else
                     {
@@ -86,7 +89,9 @@ public class SyncCustomEventsToStorageTable(
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred while syncing customEvents to the Azure Storage Table");
+            _logger.LogError(ex,
+                "An error occurred while syncing customEvents to the Azure Storage Table. Source: {0}. Partition Key: {1} ",
+                source, partitionKey);
             throw;
         }
     }
