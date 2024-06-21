@@ -57,7 +57,7 @@ public class SyncCustomEventsToStorageTable(
                 {
                     {
                         "RealTimestamp", timestamp
-                    }, // Storage Tables include a non-configurable Timestamp attribute so this lets us have our own
+                    }, // Storage Tables include a non-configurable Timestamp attribute set to the time of row insertion so this lets us have our own
                     { "Name", row.Name },
                     { "Url", row.Url },
                     { "UserId", row.UserId },

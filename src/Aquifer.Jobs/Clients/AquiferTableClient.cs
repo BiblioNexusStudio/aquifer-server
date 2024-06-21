@@ -6,18 +6,23 @@ using Microsoft.Extensions.Options;
 
 namespace Aquifer.Jobs.Clients;
 
-public class AquiferTableClient(string tableName, string partitionKey, IAzureClientService azureClientService,
-    IOptions<ConfigurationOptions> options)
+public class AquiferTableClient(
+    string _tableName,
+    string _partitionKey,
+    IAzureClientService _azureClientService,
+    IOptions<ConfigurationOptions> _options)
 {
-    private readonly string _partitionKey = partitionKey;
-    private readonly TableClient _tableClient = new TableClient(new Uri(options.Value.Analytics.StorageAccountUri), tableName, azureClientService.GetCredential());
+    // Note: we're using RealTimestamp here instead of the built-in table's Timestamp, which is set to the time the row is inserted.
+    private static readonly string[] SelectStatement = ["RealTimestamp"];
+
+    private readonly TableClient _tableClient =
+        new(new Uri(_options.Value.Analytics.StorageAccountUri), _tableName, _azureClientService.GetCredential());
 
     public async Task<DateTime?> GetLastTimestampAsync(CancellationToken ct)
     {
-        // Note: we're using RealTimestamp here instead of the built-in table's Timestamp
         var result = _tableClient.QueryAsync<TableEntity>(
             $"PartitionKey eq '{_partitionKey}'",
-            select: new[] { "RealTimestamp" },
+            select: SelectStatement,
             maxPerPage: 1,
             cancellationToken: ct);
 
