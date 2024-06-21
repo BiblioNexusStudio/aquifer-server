@@ -6,6 +6,15 @@
     "Values": {
         "AzureWebJobsStorage": "UseDevelopmentStorage=true",
         "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-        "JobQueues:TrackResourceContentRequestQueue": "aquifer-jobs-local-track-resource-content-request"
+        "JobQueues:TrackResourceContentRequestQueue": "aquifer-jobs-local-track-resource-content-request",
+        "IsDevelopment": true,
+        "Analytics:StorageAccountUri": "https://aquiferstoragedev.table.core.windows.net",
+        "Analytics:CustomEventsTableName": "CustomEventsQa",
+        "Analytics:ApiRequestsTableName": "ApiRequestsQa",
+        "Analytics:PageViewsTableName": "PageViewsQa",
+        "Analytics:AppInsightsResourceId": "/subscriptions/dacfa945-984c-4708-9f2d-7d8358f223d5/resourceGroups/BiblioNexus-Dev/providers/microsoft.insights/components/appinsights-qa",
+        "Analytics:ApiManagementReportsUri": "https://management.azure.com/subscriptions/dacfa945-984c-4708-9f2d-7d8358f223d5/resourceGroups/BiblioNexus-Global/providers/Microsoft.ApiManagement/service/aquifer-api-management/reports/bySubscription?api-version=2022-08-01",
+        "Analytics:CronSchedule": "5 * * * *",
+        "Analytics:HoursBetweenRuns": 1
     }
 }
