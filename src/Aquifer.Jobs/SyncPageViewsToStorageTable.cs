@@ -15,9 +15,8 @@ public class SyncPageViewsToStorageTable(
     IAzureClientService _azureClientService,
     IOptions<ConfigurationOptions> _options)
 {
-    // Run at 7am UTC which is 2-3am ET (depending on DST)
     [Function(nameof(SyncPageViewsToStorageTable))]
-    public async Task Run([TimerTrigger("0 7 * * *")] TimerInfo timerInfo, CancellationToken ct)
+    public async Task Run([TimerTrigger("%Analytics:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
     {
         await SyncSourceToPartitionKey("content-manager-web", "AquiferAdminPageViews", ct);
         await SyncSourceToPartitionKey("well-web", "BibleWellPageViews", ct);
@@ -46,7 +45,7 @@ public class SyncPageViewsToStorageTable(
 
             foreach (var row in queryResult.Value)
             {
-                var timestamp = DateTime.Parse(row.Timestamp);
+                var timestamp = DateTime.Parse(row.Timestamp).ToUniversalTime();
                 var invertedTimestamp = DateTime.MaxValue.Ticks - timestamp.Ticks;
                 var pageViewId = row.PageViewId;
 
@@ -77,7 +76,7 @@ public class SyncPageViewsToStorageTable(
                     if (error.Message.Contains("already exists"))
                     {
                         _logger.LogError(
-                            "Tried to insert an entity that already exists. This could be the result of items with identical timestamps but most likely indicates an error with filtering logs to the correct time range. Source: {0}. Partition Key: {1} ",
+                            "Tried to insert an entity that already exists. This could be the result of items with identical timestamps but most likely indicates an error with filtering logs to the correct time range. Source: {source}. Partition Key: {partitionKey} ",
                             source, partitionKey);
                     }
                     else
@@ -89,7 +88,8 @@ public class SyncPageViewsToStorageTable(
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred while syncing pageViews to the Azure Storage Table. Source: {0}. Partition Key: {1} ",
+            _logger.LogError(ex,
+                "An error occurred while syncing pageViews to the Azure Storage Table. Source: {source}. Partition Key: {partitionKey} ",
                 source, partitionKey);
             throw;
         }

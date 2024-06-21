@@ -14,4 +14,6 @@ public class AnalyticsOptions
     public required string PageViewsTableName { get; init; }
     public required string AppInsightsResourceId { get; init; }
     public required string ApiManagementReportsUri { get; init; }
+    public required string CronSchedule { get; init; }
+    public required int HoursBetweenRuns { get; init; }
 }

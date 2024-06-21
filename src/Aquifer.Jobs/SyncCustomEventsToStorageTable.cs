@@ -15,9 +15,8 @@ public class SyncCustomEventsToStorageTable(
     IAzureClientService _azureClientService,
     IOptions<ConfigurationOptions> _options)
 {
-    // Run at 7am UTC which is 2-3am ET (depending on DST)
     [Function(nameof(SyncCustomEventsToStorageTable))]
-    public async Task Run([TimerTrigger("0 7 * * *")] TimerInfo timerInfo, CancellationToken ct)
+    public async Task Run([TimerTrigger("%Analytics:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
     {
         await SyncSourceToPartitionKey("content-manager-web", "AquiferAdminCustomEvents", ct);
         await SyncSourceToPartitionKey("well-web", "BibleWellCustomEvents", ct);
@@ -77,7 +76,7 @@ public class SyncCustomEventsToStorageTable(
                     if (error.Message.Contains("already exists"))
                     {
                         _logger.LogError(
-                            "Tried to insert an entity that already exists. This could be the result of items with identical timestamps but most likely indicates an error with filtering logs to the correct time range. Source: {0}. Partition Key: {1} ",
+                            "Tried to insert an entity that already exists. This could be the result of items with identical timestamps but most likely indicates an error with filtering logs to the correct time range. Source: {source}. Partition Key: {partitionKey} ",
                             source, partitionKey);
                     }
                     else
@@ -90,7 +89,7 @@ public class SyncCustomEventsToStorageTable(
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "An error occurred while syncing customEvents to the Azure Storage Table. Source: {0}. Partition Key: {1} ",
+                "An error occurred while syncing customEvents to the Azure Storage Table. Source: {source}. Partition Key: {partitionKey} ",
                 source, partitionKey);
             throw;
         }

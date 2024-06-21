@@ -21,7 +21,8 @@ public class AquiferAppInsightsClient(IAzureClientService _azureClientService, I
     {
         var appInsightsResourceId = new ResourceIdentifier(_options.Value.Analytics.AppInsightsResourceId);
         var endTime = DateTime.UtcNow;
-        var startTime = timestamp ?? endTime.AddDays(-1);
+        var startTime = timestamp ?? endTime.AddHours(-_options.Value.Analytics.HoursBetweenRuns);
+        startTime = startTime.AddMilliseconds(1);
         var queryTimeRange = new QueryTimeRange(startTime, endTime);
         return await _logsClient.QueryResourceAsync<T>(appInsightsResourceId, query, queryTimeRange, null, ct);
     }
