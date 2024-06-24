@@ -17,6 +17,7 @@ var host = new HostBuilder()
 
         services.AddSingleton<IAquiferAppInsightsClient, AquiferAppInsightsClient>();
         services.AddSingleton<IAzureClientService, AzureClientService>();
+        services.AddSingleton<IAquiferApiManagementClient, AquiferApiManagementClient>();
         services.AddAzureClient(context.Configuration.Get<ConfigurationOptions>().IsDevelopment);
         services.AddDbContext<AquiferDbContext>(options =>
             options.UseSqlServer(connectionString,
