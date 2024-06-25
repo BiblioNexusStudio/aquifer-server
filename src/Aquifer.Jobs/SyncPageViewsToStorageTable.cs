@@ -39,7 +39,8 @@ public class SyncPageViewsToStorageTable(
                          | order by Timestamp asc
                          """;
 
-            var lastTimestamp = await tableClient.GetLastTimestampAsync(ct);
+            // Note: we're using RealTimestamp here instead of the built-in table's Timestamp, which is set to the time the row is inserted.
+            var lastTimestamp = await tableClient.GetLastTimestampAsync("RealTimestamp", ct);
 
             var queryResult = await _appInsightsClient.QueryAsyncSinceTimestamp<PageViewRow>(query, lastTimestamp, ct);
 
