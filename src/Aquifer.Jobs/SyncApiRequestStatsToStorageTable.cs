@@ -23,7 +23,8 @@ public class SyncApiRequestStatsToStorageTable(
 
         try
         {
-            var lastTimestamp = await tableClient.GetLastTimestampAsync(ct);
+            // Note: we're using EndTimestamp here instead of the built-in table's Timestamp, which is set to the time the row is inserted.
+            var lastTimestamp = await tableClient.GetLastTimestampAsync("EndTimestamp", ct);
 
             var startTime = lastTimestamp ?? DateTime.UtcNow.AddHours(-_options.Value.Analytics.HoursBetweenRuns);
             var endTime = DateTime.UtcNow;

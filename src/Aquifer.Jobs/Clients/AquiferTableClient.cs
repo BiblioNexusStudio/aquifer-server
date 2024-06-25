@@ -12,17 +12,14 @@ public class AquiferTableClient(
     IAzureClientService _azureClientService,
     IOptions<ConfigurationOptions> _options)
 {
-    // Note: we're using RealTimestamp here instead of the built-in table's Timestamp, which is set to the time the row is inserted.
-    private static readonly string[] SelectStatement = ["RealTimestamp"];
-
     private readonly TableClient _tableClient =
         new(new Uri(_options.Value.Analytics.StorageAccountUri), _tableName, _azureClientService.GetCredential());
 
-    public async Task<DateTime?> GetLastTimestampAsync(CancellationToken ct)
+    public async Task<DateTime?> GetLastTimestampAsync(string timestampName, CancellationToken ct)
     {
         var result = _tableClient.QueryAsync<TableEntity>(
             $"PartitionKey eq '{_partitionKey}'",
-            select: SelectStatement,
+            select: [timestampName],
             maxPerPage: 1,
             cancellationToken: ct);
 
@@ -34,7 +31,7 @@ public class AquiferTableClient(
             lastEntity = enumerator.Current;
         }
 
-        return lastEntity?.GetDateTime("RealTimestamp");
+        return lastEntity?.GetDateTime(timestampName);
     }
 
     public async Task<Response> AddEntityAsync(ITableEntity entity, CancellationToken ct)
