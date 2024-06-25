@@ -1,7 +1,6 @@
 using Aquifer.Common.Services;
 using Aquifer.Jobs.Clients;
 using Aquifer.Jobs.Configuration;
-using Azure;
 using Azure.Data.Tables;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
@@ -52,7 +51,7 @@ public class SyncApiRequestStatsToStorageTable(
                 {
                     await tableClient.AddEntityAsync(apiRequestStatsEntity, ct);
                 }
-                catch (RequestFailedException error)
+                catch (Exception error)
                 {
                     if (error.Message.Contains("already exists"))
                     {
