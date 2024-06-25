@@ -34,7 +34,7 @@ public class SyncPageViewsToStorageTable(
                          | project PageViewId = itemId, Name = name, UserId = user_Id, Url = url,
                                    City = client_City, State = client_StateOrProvince,
                                    Country = client_CountryOrRegion, Browser = client_Browser,
-                                   OS = client_OS, Duration = duration, Timestamp = timestamp,
+                                   OS = client_OS, Timestamp = timestamp,
                                    UserName = customDimensions.userName
                          | order by Timestamp asc
                          """;
@@ -63,7 +63,6 @@ public class SyncPageViewsToStorageTable(
                     { "Browser", row.Browser },
                     { "OS", row.OS },
                     { "UserName", row.UserName },
-                    { "Duration", row.Duration },
                     { "PageViewId", pageViewId }
                 };
 
@@ -108,6 +107,5 @@ public record PageViewRow
     public string Browser { get; set; } = null!;
     public string OS { get; set; } = null!;
     public string? UserName { get; set; }
-    public int Duration { get; set; }
     public string Timestamp { get; set; } = null!;
 }
