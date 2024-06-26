@@ -2,7 +2,7 @@ using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
 
-namespace Aquifer.API.Endpoints.FeedBack.BibleWell;
+namespace Aquifer.API.Endpoints.FeedBack.BibleWell.Create;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 {
