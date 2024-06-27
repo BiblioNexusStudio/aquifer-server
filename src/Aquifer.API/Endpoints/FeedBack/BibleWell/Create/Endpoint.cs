@@ -8,7 +8,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
 {
     public override void Configure()
     {
-        Post("/feedback/biblewell");
+        Post("/feedback/bible-well");
         AllowAnonymous();
     }
 
