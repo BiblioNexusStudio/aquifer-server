@@ -25,6 +25,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
         await dbContext.Feedback.AddAsync(feedback, ct);
         await dbContext.SaveChangesAsync(ct);
 
-        await SendOkAsync(ct);
+        await SendNoContentAsync(ct);
     }
 }
