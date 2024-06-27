@@ -7,5 +7,7 @@ public class FeedbackEntity
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public string Feedback { get; set; } = null!;
+
+    [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 }

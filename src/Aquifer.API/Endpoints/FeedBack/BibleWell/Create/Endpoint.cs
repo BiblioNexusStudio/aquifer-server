@@ -4,7 +4,7 @@ using FastEndpoints;
 
 namespace Aquifer.API.Endpoints.FeedBack.BibleWell.Create;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
 {
     public override void Configure()
     {

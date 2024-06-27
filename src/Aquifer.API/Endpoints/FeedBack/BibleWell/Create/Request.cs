@@ -1,6 +1,6 @@
 namespace Aquifer.API.Endpoints.FeedBack.BibleWell.Create;
 
-public record Request
+public class Request
 {
     public string Name { get; set; }
     public string? Email { get; set; }
