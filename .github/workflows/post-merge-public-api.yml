@@ -18,6 +18,8 @@ on:
 permissions:
     id-token: write
     contents: write
+    deployments: read
+    pull-requests: read
 
 jobs:
     build:
@@ -91,6 +93,10 @@ jobs:
                   azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
                   azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
                   azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  linear-api-key: ${{ secrets.LINEAR_API_KEY }}
+                  slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+                  service-name: Public API
 
     deploy_public_api_to_prod:
         if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'prod-public'
@@ -115,3 +121,7 @@ jobs:
                   azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
                   azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
                   azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  linear-api-key: ${{ secrets.LINEAR_API_KEY }}
+                  slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+                  service-name: Public API
