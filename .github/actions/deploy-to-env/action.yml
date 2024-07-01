@@ -5,6 +5,9 @@ inputs:
     environment:
         description: Environment to deploy to
         required: true
+    full-environment:
+        description: Full environment name to deploy to
+        required: false
     resource-group:
         description: Azure Resource Group
         required: true
@@ -41,13 +44,13 @@ runs:
     steps:
         - name: Notify Slack deploy is starting
           id: slack-notify
-          if: ${{ !contains(inputs.environment, 'dev') }}
+          if: ${{ !contains(inputs.full-environment, 'dev') }}
           uses: BiblioNexusStudio/github-action-slack-notify-build@main
           with:
               channel_id: C05UPTGQGP9
               status: RUNNING
               color: warning
-              environment: ${{ inputs.environment }}
+              environment: ${{ inputs.full-environment }}
               default_branch_name: master
               service_name: ${{ inputs.service-name }}
           env:
@@ -88,13 +91,13 @@ runs:
               app-name: ${{ inputs.web-app-name }}
               package: ./build/Build.zip
         - name: Notify Slack deploy status
-          if: ${{ !cancelled() && !contains(inputs.environment, 'dev') }}
+          if: ${{ !cancelled() && !contains(inputs.full-environment, 'dev') }}
           uses: BiblioNexusStudio/github-action-slack-notify-build@main
           with:
               channel_id: C05UPTGQGP9
               status: ${{ job.status == 'success' && 'SUCCESS' || 'FAILURE' }}
               color: ${{ job.status == 'success' && 'good' || 'danger' }}
-              environment: ${{ inputs.environment }}
+              environment: ${{ inputs.full-environment }}
               default_branch_name: master
               service_name: ${{ inputs.service-name }}
               message_id: ${{ steps.slack-notify.outputs.message_id }}

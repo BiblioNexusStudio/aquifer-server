@@ -87,6 +87,7 @@ jobs:
               id: deploy
               with:
                   environment: qa
+                  full-environment: qa-internal
                   connection-url: ${{ vars.DB_CONNECTION_URL_QA }}
                   web-app-name: ${{ vars.AZURE_WEB_APP_NAME_INTERNAL_QA }}
                   resource-group: ${{ vars.AZURE_RESOURCE_GROUP_QA }}
@@ -115,6 +116,7 @@ jobs:
               id: deploy
               with:
                   environment: prod
+                  full-environment: prod-internal
                   connection-url: ${{ vars.DB_CONNECTION_URL_PROD }}
                   web-app-name: ${{ vars.AZURE_WEB_APP_NAME_INTERNAL_PROD }}
                   resource-group: ${{ vars.AZURE_RESOURCE_GROUP_PROD }}
