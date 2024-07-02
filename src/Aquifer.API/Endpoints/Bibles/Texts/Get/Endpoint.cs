@@ -10,7 +10,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
     public override void Configure()
     {
         Get("/bibles/{BibleId}/texts");
-        ResponseCache(EndpointHelpers.OneDayInSeconds);
+        ResponseCache(EndpointHelpers.OneDayInSeconds, varyByQueryKeys: ["*"]);
         AllowAnonymous();
     }
 
