@@ -10,35 +10,35 @@ namespace Aquifer.API.Endpoints.Resources.Content.AvailableChapters.List;
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerable<Response>>
 {
     private const string Query = """
-        SELECT
-            FLOOR(vr.VerseId / 1000000) % 1000 AS Book,
-            FLOOR((vr.VerseId % 1000000) / 1000) AS Chapter
-        FROM
-            ResourceContents rc
-            INNER JOIN Resources r ON r.id = rc.ResourceId
-            INNER JOIN ParentResources pr ON pr.Id = r.ParentResourceId
-            INNER JOIN VerseResources vr ON vr.ResourceId = r.Id
-        WHERE
-            rc.LanguageId = @LanguageId AND pr.Id = @ParentResourceId
-
-        UNION
-
-        SELECT
-            FLOOR(v.Id / 1000000) % 1000 AS Book,
-            FLOOR((v.Id % 1000000) / 1000) AS Chapter
-        FROM
-            ResourceContents rc
-            INNER JOIN Resources r ON r.Id = rc.ResourceId
-            INNER JOIN ParentResources parr ON parr.Id = r.ParentResourceId
-            INNER JOIN PassageResources pasr ON pasr.ResourceId = r.id
-            INNER JOIN Passages p ON p.Id = pasr.PassageId
-            INNER JOIN Verses v ON v.Id BETWEEN p.StartVerseId AND p.EndVerseId
-        WHERE
-            rc.LanguageId = @LanguageId AND parr.Id = @ParentResourceId
-
-        ORDER BY
-            Book, Chapter
-    """;
+                                     SELECT
+                                         FLOOR(vr.VerseId / 1000000) % 1000 AS Book,
+                                         FLOOR((vr.VerseId % 1000000) / 1000) AS Chapter
+                                     FROM
+                                         ResourceContents rc
+                                         INNER JOIN Resources r ON r.id = rc.ResourceId
+                                         INNER JOIN ParentResources pr ON pr.Id = r.ParentResourceId
+                                         INNER JOIN VerseResources vr ON vr.ResourceId = r.Id
+                                     WHERE
+                                         rc.LanguageId = @LanguageId AND pr.Id = @ParentResourceId AND pr.Enabled = 1
+                                 
+                                     UNION
+                                 
+                                     SELECT
+                                         FLOOR(v.Id / 1000000) % 1000 AS Book,
+                                         FLOOR((v.Id % 1000000) / 1000) AS Chapter
+                                     FROM
+                                         ResourceContents rc
+                                         INNER JOIN Resources r ON r.Id = rc.ResourceId
+                                         INNER JOIN ParentResources parr ON parr.Id = r.ParentResourceId
+                                         INNER JOIN PassageResources pasr ON pasr.ResourceId = r.id
+                                         INNER JOIN Passages p ON p.Id = pasr.PassageId
+                                         INNER JOIN Verses v ON v.Id BETWEEN p.StartVerseId AND p.EndVerseId
+                                     WHERE
+                                         rc.LanguageId = @LanguageId AND parr.Id = @ParentResourceId AND parr.Enabled = 1
+                                 
+                                     ORDER BY
+                                         Book, Chapter
+                                 """;
 
     public override void Configure()
     {

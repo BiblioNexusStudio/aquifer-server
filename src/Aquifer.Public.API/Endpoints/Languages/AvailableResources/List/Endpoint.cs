@@ -27,6 +27,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
         var response = await dbContext.ResourceContents.Where(x =>
                 x.Versions.Any(v => v.IsPublished) &&
+                x.Resource.ParentResource.Enabled &&
                 (req.LanguageCodes.Length == 0 || req.LanguageCodes.Contains(x.Language.ISO6393Code)) &&
                 (x.Resource.VerseResources.Any(vr =>
                      vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||

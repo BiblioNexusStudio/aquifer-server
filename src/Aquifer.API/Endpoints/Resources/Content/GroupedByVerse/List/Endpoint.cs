@@ -39,6 +39,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                                                                AND rce.MediaType IN ({fallbackMediaTypesSqlArray})
                              INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = COALESCE(rc.Id, rce.Id) AND rcv.IsPublished = 1
                         WHERE
+                             pr.Enabled = 1 AND
                              vr.VerseId BETWEEN {startVerseId} AND {endVerseId}
                      
                          UNION
@@ -62,9 +63,10 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                                                                AND rce.MediaType IN ({fallbackMediaTypesSqlArray})
                              INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = COALESCE(rc.Id, rce.Id) AND rcv.IsPublished = 1
                          WHERE
-                             (p.StartVerseId BETWEEN {startVerseId} AND {endVerseId})
+                             parr.Enabled = 1 AND
+                             ((p.StartVerseId BETWEEN {startVerseId} AND {endVerseId})
                              OR (p.EndVerseId BETWEEN {startVerseId} AND {endVerseId})
-                             OR (p.StartVerseId < {startVerseId} AND p.EndVerseId > {endVerseId})
+                             OR (p.StartVerseId < {startVerseId} AND p.EndVerseId > {endVerseId}))
                      
                          ORDER BY
                              VerseId

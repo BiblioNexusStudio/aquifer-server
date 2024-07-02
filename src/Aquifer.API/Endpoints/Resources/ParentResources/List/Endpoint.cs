@@ -44,6 +44,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                          FROM
                              ParentResources pr
                          LEFT JOIN ParentResourceLocalizations prl ON prl.ParentResourceId = pr.Id AND prl.LanguageId = @LanguageId
+                         WHERE pr.Enabled = 1
                          ORDER BY COALESCE(prl.DisplayName, pr.DisplayName)
                      """;
 
