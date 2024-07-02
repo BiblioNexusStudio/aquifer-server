@@ -44,7 +44,7 @@ runs:
     steps:
         - name: Notify Slack deploy is starting
           id: slack-notify
-          if: ${{ !contains(inputs.full-environment, 'dev') }}
+          if: inputs.environment != 'dev'
           uses: BiblioNexusStudio/github-action-slack-notify-build@main
           with:
               channel_id: C05UPTGQGP9
@@ -91,7 +91,7 @@ runs:
               app-name: ${{ inputs.web-app-name }}
               package: ./build/Build.zip
         - name: Notify Slack deploy status
-          if: ${{ !cancelled() && !contains(inputs.full-environment, 'dev') }}
+          if: ${{ !cancelled() && inputs.environment != 'dev' }}
           uses: BiblioNexusStudio/github-action-slack-notify-build@main
           with:
               channel_id: C05UPTGQGP9
