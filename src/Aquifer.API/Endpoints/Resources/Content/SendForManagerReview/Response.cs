@@ -8,5 +8,5 @@ public class Response
 public class UserAssignment
 {
     public int ResourceContentId { get; set; }
-    public int? AssignedUserId { get; set; } = null!;
+    public int? AssignedUserId { get; set; }
 }
