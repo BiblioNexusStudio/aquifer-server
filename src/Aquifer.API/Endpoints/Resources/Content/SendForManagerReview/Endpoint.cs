@@ -7,7 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.SendForManagerReview;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService) : Endpoint<Request>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService)
+    : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -18,6 +19,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
+        var assignments = new List<UserAssignedToContent>();
         var contentIds = request.ContentId is not null ? [request.ContentId.Value] : request.ContentIds!;
         List<ResourceContentStatus> allowedStatuses =
         [
@@ -53,7 +55,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 : ResourceContentStatus.AquiferizeManagerReview;
 
             draftVersion.ResourceContent.Status = reviewPendingStatus;
-            await SetAssignedUserId(user, managerIds, shouldSelfAssign, draftVersion);
+            var assignedUserId = await SetAssignedUserId(user, managerIds, shouldSelfAssign, draftVersion);
+
+            assignments.Add(new UserAssignedToContent
+            {
+                ResourceContentId = draftVersion.ResourceContentId,
+                AssignedUserId = assignedUserId
+            });
 
             await historyService.AddAssignedUserHistoryAsync(draftVersion, draftVersion.AssignedUserId, user.Id, ct);
             await historyService.AddStatusHistoryAsync(draftVersion, reviewPendingStatus, user.Id, ct);
@@ -61,10 +69,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         await dbContext.SaveChangesAsync(ct);
 
-        await SendNoContentAsync(ct);
+        await SendOkAsync(new Response { Assignments = assignments }, ct);
     }
 
-    private async Task SetAssignedUserId(UserEntity user,
+    private async Task<int> SetAssignedUserId(UserEntity user,
         List<int> managers,
         bool shouldSelfAssign,
         ResourceContentVersionEntity draftVersion)
@@ -74,12 +82,16 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         if (shouldSelfAssign)
         {
             draftVersion.AssignedUserId = user.Id;
+            return user.Id;
         }
-        else if (managers.Count == 1)
+
+        if (managers.Count == 1)
         {
             draftVersion.AssignedUserId = managers[0];
+            return managers[0];
         }
-        else if (managers.Count == 0)
+
+        if (managers.Count == 0)
         {
             ThrowError(x => x.ContentId, errorMessage);
         }
@@ -94,11 +106,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             if (lastAssignmentHistory is not null)
             {
                 draftVersion.AssignedUserId = lastAssignmentHistory.ChangedByUserId;
+                return lastAssignmentHistory.ChangedByUserId;
             }
-            else
-            {
-                ThrowError(x => x.ContentId, errorMessage);
-            }
+
+            ThrowError(x => x.ContentId, errorMessage);
         }
+
+        return 0;
     }
 }
