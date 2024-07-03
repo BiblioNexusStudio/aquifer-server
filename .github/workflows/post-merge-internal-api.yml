@@ -18,6 +18,8 @@ on:
 permissions:
     id-token: write
     contents: write
+    deployments: read
+    pull-requests: read
 
 jobs:
     build:
@@ -85,12 +87,17 @@ jobs:
               id: deploy
               with:
                   environment: qa
+                  full-environment: qa-internal
                   connection-url: ${{ vars.DB_CONNECTION_URL_QA }}
                   web-app-name: ${{ vars.AZURE_WEB_APP_NAME_INTERNAL_QA }}
                   resource-group: ${{ vars.AZURE_RESOURCE_GROUP_QA }}
                   azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
                   azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
                   azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  linear-api-key: ${{ secrets.LINEAR_API_KEY }}
+                  slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+                  service-name: Internal API
 
     deploy_internal_api_to_prod:
         if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'prod-internal'
@@ -109,12 +116,17 @@ jobs:
               id: deploy
               with:
                   environment: prod
+                  full-environment: prod-internal
                   connection-url: ${{ vars.DB_CONNECTION_URL_PROD }}
                   web-app-name: ${{ vars.AZURE_WEB_APP_NAME_INTERNAL_PROD }}
                   resource-group: ${{ vars.AZURE_RESOURCE_GROUP_PROD }}
                   azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
                   azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
                   azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  linear-api-key: ${{ secrets.LINEAR_API_KEY }}
+                  slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+                  service-name: Internal API
 
     e2e_tests:
         name: E2E tests

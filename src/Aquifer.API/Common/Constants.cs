@@ -9,7 +9,7 @@ public static class Constants
     public const string RolesClaim = "bnRoles";
 
     // Some guide types have predetermined passages (rather than freeform "select any Bible section").
-    // ID 1 = FIA (formerly known as CBBT-ER)
+    // ID 1 = FIA (formerly CBBT-ER)
     public static readonly ReadOnlyCollection<int> PredeterminedPassageGuideIds = new([1]);
 
     // this represents the media types that we default to English for

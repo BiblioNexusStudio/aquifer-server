@@ -62,6 +62,7 @@ public class AquiferDbContext : DbContext
     public DbSet<UserEntity> Users { get; set; }
     public DbSet<VerseEntity> Verses { get; set; }
     public DbSet<VerseResourceEntity> VerseResources { get; set; }
+    public DbSet<FeedbackEntity> Feedback { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

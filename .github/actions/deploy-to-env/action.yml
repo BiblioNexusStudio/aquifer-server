@@ -5,6 +5,9 @@ inputs:
     environment:
         description: Environment to deploy to
         required: true
+    full-environment:
+        description: Full environment name to deploy to
+        required: false
     resource-group:
         description: Azure Resource Group
         required: true
@@ -23,10 +26,37 @@ inputs:
     azure-subscription-id:
         description: Azure Subscription ID
         required: true
+    linear-api-key:
+        description: Linear API key
+        required: false
+    slack-bot-token:
+        description: Slack bot token
+        required: false
+    github-token:
+        description: GitHub token
+        required: false
+    service-name:
+        description: Service name for deploy notification
+        required: false
 
 runs:
     using: composite
     steps:
+        - name: Notify Slack deploy is starting
+          id: slack-notify
+          if: inputs.environment != 'dev'
+          uses: BiblioNexusStudio/github-action-slack-notify-build@main
+          with:
+              channel_id: C05UPTGQGP9
+              status: RUNNING
+              color: warning
+              environment: ${{ inputs.full-environment }}
+              default_branch_name: master
+              service_name: ${{ inputs.service-name }}
+          env:
+              SLACK_BOT_TOKEN: ${{ inputs.slack-bot-token }}
+              GITHUB_TOKEN: ${{ inputs.github-token }}
+              LINEAR_API_KEY: ${{ inputs.linear-api-key }}
         - uses: actions/download-artifact@v4
           with:
               name: build
@@ -60,3 +90,19 @@ runs:
           with:
               app-name: ${{ inputs.web-app-name }}
               package: ./build/Build.zip
+        - name: Notify Slack deploy status
+          if: ${{ !cancelled() && inputs.environment != 'dev' }}
+          uses: BiblioNexusStudio/github-action-slack-notify-build@main
+          with:
+              channel_id: C05UPTGQGP9
+              status: ${{ job.status == 'success' && 'SUCCESS' || 'FAILURE' }}
+              color: ${{ job.status == 'success' && 'good' || 'danger' }}
+              environment: ${{ inputs.full-environment }}
+              default_branch_name: master
+              service_name: ${{ inputs.service-name }}
+              message_id: ${{ steps.slack-notify.outputs.message_id }}
+          env:
+              SLACK_BOT_TOKEN: ${{ inputs.slack-bot-token }}
+              GITHUB_TOKEN: ${{ inputs.github-token }}
+              LINEAR_API_KEY: ${{ inputs.linear-api-key }}
+
