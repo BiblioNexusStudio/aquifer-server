@@ -65,7 +65,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         Response.Assignments = draftVersions.Select(x => new UserAssignment
         {
             ResourceContentId = x.ResourceContentId,
-            AssignedUserId = x.AssignedUserId
+            AssignedUserId = x.AssignedUserId!.Value
         }).ToList();
     }
 
