@@ -17,6 +17,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
         var resources = await dbContext.ResourceContentVersions.Where(x =>
                 x.IsPublished &&
                 x.DisplayName.Contains(request.Query) &&
+                x.ResourceContent.Resource.ParentResource.Enabled &&
                 request.ResourceTypes.Contains(x.ResourceContent.Resource.ParentResource.ResourceType) &&
                 x.ResourceContent.LanguageId == request.LanguageId).Select(rcv => new Response
                 {

@@ -28,7 +28,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     public override async Task HandleAsync(CancellationToken ct)
     {
         var resourceTypes = Enum.GetValues(typeof(ResourceType)).Cast<ResourceType>().Skip(1).ToList();
-        var parentResources = await dbContext.ParentResources.ToListAsync(ct);
+        var parentResources = await dbContext.ParentResources.Where(x => x.Enabled).ToListAsync(ct);
 
         List<Response> response = [];
         foreach (var type in resourceTypes)

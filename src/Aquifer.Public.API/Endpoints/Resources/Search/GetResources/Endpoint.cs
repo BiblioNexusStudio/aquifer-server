@@ -59,6 +59,7 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
 
         return _dbContext.ResourceContentVersions.Where(x =>
             x.IsPublished &&
+            x.ResourceContent.Resource.ParentResource.Enabled &&
             (req.Query == null || x.DisplayName.Contains(req.Query) || x.ResourceContent.Resource.EnglishLabel.Contains(req.Query)) &&
             (startVerseId == null ||
              x.ResourceContent.Resource.VerseResources.Any(vr =>
