@@ -7,7 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.SendForPublisherReview;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService) : Endpoint<Request>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService)
+    : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -20,8 +21,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var contentIds = request.ContentId is not null ? [request.ContentId.Value] : request.ContentIds!;
         List<ResourceContentStatus> allowedStatuses =
         [
-            ResourceContentStatus.AquiferizeManagerReview,
-            ResourceContentStatus.TranslationManagerReview
+            ResourceContentStatus.AquiferizeManagerReview, ResourceContentStatus.TranslationManagerReview
         ];
 
         var draftVersions = await dbContext.ResourceContentVersions
@@ -34,6 +34,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
 
         var user = await userService.GetUserFromJwtAsync(ct);
+        var isPublisher = user.Role == UserRole.Publisher;
         foreach (var draftVersion in draftVersions)
         {
             if (user.Id != draftVersion.AssignedUserId)
@@ -41,9 +42,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 ThrowError("User must be assigned to content to send for publisher review.");
             }
 
-            var reviewPendingStatus = Constants.TranslationStatuses.Contains(draftVersion.ResourceContent.Status)
-                ? ResourceContentStatus.TranslationReviewPending
-                : ResourceContentStatus.AquiferizeReviewPending;
+            var newStatus = GetNewStatus(isPublisher, draftVersion.ResourceContent.Status);
 
             await historyService.AddSnapshotHistoryAsync(draftVersion,
                 draftVersion.AssignedUserId,
@@ -52,14 +51,29 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             await historyService.AddAssignedUserHistoryAsync(draftVersion, null, user.Id, ct);
 
             Helpers.SanitizeTiptapContent(draftVersion);
-            draftVersion.ResourceContent.Status = reviewPendingStatus;
-            draftVersion.AssignedUserId = null;
+            draftVersion.ResourceContent.Status = newStatus;
+            if (!isPublisher)
+            {
+                draftVersion.AssignedUserId = null;
+            }
 
-            await historyService.AddStatusHistoryAsync(draftVersion, reviewPendingStatus, user.Id, ct);
+            await historyService.AddStatusHistoryAsync(draftVersion, newStatus, user.Id, ct);
         }
 
         await dbContext.SaveChangesAsync(ct);
 
-        await SendNoContentAsync(ct);
+        Response.ChangedByPublisher = isPublisher;
+    }
+
+    private static ResourceContentStatus GetNewStatus(bool isPublisher, ResourceContentStatus currentStatus)
+    {
+        var isCurrentStatusTranslation = Constants.TranslationStatuses.Contains(currentStatus);
+        return isPublisher switch
+        {
+            true when isCurrentStatusTranslation => ResourceContentStatus.TranslationPublisherReview,
+            true when !isCurrentStatusTranslation => ResourceContentStatus.AquiferizePublisherReview,
+            false when isCurrentStatusTranslation => ResourceContentStatus.TranslationReviewPending,
+            _ => ResourceContentStatus.AquiferizeReviewPending
+        };
     }
 }
