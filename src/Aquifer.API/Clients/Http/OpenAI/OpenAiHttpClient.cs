@@ -52,6 +52,5 @@ public class OpenAiHttpClient : IOpenAiHttpClient
         };
 
         return _httpClient.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseHeadersRead, ct);
-        // return await _httpClient.PostAsJsonAsync(_openAiSettings.ChatCompletionsPath, request, JsonUtilities.DefaultOptions, ct);
     }
 }
