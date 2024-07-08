@@ -7,7 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.SendForManagerReview;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService) : Endpoint<Request>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService)
+    : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -61,7 +62,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         await dbContext.SaveChangesAsync(ct);
 
-        await SendNoContentAsync(ct);
+        Response.Assignments = draftVersions.Select(x => new UserAssignment
+        {
+            ResourceContentId = x.ResourceContentId,
+            AssignedUserId = x.AssignedUserId!.Value
+        }).ToList();
     }
 
     private async Task SetAssignedUserId(UserEntity user,
