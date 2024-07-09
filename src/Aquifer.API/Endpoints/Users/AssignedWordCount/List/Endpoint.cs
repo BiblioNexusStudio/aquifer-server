@@ -15,7 +15,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                                                                  FROM Companies C
                                                                           INNER JOIN Users U ON C.Id = U.CompanyId
                                                                           INNER JOIN ResourceContentVersions RCV ON U.Id = RCV.AssignedUserId
-                                                                          CROSS APPLY (SELECT TOP 1 RCVS.WordCount
+                                                                          OUTER APPLY (SELECT TOP 1 RCVS.WordCount
                                                                                        FROM ResourceContentVersionSnapshots RCVS
                                                                                        WHERE RCVS.ResourceContentVersionId = RCV.Id
                                                                                        ORDER BY RCVS.Created) Snapshots
