@@ -4,4 +4,5 @@ public class Request
 {
     public string LanguageName { get; set; } = null!;
     public string Content { get; set; } = null!;
+    public string? Prompt { get; set; }
 }

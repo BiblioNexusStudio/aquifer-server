@@ -1,4 +1,6 @@
-﻿using Aquifer.API.Common;
+﻿using System.Net.Mime;
+using System.Text;
+using Aquifer.API.Common;
 using Aquifer.API.Configuration;
 using Aquifer.Common.Utilities;
 using Microsoft.Extensions.Options;
@@ -15,9 +17,7 @@ public class OpenAiHttpClient : IOpenAiHttpClient
     private readonly HttpClient _httpClient;
     private readonly OpenAiSettings _openAiSettings;
 
-    public OpenAiHttpClient(HttpClient httpClient,
-        IOptions<ConfigurationOptions> options,
-        IAzureKeyVaultClient keyVaultClient)
+    public OpenAiHttpClient(HttpClient httpClient, IOptions<ConfigurationOptions> options, IAzureKeyVaultClient keyVaultClient)
     {
         _httpClient = httpClient;
         _openAiSettings = options.Value.OpenAiSettings;
@@ -27,7 +27,7 @@ public class OpenAiHttpClient : IOpenAiHttpClient
             $"Bearer {keyVaultClient.GetSecretAsync(KeyVaultSecretName.OpenAiApiKey).GetAwaiter().GetResult()}");
     }
 
-    public async Task<HttpResponseMessage> PostChatCompletionsAsync(string prompt, string content, CancellationToken ct)
+    public Task<HttpResponseMessage> PostChatCompletionsAsync(string prompt, string content, CancellationToken ct)
     {
         var request = new OpenAiChatCompletionRequest
         {
@@ -46,6 +46,11 @@ public class OpenAiHttpClient : IOpenAiHttpClient
             ]
         };
 
-        return await _httpClient.PostAsJsonAsync(_openAiSettings.ChatCompletionsPath, request, JsonUtilities.DefaultOptions, ct);
+        var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, _openAiSettings.ChatCompletionsPath)
+        {
+            Content = new StringContent(JsonUtilities.DefaultSerialize(request), Encoding.UTF8, MediaTypeNames.Application.Json)
+        };
+
+        return _httpClient.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseHeadersRead, ct);
     }
 }
