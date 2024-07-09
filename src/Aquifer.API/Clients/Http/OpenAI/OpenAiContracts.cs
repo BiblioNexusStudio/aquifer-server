@@ -20,7 +20,6 @@ public class OpenAiChatCompletionResponse
 {
     // unless request specifies n > 1, this will always be length 1
     public List<OpenAiChatCompletionResponseChoices> Choices { get; set; } = [];
-    // public OpenAiChatCompletionResponseUsage Usage { get; set; } = null!;
 }
 
 public class OpenAiChatCompletionResponseChoices
