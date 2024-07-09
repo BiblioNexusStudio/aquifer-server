@@ -48,12 +48,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 draftVersion.AssignedUserId,
                 draftVersion.ResourceContent.Status,
                 ct);
-            await historyService.AddAssignedUserHistoryAsync(draftVersion, null, user.Id, ct);
 
             Helpers.SanitizeTiptapContent(draftVersion);
             draftVersion.ResourceContent.Status = newStatus;
             if (!isPublisher)
             {
+                await historyService.AddAssignedUserHistoryAsync(draftVersion, null, user.Id, ct);
                 draftVersion.AssignedUserId = null;
             }
 
