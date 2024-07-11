@@ -11,7 +11,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 {
     public override void Configure()
     {
-        Post("/admin/resources/content/{ContentId}/publish", "/resources/content/{ContentId}/publish");
+        Post("/admin/resources/content/{ContentId}/publish", "/resources/content/{ContentId}/publish", "/resources/content/publish");
         Permissions(PermissionName.PublishContent);
     }
 
@@ -22,60 +22,65 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ThrowError(Helpers.InvalidUserIdResponse);
         }
 
-        var (mostRecentContentVersion, currentlyPublishedVersion, currentDraftVersion) =
-            await Helpers.GetResourceContentVersions(request.ContentId, dbContext, ct);
+        var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
 
-        if (mostRecentContentVersion is null)
+        foreach (var contentId in contentIds)
         {
-            ThrowError(Helpers.NoResourceFoundForContentIdResponse);
-        }
+            var (mostRecentContentVersion, currentlyPublishedVersion, currentDraftVersion) =
+                await Helpers.GetResourceContentVersions(contentId, dbContext, ct);
 
-        if (request.CreateDraft && currentDraftVersion is not null)
-        {
-            ThrowError(Helpers.DraftAlreadyExistsResponse);
-        }
+            if (mostRecentContentVersion is null)
+            {
+                ThrowError(Helpers.NoResourceFoundForContentIdResponse);
+            }
 
-        // If there is currently a published version, then unpublish so this new one can become published
-        if (currentlyPublishedVersion is not null && currentlyPublishedVersion.Id != mostRecentContentVersion.Id)
-        {
-            currentlyPublishedVersion.IsPublished = false;
-        }
+            if (request.CreateDraft && currentDraftVersion is not null)
+            {
+                ThrowError(Helpers.DraftAlreadyExistsResponse);
+            }
 
-        mostRecentContentVersion.IsDraft = false;
-        mostRecentContentVersion.IsPublished = true;
-        Helpers.SanitizeTiptapContent(mostRecentContentVersion);
+            // If there is currently a published version, then unpublish so this new one can become published
+            if (currentlyPublishedVersion is not null && currentlyPublishedVersion.Id != mostRecentContentVersion.Id)
+            {
+                currentlyPublishedVersion.IsPublished = false;
+            }
 
-        var user = await userService.GetUserFromJwtAsync(ct);
-        if (mostRecentContentVersion.AssignedUserId is not null)
-        {
-            await historyService.AddSnapshotHistoryAsync(mostRecentContentVersion,
-                mostRecentContentVersion.AssignedUserId,
-                mostRecentContentVersion.ResourceContent.Status,
-                ct);
-            mostRecentContentVersion.AssignedUserId = null;
-            await historyService.AddAssignedUserHistoryAsync(mostRecentContentVersion, null, user.Id, ct);
-        }
+            mostRecentContentVersion.IsDraft = false;
+            mostRecentContentVersion.IsPublished = true;
+            Helpers.SanitizeTiptapContent(mostRecentContentVersion);
 
-        if (request.CreateDraft)
-        {
-            // create draft of published version
-            await Helpers.CreateNewDraft(dbContext,
-                request.ContentId,
-                request.AssignedUserId,
-                mostRecentContentVersion,
-                true,
-                userService,
-                user,
-                historyService,
-                ct);
-        }
-        else
-        {
-            var resourceContent = await dbContext.ResourceContents.FirstOrDefaultAsync(x => x.Id == request.ContentId, ct) ??
-                throw new ArgumentNullException();
-            resourceContent.Status = ResourceContentStatus.Complete;
+            var user = await userService.GetUserFromJwtAsync(ct);
+            if (mostRecentContentVersion.AssignedUserId is not null)
+            {
+                await historyService.AddSnapshotHistoryAsync(mostRecentContentVersion,
+                    mostRecentContentVersion.AssignedUserId,
+                    mostRecentContentVersion.ResourceContent.Status,
+                    ct);
+                mostRecentContentVersion.AssignedUserId = null;
+                await historyService.AddAssignedUserHistoryAsync(mostRecentContentVersion, null, user.Id, ct);
+            }
 
-            await historyService.AddStatusHistoryAsync(mostRecentContentVersion, ResourceContentStatus.Complete, user.Id, ct);
+            if (request.CreateDraft)
+            {
+                // create draft of published version
+                await Helpers.CreateNewDraft(dbContext,
+                    contentId,
+                    request.AssignedUserId,
+                    mostRecentContentVersion,
+                    true,
+                    userService,
+                    user,
+                    historyService,
+                    ct);
+            }
+            else
+            {
+                var resourceContent = await dbContext.ResourceContents.FirstOrDefaultAsync(x => x.Id == contentId, ct) ??
+                                      throw new ArgumentNullException();
+                resourceContent.Status = ResourceContentStatus.Complete;
+
+                await historyService.AddStatusHistoryAsync(mostRecentContentVersion, ResourceContentStatus.Complete, user.Id, ct);
+            }
         }
 
         await dbContext.SaveChangesAsync(ct);
