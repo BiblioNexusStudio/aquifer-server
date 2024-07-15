@@ -9,11 +9,6 @@ on:
             - 'src/Aquifer.Data/**'
             - 'src/Aquifer.Jobs/**'
     workflow_dispatch:
-        inputs:
-            environment:
-                description: Environment
-                type: environment
-                required: true
 
 permissions:
     id-token: write
@@ -44,7 +39,7 @@ jobs:
                   path: build
 
     deploy_jobs_to_dev_qa:
-        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'dev-qa-jobs'
+        if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
         name: Deploy Jobs to dev/qa
         runs-on: ubuntu-latest
         needs: build
@@ -63,7 +58,7 @@ jobs:
                   publish-profile: ${{ secrets.AZURE_FUNCTION_APP_PUBLISH_PROFILE_DEV_QA }}
 
     deploy_jobs_to_prod:
-        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'prod-jobs'
+        if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
         name: Deploy Jobs to prod
         runs-on: ubuntu-latest
         needs: build

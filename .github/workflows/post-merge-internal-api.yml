@@ -4,16 +4,13 @@ on:
     push:
         branches:
             - master
+            - 'release-patch-*'
+            - 'release-hotfix-*'
         paths:
             - 'src/Aquifer.Common/**'
             - 'src/Aquifer.API/**'
             - 'src/Aquifer.Data/**'
     workflow_dispatch:
-        inputs:
-            environment:
-                description: Environment
-                type: environment
-                required: true
 
 permissions:
     id-token: write
@@ -22,7 +19,21 @@ permissions:
     pull-requests: read
 
 jobs:
+    check_should_deploy:
+        runs-on: ubuntu-latest
+        outputs:
+            should_deploy: ${{ github.event_name == 'workflow_dispatch' || steps.check_deploy.outputs.should_deploy == 'true' }}
+        steps:
+            - id: check_deploy
+              if: github.event_name != 'workflow_dispatch'
+              uses: BiblioNexusStudio/github-actions/check-if-branch-should-deploy@master
+              with:
+                  current_branch: ${{ github.ref_name }}
+
     build:
+        needs:
+            - check_should_deploy
+        if: needs.check_should_deploy.outputs.should_deploy == 'true'
         name: Build
         runs-on: ubuntu-latest
         steps:
@@ -51,7 +62,7 @@ jobs:
                   path: build
 
     deploy_internal_api_to_dev:
-        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'dev-internal'
+        if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
         name: Deploy Internal API to dev
         runs-on: ubuntu-latest
         needs: build
@@ -73,7 +84,7 @@ jobs:
                   azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     deploy_internal_api_to_qa:
-        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'qa-internal'
+        if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
         name: Deploy Internal API to qa
         runs-on: ubuntu-latest
         needs: build
@@ -100,7 +111,7 @@ jobs:
                   service-name: Internal API
 
     deploy_internal_api_to_prod:
-        if: github.ref == 'refs/heads/master' || github.event.inputs.environment == 'prod-internal'
+        if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
         name: Deploy Internal API to prod
         runs-on: ubuntu-latest
         needs: build
@@ -127,23 +138,8 @@ jobs:
                   linear-api-key: ${{ secrets.LINEAR_API_KEY }}
                   slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
                   service-name: Internal API
-
-    e2e_tests:
-        name: E2E tests
-        runs-on: ubuntu-latest
-        needs: deploy_internal_api_to_dev
-        steps:
-            - name: Checkout E2E test code
-              uses: actions/checkout@v4
+            - uses: BiblioNexusStudio/github-actions/delete-hotfix-or-patch-branch@master
               with:
-                  repository: BiblioNexusStudio/well-e2e
-                  ssh-key: ${{ secrets.WELL_E2E_DEPLOY_KEY }}
-            - name: Use Node.js
-              uses: actions/setup-node@v3
-              with:
-                  node-version: 18.16.0
-                  cache: yarn
-            - name: Install dependencies
-              run: yarn install --frozen-lockfile
-            - name: Test
-              run: yarn test:ci --url ${{ vars.URL_DEV }}
+                  current_branch: ${{ github.ref_name }}
+                  app_id: ${{ secrets.BIBLIONEXUS_BOT_APP_ID }}
+                  private_key: ${{ secrets.BIBLIONEXUS_BOT_PRIVATE_KEY }}
