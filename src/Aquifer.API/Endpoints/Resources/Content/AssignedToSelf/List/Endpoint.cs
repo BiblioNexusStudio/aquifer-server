@@ -43,21 +43,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         var resourceContentVersionIds = queryResults.Select(x => x.ResourceContentVersionId);
 
-        var assignmentHistory = await dbContext.ResourceContentVersionAssignedUserHistory
-            .Where(x => resourceContentVersionIds.Contains(x.ResourceContentVersionId)).OrderByDescending(x => x.Id)
-            .Include(x => x.AssignedUser).ToListAsync(ct);
-
-        var groupedAssignmentsHistories = assignmentHistory.GroupBy(x => x.ResourceContentVersionId);
-
-        List<(int resourceContentVersionIds, UserDto? user)> lastAssignments = [];
-        foreach (var versionHistory in groupedAssignmentsHistories)
-        {
-            var lastAssignment = versionHistory.OrderByDescending(x => x.Id).Skip(1).Take(1).FirstOrDefault();
-            if (lastAssignment is not null)
-            {
-                lastAssignments.Add((lastAssignment.ResourceContentVersionId, UserDto.FromUserEntity(lastAssignment.AssignedUser)));
-            }
-        }
+        List<(int resourceContentVersionIds, UserDto? user)> lastAssignments =
+            await Helpers.GetLastAssignmentsAsync(resourceContentVersionIds, dbContext, ct);
 
         Response = queryResults.Select(x => new Response
         {

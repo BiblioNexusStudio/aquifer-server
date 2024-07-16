@@ -1,3 +1,4 @@
+using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
 using Aquifer.Common.Tiptap;
 using Aquifer.Common.Utilities;
@@ -82,5 +83,30 @@ public static class Helpers
         // Remove inline comments or anything else that needs to be sanitized.
         var deserializedContent = JsonUtilities.DefaultDeserialize<List<TiptapModel<TiptapRootContentFiltered>>>(version.Content);
         version.Content = JsonUtilities.DefaultSerialize(deserializedContent);
+    }
+
+    public static async Task<List<(int resourceContentVersionId, UserDto? user)>> GetLastAssignmentsAsync(
+        IEnumerable<int> resourceContentVersionIds,
+        AquiferDbContext dbContext,
+        CancellationToken ct
+    )
+    {
+        var assignmentHistory = await dbContext.ResourceContentVersionAssignedUserHistory
+            .Where(x => resourceContentVersionIds.Contains(x.ResourceContentVersionId)).OrderByDescending(x => x.Id)
+            .Include(x => x.AssignedUser).ToListAsync(ct);
+
+        var groupedAssignmentsHistories = assignmentHistory.GroupBy(x => x.ResourceContentVersionId);
+
+        var lastAssignments = new List<(int resourceContentVersionId, UserDto? user)>();
+        foreach (var versionHistory in groupedAssignmentsHistories)
+        {
+            var lastAssignment = versionHistory.OrderByDescending(x => x.Id).Skip(1).Take(1).FirstOrDefault();
+            if (lastAssignment != null)
+            {
+                lastAssignments.Add((lastAssignment.ResourceContentVersionId, UserDto.FromUserEntity(lastAssignment.AssignedUser)));
+            }
+        }
+
+        return lastAssignments;
     }
 }

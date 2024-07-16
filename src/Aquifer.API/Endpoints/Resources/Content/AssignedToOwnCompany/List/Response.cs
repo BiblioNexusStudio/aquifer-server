@@ -19,4 +19,5 @@ public class Response
     public required UserDto AssignedUser { get; set; }
 
     public required int? DaysSinceContentUpdated { get; set; }
+    public UserDto? LastAssignedUser { get; set; }
 }
