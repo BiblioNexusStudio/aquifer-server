@@ -19,8 +19,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var self = await userService.GetUserFromJwtAsync(ct);
 
         var users = await dbContext.Users.Where(x =>
-                userService.HasPermission(PermissionName.ReadAllUsers) ||
-                (userService.HasPermission(PermissionName.ReadUsers) && self.CompanyId == x.CompanyId && x.Enabled))
+                (userService.HasPermission(PermissionName.ReadAllUsers) ||
+                (userService.HasPermission(PermissionName.ReadUsers) && self.CompanyId == x.CompanyId)) && x.Enabled)
             .OrderBy(x => x.FirstName)
             .ThenBy(x => x.LastName).Select(user => new Response
             {
