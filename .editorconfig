@@ -16,6 +16,9 @@ dotnet_diagnostic.CS1591.severity = none
 # Suppress ternary expression warning
 dotnet_diagnostic.IDE0046.severity = none
 
+# Suppress some indenting warnings
+dotnet_diagnostic.IDE0055.severity = none
+
 #### Core EditorConfig Options ####
 
 # Indentation and spacing
