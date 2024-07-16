@@ -14,10 +14,8 @@ public class Response
     public required int SortOrder { get; set; }
     public required ResourceContentStatus StatusValue { get; set; }
     public required string StatusDisplayName { get; set; }
-
     public required int? DaysUntilProjectDeadline { get; set; }
     public required UserDto AssignedUser { get; set; }
-
     public required int? DaysSinceContentUpdated { get; set; }
-    public UserDto? LastAssignedUser { get; set; }
+    public required UserDto? LastAssignedUser { get; set; }
 }

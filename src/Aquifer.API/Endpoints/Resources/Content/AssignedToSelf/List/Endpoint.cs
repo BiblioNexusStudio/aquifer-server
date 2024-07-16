@@ -1,4 +1,3 @@
-using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
 using Aquifer.Common.Extensions;
 using Aquifer.Data;
@@ -40,10 +39,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var user = await userService.GetUserFromJwtAsync(ct);
         var queryResults = await dbContext.Database
             .SqlQueryRaw<SqlQueryResult>(Query, user.Id, (int)ResourceContentStatus.TranslationNotStarted).ToListAsync(ct);
-
         var resourceContentVersionIds = queryResults.Select(x => x.ResourceContentVersionId);
-
-        List<(int resourceContentVersionIds, UserDto? user)> lastAssignments =
+        var lastAssignments =
             await Helpers.GetLastAssignmentsAsync(resourceContentVersionIds, dbContext, ct);
 
         Response = queryResults.Select(x => new Response
@@ -63,7 +60,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 ? null
                 : (x.ProjectedDeliveryDate.Value.ToDateTime(new TimeOnly(23, 59)) - DateTime.UtcNow).Days,
             DaysSinceContentUpdated = x.ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)x.ContentUpdated).Days,
-            LastAssignedUser = lastAssignments.FirstOrDefault(a => a.resourceContentVersionIds == x.ResourceContentVersionId).user
+            LastAssignedUser = lastAssignments.FirstOrDefault(a => a.resourceContentVersionId == x.ResourceContentVersionId).user
         }).OrderByDescending(x => x.DaysSinceAssignment).ThenBy(x => x.ProjectName).ThenBy(x => x.EnglishLabel);
     }
 }
