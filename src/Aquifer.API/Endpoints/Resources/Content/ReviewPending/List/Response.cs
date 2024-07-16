@@ -9,6 +9,7 @@ public class Response
     public required string ParentResourceName { get; set; }
     public required string LanguageEnglishDisplay { get; set; }
     public required int SortOrder { get; set; }
+    public required string? ProjectName { get; set; }
 
     public int DaysSinceStatusChange => (DateTime.UtcNow - LastStatusUpdate).Days;
 

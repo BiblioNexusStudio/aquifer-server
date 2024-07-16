@@ -3,11 +3,15 @@ using Aquifer.API.Clients.Http.OpenAI;
 using Aquifer.API.Common;
 using Aquifer.API.Configuration;
 using FastEndpoints;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Options;
 
 namespace Aquifer.API.Endpoints.AI.Translate;
 
-public partial class Endpoint(IOpenAiHttpClient openAiClient, IOptions<ConfigurationOptions> options) : Endpoint<Request>
+public partial class Endpoint(
+    IOpenAiHttpClient openAiClient,
+    IOptions<ConfigurationOptions> options,
+    IConfiguration configuration) : Endpoint<Request>
 {
     public override void Configure()
     {
@@ -17,9 +21,12 @@ public partial class Endpoint(IOpenAiHttpClient openAiClient, IOptions<Configura
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var prompt = req.Prompt ?? $"{options.Value.OpenAiSettings.HtmlSimplifyBasePrompt} Then translate to {req.LanguageName}";
+        HttpContext.Features.Get<IHttpResponseBodyFeature>()?.DisableBuffering();
+        HttpContext.Response.ContentType = "text/event-stream";
 
+        var prompt = req.Prompt ?? GetPrompt(req);
         var paragraphChunks = ParagraphRegex().Split(req.Content);
+
         foreach (var paragraphChunk in paragraphChunks)
         {
             List<string> sentenceSplits = [];
@@ -48,6 +55,18 @@ public partial class Endpoint(IOpenAiHttpClient openAiClient, IOptions<Configura
                 await HttpContext.Response.Body.FlushAsync(ct);
             }
         }
+    }
+
+    private string GetPrompt(Request req)
+    {
+        string? languagePrompt = null;
+        if (req.LanguageCode is not null)
+        {
+            languagePrompt = configuration.GetSection($"LanguagePrompts:{req.LanguageCode}").Value;
+        }
+
+        languagePrompt ??= $"Then translate to {req.LanguageName}";
+        return $"{options.Value.OpenAiSettings.HtmlSimplifyBasePrompt} {languagePrompt}";
     }
 
     [GeneratedRegex("/(<h\\d|<p)/")]

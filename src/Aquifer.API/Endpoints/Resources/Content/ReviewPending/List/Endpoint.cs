@@ -27,6 +27,8 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
                     LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
                     ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
                     LastStatusUpdate = x.ResourceContent.Updated,
+                    ProjectName =
+                        x.ResourceContent.Projects.FirstOrDefault() == null ? null : x.ResourceContent.Projects.FirstOrDefault()!.Name,
                     WordCount = x.WordCount,
                     SortOrder = x.ResourceContent.Resource.SortOrder,
                     ContentUpdated = x.ResourceContent.ContentUpdated

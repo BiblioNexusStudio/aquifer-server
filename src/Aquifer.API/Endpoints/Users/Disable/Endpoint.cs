@@ -3,8 +3,8 @@ using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
-using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Users.Disable;
 
@@ -12,7 +12,7 @@ public class Endpoint(
     AquiferDbContext dbContext,
     IUserService userService,
     IAuth0HttpClient auth0HttpClient,
-    ILogger<Endpoint> logger) : Endpoint<Request, Response>
+    ILogger<Endpoint> logger) : Endpoint<Request>
 {
     public override void Configure()
     {
@@ -28,73 +28,52 @@ public class Endpoint(
         if (userToDisable is null ||
             (!currentUserPermissions.Contains(PermissionName.DisableUser) && currentUser.CompanyId != userToDisable.CompanyId))
         {
-            Response response = new()
-            {
-                HasError = true,
-                Error = "User not found"
-            };
-
-            await SendAsync(response, 404, ct);
+            await SendNotFoundAsync(ct);
             return;
         }
 
-        var assignedResources = await dbContext.ResourceContentVersions.Where(x => x.AssignedUserId == userToDisable.Id).ToListAsync(ct);
-        if (assignedResources.Count > 0)
+        if (userToDisable.Role is UserRole.Publisher or UserRole.Admin && currentUser.Role != UserRole.Admin)
         {
-            Response response = new()
-            {
-                HasError = true,
-                Error = "Cannot remove a user with assigned items",
-                AssignedResources = assignedResources.Select(x => new DisableUserAssignedResourceResponse
-                {
-                    ResourceContentId = x.ResourceContentId,
-                    DisplayName = x.DisplayName
-                })
-            };
-
-            await SendAsync(response, 400, ct);
+            await SendForbiddenAsync(ct);
             return;
         }
 
-        var authTokenResponse = await auth0HttpClient.GetAuth0Token(ct);
-        var authTokenResponseContent = await authTokenResponse.Content.ReadAsStringAsync(ct);
-        if (!authTokenResponse.IsSuccessStatusCode)
-        {
-            await HandleErrorAsync(authTokenResponse, authTokenResponseContent, "Error getting Auth0 access token", ct);
-            return;
-        }
+        var token = await GetAuth0TokenAsync(ct);
+        await BlockAuth0UserAsync(userToDisable, token, ct);
 
-        var token = JsonUtilities.DefaultDeserialize<Auth0TokenResponse>(authTokenResponseContent).AccessToken;
+        userToDisable.Enabled = false;
+        await dbContext.SaveChangesAsync(ct);
+    }
+
+    private async Task BlockAuth0UserAsync(UserEntity userToDisable, string token, CancellationToken ct)
+    {
         var blockUserResponse = await auth0HttpClient.BlockUser(userToDisable.ProviderId, token, ct);
         var blockUserResponseContent = await blockUserResponse.Content.ReadAsStringAsync(ct);
         if (!blockUserResponse.IsSuccessStatusCode)
         {
-            await HandleErrorAsync(blockUserResponse, blockUserResponseContent, "Error blocking user on Auth0", ct);
-            return;
+            HandleErrorAsync(blockUserResponse, blockUserResponseContent, "Error blocking user on Auth0");
         }
-
-        userToDisable.Enabled = false;
-        await dbContext.SaveChangesAsync(ct);
-
-        await SendOkAsync(new Response(), ct);
     }
 
-    private async Task HandleErrorAsync(HttpResponseMessage responseMessage,
-        string responseMessageContent,
-        string error,
-        CancellationToken ct)
+    private async Task<string> GetAuth0TokenAsync(CancellationToken ct)
+    {
+        var authTokenResponse = await auth0HttpClient.GetAuth0Token(ct);
+        var authTokenResponseContent = await authTokenResponse.Content.ReadAsStringAsync(ct);
+        if (!authTokenResponse.IsSuccessStatusCode)
+        {
+            HandleErrorAsync(authTokenResponse, authTokenResponseContent, "Error getting Auth0 access token");
+        }
+
+        return JsonUtilities.DefaultDeserialize<Auth0TokenResponse>(authTokenResponseContent).AccessToken;
+    }
+
+    private void HandleErrorAsync(HttpResponseMessage responseMessage, string responseMessageContent, string error)
     {
         logger.LogError("{error} - {statusCode} - {responseMessageContent}",
             error,
             (int)responseMessage.StatusCode,
             responseMessageContent);
 
-        Response response = new()
-        {
-            HasError = true,
-            Error = "An error occurred. Please try again later."
-        };
-
-        await SendAsync(response, 500, ct);
+        ThrowError("Error from Auth0");
     }
 }
