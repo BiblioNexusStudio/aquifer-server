@@ -26,7 +26,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 LastActionTime = x.Created,
                 ParentResourceName = x.ResourceContentVersion.ResourceContent.Resource.ParentResource.DisplayName,
                 SortOrder = x.ResourceContentVersion.ResourceContent.Resource.SortOrder,
-                SourceWords = Random.Shared.Next() // TODO
+                SourceWords = x.ResourceContentVersion.SourceWordCount
             })
             .ToListAsync(ct);
 
