@@ -23,7 +23,8 @@ public static class Helpers
             draftVersion)> GetResourceContentVersions(int contentId, AquiferDbContext dbContext, CancellationToken cancellationToken)
     {
         var resourceContentVersions = await dbContext.ResourceContentVersions.Where(x => x.ResourceContentId == contentId)
-            .Include(x => x.ResourceContent).ToListAsync(cancellationToken);
+            .Include(x => x.ResourceContent)
+            .ToListAsync(cancellationToken);
 
         return (resourceContentVersions.MaxBy(x => x.Version), resourceContentVersions.SingleOrDefault(x => x.IsPublished),
             resourceContentVersions.SingleOrDefault(x => x.IsDraft));
@@ -49,6 +50,7 @@ public static class Helpers
             DisplayName = mostRecentResourceContentVersion.DisplayName,
             Content = mostRecentResourceContentVersion.Content,
             WordCount = mostRecentResourceContentVersion.WordCount,
+            SourceWordCount = mostRecentResourceContentVersion.WordCount,
             ContentSize = mostRecentResourceContentVersion.ContentSize,
             AssignedUserId = assignedUserId,
             Created = DateTime.UtcNow,
@@ -88,12 +90,13 @@ public static class Helpers
     public static async Task<List<(int resourceContentVersionId, UserDto? user)>> GetLastAssignmentsAsync(
         IEnumerable<int> resourceContentVersionIds,
         AquiferDbContext dbContext,
-        CancellationToken ct
-    )
+        CancellationToken ct)
     {
         var assignmentHistory = await dbContext.ResourceContentVersionAssignedUserHistory
-            .Where(x => resourceContentVersionIds.Contains(x.ResourceContentVersionId)).OrderByDescending(x => x.Id)
-            .Include(x => x.AssignedUser).ToListAsync(ct);
+            .Where(x => resourceContentVersionIds.Contains(x.ResourceContentVersionId))
+            .OrderByDescending(x => x.Id)
+            .Include(x => x.AssignedUser)
+            .ToListAsync(ct);
 
         var groupedAssignmentsHistories = assignmentHistory.GroupBy(x => x.ResourceContentVersionId);
 
