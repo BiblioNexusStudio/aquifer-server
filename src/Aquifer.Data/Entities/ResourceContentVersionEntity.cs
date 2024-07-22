@@ -4,8 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
-[Index(nameof(AssignedUserId))]
-[EntityTypeConfiguration(typeof(ResourceContentVersionEntityConfiguration))]
+[Index(nameof(AssignedUserId)), EntityTypeConfiguration(typeof(ResourceContentVersionEntityConfiguration))]
 public class ResourceContentVersionEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
@@ -20,7 +19,7 @@ public class ResourceContentVersionEntity : IHasUpdatedTimestamp
     public string Content { get; set; } = null!; // JSON
     public int ContentSize { get; set; }
     public int? WordCount { get; set; }
-    public bool? HadMachineTranslation { get; set; } // delete this after moving data to new table
+    public int? SourceWordCount { get; set; }
 
     public int? AssignedUserId { get; set; }
     public UserEntity? AssignedUser { get; set; }
@@ -30,11 +29,11 @@ public class ResourceContentVersionEntity : IHasUpdatedTimestamp
 
     public ICollection<ResourceContentVersionMachineTranslationEntity> MachineTranslations { get; set; } = [];
 
-    public IEnumerable<ResourceContentVersionStatusHistoryEntity> ResourceContentVersionStatusHistories { get; set; }
-        = new List<ResourceContentVersionStatusHistoryEntity>();
+    public IEnumerable<ResourceContentVersionStatusHistoryEntity> ResourceContentVersionStatusHistories { get; set; } =
+        new List<ResourceContentVersionStatusHistoryEntity>();
 
-    public IEnumerable<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistories { get; set; }
-        = new List<ResourceContentVersionAssignedUserHistoryEntity>();
+    public IEnumerable<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistories { get; set; } =
+        new List<ResourceContentVersionAssignedUserHistoryEntity>();
 
     public ICollection<ResourceContentVersionSnapshotEntity> ResourceContentVersionSnapshots { get; set; } =
         new List<ResourceContentVersionSnapshotEntity>();
@@ -49,16 +48,17 @@ public class ResourceContentVersionEntityConfiguration : IEntityTypeConfiguratio
 {
     public void Configure(EntityTypeBuilder<ResourceContentVersionEntity> builder)
     {
-        builder
-            .ToTable(b => b.HasCheckConstraint("CK_ResourceContentVersions_IsPublishedOrIsDraftNotBoth",
-                "IsPublished = 0 OR IsDraft = 0"));
+        builder.ToTable(b =>
+            b.HasCheckConstraint("CK_ResourceContentVersions_IsPublishedOrIsDraftNotBoth", "IsPublished = 0 OR IsDraft = 0"));
 
-        builder
-            .HasIndex(x => new { x.ResourceContentId, x.Version })
+        builder.HasIndex(x => new
+            {
+                x.ResourceContentId,
+                x.Version
+            })
             .IsUnique();
 
-        builder
-            .HasIndex(x => x.ResourceContentId)
+        builder.HasIndex(x => x.ResourceContentId)
             .HasFilter($"{nameof(ResourceContentVersionEntity.IsDraft)} = 1")
             .HasDatabaseName("IX_ResourceContentVersions_ResourceContentId_IsDraft")
             .IsUnique();
