@@ -77,21 +77,20 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                                  R.EnglishLabel,
                                  PR.DisplayName AS ParentResourceName,
                                  RC.Status,
-                                 Snapshots.AssignedUserName,
+                                 CASE
+                                    WHEN RCVD.AssignedUserId IS NULL THEN NULL
+                                    ELSE U.FirstName + ' ' + U.LastName
+                                 END AS AssignedUserName,
                                  R.SortOrder
                              FROM ResourceContents RC
                              INNER JOIN Resources R ON R.Id = RC.ResourceId
                              INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
+                             LEFT JOIN ResourceContentVersions RCVD ON RCVD.ResourceContentId = RC.Id AND RCVD.IsDraft = 1
+                             LEFT JOIN Users U on U.Id = RCVD.AssignedUserId
                              CROSS APPLY (
-                                 SELECT TOP 1
-                                     COALESCE(RCVS.WordCount, RCV.WordCount) AS WordCount,
-                                     CASE
-                                         WHEN RCV.AssignedUserId IS NULL THEN NULL
-                                         ELSE U.FirstName + ' ' + U.LastName
-                                     END AS AssignedUserName
+                                 SELECT TOP 1 COALESCE(RCVS.WordCount, RCV.WordCount) AS WordCount
                                  FROM ResourceContentVersions RCV
                                  LEFT JOIN ResourceContentVersionSnapshots RCVS ON RCVS.ResourceContentVersionId = RCV.Id
-                                 LEFT JOIN Users U ON U.Id = RCV.AssignedUserId
                                  WHERE RCV.ResourceContentId = RC.Id
                                  ORDER BY RCVS.Created ASC, RCV.Version DESC
                              ) Snapshots
