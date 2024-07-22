@@ -42,9 +42,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ThrowError("Invalid language id");
         }
 
-        var baseVersion = request.UseDraft
-            ? baseContent.Versions.Single(x => x.IsDraft)
-            : baseContent.Versions.Single(x => x.IsPublished);
+        var baseVersion = request.UseDraft ? baseContent.Versions.Single(x => x.IsDraft) : baseContent.Versions.Single(x => x.IsPublished);
 
         var newResourceContentVersion = new ResourceContentVersionEntity
         {
@@ -54,6 +52,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             Content = baseVersion.Content,
             ContentSize = baseVersion.ContentSize,
             WordCount = baseVersion.WordCount,
+            SourceWordCount = baseVersion.WordCount,
             Version = 1
         };
 

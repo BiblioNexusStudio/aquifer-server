@@ -8,8 +8,7 @@ using static Aquifer.API.Helpers.EndpointHelpers;
 
 namespace Aquifer.API.Endpoints.Projects.Create;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService)
-    : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -132,7 +131,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
             .Where(rc => request.ResourceIds.Contains(rc.ResourceId) &&
                 rc.LanguageId == language.Id &&
                 rc.MediaType != ResourceContentMediaType.Audio)
-            .Include(rc => rc.Versions.OrderByDescending(v => v.Created)).Include(rc => rc.Projects).ToListAsync(ct);
+            .Include(rc => rc.Versions.OrderByDescending(v => v.Created))
+            .Include(rc => rc.Projects)
+            .ToListAsync(ct);
 
         if (resourceContents.Count < request.ResourceIds.Length)
         {
@@ -163,6 +164,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
                     Content = firstVersion.Content,
                     ContentSize = firstVersion.ContentSize,
                     WordCount = firstVersion.WordCount,
+                    SourceWordCount = firstVersion.WordCount,
                     Version = firstVersion.Version + 1,
                     ResourceContent = resourceContent
                 });
@@ -180,9 +182,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
         var englishOrLanguageResourceContents = await dbContext.ResourceContents
             .Where(rc => request.ResourceIds.Contains(rc.ResourceId) && rc.MediaType != ResourceContentMediaType.Audio)
             .Where(rc => rc.LanguageId == language.Id ||
-                (rc.Resource.ResourceContents.All(rci => rci.LanguageId != language.Id) &&
-                    rc.Language.ISO6393Code == "eng"))
-            .Include(rc => rc.Versions).Include(rc => rc.Projects).Include(rc => rc.Language).ToListAsync(ct);
+                (rc.Resource.ResourceContents.All(rci => rci.LanguageId != language.Id) && rc.Language.ISO6393Code == "eng"))
+            .Include(rc => rc.Versions)
+            .Include(rc => rc.Projects)
+            .Include(rc => rc.Language)
+            .ToListAsync(ct);
 
         List<ResourceContentEntity> resourceContents = [];
 
@@ -204,6 +208,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
                     Content = baseVersion.Content,
                     ContentSize = baseVersion.ContentSize,
                     WordCount = baseVersion.WordCount,
+                    SourceWordCount = baseVersion.WordCount,
                     ResourceContentVersionStatusHistories =
                     [
                         new ResourceContentVersionStatusHistoryEntity
