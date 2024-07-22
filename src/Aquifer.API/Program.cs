@@ -12,6 +12,7 @@ using FastEndpoints;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,12 +44,22 @@ builder.Services.AddAuth(configuration?.JwtSettings)
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbContext>();
 
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddResponseCompression(options => options.Providers.Add<GzipCompressionProvider>());
+}
+
 builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
 
 var app = builder.Build();
 
 app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseHealthChecks("/_health");
+if (builder.Environment.IsDevelopment())
+{
+    app.UseResponseCompression();
+}
+
 app.UseAuth();
 app.UseMiddleware<TrackResourceContentRequestMiddleware>();
 app.UseOutputCache();
