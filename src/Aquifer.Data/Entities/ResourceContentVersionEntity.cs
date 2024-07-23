@@ -20,7 +20,7 @@ public class ResourceContentVersionEntity : IHasUpdatedTimestamp
     public int ContentSize { get; set; }
     public int? WordCount { get; set; }
     public int? SourceWordCount { get; set; }
-
+    public int? InlineMediaSize { get; set; }
     public int? AssignedUserId { get; set; }
     public UserEntity? AssignedUser { get; set; }
 
