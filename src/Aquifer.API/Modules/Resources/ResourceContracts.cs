@@ -20,6 +20,7 @@ public class ResourceItemResponse
     public int Version { get; set; }
     public ResourceContentMediaType MediaTypeName { get; set; }
     public int ContentSize { get; set; }
+    public int? InlineMediaSize { get; set; }
 }
 
 public class ResourceItemTextContentResponse
