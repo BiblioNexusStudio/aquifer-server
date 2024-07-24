@@ -33,7 +33,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var query = $"""
                      SELECT RCV.ResourceContentId AS ResourceContentId, RCV.Id AS ResourceContentVersionId, R.EnglishLabel, PR.DisplayName AS ParentResourceName, U.Id AS UserId,
                             U.FirstName AS UserFirstName, U.LastName AS UserLastName, RC.Status AS StatusValue,
-                            L.EnglishDisplay AS LanguageEnglishDisplay, RCV.WordCount, P.Name AS ProjectName,
+                            L.EnglishDisplay AS LanguageEnglishDisplay, RCV.SourceWordCount AS WordCount, P.Name AS ProjectName,
                             P.ProjectedDeliveryDate AS ProjectProjectedDeliveryDate, R.SortOrder, RC.ContentUpdated
                      FROM ResourceContentVersions AS RCV
                               INNER JOIN Users AS U ON RCV.AssignedUserId = U.Id
@@ -52,28 +52,24 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             await Helpers.GetLastAssignmentsAsync(resourceContentVersionIds, dbContext, ct);
 
         Response = queryResponse.Select(x => new Response
-            {
-                Id = x.ResourceContentId,
-                EnglishLabel = x.EnglishLabel,
-                ParentResourceName = x.ParentResourceName,
-                LanguageEnglishDisplay = x.LanguageEnglishDisplay,
-                WordCount = x.WordCount,
-                ProjectName = x.ProjectName,
-                SortOrder = x.SortOrder,
-                StatusValue = x.StatusValue,
-                StatusDisplayName = x.StatusValue.GetDisplayName(),
-                AssignedUser = new UserDto
-                {
-                    Id = x.UserId,
-                    Name = $"{x.UserFirstName} {x.UserLastName}"
-                },
-                DaysSinceContentUpdated = x.ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)x.ContentUpdated).Days,
-                DaysUntilProjectDeadline =
+        {
+            Id = x.ResourceContentId,
+            EnglishLabel = x.EnglishLabel,
+            ParentResourceName = x.ParentResourceName,
+            LanguageEnglishDisplay = x.LanguageEnglishDisplay,
+            WordCount = x.WordCount,
+            ProjectName = x.ProjectName,
+            SortOrder = x.SortOrder,
+            StatusValue = x.StatusValue,
+            StatusDisplayName = x.StatusValue.GetDisplayName(),
+            AssignedUser = new UserDto { Id = x.UserId, Name = $"{x.UserFirstName} {x.UserLastName}" },
+            DaysSinceContentUpdated = x.ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)x.ContentUpdated).Days,
+            DaysUntilProjectDeadline =
                     x.ProjectProjectedDeliveryDate == null
                         ? null
                         : (x.ProjectProjectedDeliveryDate.Value.ToDateTime(new TimeOnly(23, 59)) - DateTime.UtcNow).Days,
-                LastAssignedUser = lastAssignments.FirstOrDefault(a => a.resourceContentVersionId == x.ResourceContentVersionId).user
-            }).OrderBy(x => x.DaysUntilProjectDeadline)
+            LastAssignedUser = lastAssignments.FirstOrDefault(a => a.resourceContentVersionId == x.ResourceContentVersionId).user
+        }).OrderBy(x => x.DaysUntilProjectDeadline)
             .ThenBy(x => x.ProjectName)
             .ThenBy(x => x.ParentResourceName)
             .ThenBy(x => x.SortOrder)

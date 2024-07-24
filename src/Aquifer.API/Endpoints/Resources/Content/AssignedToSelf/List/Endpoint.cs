@@ -11,7 +11,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 {
     private const string Query = """
                                  SELECT RCV.ResourceContentId AS ResourceContentId, RCV.Id AS ResourceContentVersionId, R.EnglishLabel, PR.DisplayName AS ParentResourceName,
-                                        L.EnglishDisplay AS LanguageEnglishDisplay, RCV.WordCount, RC.Status AS StatusValue,
+                                        L.EnglishDisplay AS LanguageEnglishDisplay, RCV.SourceWordCount AS WordCount, RC.Status AS StatusValue,
                                         P.Name AS ProjectName, P.ProjectedDeliveryDate, History.Created AS HistoryCreated, R.SortOrder, RC.ContentUpdated
                                  FROM ResourceContentVersions AS RCV
                                      INNER JOIN ResourceContents AS RC ON RCV.ResourceContentId = RC.Id

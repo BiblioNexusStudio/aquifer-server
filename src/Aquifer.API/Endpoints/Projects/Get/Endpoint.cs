@@ -73,7 +73,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         const string query = """
                              SELECT
                                  RC.Id AS ResourceContentId,
-                                 Snapshots.WordCount,
+                                 RCVD.SourceWordCount AS WordCount,
                                  R.EnglishLabel,
                                  PR.DisplayName AS ParentResourceName,
                                  RC.Status,
@@ -87,13 +87,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                              INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
                              LEFT JOIN ResourceContentVersions RCVD ON RCVD.ResourceContentId = RC.Id AND RCVD.IsDraft = 1
                              LEFT JOIN Users U on U.Id = RCVD.AssignedUserId
-                             CROSS APPLY (
-                                 SELECT TOP 1 COALESCE(RCVS.WordCount, RCV.WordCount) AS WordCount
-                                 FROM ResourceContentVersions RCV
-                                 LEFT JOIN ResourceContentVersionSnapshots RCVS ON RCVS.ResourceContentVersionId = RCV.Id
-                                 WHERE RCV.ResourceContentId = RC.Id
-                                 ORDER BY RCVS.Created ASC, RCV.Version DESC
-                             ) Snapshots
                              WHERE RC.Id IN (
                                  SELECT ResourceContentId
                                  FROM ProjectResourceContents
