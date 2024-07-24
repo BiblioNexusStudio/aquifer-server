@@ -59,6 +59,7 @@ public static class LanguageResourcesEndpoints
                             ContentId = rc.Id,
                             Version = rcv.Version,
                             ContentSize = rcv.ContentSize,
+                            InlineMediaSize = rcv.InlineMediaSize,
                             MediaType = rc.MediaType,
                             LanguageId = rc.LanguageId,
                             ResourceId = pr.ResourceId,
@@ -84,6 +85,7 @@ public static class LanguageResourcesEndpoints
                             ContentId = rc.Id,
                             Version = rcv.Version,
                             ContentSize = rcv.ContentSize,
+                            InlineMediaSize = rcv.InlineMediaSize,
                             MediaType = rc.MediaType,
                             LanguageId = rc.LanguageId,
                             ResourceId = vr.ResourceId,
@@ -106,6 +108,7 @@ public static class LanguageResourcesEndpoints
                     {
                         ContentId = content.ContentId,
                         ContentSize = content.ContentSize,
+                        InlineMediaSize = content.InlineMediaSize,
                         Version = content.Version,
                         MediaTypeName = content.MediaType,
                         ParentResourceId = content.ParentResource.Id
@@ -133,6 +136,7 @@ public record IntermediateResourceItem
     public int ContentId { get; set; }
     public int Version { get; set; }
     public int ContentSize { get; set; }
+    public int? InlineMediaSize { get; set; }
     public ResourceContentMediaType MediaType { get; set; }
     public int LanguageId { get; set; }
     public int ResourceId { get; set; }
