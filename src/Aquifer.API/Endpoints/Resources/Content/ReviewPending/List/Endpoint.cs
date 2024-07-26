@@ -29,7 +29,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
                     LastStatusUpdate = x.ResourceContent.Updated,
                     ProjectName =
                         x.ResourceContent.Projects.FirstOrDefault() == null ? null : x.ResourceContent.Projects.FirstOrDefault()!.Name,
-                    WordCount = x.WordCount,
+                    WordCount = x.SourceWordCount,
                     SortOrder = x.ResourceContent.Resource.SortOrder,
                     ContentUpdated = x.ResourceContent.ContentUpdated
                 }).ToListAsync(ct))

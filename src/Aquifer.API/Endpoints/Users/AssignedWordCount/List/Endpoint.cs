@@ -11,14 +11,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     private const string Query = """
                                  WITH AssignedUserWordCounts AS (SELECT U.Id AS UserId
                                                                       , U.FirstName + ' ' + U.LastName AS UserName
-                                                                      , COALESCE(Snapshots.WordCount, RCV.WordCount, 0) AS AssignedSourceWordCount
+                                                                      , COALESCE(RCV.SourceWordCount, 0) AS AssignedSourceWordCount
                                                                  FROM Companies C
-                                                                          INNER JOIN Users U ON C.Id = U.CompanyId
-                                                                          LEFT JOIN ResourceContentVersions RCV ON U.Id = RCV.AssignedUserId
-                                                                          OUTER APPLY (SELECT TOP 1 RCVS.WordCount
-                                                                                       FROM ResourceContentVersionSnapshots RCVS
-                                                                                       WHERE RCVS.ResourceContentVersionId = RCV.Id
-                                                                                       ORDER BY RCVS.Created) Snapshots
+                                                                 INNER JOIN Users U ON C.Id = U.CompanyId
+                                                                 LEFT JOIN ResourceContentVersions RCV ON U.Id = RCV.AssignedUserId
                                                                  WHERE C.Id = {0})
                                  SELECT UserId, UserName, SUM(AssignedSourceWordCount) AS AssignedSourceWordCount
                                  FROM AssignedUserWordCounts
