@@ -70,7 +70,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                          WHERE rcv.ResourceContentId = rcv2.ResourceContentId
                          ORDER BY Created DESC
                      )
-                     ORDER BY r.EnglishLabel ASC;
+                     ORDER BY r.SortOrder ASC, r.EnglishLabel ASC;
                      """;
 
         var response = await dbContext.Database
