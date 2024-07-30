@@ -67,6 +67,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                          COALESCE(rcv.WordCount, 0) AS WordCount,
                          rc.ResourceId AS ResourceId,
                          r.EnglishLabel AS Title,
+                         r.SortOrder,
                          CAST(CASE WHEN rc.Status IN
                                  ({(int)ResourceContentStatus.AquiferizeInProgress},
                                   {(int)ResourceContentStatus.AquiferizePublisherReview},

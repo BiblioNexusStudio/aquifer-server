@@ -58,7 +58,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                      SELECT
                          COALESCE(rcv.WordCount, 0) AS WordCount,
                          rc.ResourceId AS ResourceId,
-                         r.EnglishLabel AS Title
+                         r.EnglishLabel AS Title,
+                         r.SortOrder
                      FROM
                          ResourceContentVersions rcv
                      INNER JOIN ResourceContents rc ON rcv.ResourceContentId = rc.Id
