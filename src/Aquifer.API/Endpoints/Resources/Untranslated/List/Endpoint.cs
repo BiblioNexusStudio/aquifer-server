@@ -77,7 +77,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                      INNER JOIN FilteredResources fr ON fr.ResourceContentId = rc.Id
                      INNER JOIN Resources r ON rc.ResourceId = r.Id
                      WHERE rcv.IsPublished = 1
-                     ORDER BY r.EnglishLabel ASC;
+                     ORDER BY r.SortOrder ASC, r.EnglishLabel ASC;
                      """;
 
         var response = await dbContext.Database
