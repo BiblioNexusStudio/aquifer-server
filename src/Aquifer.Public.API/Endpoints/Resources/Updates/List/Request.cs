@@ -1,4 +1,4 @@
-﻿namespace Aquifer.Public.API.Endpoints.Resources.Updated.List;
+﻿namespace Aquifer.Public.API.Endpoints.Resources.Updates.List;
 
 public class Request
 {

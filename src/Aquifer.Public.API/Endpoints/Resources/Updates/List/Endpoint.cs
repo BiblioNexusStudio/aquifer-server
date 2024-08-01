@@ -2,13 +2,13 @@
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.Public.API.Endpoints.Resources.Updated.List;
+namespace Aquifer.Public.API.Endpoints.Resources.Updates.List;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
-        Get("/resources/updated");
+        Get("/resources/updates");
         Description(d => d.ProducesProblemFE());
         Summary(s =>
         {
