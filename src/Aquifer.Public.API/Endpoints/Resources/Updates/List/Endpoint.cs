@@ -28,7 +28,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             {
                 ResourceId = x.ResourceContentId,
                 LanguageId = x.ResourceContent.LanguageId,
-                UpdateType = (x.Version == 1 ? ResponseContentUpdateType.New : ResponseContentUpdateType.Updated).ToString(),
+                UpdateType = x.Version == 1 ? ResponseContentUpdateType.New : ResponseContentUpdateType.Updated,
                 Timestamp = x.Updated
             })
             .ToListAsync(ct);
