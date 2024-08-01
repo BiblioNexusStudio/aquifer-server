@@ -14,7 +14,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         {
             s.Summary = "Get resource ids that are new or updated since the given UTC timestamp";
             s.Description =
-                "For a given UTC timestamp and optional language id, get a list of resource ids that are new or have been updated since the provided timestamp. Maximum look-back is 90 days.";
+                "For a given UTC timestamp and optional language id, get a list of resource ids that are new or have been updated since the provided timestamp. This is intended for users who are storing Aquifer data locally and want to fetch new content.";
         });
     }
 

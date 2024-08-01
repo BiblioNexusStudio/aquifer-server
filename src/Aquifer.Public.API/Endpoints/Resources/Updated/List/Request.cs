@@ -3,7 +3,7 @@
 public class Request
 {
     /// <summary>
-    ///     UTC timestamp indicating how far back to check for updates. The maximum look-back is 90 days.
+    ///     UTC timestamp (e.g. 07/20/2024) indicating how far back to check for updates. The maximum look-back is 90 days.
     /// </summary>
     public DateTime Timestamp { get; set; }
 
