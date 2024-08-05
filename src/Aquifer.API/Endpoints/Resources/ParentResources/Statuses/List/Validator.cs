@@ -7,7 +7,6 @@ public class Validator : Validator<Request>
 {
     public Validator()
     {
-        RuleFor(x => x.LanguageId).GreaterThan(0);
-        RuleFor(x => x.LanguageId).LessThan(33);
+        RuleFor(x => x.LanguageId).NotEmpty().InclusiveBetween(1, 32);
     }
 }

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.ParentResources.Statuses.List;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Response>>
+public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerable<Response>>
 {
     private const int EnglishLanguageId = 1;
 
@@ -35,7 +35,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                                  ORDER BY PR.DisplayName
                                  """;
 
-    private static int _languageId;
     public override void Configure()
     {
         Get("/resources/parent-resources/statuses");
@@ -46,79 +45,50 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        _languageId = request.LanguageId;
-        var languageExists = dbContext.ResourceContents.Any(x => x.Language.Id == request.LanguageId);
-        if (!languageExists)
-        {
-            await SendOkAsync([], ct);
-        }
-
         var rows = await dbContext.Database
             .SqlQueryRaw<ParentAndLanguageRow>(Query,
                 new SqlParameter("LanguageId", request.LanguageId),
                 new SqlParameter("EnglishLanguageId", EnglishLanguageId))
             .ToListAsync(ct);
-
         Response = rows.Select(x => new Response
         {
             ResourceId = x.ResourceId,
-            ResourceType = x.ResourceType,
+            ResourceType = x.ResourceType.GetDisplayName(),
             Title = x.Title,
-            LicenseInfo = x.LicenseInfo,
-            Status = x.Status
-        }).ToList();
-
+            LicenseInfo = x.LicenseInfo is null ? null : JsonUtilities.DefaultDeserialize(x.LicenseInfo),
+            Status = GetStatus(x.TotalResources, x.TotalLanguageResources, x.LastPublished)
+        });
     }
-    
-    
-    private record ParentAndLanguageRow {
-        public ResourceType ResourceTypeValue { get; set; }
 
-        public string ResourceType => ResourceTypeValue.GetDisplayName();
-        public required string Title { get; set; }
-        public required int ResourceId { get; set; }
-        
-        public string? LicenseInfoValue { get; set; }
-        
-        public object? LicenseInfo => LicenseInfoValue is null ? null : JsonUtilities.DefaultDeserialize(LicenseInfoValue);
-        
-        public int TotalResources { get; set; }
-        
-        public int TotalLanguageResources { get; set; }
-        
-        public DateTime? LastPublished { get; set; }
-
-        public ParentResourceStatus Status => GetStatus(TotalResources, TotalLanguageResources, LastPublished);
-    
-        private ParentResourceStatus GetStatus(int totalCount, int totalLanguageCount, DateTime? lastPublished)
+    private ParentResourceStatus GetStatus(int totalCount, int totalLanguageCount, DateTime? lastPublished)
+    {
+        if (totalLanguageCount == 0)
         {
-            
-            if (totalLanguageCount == 0)
-            {
-                return ParentResourceStatus.ComingSoon;
-            }
-
-            var today = DateTime.Today;
-            var thirtyDaysAgo = today.AddDays(-30);
-            
-            // for English no need to check counts, we're assuming they're always complete
-            if (_languageId == EnglishLanguageId)
-            {
-                return lastPublished > thirtyDaysAgo ? ParentResourceStatus.RecentlyCompleted : ParentResourceStatus.Complete;
-
-            }
-
-            if (totalLanguageCount < totalCount)
-            {
-                return lastPublished > thirtyDaysAgo ? ParentResourceStatus.RecentlyUpdated : ParentResourceStatus.Partial;
-            }
-
-            if (totalLanguageCount == totalCount && lastPublished > thirtyDaysAgo)
-            {
-                return ParentResourceStatus.RecentlyCompleted;
-            }
-
-            return ParentResourceStatus.Complete;
+            return ParentResourceStatus.ComingSoon;
         }
+
+        var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+        if (totalLanguageCount < totalCount)
+        {
+            return lastPublished >= thirtyDaysAgo ? ParentResourceStatus.RecentlyUpdated : ParentResourceStatus.Partial;
+        }
+
+        if (totalLanguageCount == totalCount && lastPublished >= thirtyDaysAgo)
+        {
+            return ParentResourceStatus.RecentlyCompleted;
+        }
+
+        return ParentResourceStatus.Complete;
     }
+}
+
+internal class ParentAndLanguageRow
+{
+    public required ResourceType ResourceType { get; set; }
+    public required string Title { get; set; }
+    public required int ResourceId { get; set; }
+    public string? LicenseInfo { get; set; }
+    public int TotalResources { get; set; }
+    public int TotalLanguageResources { get; set; }
+    public DateTime? LastPublished { get; set; }
 }
