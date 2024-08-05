@@ -20,7 +20,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
                                         OtherLanguage.Total AS TotalLanguageResources,
                                         OtherLanguage.LastPublished AS LastPublished,
                                         PR.LicenseInfo AS LicenseInfoValue,
-                                        PR.ResourceType AS ResourceTypeValue
+                                        PR.ResourceType AS ResourceType
                                  FROM ResourceContents RC
                                           INNER JOIN Resources R ON R.Id = RC.ResourceId
                                           INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
@@ -55,7 +55,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
             ResourceId = x.ResourceId,
             ResourceType = x.ResourceType.GetDisplayName(),
             Title = x.Title,
-            LicenseInfo = x.LicenseInfo is null ? null : JsonUtilities.DefaultDeserialize(x.LicenseInfo),
+            LicenseInfo = x.LicenseInfoValue is not null ? JsonUtilities.DefaultDeserialize<object>(x.LicenseInfoValue) : null,
             Status = GetStatus(x.TotalResources, x.TotalLanguageResources, x.LastPublished)
         });
     }
@@ -87,7 +87,7 @@ internal class ParentAndLanguageRow
     public required ResourceType ResourceType { get; set; }
     public required string Title { get; set; }
     public required int ResourceId { get; set; }
-    public string? LicenseInfo { get; set; }
+    public string? LicenseInfoValue { get; set; }
     public int TotalResources { get; set; }
     public int TotalLanguageResources { get; set; }
     public DateTime? LastPublished { get; set; }
