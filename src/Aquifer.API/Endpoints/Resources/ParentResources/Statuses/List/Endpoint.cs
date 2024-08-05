@@ -37,7 +37,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
 
     public override void Configure()
     {
-        Get("/resources/parent-resources/statuses");
+        Get("/resources/parent-resources/statuses/{LanguageId}");
         Options(EndpointHelpers.SetCacheOption(60));
         ResponseCache(EndpointHelpers.OneDayInSeconds, varyByQueryKeys:["*"]);
         AllowAnonymous();
