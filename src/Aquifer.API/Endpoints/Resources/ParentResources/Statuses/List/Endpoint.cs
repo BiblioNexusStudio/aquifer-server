@@ -39,7 +39,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
     {
         Get("/resources/parent-resources/statuses");
         Options(EndpointHelpers.SetCacheOption(60));
-        ResponseCache(EndpointHelpers.OneDayInSeconds);
+        ResponseCache(EndpointHelpers.OneDayInSeconds, varyByQueryKeys:["*"]);
         AllowAnonymous();
     }
 
