@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Aquifer.Data.EventHandlers;
 
 namespace Aquifer.Data.Entities;
@@ -32,9 +33,19 @@ public enum ResourceTypeComplexityLevel
 public enum ResourceType
 {
     None = 0,
+
+    [Display(Name = "Translation Guides")]
     Guide = 1,
+
+    [Display(Name = "Bible Dictionaries")]
     Dictionary = 2,
+
+    [Display(Name = "Study Notes")]
     StudyNotes = 3,
+
+    [Display(Name = "Images")]
     Images = 4,
+
+    [Display(Name = "Videos")]
     Videos = 5
 }
