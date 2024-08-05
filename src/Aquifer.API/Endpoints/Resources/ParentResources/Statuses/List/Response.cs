@@ -2,17 +2,10 @@
 
 public class Response
 {
-
     public required int ResourceId { get; set; }
-    
     public required string ResourceType { get; set; }
-    
     public required string Title { get; set; }
-    
-
     public object? LicenseInfo { get; set; }
-    
-
     public ParentResourceStatus Status { get; set; }
 }
 
