@@ -55,6 +55,7 @@ public class AquiferDbContext : DbContext
     public DbSet<ResourceContentVersionMachineTranslationEntity> ResourceContentVersionMachineTranslations { get; set; }
     public DbSet<ResourceContentVersionCommentThreadEntity> ResourceContentVersionCommentThreads { get; set; }
     public DbSet<ResourceContentVersionEntity> ResourceContentVersions { get; set; }
+    public DbSet<ResourceContentVersionEditTimeEntity> ResourceContentVersionEditTimes { get; set; }
     public DbSet<ResourceContentVersionSnapshotEntity> ResourceContentVersionSnapshots { get; set; }
     public DbSet<ResourceContentVersionStatusHistoryEntity> ResourceContentVersionStatusHistory { get; set; }
     public DbSet<ResourceEntity> Resources { get; set; }
