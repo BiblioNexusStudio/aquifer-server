@@ -29,6 +29,8 @@ public class ResourceContentEntity : IHasUpdatedTimestamp
     public int Id { get; set; }
     public ResourceContentStatus Status { get; set; }
 
+    public string? ExternalVersion { get; set; }
+
     public DateTime? ContentUpdated { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
