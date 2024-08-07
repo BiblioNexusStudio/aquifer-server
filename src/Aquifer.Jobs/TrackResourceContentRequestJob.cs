@@ -3,6 +3,7 @@ using Aquifer.Common.Jobs.Messages;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Azure.Storage.Queues.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
@@ -32,6 +33,10 @@ public class TrackResourceContentRequestJob(
                 {
                     ResourceContentId = resourceContentId,
                     IpAddress = trackingMetadata.IpAddress,
+                    SubscriptionName = trackingMetadata.SubscriptionName,
+                    EndpointId = trackingMetadata.EndpointId,
+                    Source = trackingMetadata.Source,
+                    UserId = trackingMetadata.UserId,
                     Created = message.InsertedOn?.UtcDateTime ?? DateTime.UtcNow
                 }, ct);
             }
