@@ -2,21 +2,22 @@
 using Aquifer.Common.Jobs.Messages;
 using Azure.Storage.Queues;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 
 namespace Aquifer.Common.Services;
 
-public interface ITrackResourceContentRequestService
+public interface IResourceContentRequestTrackingService
 {
-    Task TrackAsync(HttpContext httpContext, string endpointId, int resourceContentId, string? source = null);
-    Task TrackAsync(HttpContext httpContext, string endpointId, List<int> resourceContentIds, string? source = null);
+    Task TrackAsync(HttpContext httpContext, int resourceContentId, string? source = null);
+    Task TrackAsync(HttpContext httpContext, List<int> resourceContentIds, string? source = null);
 }
 
-public class TrackResourceContentRequestService : ITrackResourceContentRequestService
+public class ResourceContentRequestTrackingService : IResourceContentRequestTrackingService
 {
     private readonly QueueClient _client;
 
-    public TrackResourceContentRequestService(IConfiguration configuration, IAzureClientService azureClientService)
+    public ResourceContentRequestTrackingService(IConfiguration configuration, IAzureClientService azureClientService)
     {
         var clientOptions = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
         var (connectionString, queue) = GetClientConfigurations(configuration);
@@ -28,19 +29,24 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
         _client.CreateIfNotExists();
     }
 
-    public async Task TrackAsync(HttpContext httpContext, string endpointId, int resourceContentId, string? source = null)
+    public async Task TrackAsync(HttpContext httpContext, int resourceContentId, string? source = null)
     {
-        await TrackAsync(httpContext, endpointId, [resourceContentId]);
+        await TrackAsync(httpContext, [resourceContentId], source);
     }
 
-    public async Task TrackAsync(HttpContext httpContext, string endpointId, List<int> resourceContentIds, string? source = null)
+    public async Task TrackAsync(HttpContext httpContext, List<int> resourceContentIds, string? source = null)
     {
+        if (httpContext.Response.StatusCode >= 400)
+        {
+            return;
+        }
+
         var message = new TrackResourceContentRequestMessage
         {
             Source = source ?? httpContext.Request.Headers["bn-source"],
             IpAddress = GetClientIp(httpContext),
             SubscriptionName = httpContext.Request.Headers["bn-subscription-name"],
-            EndpointId = endpointId,
+            EndpointId = (httpContext.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText,
             UserId = httpContext.Request.Headers["bn-user-id"],
             ResourceContentIds = resourceContentIds
         };

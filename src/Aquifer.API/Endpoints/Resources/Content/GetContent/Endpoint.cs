@@ -13,7 +13,7 @@ namespace Aquifer.API.Endpoints.Resources.Content.GetContent;
 public class Endpoint(
     AquiferDbContext dbContext,
     TelemetryClient telemetry,
-    ITrackResourceContentRequestService trackingService) : Endpoint<Request, object>
+    IResourceContentRequestTrackingService trackingService) : Endpoint<Request, object>
 {
     public override void Configure()
     {
@@ -75,7 +75,6 @@ public class Endpoint(
 
     public override async Task OnAfterHandleAsync(Request req, object res, CancellationToken ct)
     {
-        const string endpointId = "resources-content-get-content";
-        await trackingService.TrackAsync(HttpContext, endpointId, req.ResourceContentId);
+        await trackingService.TrackAsync(HttpContext, req.ResourceContentId);
     }
 }

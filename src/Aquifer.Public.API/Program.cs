@@ -13,7 +13,7 @@ builder.Services.AddDbContext<AquiferDbContext>(options =>
     options.UseSqlServer(configuration?.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3)));
 
 builder.Services.AddFastEndpoints()
-    .AddSingleton<ITrackResourceContentRequestService, TrackResourceContentRequestService>()
+    .AddSingleton<IResourceContentRequestTrackingService, ResourceContentRequestTrackingService>()
     .AddAzureClient(builder.Environment.IsDevelopment())
     .AddSwaggerDocumentSettings()
     .AddOutputCache()
