@@ -8,8 +8,8 @@ namespace Aquifer.Common.Services;
 
 public interface ITrackResourceContentRequestService
 {
-    Task TrackAsync(HttpContext httpContext, string endpointId, int resourceContentId);
-    Task TrackAsync(HttpContext httpContext, string endpointId, List<int> resourceContentIds);
+    Task TrackAsync(HttpContext httpContext, string endpointId, int resourceContentId, string? source = null);
+    Task TrackAsync(HttpContext httpContext, string endpointId, List<int> resourceContentIds, string? source = null);
 }
 
 public class TrackResourceContentRequestService : ITrackResourceContentRequestService
@@ -28,16 +28,16 @@ public class TrackResourceContentRequestService : ITrackResourceContentRequestSe
         _client.CreateIfNotExists();
     }
 
-    public async Task TrackAsync(HttpContext httpContext, string endpointId, int resourceContentId)
+    public async Task TrackAsync(HttpContext httpContext, string endpointId, int resourceContentId, string? source = null)
     {
         await TrackAsync(httpContext, endpointId, [resourceContentId]);
     }
 
-    public async Task TrackAsync(HttpContext httpContext, string endpointId, List<int> resourceContentIds)
+    public async Task TrackAsync(HttpContext httpContext, string endpointId, List<int> resourceContentIds, string? source = null)
     {
         var message = new TrackResourceContentRequestMessage
         {
-            Source = httpContext.Request.Headers["bn-source"],
+            Source = source ?? httpContext.Request.Headers["bn-source"],
             IpAddress = GetClientIp(httpContext),
             SubscriptionName = httpContext.Request.Headers["bn-subscription-name"],
             EndpointId = endpointId,

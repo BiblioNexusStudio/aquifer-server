@@ -17,7 +17,7 @@ public class Endpoint(
 {
     public override void Configure()
     {
-        // This was originally a Module that was moved to use FastEndpoints. Unfortunately it shared a very similar
+        // This was originally a Module that was moved to use FastEndpoints. Unfortunately, it shared a very similar
         // path as /Get. We should probably revisit these endpoints, either combine them or establish a real difference
         // that can guide the path. This endpoint is used by Bible Well, and the other one is used by the CMS.
         Get("/resources/{ResourceContentId}/content");
