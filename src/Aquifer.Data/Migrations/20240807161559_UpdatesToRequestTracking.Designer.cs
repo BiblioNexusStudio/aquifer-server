@@ -4,6 +4,7 @@ using Aquifer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    partial class AquiferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240807161559_UpdatesToRequestTracking")]
+    partial class UpdatesToRequestTracking
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -43,7 +46,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BibleBookChapters", (string)null);
+                    b.ToTable("BibleBookChapters");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.BibleBookChapterVerseEntity", b =>
@@ -71,7 +74,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BibleBookChapterVerses", (string)null);
+                    b.ToTable("BibleBookChapterVerses");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.BibleBookContentEntity", b =>
@@ -114,7 +117,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("BibleId", "BookId");
 
-                    b.ToTable("BibleBookContents", (string)null);
+                    b.ToTable("BibleBookContents");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.BibleBookEntity", b =>
@@ -148,7 +151,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BibleBooks", (string)null);
+                    b.ToTable("BibleBooks");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.BibleEntity", b =>
@@ -198,7 +201,7 @@ namespace Aquifer.Data.Migrations
                         .HasDatabaseName("IX_Bibles_LanguageId_LanguageDefault")
                         .HasFilter("LanguageDefault = 1");
 
-                    b.ToTable("Bibles", (string)null);
+                    b.ToTable("Bibles");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.BibleVersionWordEntity", b =>
@@ -237,7 +240,7 @@ namespace Aquifer.Data.Migrations
                     b.HasIndex("BibleId", "WordIdentifier")
                         .IsUnique();
 
-                    b.ToTable("BibleVersionWords", (string)null);
+                    b.ToTable("BibleVersionWords");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.BibleVersionWordGroupEntity", b =>
@@ -255,7 +258,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BibleVersionWordGroups", (string)null);
+                    b.ToTable("BibleVersionWordGroups");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.BibleVersionWordGroupWordEntity", b =>
@@ -268,7 +271,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("BibleVersionWordGroupId", "BibleVersionWordId");
 
-                    b.ToTable("BibleVersionWordGroupWords", (string)null);
+                    b.ToTable("BibleVersionWordGroupWords");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.CommentEntity", b =>
@@ -301,7 +304,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Comments", (string)null);
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.CommentThreadEntity", b =>
@@ -330,7 +333,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CommentThreads", (string)null);
+                    b.ToTable("CommentThreads");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.CompanyEntity", b =>
@@ -350,7 +353,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Companies", (string)null);
+                    b.ToTable("Companies");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.FeedbackEntity", b =>
@@ -382,7 +385,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Feedback", (string)null);
+                    b.ToTable("Feedback");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekLemmaEntity", b =>
@@ -412,7 +415,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GreekLemmas", (string)null);
+                    b.ToTable("GreekLemmas");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekNewTestamentEntity", b =>
@@ -439,7 +442,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GreekNewTestaments", (string)null);
+                    b.ToTable("GreekNewTestaments");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekNewTestamentWordEntity", b =>
@@ -474,7 +477,7 @@ namespace Aquifer.Data.Migrations
                     b.HasIndex("GreekNewTestamentId", "WordIdentifier")
                         .IsUnique();
 
-                    b.ToTable("GreekNewTestamentWords", (string)null);
+                    b.ToTable("GreekNewTestamentWords");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekNewTestamentWordGroupEntity", b =>
@@ -492,7 +495,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GreekNewTestamentWordGroups", (string)null);
+                    b.ToTable("GreekNewTestamentWordGroups");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekNewTestamentWordGroupWordEntity", b =>
@@ -505,7 +508,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("GreekNewTestamentWordGroupId", "GreekNewTestamentWordId");
 
-                    b.ToTable("GreekNewTestamentWordGroupWords", (string)null);
+                    b.ToTable("GreekNewTestamentWordGroupWords");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekNewTestamentWordSenseEntity", b =>
@@ -523,7 +526,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("GreekNewTestamentWordId", "GreekSenseId");
 
-                    b.ToTable("GreekNewTestamentWordSenses", (string)null);
+                    b.ToTable("GreekNewTestamentWordSenses");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekSenseEntity", b =>
@@ -576,7 +579,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GreekSenses", (string)null);
+                    b.ToTable("GreekSenses");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekSenseGlossEntity", b =>
@@ -601,7 +604,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GreekSenseGlosses", (string)null);
+                    b.ToTable("GreekSenseGlosses");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekWordEntity", b =>
@@ -637,7 +640,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GreekWords", (string)null);
+                    b.ToTable("GreekWords");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.LanguageEntity", b =>
@@ -674,7 +677,7 @@ namespace Aquifer.Data.Migrations
                     b.HasIndex("ISO6393Code")
                         .IsUnique();
 
-                    b.ToTable("Languages", (string)null);
+                    b.ToTable("Languages");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.NewTestamentAlignmentEntity", b =>
@@ -692,7 +695,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("BibleVersionWordGroupId", "GreekNewTestamentWordGroupId");
 
-                    b.ToTable("NewTestamentAlignments", (string)null);
+                    b.ToTable("NewTestamentAlignments");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ParentResourceEntity", b =>
@@ -739,7 +742,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ParentResources", (string)null);
+                    b.ToTable("ParentResources");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ParentResourceLocalizationEntity", b =>
@@ -766,7 +769,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("ParentResourceId", "LanguageId");
 
-                    b.ToTable("ParentResourceLocalizations", (string)null);
+                    b.ToTable("ParentResourceLocalizations");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.PassageEntity", b =>
@@ -798,7 +801,7 @@ namespace Aquifer.Data.Migrations
                     b.HasIndex("StartVerseId", "EndVerseId")
                         .IsUnique();
 
-                    b.ToTable("Passages", (string)null);
+                    b.ToTable("Passages");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.PassageResourceEntity", b =>
@@ -813,7 +816,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasIndex("ResourceId");
 
-                    b.ToTable("PassageResources", (string)null);
+                    b.ToTable("PassageResources");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ProjectEntity", b =>
@@ -883,7 +886,7 @@ namespace Aquifer.Data.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Projects", (string)null);
+                    b.ToTable("Projects");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ProjectPlatformEntity", b =>
@@ -900,7 +903,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProjectPlatforms", (string)null);
+                    b.ToTable("ProjectPlatforms");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentEntity", b =>
@@ -949,7 +952,7 @@ namespace Aquifer.Data.Migrations
                     b.HasIndex("ResourceId", "LanguageId", "MediaType")
                         .IsUnique();
 
-                    b.ToTable("ResourceContents", (string)null);
+                    b.ToTable("ResourceContents");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentRequestEntity", b =>
@@ -986,7 +989,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ResourceContentRequests", (string)null);
+                    b.ToTable("ResourceContentRequests");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionAssignedUserHistoryEntity", b =>
@@ -1013,7 +1016,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ResourceContentVersionAssignedUserHistory", (string)null);
+                    b.ToTable("ResourceContentVersionAssignedUserHistory");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionCommentThreadEntity", b =>
@@ -1026,7 +1029,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("CommentThreadId", "ResourceContentVersionId");
 
-                    b.ToTable("ResourceContentVersionCommentThreads", (string)null);
+                    b.ToTable("ResourceContentVersionCommentThreads");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionEditTimeEntity", b =>
@@ -1116,7 +1119,7 @@ namespace Aquifer.Data.Migrations
                     b.HasIndex("ResourceContentId", "Version")
                         .IsUnique();
 
-                    b.ToTable("ResourceContentVersions", null, t =>
+                    b.ToTable("ResourceContentVersions", t =>
                         {
                             t.HasCheckConstraint("CK_ResourceContentVersions_IsPublishedOrIsDraftNotBoth", "IsPublished = 0 OR IsDraft = 0");
                         });
@@ -1169,7 +1172,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasIndex("ResourceContentVersionId");
 
-                    b.ToTable("ResourceContentVersionMachineTranslations", (string)null);
+                    b.ToTable("ResourceContentVersionMachineTranslations");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionSnapshotEntity", b =>
@@ -1209,7 +1212,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasIndex("ResourceContentVersionId");
 
-                    b.ToTable("ResourceContentVersionSnapshots", (string)null);
+                    b.ToTable("ResourceContentVersionSnapshots");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionStatusHistoryEntity", b =>
@@ -1236,7 +1239,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ResourceContentVersionStatusHistory", (string)null);
+                    b.ToTable("ResourceContentVersionStatusHistory");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceEntity", b =>
@@ -1278,7 +1281,7 @@ namespace Aquifer.Data.Migrations
                         .IsUnique()
                         .HasFilter("[ExternalId] IS NOT NULL");
 
-                    b.ToTable("Resources", (string)null);
+                    b.ToTable("Resources");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.StrongNumberEntity", b =>
@@ -1305,7 +1308,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("StrongNumbers", (string)null);
+                    b.ToTable("StrongNumbers");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.UserEntity", b =>
@@ -1364,7 +1367,7 @@ namespace Aquifer.Data.Migrations
                     b.HasIndex("ProviderId")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.VerseEntity", b =>
@@ -1374,7 +1377,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Verses", (string)null);
+                    b.ToTable("Verses");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.VerseResourceEntity", b =>
@@ -1387,7 +1390,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("VerseId", "ResourceId");
 
-                    b.ToTable("VerseResources", (string)null);
+                    b.ToTable("VerseResources");
                 });
 
             modelBuilder.Entity("AssociatedResources", b =>
@@ -1400,7 +1403,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("AssociatedResourceId", "ResourceId");
 
-                    b.ToTable("AssociatedResources", (string)null);
+                    b.ToTable("AssociatedResources");
                 });
 
             modelBuilder.Entity("ProjectResourceContents", b =>
@@ -1416,7 +1419,7 @@ namespace Aquifer.Data.Migrations
                     b.HasIndex("ResourceContentId")
                         .IsUnique();
 
-                    b.ToTable("ProjectResourceContents", (string)null);
+                    b.ToTable("ProjectResourceContents");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.BibleBookChapterEntity", b =>
