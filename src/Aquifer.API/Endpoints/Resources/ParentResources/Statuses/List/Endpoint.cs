@@ -51,29 +51,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
             ResourceType = x.ResourceType.GetDisplayName(),
             Title = x.Title,
             LicenseInfo = x.LicenseInfoValue is not null ? JsonUtilities.DefaultDeserialize<object>(x.LicenseInfoValue) : null,
-            Status = GetStatus(x.TotalResources, x.TotalLanguageResources, x.LastPublished)
+            Status = ResourceStatusUtilities.GetStatus(x.TotalResources, x.TotalLanguageResources, x.LastPublished)
         });
-    }
-
-    private ParentResourceStatus GetStatus(int totalCount, int totalLanguageCount, DateTime? lastPublished)
-    {
-        if (totalLanguageCount == 0)
-        {
-            return ParentResourceStatus.ComingSoon;
-        }
-
-        var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
-        if (totalLanguageCount < totalCount)
-        {
-            return lastPublished >= thirtyDaysAgo ? ParentResourceStatus.RecentlyUpdated : ParentResourceStatus.Partial;
-        }
-
-        if (totalLanguageCount == totalCount && lastPublished >= thirtyDaysAgo)
-        {
-            return ParentResourceStatus.RecentlyCompleted;
-        }
-
-        return ParentResourceStatus.Complete;
     }
 }
 
