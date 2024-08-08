@@ -2,5 +2,5 @@
 
 public class Request
 {
-    public List<int> Ids { get; set; }
+    public List<int> Ids { get; set; } = [];
 }
