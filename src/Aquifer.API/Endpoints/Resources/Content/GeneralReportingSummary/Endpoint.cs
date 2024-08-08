@@ -45,7 +45,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
     {
         Get("/admin/resources/summary", "/resources/content/general-reporting-summary");
         Permissions(PermissionName.ReadReports);
-        Options(EndpointHelpers.SetCacheOption(60 * 60));
+        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
     }
 
     public override async Task HandleAsync(CancellationToken ct)

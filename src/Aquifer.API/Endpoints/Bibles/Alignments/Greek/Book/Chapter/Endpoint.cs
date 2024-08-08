@@ -53,7 +53,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
     public override void Configure()
     {
         Get("/bibles/{BibleId}/alignments/greek/book/{BookCode}/chapter/{Chapter}");
-        Options(EndpointHelpers.SetCacheOption(60));
+        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
         AllowAnonymous();
     }
 
