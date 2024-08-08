@@ -65,7 +65,7 @@ public class Endpoint(
 
         if (url != null)
         {
-            await SendRedirectAsync(url, false, ct);
+            await SendRedirectAsync(url, false, true);
             return;
         }
 
