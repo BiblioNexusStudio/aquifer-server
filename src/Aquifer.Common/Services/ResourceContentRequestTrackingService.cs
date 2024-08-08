@@ -2,15 +2,14 @@
 using Aquifer.Common.Jobs.Messages;
 using Azure.Storage.Queues;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 
 namespace Aquifer.Common.Services;
 
 public interface IResourceContentRequestTrackingService
 {
-    Task TrackAsync(HttpContext httpContext, int resourceContentId, string? source = null);
-    Task TrackAsync(HttpContext httpContext, List<int> resourceContentIds, string? source = null);
+    Task TrackAsync(HttpContext httpContext, int resourceContentId, string endpointId, string? source = null);
+    Task TrackAsync(HttpContext httpContext, List<int> resourceContentIds, string endpointId, string? source = null);
 }
 
 public class ResourceContentRequestTrackingService : IResourceContentRequestTrackingService
@@ -29,24 +28,25 @@ public class ResourceContentRequestTrackingService : IResourceContentRequestTrac
         _client.CreateIfNotExists();
     }
 
-    public async Task TrackAsync(HttpContext httpContext, int resourceContentId, string? source = null)
+    public async Task TrackAsync(HttpContext httpContext, int resourceContentId, string endpointId, string? source = null)
     {
-        await TrackAsync(httpContext, [resourceContentId], source);
+        await TrackAsync(httpContext, [resourceContentId], endpointId, source);
     }
 
-    public async Task TrackAsync(HttpContext httpContext, List<int> resourceContentIds, string? source = null)
+    public async Task TrackAsync(HttpContext httpContext, List<int> resourceContentIds, string endpointId, string? source = null)
     {
         if (httpContext.Response.StatusCode >= 400)
         {
             return;
         }
 
+        var sourceHeader = httpContext.Request.Headers["bn-source"].ToString();
         var message = new TrackResourceContentRequestMessage
         {
-            Source = source ?? httpContext.Request.Headers["bn-source"],
+            Source = string.IsNullOrEmpty(sourceHeader) ? source : sourceHeader,
             IpAddress = GetClientIp(httpContext),
             SubscriptionName = httpContext.Request.Headers["bn-subscription-name"],
-            EndpointId = (httpContext.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText,
+            EndpointId = endpointId,
             UserId = httpContext.Request.Headers["bn-user-id"],
             ResourceContentIds = resourceContentIds
         };

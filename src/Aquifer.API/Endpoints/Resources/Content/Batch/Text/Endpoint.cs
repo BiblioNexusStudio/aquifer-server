@@ -45,6 +45,7 @@ public class Endpoint(AquiferDbContext dbContext, TelemetryClient telemetry, IRe
 
     public override async Task OnAfterHandleAsync(Request req, List<Response> res, CancellationToken ct)
     {
-        await trackingService.TrackAsync(HttpContext, req.Ids);
+        const string endpointId = "resources-content-batch-text";
+        await trackingService.TrackAsync(HttpContext, req.Ids, endpointId);
     }
 }

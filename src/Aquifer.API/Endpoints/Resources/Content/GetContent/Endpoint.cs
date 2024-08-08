@@ -75,6 +75,7 @@ public class Endpoint(
 
     public override async Task OnAfterHandleAsync(Request req, object res, CancellationToken ct)
     {
-        await trackingService.TrackAsync(HttpContext, req.ResourceContentId);
+        const string endpointId = "resources-content-getcontent";
+        await trackingService.TrackAsync(HttpContext, req.ResourceContentId, endpointId);
     }
 }
