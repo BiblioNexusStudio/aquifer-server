@@ -26,6 +26,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
             return;
         }
 
-        await SendRedirectAsync(textUrl, true, ct);
+        await SendRedirectAsync(textUrl, true, true);
     }
 }
