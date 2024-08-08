@@ -32,14 +32,15 @@ public class AquiferDbContext : DbContext
     public DbSet<CommentEntity> Comments { get; set; }
     public DbSet<CommentThreadEntity> CommentThreads { get; set; }
     public DbSet<CompanyEntity> Companies { get; set; }
+    public DbSet<FeedbackEntity> Feedback { get; set; }
     public DbSet<GreekLemmaEntity> GreekLemmas { get; set; }
-    public DbSet<GreekSenseEntity> GreekSenses { get; set; }
-    public DbSet<GreekSenseGlossEntity> GreekSenseGlosses { get; set; }
     public DbSet<GreekNewTestamentEntity> GreekNewTestaments { get; set; }
     public DbSet<GreekNewTestamentWordEntity> GreekNewTestamentWords { get; set; }
     public DbSet<GreekNewTestamentWordGroupEntity> GreekNewTestamentWordGroups { get; set; }
     public DbSet<GreekNewTestamentWordGroupWordEntity> GreekNewTestamentWordGroupWords { get; set; }
     public DbSet<GreekNewTestamentWordSenseEntity> GreekNewTestamentWordSenses { get; set; }
+    public DbSet<GreekSenseEntity> GreekSenses { get; set; }
+    public DbSet<GreekSenseGlossEntity> GreekSenseGlosses { get; set; }
     public DbSet<GreekWordEntity> GreekWords { get; set; }
     public DbSet<LanguageEntity> Languages { get; set; }
     public DbSet<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; }
@@ -52,10 +53,10 @@ public class AquiferDbContext : DbContext
     public DbSet<ResourceContentEntity> ResourceContents { get; set; }
     public DbSet<ResourceContentRequestEntity> ResourceContentRequests { get; set; }
     public DbSet<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistory { get; set; }
-    public DbSet<ResourceContentVersionMachineTranslationEntity> ResourceContentVersionMachineTranslations { get; set; }
     public DbSet<ResourceContentVersionCommentThreadEntity> ResourceContentVersionCommentThreads { get; set; }
-    public DbSet<ResourceContentVersionEntity> ResourceContentVersions { get; set; }
     public DbSet<ResourceContentVersionEditTimeEntity> ResourceContentVersionEditTimes { get; set; }
+    public DbSet<ResourceContentVersionEntity> ResourceContentVersions { get; set; }
+    public DbSet<ResourceContentVersionMachineTranslationEntity> ResourceContentVersionMachineTranslations { get; set; }
     public DbSet<ResourceContentVersionSnapshotEntity> ResourceContentVersionSnapshots { get; set; }
     public DbSet<ResourceContentVersionStatusHistoryEntity> ResourceContentVersionStatusHistory { get; set; }
     public DbSet<ResourceEntity> Resources { get; set; }
@@ -63,7 +64,6 @@ public class AquiferDbContext : DbContext
     public DbSet<UserEntity> Users { get; set; }
     public DbSet<VerseEntity> Verses { get; set; }
     public DbSet<VerseResourceEntity> VerseResources { get; set; }
-    public DbSet<FeedbackEntity> Feedback { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

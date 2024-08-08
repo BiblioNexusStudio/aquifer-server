@@ -22,9 +22,3 @@ public class ResourceItemResponse
     public int ContentSize { get; set; }
     public int? InlineMediaSize { get; set; }
 }
-
-public class ResourceItemTextContentResponse
-{
-    public int Id { get; set; }
-    public object? Content { get; set; }
-}

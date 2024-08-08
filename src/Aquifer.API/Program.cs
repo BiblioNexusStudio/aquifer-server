@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Aquifer.API.Clients;
 using Aquifer.API.Configuration;
-using Aquifer.API.Middleware;
 using Aquifer.API.Modules;
 using Aquifer.API.Services;
 using Aquifer.API.Telemetry;
@@ -37,7 +36,7 @@ builder.Services.AddAuth(configuration?.JwtSettings)
     .AddScoped<IUserService, UserService>()
     .AddScoped<IResourceHistoryService, ResourceHistoryService>()
     .AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>()
-    .AddSingleton<ITrackResourceContentRequestService, TrackResourceContentRequestService>()
+    .AddSingleton<IResourceContentRequestTrackingService, ResourceContentRequestTrackingService>()
     .AddAzureClient(builder.Environment.IsDevelopment())
     .AddFastEndpoints()
     .AddResponseCaching()
@@ -61,7 +60,6 @@ if (builder.Environment.IsDevelopment())
 }
 
 app.UseAuth();
-app.UseMiddleware<TrackResourceContentRequestMiddleware>();
 app.UseOutputCache();
 if (app.Environment.IsDevelopment())
 {
