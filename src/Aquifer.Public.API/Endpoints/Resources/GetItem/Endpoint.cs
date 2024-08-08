@@ -1,4 +1,5 @@
-﻿using Aquifer.Common.Tiptap;
+﻿using Aquifer.Common.Services;
+using Aquifer.Common.Tiptap;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -7,12 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Resources.GetItem;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackingService trackingService) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
         Get("/resources/{ContentId}");
-        Options(x => x.CacheOutput(c => c.Expire(TimeSpan.FromMinutes(5))));
         Description(d => d.ProducesProblemFE(404));
         Summary(s =>
         {
@@ -31,28 +31,29 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
     private async Task<Response> GetResourceContentAsync(Request req, CancellationToken ct)
     {
         var response = await dbContext.ResourceContentVersions
-            .Where(x => x.ResourceContentId == req.ContentId && x.IsPublished && x.ResourceContent.Resource.ParentResource.Enabled).Select(
-                x => new Response
+            .Where(x => x.ResourceContentId == req.ContentId && x.IsPublished && x.ResourceContent.Resource.ParentResource.Enabled)
+            .Select(x => new Response
+            {
+                Id = x.ResourceContentId,
+                Name = x.ResourceContent.Resource.EnglishLabel,
+                LocalizedName = x.DisplayName,
+                ContentValue = x.Content,
+                Language = new ResourceContentLanguage
                 {
-                    Id = x.ResourceContentId,
-                    Name = x.ResourceContent.Resource.EnglishLabel,
-                    LocalizedName = x.DisplayName,
-                    ContentValue = x.Content,
-                    Language = new ResourceContentLanguage
-                    {
-                        Id = x.ResourceContent.Language.Id,
-                        DisplayName = x.ResourceContent.Language.EnglishDisplay,
-                        Code = x.ResourceContent.Language.ISO6393Code,
-                        ScriptDirection = x.ResourceContent.Language.ScriptDirection
-                    },
-                    Grouping = new ResourceTypeMetadata
-                    {
-                        Name = x.ResourceContent.Resource.ParentResource.DisplayName,
-                        Type = x.ResourceContent.Resource.ParentResource.ResourceType,
-                        MediaTypeValue = x.ResourceContent.MediaType,
-                        LicenseInfoValue = x.ResourceContent.Resource.ParentResource.LicenseInfo
-                    }
-                }).SingleOrDefaultAsync(ct);
+                    Id = x.ResourceContent.Language.Id,
+                    DisplayName = x.ResourceContent.Language.EnglishDisplay,
+                    Code = x.ResourceContent.Language.ISO6393Code,
+                    ScriptDirection = x.ResourceContent.Language.ScriptDirection
+                },
+                Grouping = new ResourceTypeMetadata
+                {
+                    Name = x.ResourceContent.Resource.ParentResource.DisplayName,
+                    Type = x.ResourceContent.Resource.ParentResource.ResourceType,
+                    MediaTypeValue = x.ResourceContent.MediaType,
+                    LicenseInfoValue = x.ResourceContent.Resource.ParentResource.LicenseInfo
+                }
+            })
+            .SingleOrDefaultAsync(ct);
 
         if (response is null)
         {
@@ -62,5 +63,11 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         response.Content = TiptapUtilities.ConvertFromJson(response.ContentValue,
             response.Grouping.MediaTypeValue == ResourceContentMediaType.Text ? req.ContentTextType : TiptapContentType.None);
         return response;
+    }
+
+    public override async Task OnAfterHandleAsync(Request req, Response res, CancellationToken ct)
+    {
+        const string endpointId = "public-resources-get";
+        await trackingService.TrackAsync(HttpContext, req.ContentId, endpointId, "public-api");
     }
 }
