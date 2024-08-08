@@ -1,4 +1,4 @@
-﻿using Aquifer.Common.Extensions;
+using Aquifer.Common.Extensions;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -13,7 +13,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     public override void Configure()
     {
         Get("/resources/types");
-        Options(EndpointHelpers.SetCacheOption(30));
+        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
         Summary(s =>
         {
             s.Summary = "Get a list of available resource types and collections.";

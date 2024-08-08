@@ -1,4 +1,4 @@
-﻿using Aquifer.Common.Utilities;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Public.API.Helpers;
@@ -12,7 +12,7 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
     public override void Configure()
     {
         Get("/resources/search");
-        Options(EndpointHelpers.SetCacheOption());
+        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
         Summary(s =>
         {
             s.Summary = "Search resources by keyword query, passage, or both.";
