@@ -1,4 +1,4 @@
-﻿using Aquifer.API.Helpers;
+using Aquifer.API.Helpers;
 using Aquifer.Common.Extensions;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
@@ -15,8 +15,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
     public override void Configure()
     {
         Get("/resources/parent-resources/statuses");
-        Options(EndpointHelpers.SetCacheOption(60));
-        ResponseCache(EndpointHelpers.OneDayInSeconds, varyByQueryKeys: ["languageId"]);
+        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
+        ResponseCache(EndpointHelpers.OneHourInSeconds, varyByQueryKeys: ["languageId"]);
         AllowAnonymous();
     }
 

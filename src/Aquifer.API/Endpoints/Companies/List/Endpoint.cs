@@ -1,4 +1,5 @@
 ﻿using Aquifer.API.Common;
+using Aquifer.API.Helpers;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     public override void Configure()
     {
         Get("/companies");
-        ResponseCache(600);
+        ResponseCache(EndpointHelpers.TenMinutesInSeconds);
         Permissions(PermissionName.ReadUsers);
     }
 
