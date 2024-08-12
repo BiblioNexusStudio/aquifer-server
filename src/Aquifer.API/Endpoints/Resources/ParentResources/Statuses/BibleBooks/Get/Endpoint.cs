@@ -12,7 +12,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     public override void Configure()
     {
         Get("/resources/parent-resources/statuses/bible-books");
-        Options(EndpointHelpers.SetCacheOption(60));
+        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
         ResponseCache(EndpointHelpers.OneDayInSeconds, varyByQueryKeys: ["languageId", "resourceId"]);
         AllowAnonymous();
     }
