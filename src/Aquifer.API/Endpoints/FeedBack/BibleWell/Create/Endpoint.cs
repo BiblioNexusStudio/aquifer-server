@@ -19,6 +19,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
             Name = req.Name,
             Email = req.Email,
             Phone = req.Phone,
+            UserId = HttpContext.Request.Headers["bn-user-id"],
             Feedback = req.Feedback
         };
 

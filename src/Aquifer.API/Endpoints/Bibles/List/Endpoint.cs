@@ -10,8 +10,8 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     public override void Configure()
     {
         Get("/bibles");
-        Options(EndpointHelpers.SetCacheOption(60));
-        ResponseCache(EndpointHelpers.OneDayInSeconds);
+        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
+        ResponseCache(EndpointHelpers.OneHourInSeconds);
         AllowAnonymous();
     }
 

@@ -7,8 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-var host = new HostBuilder()
-    .ConfigureFunctionsWorkerDefaults()
+var host = new HostBuilder().ConfigureFunctionsWorkerDefaults()
     .ConfigureServices((context, services) =>
     {
         services.AddOptions<ConfigurationOptions>().Bind(context.Configuration);
@@ -18,10 +17,9 @@ var host = new HostBuilder()
         services.AddSingleton<IAquiferAppInsightsClient, AquiferAppInsightsClient>();
         services.AddSingleton<IAzureClientService, AzureClientService>();
         services.AddSingleton<IAquiferApiManagementClient, AquiferApiManagementClient>();
-        services.AddAzureClient(context.Configuration.Get<ConfigurationOptions>().IsDevelopment);
+        services.AddAzureClient(context.Configuration.Get<ConfigurationOptions>()!.IsDevelopment);
         services.AddDbContext<AquiferDbContext>(options =>
-            options.UseSqlServer(connectionString,
-                providerOptions => providerOptions.EnableRetryOnFailure(3)));
+            options.UseSqlServer(connectionString, providerOptions => providerOptions.EnableRetryOnFailure(3)));
     })
     .Build();
 

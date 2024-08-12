@@ -8,14 +8,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Aquifer.Jobs;
 
-public class TrackResourceContentRequestJob(
-    ILogger<TrackResourceContentRequestJob> _logger,
-    AquiferDbContext _dbContext)
+public class TrackResourceContentRequestJob(ILogger<TrackResourceContentRequestJob> _logger, AquiferDbContext _dbContext)
 {
     [Function(nameof(TrackResourceContentRequestJob))]
     public async Task Run(
-        [QueueTrigger("%JobQueues:TrackResourceContentRequestQueue%", Connection = "AzureWebJobsStorage")]
-        QueueMessage message, CancellationToken ct)
+        [QueueTrigger("%JobQueues:TrackResourceContentRequestQueue%", Connection = "AzureWebJobsStorage")] QueueMessage message,
+        CancellationToken ct)
     {
         try
         {
@@ -29,11 +27,16 @@ public class TrackResourceContentRequestJob(
             foreach (var resourceContentId in trackingMetadata.ResourceContentIds)
             {
                 await _dbContext.ResourceContentRequests.AddAsync(new ResourceContentRequestEntity
-                {
-                    ResourceContentId = resourceContentId,
-                    IpAddress = trackingMetadata.IpAddress,
-                    Created = message.InsertedOn?.UtcDateTime ?? DateTime.UtcNow
-                }, ct);
+                    {
+                        ResourceContentId = resourceContentId,
+                        IpAddress = trackingMetadata.IpAddress,
+                        SubscriptionName = trackingMetadata.SubscriptionName,
+                        EndpointId = trackingMetadata.EndpointId,
+                        Source = trackingMetadata.Source,
+                        UserId = trackingMetadata.UserId,
+                        Created = message.InsertedOn?.UtcDateTime ?? DateTime.UtcNow
+                    },
+                    ct);
             }
 
             await _dbContext.SaveChangesAsync(ct);
