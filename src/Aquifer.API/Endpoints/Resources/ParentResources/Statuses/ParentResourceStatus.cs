@@ -2,7 +2,6 @@ namespace Aquifer.API.Endpoints.Resources.ParentResources.Statuses;
 
 public static class ResourceStatusUtilities
 {
-
     public static ParentResourceStatus GetStatus(int totalCount, int totalLanguageCount, DateTime? lastPublished)
     {
         if (totalLanguageCount == 0)
