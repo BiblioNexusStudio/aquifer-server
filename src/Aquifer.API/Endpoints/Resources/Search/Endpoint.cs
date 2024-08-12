@@ -31,13 +31,14 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                 x.ResourceContent.Resource.ParentResource.Enabled &&
                 (req.Query == null || x.DisplayName.Contains(req.Query) || x.ResourceContent.Resource.EnglishLabel.Contains(req.Query)) &&
                 (startVerseId == null ||
-                 (x.ResourceContent.LanguageId == req.LanguageId &&
-                  (x.ResourceContent.Resource.VerseResources.Any(vr =>
-                       vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
-                   x.ResourceContent.Resource.PassageResources.Any(pr =>
-                       (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
-                       (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
-                       (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId)))))).OrderBy(r => r.DisplayName)
+                 x.ResourceContent.Resource.VerseResources.Any(vr =>
+                     vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
+                 x.ResourceContent.Resource.PassageResources.Any(pr =>
+                     (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
+                     (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
+                     (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
+                req.ResourceTypes.Contains(x.ResourceContent.Resource.ParentResource.ResourceType) &&
+                x.ResourceContent.LanguageId == req.LanguageId).OrderBy(r => r.DisplayName)
             .Select(rcv => new Response
             {
                 Id = rcv.ResourceContentId,
