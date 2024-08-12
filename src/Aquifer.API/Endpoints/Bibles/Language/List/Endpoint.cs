@@ -11,7 +11,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     public override void Configure()
     {
         Get("/bibles/language/{LanguageId}");
-        ResponseCache(EndpointHelpers.OneDayInSeconds);
+        ResponseCache(EndpointHelpers.OneHourInSeconds);
         AllowAnonymous();
     }
 

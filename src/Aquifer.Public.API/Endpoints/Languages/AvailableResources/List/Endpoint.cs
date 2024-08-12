@@ -1,4 +1,4 @@
-﻿using Aquifer.Common.Utilities;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Public.API.Helpers;
 using FastEndpoints;
@@ -11,7 +11,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     public override void Configure()
     {
         Get("/languages/available-resources");
-        Options(EndpointHelpers.SetCacheOption());
+        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
         Summary(s =>
         {
             s.Summary = "Get count of resource types per language";

@@ -1,4 +1,4 @@
-﻿using Aquifer.Data;
+using Aquifer.Data;
 using Aquifer.Public.API.Helpers;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +10,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     public override void Configure()
     {
         Get("/languages");
-        Options(EndpointHelpers.SetCacheOption(60));
+        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
         Summary(s =>
         {
             s.Summary = "Return language list";
