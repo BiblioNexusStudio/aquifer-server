@@ -13,7 +13,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     {
         Get("/resources/parent-resources/statuses/bible-books");
         Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
-        ResponseCache(EndpointHelpers.OneDayInSeconds, varyByQueryKeys: ["languageId", "resourceId"]);
+        ResponseCache(EndpointHelpers.OneDayInSeconds, varyByQueryKeys: [nameof(Request.LanguageId), nameof(Request.ParentResourceId)]);
         AllowAnonymous();
     }
 
