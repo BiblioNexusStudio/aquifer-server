@@ -8,12 +8,3 @@ public class Response
     public required object? LicenseInfo { get; set; }
     public required ParentResourceStatus Status { get; set; }
 }
-
-public enum ParentResourceStatus
-{
-    Complete = 1,
-    RecentlyCompleted = 2,
-    Partial = 3,
-    RecentlyUpdated = 4,
-    ComingSoon = 5
-}
