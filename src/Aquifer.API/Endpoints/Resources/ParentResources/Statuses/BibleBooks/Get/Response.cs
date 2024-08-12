@@ -1,6 +1,4 @@
-﻿using Aquifer.Data.Enums;
-
-namespace Aquifer.API.Endpoints.Resources.ParentResources.Statuses.Get;
+﻿namespace Aquifer.API.Endpoints.Resources.ParentResources.Statuses.BibleBooks.Get;
 
 public class Response
 {

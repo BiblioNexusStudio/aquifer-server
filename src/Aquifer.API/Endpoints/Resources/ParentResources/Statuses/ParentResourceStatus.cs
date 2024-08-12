@@ -1,6 +1,4 @@
-using Aquifer.Data.Enums;
-
-namespace Aquifer.Common.Utilities;
+namespace Aquifer.API.Endpoints.Resources.ParentResources.Statuses;
 
 public static class ResourceStatusUtilities
 {
@@ -25,4 +23,13 @@ public static class ResourceStatusUtilities
 
         return ParentResourceStatus.Complete;
     }
+}
+
+public enum ParentResourceStatus
+{
+    Complete = 1,
+    RecentlyCompleted = 2,
+    Partial = 3,
+    RecentlyUpdated = 4,
+    ComingSoon = 5
 }

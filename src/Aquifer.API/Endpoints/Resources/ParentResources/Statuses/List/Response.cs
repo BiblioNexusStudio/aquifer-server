@@ -1,6 +1,4 @@
-﻿using Aquifer.Data.Enums;
-
-namespace Aquifer.API.Endpoints.Resources.ParentResources.Statuses.List;
+﻿namespace Aquifer.API.Endpoints.Resources.ParentResources.Statuses.List;
 
 public class Response
 {

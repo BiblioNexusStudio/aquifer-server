@@ -32,4 +32,9 @@
         <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj"/>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <Folder Include="Endpoints\Resources\ParentResources\Statuses\BibleBooks\"/>
+    </ItemGroup>
+
 </Project>
