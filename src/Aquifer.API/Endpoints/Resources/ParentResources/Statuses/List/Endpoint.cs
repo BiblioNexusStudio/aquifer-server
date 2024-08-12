@@ -51,7 +51,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
             ResourceType = x.ResourceType.GetDisplayName(),
             Title = x.Title,
             LicenseInfo = x.LicenseInfoValue is not null ? JsonUtilities.DefaultDeserialize<object>(x.LicenseInfoValue) : null,
-            Status = ResourceStatusUtilities.GetStatus(x.TotalResources, x.TotalLanguageResources, x.LastPublished)
+            Status = ParentResourceStatusHelpers.GetStatus(x.TotalResources, x.TotalLanguageResources, x.LastPublished)
         });
     }
 }
