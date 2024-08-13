@@ -46,20 +46,17 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
         }
         else
         {
-            var existingPassage = await dbContext.Passages
-                .SingleOrDefaultAsync(p => p.StartVerseId == request.StartVerseId && p.EndVerseId == request.EndVerseId, ct);
-
-            if (existingPassage == null)
-            {
-                existingPassage = new PassageEntity { StartVerseId = request.StartVerseId, EndVerseId = request.EndVerseId };
-                await dbContext.Passages.AddAsync(existingPassage, ct);
-            }
-
             if (!resourceContent.Resource.PassageResources.Any(pr =>
                     pr.Passage.StartVerseId == request.StartVerseId && pr.Passage.EndVerseId == request.EndVerseId))
             {
+                var passage = await dbContext.Passages
+                                  .SingleOrDefaultAsync(p => p.StartVerseId == request.StartVerseId && p.EndVerseId == request.EndVerseId,
+                                      ct) ??
+                              new PassageEntity { StartVerseId = request.StartVerseId, EndVerseId = request.EndVerseId };
+                ;
+
                 await dbContext.PassageResources.AddAsync(
-                    new PassageResourceEntity { ResourceId = resourceContent.ResourceId, PassageId = existingPassage.Id }, ct);
+                    new PassageResourceEntity { ResourceId = resourceContent.ResourceId, Passage = passage }, ct);
             }
         }
 
