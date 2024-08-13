@@ -1,3 +1,4 @@
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
@@ -14,23 +15,38 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var resources = await dbContext.ResourceContentVersions.Where(x =>
-                x.IsPublished &&
-                x.DisplayName.Contains(request.Query) &&
-                x.ResourceContent.Resource.ParentResource.Enabled &&
-                request.ResourceTypes.Contains(x.ResourceContent.Resource.ParentResource.ResourceType) &&
-                x.ResourceContent.LanguageId == request.LanguageId).Select(rcv => new Response
-                {
-                    Id = rcv.ResourceContentId,
-                    DisplayName = rcv.DisplayName,
-                    MediaType = rcv.ResourceContent.MediaType.ToString(),
-                    ParentResourceId = rcv.ResourceContent.Resource.ParentResourceId,
-                    Version = rcv.Version,
-                    ResourceType = rcv.ResourceContent.Resource.ParentResource.ResourceType.ToString()
-                })
-            .OrderBy(r => r.DisplayName)
-            .ToListAsync(ct);
+        var resources = await GetResources(request, ct);
 
         await SendOkAsync(resources, ct);
+    }
+
+    private async Task<List<Response>> GetResources(Request req, CancellationToken ct)
+    {
+        var (startVerseId, endVerseId) = req.BookCode is null
+            ? ((int?)null, (int?)null)
+            : BibleUtilities.GetVerseIds(req.BookCode, req.StartChapter, req.EndChapter, req.StartVerse, req.EndVerse);
+
+        return await dbContext.ResourceContentVersions.Where(x =>
+                x.IsPublished &&
+                x.ResourceContent.Resource.ParentResource.Enabled &&
+                (req.Query == null || x.DisplayName.Contains(req.Query) || x.ResourceContent.Resource.EnglishLabel.Contains(req.Query)) &&
+                (startVerseId == null ||
+                 x.ResourceContent.Resource.VerseResources.Any(vr =>
+                     vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
+                 x.ResourceContent.Resource.PassageResources.Any(pr =>
+                     (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
+                     (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
+                     (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
+                req.ResourceTypes.Contains(x.ResourceContent.Resource.ParentResource.ResourceType) &&
+                x.ResourceContent.LanguageId == req.LanguageId).OrderBy(r => r.DisplayName)
+            .Select(rcv => new Response
+            {
+                Id = rcv.ResourceContentId,
+                DisplayName = rcv.DisplayName,
+                MediaType = rcv.ResourceContent.MediaType.ToString(),
+                ParentResourceId = rcv.ResourceContent.Resource.ParentResourceId,
+                Version = rcv.Version,
+                ResourceType = rcv.ResourceContent.Resource.ParentResource.ResourceType.ToString()
+            }).ToListAsync(ct);
     }
 }
