@@ -40,6 +40,7 @@ public static class PermissionName
         ReadAllUsers = "read:all-users",
         ReadCompanyContentAssignments = "read:company-content-assignments",
         EditContent = "edit:content",
+        EditContentBibleReferences = "edit:content-bible-references",
         PublishContent = "publish:content",
         CreateContent = "create:content",
         AssignContent = "assign:content",
