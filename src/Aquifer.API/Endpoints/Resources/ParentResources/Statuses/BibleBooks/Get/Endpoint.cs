@@ -1,5 +1,7 @@
 ﻿using Aquifer.API.Helpers;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
+using Aquifer.Data.Enums;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,15 +25,16 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
         var englishPassages = await GetPassageResourceCountAsync(EnglishLanguageId, request.ParentResourceId, ct);
         var languageVerses = await GetVerseResourceCountAsync(request.LanguageId, request.ParentResourceId, ct);
         var languagePassages = await GetPassageResourceCountAsync(request.LanguageId, request.ParentResourceId, ct);
+        var booksWithNoResources = GetZeroResourceCount();
 
-        var rowsEnglishTotals = englishVerses.Concat(englishPassages).GroupBy(x => x.BibleBookId)
+        var rowsEnglishTotals = englishVerses.Concat(englishPassages).Concat(booksWithNoResources).GroupBy(x => x.BibleBookId)
             .Select(x => new BookRow
             {
                 BibleBookId = x.Key,
                 BookName = x.Select(y => y.BookName).First(),
                 LastPublished = x.Select(y => y.LastPublished).Max(),
                 TotalResources = x.Sum(y => y.TotalResources)
-            }).ToList();
+            }).OrderBy(x => x.BibleBookId).ToList();
 
         var rowsLanguageTotals = languageVerses.Concat(languagePassages).GroupBy(x => x.BibleBookId)
             .Select(x => new BookRow
@@ -97,6 +100,15 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                                                                ORDER BY SUBSTRING(CAST(VerseId AS VARCHAR(10)), 2, 3)
                                                            """)
             .ToListAsync(ct);
+    }
+
+    private static List<BookRow> GetZeroResourceCount()
+    {
+        return BibleBookCodeUtilities.GetAll().Where(x => x.BookId <= BookId.BookREV).Select(x => new BookRow
+        {
+            BookName = x.BookFullName,
+            BibleBookId = ((int)x.BookId).ToString("D3")
+        }).ToList();
     }
 }
 
