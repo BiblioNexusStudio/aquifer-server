@@ -104,9 +104,10 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     private static List<BookRow> GetZeroResourceCount()
     {
-        return BibleBookCodeUtilities.GetAll().Where(x => (int)x.BookId <= (int)BookId.BookREV).Select(x => new BookRow
+        return BibleBookCodeUtilities.GetAll().Where(x => x.BookId <= BookId.BookREV).Select(x => new BookRow
         {
-            BookName = x.BookFullName, BibleBookId = ((int)x.BookId).ToString("D3"), TotalResources = 0
+            BookName = x.BookFullName,
+            BibleBookId = ((int)x.BookId).ToString("D3")
         }).ToList();
     }
 }
