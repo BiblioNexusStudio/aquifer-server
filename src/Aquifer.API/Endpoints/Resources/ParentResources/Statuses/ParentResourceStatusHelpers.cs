@@ -6,7 +6,7 @@ public static class ParentResourceStatusHelpers
     {
         if (totalLanguageCount == 0)
         {
-            return ParentResourceStatus.ComingSoon;
+            return totalCount == 0 ? ParentResourceStatus.NoStatus : ParentResourceStatus.ComingSoon;
         }
 
         var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
@@ -26,6 +26,7 @@ public static class ParentResourceStatusHelpers
 
 public enum ParentResourceStatus
 {
+    NoStatus = 0,
     Complete = 1,
     RecentlyCompleted = 2,
     Partial = 3,
