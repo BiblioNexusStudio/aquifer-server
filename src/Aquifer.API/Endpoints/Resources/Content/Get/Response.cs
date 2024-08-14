@@ -21,7 +21,7 @@ public class Response
     public required bool HasPublishedVersion { get; set; }
     public int ResourceContentVersionId { get; set; }
     public bool IsDraft { get; set; }
-    public bool WasLastAssignedToSelf { get; set; }
+    public bool CanPullBackToManagerReview { get; set; }
     public object Content => JsonUtilities.DefaultDeserialize(ContentValue);
     public int ContentSize { get; set; }
     public string DisplayName { get; set; } = null!;

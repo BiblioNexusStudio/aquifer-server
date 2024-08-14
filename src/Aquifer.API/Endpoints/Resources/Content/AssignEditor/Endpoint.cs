@@ -55,11 +55,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             var assignedUserIsInCompany = draftVersion.AssignedUser?.CompanyId == user.CompanyId;
             var isTakingBackFromReviewPending = hasSendReviewContentPermission && !currentUserIsAssigned &&
                                                 Constants.ReviewPendingStatuses.Contains(originalStatus) &&
-                                                await dbContext.ResourceContentVersionAssignedUserHistory
-                                                    .Where(h => h.ResourceContentVersionId == draftVersion.Id && h.AssignedUserId != null)
-                                                    .OrderByDescending(h => h.Created)
-                                                    .Select(h => h.AssignedUserId == user.Id)
-                                                    .FirstOrDefaultAsync(ct);
+                                                await WasLastAssignedToSelfOrIsCompanyLead(draftVersion, user.Id, ct);
 
             var allowedToAssign = (hasAssignOverridePermission && (assignedUserIsInCompany || hasAssignOutsideCompanyPermission)) ||
                                   isTakingBackFromReviewPending ||
@@ -111,5 +107,26 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         await dbContext.SaveChangesAsync(ct);
 
         await SendNoContentAsync(ct);
+    }
+
+    private async Task<bool> WasLastAssignedToSelfOrIsCompanyLead(ResourceContentVersionEntity version, int userId, CancellationToken ct)
+    {
+        var wasLastAssignedToSelf = await dbContext.ResourceContentVersionAssignedUserHistory
+            .Where(h => h.ResourceContentVersionId == version.Id && h.AssignedUserId != null)
+            .OrderByDescending(h => h.Created)
+            .Select(h => h.AssignedUserId == userId)
+            .FirstOrDefaultAsync(ct);
+
+        if (wasLastAssignedToSelf)
+        {
+            return true;
+        }
+
+        var isCompanyLead = await dbContext.Projects
+            .Where(p => p.ResourceContents.Any(rc => rc.Id == version.ResourceContentId))
+            .Select(p => p.CompanyLeadUserId == userId)
+            .FirstOrDefaultAsync(ct);
+
+        return isCompanyLead;
     }
 }

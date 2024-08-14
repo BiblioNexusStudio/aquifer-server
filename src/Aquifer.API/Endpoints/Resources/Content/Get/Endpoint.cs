@@ -98,13 +98,15 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         }
 
         if (relevantContentVersion.IsDraft && relevantContentVersion.AssignedUserId != self.Id &&
-            userService.HasPermission(PermissionName.SendReviewContent))
+            userService.HasPermission(PermissionName.SendReviewContent) && Constants.ReviewPendingStatuses.Contains(resourceContent.Status))
         {
-            resourceContent.WasLastAssignedToSelf = await dbContext.ResourceContentVersionAssignedUserHistory
-                .Where(h => h.ResourceContentVersionId == relevantContentVersion.Id && h.AssignedUserId != null)
-                .OrderByDescending(h => h.Created)
-                .Select(h => h.AssignedUserId == self.Id)
-                .FirstOrDefaultAsync(ct);
+            resourceContent.CanPullBackToManagerReview = resourceContent.ProjectEntity?.CompanyLeadUserId == self.Id
+                                                         || await dbContext.ResourceContentVersionAssignedUserHistory
+                                                             .Where(h => h.ResourceContentVersionId == relevantContentVersion.Id &&
+                                                                         h.AssignedUserId != null)
+                                                             .OrderByDescending(h => h.Created)
+                                                             .Select(h => h.AssignedUserId == self.Id)
+                                                             .FirstOrDefaultAsync(ct);
         }
 
         var snapshots = await dbContext.ResourceContentVersionSnapshots
