@@ -22,6 +22,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     {
         var user = await userService.GetUserFromJwtAsync(ct);
         var userToAssign = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.AssignedUserId && u.Enabled, ct);
+        var hasSendReviewContentPermission = userService.HasPermission(PermissionName.SendReviewContent);
         var hasAssignOverridePermission = userService.HasPermission(PermissionName.AssignOverride);
         var hasAssignOutsideCompanyPermission = userService.HasPermission(PermissionName.AssignOutsideCompany);
 
@@ -49,38 +50,45 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         foreach (var draftVersion in draftVersions)
         {
+            var originalStatus = draftVersion.ResourceContent.Status;
             var currentUserIsAssigned = draftVersion.AssignedUserId == user.Id;
             var assignedUserIsInCompany = draftVersion.AssignedUser?.CompanyId == user.CompanyId;
+            var isTakingBackFromReviewPending = hasSendReviewContentPermission && !currentUserIsAssigned &&
+                                                Constants.ReviewPendingStatuses.Contains(originalStatus) &&
+                                                await dbContext.ResourceContentVersionAssignedUserHistory
+                                                    .Where(h => h.ResourceContentVersionId == draftVersion.Id && h.AssignedUserId != null)
+                                                    .OrderByDescending(h => h.Created)
+                                                    .Select(h => h.AssignedUserId == user.Id)
+                                                    .FirstOrDefaultAsync(ct);
+
             var allowedToAssign = (hasAssignOverridePermission && (assignedUserIsInCompany || hasAssignOutsideCompanyPermission)) ||
-                currentUserIsAssigned;
+                                  isTakingBackFromReviewPending ||
+                                  currentUserIsAssigned;
 
             if (!allowedToAssign)
             {
                 ThrowError($"Unable to assign user for id {draftVersion.ResourceContentId}");
             }
 
-            var inReviewStatus = Constants.TranslationStatuses.Contains(draftVersion.ResourceContent.Status)
-                ? ResourceContentStatus.TranslationPublisherReview
-                : ResourceContentStatus.AquiferizePublisherReview;
-
-            if (draftVersion.ResourceContent.Status == inReviewStatus && draftVersion.AssignedUserId != user.Id)
+            if (Constants.PublisherReviewStatuses.Contains(originalStatus) && draftVersion.AssignedUserId != user.Id)
             {
                 ThrowError(
                     $"Must be assigned the in-review content in order to assign to another user for id {draftVersion.ResourceContentId}");
             }
 
-            var inProgressStatus = Constants.TranslationStatuses.Contains(draftVersion.ResourceContent.Status)
-                ? ResourceContentStatus.TranslationInProgress
-                : ResourceContentStatus.AquiferizeInProgress;
+            var newStatus = isTakingBackFromReviewPending
+                ? Constants.TranslationStatuses.Contains(originalStatus)
+                    ? ResourceContentStatus.TranslationManagerReview
+                    : ResourceContentStatus.AquiferizeManagerReview
+                : Constants.TranslationStatuses.Contains(originalStatus)
+                    ? ResourceContentStatus.TranslationInProgress
+                    : ResourceContentStatus.AquiferizeInProgress;
 
-            var originalStatus = draftVersion.ResourceContent.Status;
-            var keepCurrentStatus = userToAssign.Role is UserRole.Manager &&
-                draftVersion.ResourceContent.Status is ResourceContentStatus.AquiferizeManagerReview
-                    or ResourceContentStatus.TranslationManagerReview;
+            var keepCurrentStatus = userToAssign.Role is UserRole.Manager && Constants.ManagerReviewStatuses.Contains(originalStatus);
 
             if (!keepCurrentStatus)
             {
-                draftVersion.ResourceContent.Status = inProgressStatus;
+                draftVersion.ResourceContent.Status = newStatus;
             }
 
             if (draftVersion.AssignedUserId != request.AssignedUserId || draftVersion.ResourceContentVersionSnapshots.Count == 0)

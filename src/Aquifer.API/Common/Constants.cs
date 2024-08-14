@@ -32,6 +32,24 @@ public static class Constants
             ResourceContentStatus.TranslationPublisherReview,
             ResourceContentStatus.TranslationManagerReview
         ]);
+
+    public static readonly ReadOnlyCollection<ResourceContentStatus> ReviewPendingStatuses =
+        new([
+            ResourceContentStatus.TranslationReviewPending,
+            ResourceContentStatus.AquiferizeReviewPending
+        ]);
+
+    public static readonly ReadOnlyCollection<ResourceContentStatus> PublisherReviewStatuses =
+        new([
+                ResourceContentStatus.TranslationPublisherReview,
+                ResourceContentStatus.AquiferizePublisherReview
+        ]);
+
+    public static readonly ReadOnlyCollection<ResourceContentStatus> ManagerReviewStatuses =
+        new([
+            ResourceContentStatus.TranslationManagerReview,
+            ResourceContentStatus.AquiferizeManagerReview
+        ]);
 }
 
 public static class PermissionName
