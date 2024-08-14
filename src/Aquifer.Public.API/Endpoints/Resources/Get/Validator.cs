@@ -1,7 +1,7 @@
 ﻿using FastEndpoints;
 using FluentValidation;
 
-namespace Aquifer.Public.API.Endpoints.Resources.GetItem;
+namespace Aquifer.Public.API.Endpoints.Resources.Get;
 
 public class Validator : Validator<Request>
 {

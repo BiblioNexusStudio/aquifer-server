@@ -6,10 +6,12 @@ using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.Public.API.Endpoints.Resources.GetItem;
+namespace Aquifer.Public.API.Endpoints.Resources.Get;
 
 public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackingService trackingService) : Endpoint<Request, Response>
 {
+    private int _actingContentId;
+
     public override void Configure()
     {
         Get("/resources/{ContentId}");
@@ -30,8 +32,14 @@ public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackin
 
     private async Task<Response> GetResourceContentAsync(Request req, CancellationToken ct)
     {
+        //await SetContentIdAsync(req.ContentId, req.AsLanguage);
+
         var response = await dbContext.ResourceContentVersions
-            .Where(x => x.ResourceContentId == req.ContentId && x.IsPublished && x.ResourceContent.Resource.ParentResource.Enabled)
+            .Where(x => ((req.AsLanguage == null && x.ResourceContentId == req.ContentId) ||
+                    (x.ResourceContent.Resource.ResourceContents.Any(rc => rc.Id == req.ContentId) &&
+                        x.ResourceContent.Language.ISO6393Code == req.AsLanguage)) &&
+                x.IsPublished &&
+                x.ResourceContent.Resource.ParentResource.Enabled)
             .Select(x => new Response
             {
                 Id = x.ResourceContentId,
@@ -65,9 +73,29 @@ public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackin
         return response;
     }
 
+    private async Task SetContentIdAsync(int contentId, string? asLanguage)
+    {
+        if (asLanguage?.Length != 3)
+        {
+            _actingContentId = contentId;
+            return;
+        }
+
+        var resourceContent = await dbContext.ResourceContents
+            .Where(x => x.Resource.ResourceContents.Any(rc => rc.Id == contentId) && x.Language.ISO6393Code == asLanguage)
+            .SingleOrDefaultAsync();
+
+        if (resourceContent is null)
+        {
+            ThrowError($"No associated record found for {_actingContentId} in {asLanguage}", 404);
+        }
+
+        _actingContentId = resourceContent.Id;
+    }
+
     public override async Task OnAfterHandleAsync(Request req, Response res, CancellationToken ct)
     {
         const string endpointId = "public-resources-get";
-        await trackingService.TrackAsync(HttpContext, req.ContentId, endpointId, "public-api");
+        await trackingService.TrackAsync(HttpContext, _actingContentId, endpointId, "public-api");
     }
 }

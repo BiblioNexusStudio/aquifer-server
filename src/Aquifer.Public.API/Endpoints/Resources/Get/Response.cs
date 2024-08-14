@@ -2,7 +2,7 @@
 using Aquifer.Common.Utilities;
 using Aquifer.Data.Entities;
 
-namespace Aquifer.Public.API.Endpoints.Resources.GetItem;
+namespace Aquifer.Public.API.Endpoints.Resources.Get;
 
 public class Response
 {
