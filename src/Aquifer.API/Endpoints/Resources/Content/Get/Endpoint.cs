@@ -1,3 +1,4 @@
+using Aquifer.API.Common;
 using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
 using Aquifer.Common.Extensions;
@@ -96,7 +97,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ThrowError("Data integrity issue, no resource content version found.");
         }
 
-        if (relevantContentVersion.IsDraft && relevantContentVersion.AssignedUserId != self.Id)
+        if (relevantContentVersion.IsDraft && relevantContentVersion.AssignedUserId != self.Id &&
+            userService.HasPermission(PermissionName.SendReviewContent))
         {
             resourceContent.WasLastAssignedToSelf = await dbContext.ResourceContentVersionAssignedUserHistory
                 .Where(h => h.ResourceContentVersionId == relevantContentVersion.Id && h.AssignedUserId != null)
