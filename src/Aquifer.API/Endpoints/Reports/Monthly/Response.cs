@@ -1,6 +1,6 @@
-namespace Aquifer.API.Modules.Reports.MonthlyReports;
+namespace Aquifer.API.Endpoints.Reports.Monthly;
 
-public record MonthlyStartsAndCompletionsResponse(
+public record Response(
     IEnumerable<StatusCountPerMonth> Starts,
     IEnumerable<StatusCountPerMonth> Completions
 );
