@@ -32,6 +32,9 @@ public class AquiferDbContext : DbContext
     public DbSet<CommentEntity> Comments { get; set; }
     public DbSet<CommentThreadEntity> CommentThreads { get; set; }
     public DbSet<CompanyEntity> Companies { get; set; }
+    public DbSet<ContentSubscriberEntity> ContentSubscribers { get; set; }
+    public DbSet<ContentSubscriberLanguageEntity> ContentSubscriberLanguages { get; set; }
+    public DbSet<ContentSubscriberParentResourceEntity> ContentSubscriberParentResources { get; set; }
     public DbSet<FeedbackEntity> Feedback { get; set; }
     public DbSet<GreekLemmaEntity> GreekLemmas { get; set; }
     public DbSet<GreekNewTestamentEntity> GreekNewTestaments { get; set; }
