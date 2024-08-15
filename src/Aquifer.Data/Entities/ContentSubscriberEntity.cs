@@ -14,7 +14,7 @@ public class ContentSubscriberEntity : IHasUpdatedTimestamp
     public string Email { get; set; } = null!;
 
     [MaxLength(256)]
-    public string Organization { get; set; } = null!;
+    public string? Organization { get; set; }
 
     public bool GetNewsletter { get; set; }
 
