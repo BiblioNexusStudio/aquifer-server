@@ -22,6 +22,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     {
         var user = await userService.GetUserFromJwtAsync(ct);
         var userToAssign = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.AssignedUserId && u.Enabled, ct);
+        var hasSendReviewContentPermission = userService.HasPermission(PermissionName.SendReviewContent);
         var hasAssignOverridePermission = userService.HasPermission(PermissionName.AssignOverride);
         var hasAssignOutsideCompanyPermission = userService.HasPermission(PermissionName.AssignOutsideCompany);
 
@@ -49,38 +50,41 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         foreach (var draftVersion in draftVersions)
         {
+            var originalStatus = draftVersion.ResourceContent.Status;
             var currentUserIsAssigned = draftVersion.AssignedUserId == user.Id;
             var assignedUserIsInCompany = draftVersion.AssignedUser?.CompanyId == user.CompanyId;
+            var isTakingBackFromReviewPending = hasSendReviewContentPermission && !currentUserIsAssigned &&
+                                                Constants.ReviewPendingStatuses.Contains(originalStatus) &&
+                                                await WasLastAssignedToSelfOrIsCompanyLead(draftVersion, user.Id, ct);
+
             var allowedToAssign = (hasAssignOverridePermission && (assignedUserIsInCompany || hasAssignOutsideCompanyPermission)) ||
-                currentUserIsAssigned;
+                                  isTakingBackFromReviewPending ||
+                                  currentUserIsAssigned;
 
             if (!allowedToAssign)
             {
                 ThrowError($"Unable to assign user for id {draftVersion.ResourceContentId}");
             }
 
-            var inReviewStatus = Constants.TranslationStatuses.Contains(draftVersion.ResourceContent.Status)
-                ? ResourceContentStatus.TranslationPublisherReview
-                : ResourceContentStatus.AquiferizePublisherReview;
-
-            if (draftVersion.ResourceContent.Status == inReviewStatus && draftVersion.AssignedUserId != user.Id)
+            if (Constants.PublisherReviewStatuses.Contains(originalStatus) && draftVersion.AssignedUserId != user.Id)
             {
                 ThrowError(
                     $"Must be assigned the in-review content in order to assign to another user for id {draftVersion.ResourceContentId}");
             }
 
-            var inProgressStatus = Constants.TranslationStatuses.Contains(draftVersion.ResourceContent.Status)
-                ? ResourceContentStatus.TranslationInProgress
-                : ResourceContentStatus.AquiferizeInProgress;
+            var newStatus = isTakingBackFromReviewPending
+                ? Constants.TranslationStatuses.Contains(originalStatus)
+                    ? ResourceContentStatus.TranslationManagerReview
+                    : ResourceContentStatus.AquiferizeManagerReview
+                : Constants.TranslationStatuses.Contains(originalStatus)
+                    ? ResourceContentStatus.TranslationInProgress
+                    : ResourceContentStatus.AquiferizeInProgress;
 
-            var originalStatus = draftVersion.ResourceContent.Status;
-            var keepCurrentStatus = userToAssign.Role is UserRole.Manager &&
-                draftVersion.ResourceContent.Status is ResourceContentStatus.AquiferizeManagerReview
-                    or ResourceContentStatus.TranslationManagerReview;
+            var keepCurrentStatus = userToAssign.Role is UserRole.Manager && Constants.ManagerReviewStatuses.Contains(originalStatus);
 
             if (!keepCurrentStatus)
             {
-                draftVersion.ResourceContent.Status = inProgressStatus;
+                draftVersion.ResourceContent.Status = newStatus;
             }
 
             if (draftVersion.AssignedUserId != request.AssignedUserId || draftVersion.ResourceContentVersionSnapshots.Count == 0)
@@ -103,5 +107,26 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         await dbContext.SaveChangesAsync(ct);
 
         await SendNoContentAsync(ct);
+    }
+
+    private async Task<bool> WasLastAssignedToSelfOrIsCompanyLead(ResourceContentVersionEntity version, int userId, CancellationToken ct)
+    {
+        var wasLastAssignedToSelf = await dbContext.ResourceContentVersionAssignedUserHistory
+            .Where(h => h.ResourceContentVersionId == version.Id && h.AssignedUserId != null)
+            .OrderByDescending(h => h.Created)
+            .Select(h => h.AssignedUserId == userId)
+            .FirstOrDefaultAsync(ct);
+
+        if (wasLastAssignedToSelf)
+        {
+            return true;
+        }
+
+        var isCompanyLead = await dbContext.Projects
+            .Where(p => p.ResourceContents.Any(rc => rc.Id == version.ResourceContentId))
+            .Select(p => p.CompanyLeadUserId == userId)
+            .FirstOrDefaultAsync(ct);
+
+        return isCompanyLead;
     }
 }
