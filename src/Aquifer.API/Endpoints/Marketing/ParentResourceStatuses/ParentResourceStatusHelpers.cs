@@ -1,4 +1,4 @@
-namespace Aquifer.API.Endpoints.Resources.ParentResources.Statuses;
+namespace Aquifer.API.Endpoints.Marketing.ParentResourceStatuses;
 
 public static class ParentResourceStatusHelpers
 {

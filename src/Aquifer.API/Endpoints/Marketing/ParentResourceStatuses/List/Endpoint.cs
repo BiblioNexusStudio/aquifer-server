@@ -6,7 +6,7 @@ using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.ParentResources.Statuses.List;
+namespace Aquifer.API.Endpoints.Marketing.ParentResourceStatuses.List;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerable<Response>>
 {
@@ -14,7 +14,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
 
     public override void Configure()
     {
-        Get("/resources/parent-resources/statuses");
+        Get("/marketing/parent-resource-statuses");
         Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
         ResponseCache(EndpointHelpers.OneHourInSeconds, varyByQueryKeys: ["languageId"]);
         AllowAnonymous();

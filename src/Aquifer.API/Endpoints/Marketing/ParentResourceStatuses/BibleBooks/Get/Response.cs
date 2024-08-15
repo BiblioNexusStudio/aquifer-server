@@ -1,4 +1,4 @@
-﻿namespace Aquifer.API.Endpoints.Resources.ParentResources.Statuses.BibleBooks.Get;
+﻿namespace Aquifer.API.Endpoints.Marketing.ParentResourceStatuses.BibleBooks.Get;
 
 public class Response
 {

@@ -5,7 +5,7 @@ using Aquifer.Data.Enums;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.ParentResources.Statuses.BibleBooks.Get;
+namespace Aquifer.API.Endpoints.Marketing.ParentResourceStatuses.BibleBooks.Get;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Response>>
 {
@@ -13,7 +13,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     public override void Configure()
     {
-        Get("/resources/parent-resources/statuses/bible-books");
+        Get("/marketing/parent-resource-statuses/bible-books");
         Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
         ResponseCache(EndpointHelpers.OneDayInSeconds, varyByQueryKeys: [nameof(Request.LanguageId), nameof(Request.ParentResourceId)]);
         AllowAnonymous();
