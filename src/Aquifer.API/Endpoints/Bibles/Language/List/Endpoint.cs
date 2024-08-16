@@ -17,7 +17,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var bibles = await dbContext.Bibles.Where(x => x.Enabled && x.LanguageId == request.LanguageId)
+        var bibles = await dbContext.Bibles
+            .Where(x => x.Enabled && x.LanguageId == request.LanguageId && x.RestrictedLicense == request.RestrictedLicense)
             .Select(bible => new Response
             {
                 Name = bible.Name,
@@ -25,6 +26,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                 SerializedLicenseInfo = bible.LicenseInfo,
                 Id = bible.Id,
                 LanguageId = bible.LanguageId,
+                RestrictedLicense = bible.RestrictedLicense,
                 Books = bible.BibleBookContents.OrderBy(book => book.BookId).Select(book =>
                     new BibleBookMetadataResponse
                     {
