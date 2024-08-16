@@ -1,42 +1,42 @@
 using Aquifer.API.Helpers;
-using Aquifer.API.Utilities;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Reports.BarCharts.DailyResourceDownloads;
 
-public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<IEnumerable<Response>>
+public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerable<Response>>
 {
-    private const string DailyDownloadTotalsQuery =
-        """
-        SELECT DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0)) AS Date,
-                COUNT(*) AS Amount FROM ResourceContentRequests
-        WHERE [Created] >= DATEADD(DAY, -30, GETUTCDATE())
-        GROUP BY DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0));
-        """;
-
     public override void Configure()
     {
         Get("/reports/bar-charts/daily-resource-downloads");
         EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds);
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var dailyDownloadTotals = await dbContext.Database
-            .SqlQuery<Response>($"exec ({DailyDownloadTotalsQuery})")
+            .SqlQuery<Response>($"""
+                                     SELECT DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0)) AS Date, COUNT(*) AS Amount
+                                     FROM ResourceContentRequests
+                                     WHERE [Created] BETWEEN {request.StartDate} AND {request.EndDate}
+                                     GROUP BY DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0));
+                                 """)
             .ToListAsync(ct);
 
-        var lastThirtyDays = ReportUtilities.GetLastDays(30);
-        foreach (var date in lastThirtyDays)
-        {
-            if (dailyDownloadTotals.All(x => x.Date != date))
-            {
-                dailyDownloadTotals.Add(new Response { Date = date, Amount = 0 });
-            }
-        }
+        var allDates = Enumerable.Range(0, request.EndDate.DayNumber - request.StartDate.DayNumber + 1)
+            .Select(request.StartDate.AddDays);
 
-        await SendOkAsync(dailyDownloadTotals.OrderBy(x => x.Date), ct);
+        var augmentedTotals = allDates
+            .GroupJoin(dailyDownloadTotals,
+                date => date,
+                total => DateOnly.FromDateTime(total.Date),
+                (date, totals) => new Response
+                {
+                    Date = date.ToDateTime(TimeOnly.MinValue),
+                    Amount = totals.FirstOrDefault()?.Amount ?? 0
+                });
+
+        await SendOkAsync(augmentedTotals.OrderBy(x => x.Date), ct);
     }
 }

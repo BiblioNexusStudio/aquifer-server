@@ -14,6 +14,7 @@ public class BibleEntity : IHasUpdatedTimestamp
     public string? LicenseInfo { get; set; }
     public bool Enabled { get; set; }
     public bool LanguageDefault { get; set; }
+    public bool RestrictedLicense { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
