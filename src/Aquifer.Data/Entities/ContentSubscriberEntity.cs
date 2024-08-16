@@ -21,6 +21,9 @@ public class ContentSubscriberEntity : IHasUpdatedTimestamp
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
+    public ICollection<ContentSubscriberLanguageEntity> ContentSubscriberLanguages { get; set; } = [];
+    public ICollection<ContentSubscriberParentResourceEntity> ContentSubscriberParentResources { get; set; } = [];
+
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 }
