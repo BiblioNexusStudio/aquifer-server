@@ -1,6 +1,6 @@
-﻿namespace Aquifer.API.Modules.Reports.ResourceItemTotals;
+namespace Aquifer.API.Endpoints.Reports.Resources.ItemTotals;
 
-public class ResourceItemTotalsResponse
+public record Response
 {
     public int TotalResources { get; set; }
     public int TotalResourcesThisMonth { get; set; }

@@ -1,11 +1,12 @@
+using Aquifer.API.Helpers;
 using Aquifer.API.Utilities;
 using Aquifer.Data;
-using Microsoft.AspNetCore.Http.HttpResults;
+using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Modules.Reports.DailyDownloadTotals;
+namespace Aquifer.API.Endpoints.Reports.BarCharts.DailyResourceDownloads;
 
-public static class DailyDownloadEndpoints
+public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<IEnumerable<Response>>
 {
     private const string DailyDownloadTotalsQuery =
         """
@@ -15,27 +16,27 @@ public static class DailyDownloadEndpoints
         GROUP BY DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0));
         """;
 
-    public static async Task<Ok<IOrderedEnumerable<AmountPerDay>>> DailyResourceDownloadTotals(
-        AquiferDbContext dbContext,
-        CancellationToken cancellationToken)
+    public override void Configure()
+    {
+        Get("/reports/bar-charts/daily-resource-downloads");
+        EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds);
+    }
+
+    public override async Task HandleAsync(CancellationToken ct)
     {
         var dailyDownloadTotals = await dbContext.Database
-            .SqlQuery<AmountPerDay>($"exec ({DailyDownloadTotalsQuery})")
-            .ToListAsync(cancellationToken);
+            .SqlQuery<Response>($"exec ({DailyDownloadTotalsQuery})")
+            .ToListAsync(ct);
 
         var lastThirtyDays = ReportUtilities.GetLastDays(30);
         foreach (var date in lastThirtyDays)
         {
             if (dailyDownloadTotals.All(x => x.Date != date))
             {
-                dailyDownloadTotals.Add(new AmountPerDay
-                {
-                    Date = date,
-                    Amount = 0
-                });
+                dailyDownloadTotals.Add(new Response { Date = date, Amount = 0 });
             }
         }
 
-        return TypedResults.Ok(dailyDownloadTotals.OrderBy(x => x.Date));
+        await SendOkAsync(dailyDownloadTotals.OrderBy(x => x.Date), ct);
     }
 }
