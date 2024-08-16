@@ -1,4 +1,5 @@
-﻿using Aquifer.Data;
+﻿using Aquifer.API.Helpers;
+using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,8 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
     public override void Configure()
     {
         Get("/marketing/subscribers/choices");
+        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
+        ResponseCache(EndpointHelpers.OneHourInSeconds);
         AllowAnonymous();
     }
 
@@ -19,12 +22,14 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
             {
                 Id = x.Id,
                 EnglishDisplayName = x.DisplayName
-            }).ToListAsync(ct);
+            })
+            .ToListAsync(ct);
 
         Response.LanguageChoices = await dbContext.Languages.Select(x => new SubscriberChoice
-        {
-            Id = x.Id,
-            EnglishDisplayName = x.EnglishDisplay
-        }).ToListAsync(ct);
+            {
+                Id = x.Id,
+                EnglishDisplayName = x.EnglishDisplay
+            })
+            .ToListAsync(ct);
     }
 }

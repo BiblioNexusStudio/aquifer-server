@@ -32,7 +32,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
                                                                                    PR.ResourceType AS ResourceType
                                                                             FROM ResourceContents RC
                                                                                      INNER JOIN Resources R ON R.Id = RC.ResourceId
-                                                                                     INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
+                                                                                     INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId AND PR.ForMarketing = 1
                                                                                      CROSS APPLY (SELECT COUNT(RC2.Id) AS Total, MAX(RC2.Updated) AS LastPublished
                                                                                                   FROM ResourceContents RC2
                                                                                                            INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC2.Id AND RCV.IsPublished = 1

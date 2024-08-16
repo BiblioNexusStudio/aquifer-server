@@ -2,10 +2,10 @@
 
 public class Request
 {
-    public string Name { get; set; } = null!;
-    public string Email { get; set; } = null!;
-    public string? Organization { get; set; }
-    public bool GetNewsletter { get; set; }
-    public List<int> SelectedLanguageIds { get; set; } = [];
-    public List<int> SelectedParentResourceIds { get; set; } = [];
+    public string Name { get; init; } = null!;
+    public string Email { get; init; } = null!;
+    public string? Organization { get; init; }
+    public bool GetNewsletter { get; init; }
+    public IEnumerable<int> SelectedLanguageIds { get; init; } = [];
+    public IEnumerable<int> SelectedParentResourceIds { get; init; } = [];
 }

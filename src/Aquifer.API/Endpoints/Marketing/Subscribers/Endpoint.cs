@@ -74,6 +74,8 @@ public class Endpoint(AquiferDbContext dbContext, ILogger<Endpoint> logger) : En
         dbContext.ContentSubscriberLanguages.RemoveRange(languagesToRemove);
 
         subscriber.GetNewsletter = req.GetNewsletter;
+        subscriber.Name = req.Name;
+        subscriber.Organization = req.Organization;
     }
 
     private async Task HandleNewSubscriberAsync(Request req, CancellationToken ct)
