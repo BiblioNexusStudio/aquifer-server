@@ -1,21 +1,12 @@
 using Aquifer.API.Helpers;
 using Aquifer.Data;
 using FastEndpoints;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Reports.BarCharts.DailyResourceDownloads;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerable<Response>>
 {
-    private const string DailyDownloadTotalsQuery =
-        """
-        SELECT DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0)) AS Date,
-                COUNT(*) AS Amount FROM ResourceContentRequests
-        WHERE [Created] BETWEEN @StartDate AND @EndDate
-        GROUP BY DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0));
-        """;
-
     public override void Configure()
     {
         Get("/reports/bar-charts/daily-resource-downloads");
@@ -24,15 +15,17 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var startDate = request.StartDate ?? DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(-3));
-        var endDate = request.EndDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
-
         var dailyDownloadTotals = await dbContext.Database
-            .SqlQueryRaw<Response>(DailyDownloadTotalsQuery, new SqlParameter("StartDate", startDate), new SqlParameter("EndDate", endDate))
+            .SqlQuery<Response>($"""
+                                     SELECT DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0)) AS Date, COUNT(*) AS Amount
+                                     FROM ResourceContentRequests
+                                     WHERE [Created] BETWEEN {request.StartDate} AND {request.EndDate}
+                                     GROUP BY DATEADD(DD, 0, DATEADD(DD, DATEDIFF(D, 0, Created), 0));
+                                 """)
             .ToListAsync(ct);
 
-        var allDates = Enumerable.Range(0, endDate.DayNumber - startDate.DayNumber + 1)
-            .Select(startDate.AddDays);
+        var allDates = Enumerable.Range(0, request.EndDate.DayNumber - request.StartDate.DayNumber + 1)
+            .Select(request.StartDate.AddDays);
 
         var augmentedTotals = allDates
             .GroupJoin(dailyDownloadTotals,
