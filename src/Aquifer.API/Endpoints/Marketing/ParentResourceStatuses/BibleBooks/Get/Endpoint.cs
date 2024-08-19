@@ -15,7 +15,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     {
         Get("/marketing/parent-resource-statuses/bible-books");
         Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
-        ResponseCache(EndpointHelpers.OneHourInSeconds, varyByQueryKeys: [nameof(Request.LanguageId), nameof(Request.ParentResourceId)]);
+        ResponseCache(EndpointHelpers.OneHourInSeconds);
         AllowAnonymous();
     }
 
@@ -114,11 +114,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     {
         return BibleBookCodeUtilities.GetAll()
             .Where(x => x.BookId <= BookId.BookREV)
-            .Select(x => new BookRow
-            {
-                BookName = x.BookFullName,
-                BibleBookId = ((int)x.BookId).ToString("D3")
-            })
+            .Select(x => new BookRow { BookName = x.BookFullName, BibleBookId = ((int)x.BookId).ToString("D3") })
             .ToList();
     }
 }
