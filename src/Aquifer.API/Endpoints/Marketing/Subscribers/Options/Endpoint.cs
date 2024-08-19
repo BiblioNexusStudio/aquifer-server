@@ -3,13 +3,13 @@ using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Marketing.Subscribers.Choices;
+namespace Aquifer.API.Endpoints.Marketing.Subscribers.Options;
 
 public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Response>
 {
     public override void Configure()
     {
-        Get("/marketing/subscribers/choices");
+        Get("/marketing/subscribers/options");
         Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
         ResponseCache(EndpointHelpers.OneHourInSeconds);
         AllowAnonymous();
@@ -17,15 +17,15 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        Response.ParentResourceChoices = await dbContext.ParentResources.Where(x => x.ForMarketing == true)
-            .Select(x => new SubscriberChoice
+        Response.ParentResourceOptions = await dbContext.ParentResources.Where(x => x.ForMarketing == true)
+            .Select(x => new SubscriberOption
             {
                 Id = x.Id,
                 EnglishDisplayName = x.DisplayName
             })
             .ToListAsync(ct);
 
-        Response.LanguageChoices = await dbContext.Languages.Select(x => new SubscriberChoice
+        Response.LanguageOptions = await dbContext.Languages.Select(x => new SubscriberOption
             {
                 Id = x.Id,
                 EnglishDisplayName = x.EnglishDisplay
