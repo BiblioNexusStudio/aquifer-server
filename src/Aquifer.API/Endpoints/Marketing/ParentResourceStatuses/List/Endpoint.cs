@@ -16,7 +16,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
     {
         Get("/marketing/parent-resource-statuses");
         Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
-        ResponseCache(EndpointHelpers.OneHourInSeconds, varyByQueryKeys: ["languageId"]);
+        ResponseCache(EndpointHelpers.OneHourInSeconds);
         AllowAnonymous();
     }
 

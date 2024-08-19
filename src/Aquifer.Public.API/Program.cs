@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aquifer.Common.Middleware;
 using Aquifer.Common.Services;
 using Aquifer.Data;
 using Aquifer.Public.API.Configuration;
@@ -34,5 +35,7 @@ app.UseHealthChecks("/_health")
     })
     .UseOpenApi()
     .UseReDoc(options => options.Path = "/docs");
+
+app.UseResponseCachingVaryByAllQueryKeys();
 
 app.Run();
