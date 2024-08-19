@@ -5,7 +5,7 @@ using Aquifer.Data.Enums;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.ParentResources.Statuses.BibleBooks.Get;
+namespace Aquifer.API.Endpoints.Marketing.ParentResourceStatuses.BibleBooks.Get;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Response>>
 {
@@ -13,9 +13,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     public override void Configure()
     {
-        Get("/resources/parent-resources/statuses/bible-books");
+        Get("/marketing/parent-resource-statuses/bible-books");
         Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
-        ResponseCache(EndpointHelpers.OneDayInSeconds, varyByQueryKeys: [nameof(Request.LanguageId), nameof(Request.ParentResourceId)]);
+        ResponseCache(EndpointHelpers.OneHourInSeconds, varyByQueryKeys: [nameof(Request.LanguageId), nameof(Request.ParentResourceId)]);
         AllowAnonymous();
     }
 
@@ -27,23 +27,29 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
         var languagePassages = await GetPassageResourceCountAsync(request.LanguageId, request.ParentResourceId, ct);
         var booksWithNoResources = GetZeroResourceCount();
 
-        var rowsEnglishTotals = englishVerses.Concat(englishPassages).Concat(booksWithNoResources).GroupBy(x => x.BibleBookId)
+        var rowsEnglishTotals = englishVerses.Concat(englishPassages)
+            .Concat(booksWithNoResources)
+            .GroupBy(x => x.BibleBookId)
             .Select(x => new BookRow
             {
                 BibleBookId = x.Key,
                 BookName = x.Select(y => y.BookName).First(),
                 LastPublished = x.Select(y => y.LastPublished).Max(),
                 TotalResources = x.Sum(y => y.TotalResources)
-            }).OrderBy(x => x.BibleBookId).ToList();
+            })
+            .OrderBy(x => x.BibleBookId)
+            .ToList();
 
-        var rowsLanguageTotals = languageVerses.Concat(languagePassages).GroupBy(x => x.BibleBookId)
+        var rowsLanguageTotals = languageVerses.Concat(languagePassages)
+            .GroupBy(x => x.BibleBookId)
             .Select(x => new BookRow
             {
                 BibleBookId = x.Key,
                 BookName = x.Select(y => y.BookName).First(),
                 LastPublished = x.Select(y => y.LastPublished).Max(),
                 TotalResources = x.Sum(y => y.TotalResources)
-            }).ToList();
+            })
+            .ToList();
 
         List<Response> responseRows = [];
         foreach (var englishRow in rowsEnglishTotals)
@@ -52,7 +58,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             responseRows.Add(new Response
             {
                 Book = englishRow.BookName,
-                Status = ParentResourceStatusHelpers.GetStatus(englishRow.TotalResources, languageRow?.TotalResources ?? 0,
+                Status = ParentResourceStatusHelpers.GetStatus(englishRow.TotalResources,
+                    languageRow?.TotalResources ?? 0,
                     languageRow?.LastPublished)
             });
         }
@@ -70,7 +77,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                                                            FROM ResourceContents RC
                                                                INNER JOIN Resources R ON R.Id = RC.ResourceId
                                                                INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id AND RCV.IsPublished = 1
-                                                               INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
+                                                               INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId AND PR.ForMarketing = 1
                                                                INNER JOIN PassageResources PAR ON PAR.ResourceId = R.Id
                                                                INNER JOIN Passages PAS ON PAS.Id = PAR.PassageId
                                                                INNER JOIN BibleBooks BB ON BB.BibleId = 1 AND BB.Number = CAST(SUBSTRING(CAST(StartVerseId AS VARCHAR(10)), 2, 3) AS int)
@@ -78,7 +85,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                                                                AND PR.Id = {resourceId}
                                                            GROUP BY PR.Id, PR.DisplayName, SUBSTRING(CAST(StartVerseId AS VARCHAR(10)), 2, 3), BB.LocalizedName
                                                            ORDER BY SUBSTRING(CAST(StartVerseId AS VARCHAR(10)), 2, 3)
-                                                           """).ToListAsync(ct);
+                                                           """)
+            .ToListAsync(ct);
     }
 
     private async Task<List<BookRow>> GetVerseResourceCountAsync(int languageId, int resourceId, CancellationToken ct)
@@ -91,7 +99,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                                                                FROM ResourceContents RC
                                                            INNER JOIN Resources R ON R.Id = RC.ResourceId
                                                            INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id AND RCV.IsPublished = 1
-                                                           INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
+                                                           INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId AND PR.ForMarketing = 1
                                                            INNER JOIN VerseResources VR ON VR.ResourceId = R.Id
                                                            INNER JOIN BibleBooks BB ON BB.BibleId = 1 AND BB.Number = CAST(SUBSTRING(CAST(VerseId AS VARCHAR(10)), 2, 3) AS int)
                                                            WHERE RC.LanguageId = {languageId}
@@ -104,11 +112,14 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     private static List<BookRow> GetZeroResourceCount()
     {
-        return BibleBookCodeUtilities.GetAll().Where(x => x.BookId <= BookId.BookREV).Select(x => new BookRow
-        {
-            BookName = x.BookFullName,
-            BibleBookId = ((int)x.BookId).ToString("D3")
-        }).ToList();
+        return BibleBookCodeUtilities.GetAll()
+            .Where(x => x.BookId <= BookId.BookREV)
+            .Select(x => new BookRow
+            {
+                BookName = x.BookFullName,
+                BibleBookId = ((int)x.BookId).ToString("D3")
+            })
+            .ToList();
     }
 }
 

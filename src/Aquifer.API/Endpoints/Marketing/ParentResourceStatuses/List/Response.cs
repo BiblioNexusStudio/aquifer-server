@@ -1,4 +1,4 @@
-﻿namespace Aquifer.API.Endpoints.Resources.ParentResources.Statuses.List;
+﻿namespace Aquifer.API.Endpoints.Marketing.ParentResourceStatuses.List;
 
 public class Response
 {
