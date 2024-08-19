@@ -10,13 +10,13 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
-        Get("/reports/dynamic/{Id}");
+        Get("/reports/dynamic/{Slug}");
         Permissions(PermissionName.ReadReports);
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var report = await dbContext.Reports.FindAsync([request.Id], ct);
+        var report = await dbContext.Reports.SingleOrDefaultAsync(r => r.Slug == request.Slug, ct);
 
         if (report == null)
         {
