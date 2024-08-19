@@ -53,6 +53,7 @@ public class AquiferDbContext : DbContext
     public DbSet<PassageResourceEntity> PassageResources { get; set; }
     public DbSet<ProjectEntity> Projects { get; set; }
     public DbSet<ProjectPlatformEntity> ProjectPlatforms { get; set; }
+    public DbSet<ReportEntity> Reports { get; set; }
     public DbSet<ResourceContentEntity> ResourceContents { get; set; }
     public DbSet<ResourceContentRequestEntity> ResourceContentRequests { get; set; }
     public DbSet<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistory { get; set; }
