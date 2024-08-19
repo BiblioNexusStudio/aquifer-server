@@ -10,7 +10,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 {
     public override void Configure()
     {
-        Post("/admin/resources/content/{ContentId}/unpublish", "/resources/content/{ContentId}/unpublish");
+        Post("/resources/content/{ContentId}/unpublish");
         Permissions(PermissionName.PublishContent);
     }
 

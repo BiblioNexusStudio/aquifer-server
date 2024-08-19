@@ -11,9 +11,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 {
     public override void Configure()
     {
-        Post("/admin/resources/content/{ContentId}/assign-editor",
-            "/admin/resources/content/{ContentId}/assign-translator",
-            "/resources/content/{ContentId}/assign-editor",
+        Post("/resources/content/{ContentId}/assign-editor",
             "/resources/content/assign-editor");
         Permissions(PermissionName.AssignContent, PermissionName.AssignOverride, PermissionName.AssignOutsideCompany);
     }
