@@ -13,7 +13,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     {
         Get("/resources/parent-resources");
         AllowAnonymous();
-        ResponseCache(EndpointHelpers.TenMinutesInSeconds, varyByQueryKeys: ["*"]);
+        ResponseCache(EndpointHelpers.TenMinutesInSeconds);
         Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
     }
 

@@ -6,6 +6,7 @@ using Aquifer.API.Modules;
 using Aquifer.API.Services;
 using Aquifer.API.Telemetry;
 using Aquifer.Common.Services;
+using Aquifer.Common.Middleware;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -67,6 +68,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseResponseCaching().UseFastEndpoints(config => config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase);
+
+app.UseResponseCachingVaryByAllQueryKeys();
 
 app.MapEndpoints();
 app.Run();
