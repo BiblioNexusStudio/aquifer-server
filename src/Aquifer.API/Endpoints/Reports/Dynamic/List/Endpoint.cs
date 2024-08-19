@@ -17,7 +17,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<IEnum
     {
         var reports = await dbContext.Reports
             .Where(r => r.Enabled)
-            .Select(r => new Response { Id = r.Id, Name = r.Name, Description = r.Description, Type = r.Type })
+            .Select(r => new Response { Slug = r.Slug, Name = r.Name, Description = r.Description, Type = r.Type })
             .ToListAsync(ct);
 
         await SendOkAsync(reports, ct);

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
+[Index(nameof(Slug), IsUnique = true)]
 [EntityTypeConfiguration(typeof(ReportEntityConfiguration))]
 public class ReportEntity : IHasUpdatedTimestamp
 {
@@ -13,6 +14,7 @@ public class ReportEntity : IHasUpdatedTimestamp
     public string StoredProcedureName { get; set; } = null!; // must begin with DynamicReport
     public ReportType Type { get; set; }
     public bool Enabled { get; set; } = true;
+    public string Slug { get; set; } = null!;
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
