@@ -7,7 +7,7 @@ public class Endpoint(IUserService userService) : EndpointWithoutRequest<Respons
 {
     public override void Configure()
     {
-        Get("/users/self", "/admin/users/self");
+        Get("/users/self");
     }
 
     public override async Task HandleAsync(CancellationToken ct)

@@ -43,7 +43,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
 
     public override void Configure()
     {
-        Get("/admin/resources/summary", "/resources/content/general-reporting-summary");
+        Get("/resources/content/general-reporting-summary");
         Permissions(PermissionName.ReadReports);
         Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
     }
