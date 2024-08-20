@@ -35,7 +35,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
         if (report.AcceptsDateRange)
         {
-            startDate = request.StartDate ?? DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(-report.DefaultDateRangeMonths ?? 3));
+            startDate = request.StartDate ?? DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(-(report.DefaultDateRangeMonths ?? 3)));
             endDate = request.EndDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
             command.Parameters.Add(new SqlParameter("@StartDate", startDate.Value));
             command.Parameters.Add(new SqlParameter("@EndDate", endDate.Value));
