@@ -45,27 +45,27 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
                                                                             """)
             .ToListAsync(ct);
 
-        var bibles = await dbContext.Bibles.Where(b => b.LanguageId == request.LanguageId).Select(b => new BibleParentAndLanguageRow
-        {
-            Title = b.Name,
-            LicenseInfoValue = b.LicenseInfo
-        }).ToListAsync(ct);
+        var selectedBibles =  await dbContext.Bibles.Where(b => b.LanguageId == request.LanguageId)
+            .Select(b => new Response
+            {
+                ResourceId = null,
+                ResourceType = "Bible(s)",
+                Title = b.Name,
+                LicenseInfo = b.LicenseInfo != null ? JsonUtilities.DefaultDeserialize<object>(b.LicenseInfo) : null,
+                Status = ParentResourceStatus.Complete
+            }).ToListAsync(ct);
 
-        var selectedBibles = bibles.Count > 0 ? bibles.Select(b => new Response
+        if (selectedBibles.Count == 0)
         {
-            ResourceId = null,
-            ResourceType = "Bible(s)",
-            Title = b.Title,
-            LicenseInfo = b.LicenseInfoValue is not null ? JsonUtilities.DefaultDeserialize<object>(b.LicenseInfoValue) : null,
-            Status = ParentResourceStatus.Complete
-        }) : [ new Response
-        {
-            ResourceId = null,
-            Status = ParentResourceStatus.ComingSoon,
-            Title = "Open License Needed",
-            LicenseInfo = null,
-            ResourceType = "Bible(s)"
-        }];
+            selectedBibles.Add(new Response
+            {
+                ResourceId = null,
+                Status = ParentResourceStatus.ComingSoon,
+                Title = "Open License Needed",
+                LicenseInfo = null,
+                ResourceType = "Bible(s)"
+            });
+        }
 
         var selectedRows = rows.Select(x => new Response
         {
@@ -78,12 +78,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
 
         Response = selectedBibles.Concat(selectedRows);
     }
-}
-
-internal class BibleParentAndLanguageRow
-{
-    public string Title { get; set; } = null!;
-    public string? LicenseInfoValue { get; set; }
 }
 
 internal class ParentAndLanguageRow
