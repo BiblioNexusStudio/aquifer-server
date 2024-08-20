@@ -12,7 +12,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 {
     public override void Configure()
     {
-        Post("/admin/resources/content/create-translation", "/resources/content/{BaseContentId}/create-translation");
+        Post("/resources/content/{BaseContentId}/create-translation");
         Permissions(PermissionName.CreateContent);
     }
 

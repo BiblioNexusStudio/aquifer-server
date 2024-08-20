@@ -186,6 +186,9 @@ namespace Aquifer.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("RestrictedLicense")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("Updated")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -351,6 +354,102 @@ namespace Aquifer.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Companies");
+                });
+
+            modelBuilder.Entity("Aquifer.Data.Entities.CompanyReviewerEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Created")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.Property<int>("LanguageId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CompanyId", "LanguageId")
+                        .IsUnique();
+
+                    b.ToTable("CompanyReviewers");
+                });
+
+            modelBuilder.Entity("Aquifer.Data.Entities.ContentSubscriberEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Created")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("GetNewsletter")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Organization")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("Updated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ContentSubscribers");
+                });
+
+            modelBuilder.Entity("Aquifer.Data.Entities.ContentSubscriberLanguageEntity", b =>
+                {
+                    b.Property<int>("ContentSubscriberId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LanguageId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ContentSubscriberId", "LanguageId");
+
+                    b.ToTable("ContentSubscriberLanguages");
+                });
+
+            modelBuilder.Entity("Aquifer.Data.Entities.ContentSubscriberParentResourceEntity", b =>
+                {
+                    b.Property<int>("ContentSubscriberId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ParentResourceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ContentSubscriberId", "ParentResourceId");
+
+                    b.ToTable("ContentSubscriberParentResources");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.FeedbackEntity", b =>
@@ -725,6 +824,9 @@ namespace Aquifer.Data.Migrations
                     b.Property<bool>("Enabled")
                         .HasColumnType("bit");
 
+                    b.Property<bool?>("ForMarketing")
+                        .HasColumnType("bit");
+
                     b.Property<string>("LicenseInfo")
                         .HasColumnType("nvarchar(max)");
 
@@ -906,6 +1008,66 @@ namespace Aquifer.Data.Migrations
                     b.ToTable("ProjectPlatforms");
                 });
 
+            modelBuilder.Entity("Aquifer.Data.Entities.ReportEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AcceptsDateRange")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AcceptsLanguage")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AcceptsParentResource")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("Created")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.Property<int?>("DefaultDateRangeMonths")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("SqlStatement")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Updated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("Reports");
+                });
+
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -988,6 +1150,8 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Created");
 
                     b.ToTable("ResourceContentRequests");
                 });
@@ -1533,6 +1697,71 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("DefaultReviewerUser");
                 });
 
+            modelBuilder.Entity("Aquifer.Data.Entities.CompanyReviewerEntity", b =>
+                {
+                    b.HasOne("Aquifer.Data.Entities.CompanyEntity", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aquifer.Data.Entities.LanguageEntity", "Language")
+                        .WithMany()
+                        .HasForeignKey("LanguageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aquifer.Data.Entities.UserEntity", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Language");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Aquifer.Data.Entities.ContentSubscriberLanguageEntity", b =>
+                {
+                    b.HasOne("Aquifer.Data.Entities.ContentSubscriberEntity", "ContentSubscriber")
+                        .WithMany("ContentSubscriberLanguages")
+                        .HasForeignKey("ContentSubscriberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aquifer.Data.Entities.LanguageEntity", "Language")
+                        .WithMany()
+                        .HasForeignKey("LanguageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ContentSubscriber");
+
+                    b.Navigation("Language");
+                });
+
+            modelBuilder.Entity("Aquifer.Data.Entities.ContentSubscriberParentResourceEntity", b =>
+                {
+                    b.HasOne("Aquifer.Data.Entities.ContentSubscriberEntity", "ContentSubscriber")
+                        .WithMany("ContentSubscriberParentResources")
+                        .HasForeignKey("ContentSubscriberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aquifer.Data.Entities.ParentResourceEntity", "ParentResource")
+                        .WithMany()
+                        .HasForeignKey("ParentResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ContentSubscriber");
+
+                    b.Navigation("ParentResource");
+                });
+
             modelBuilder.Entity("Aquifer.Data.Entities.GreekLemmaEntity", b =>
                 {
                     b.HasOne("Aquifer.Data.Entities.StrongNumberEntity", "StrongNumber")
@@ -2020,6 +2249,13 @@ namespace Aquifer.Data.Migrations
             modelBuilder.Entity("Aquifer.Data.Entities.CompanyEntity", b =>
                 {
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("Aquifer.Data.Entities.ContentSubscriberEntity", b =>
+                {
+                    b.Navigation("ContentSubscriberLanguages");
+
+                    b.Navigation("ContentSubscriberParentResources");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekLemmaEntity", b =>

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Bibles.List;
 
-public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<Response>>
+public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Response>>
 {
     public override void Configure()
     {
@@ -15,9 +15,9 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
         AllowAnonymous();
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var bibles = await dbContext.Bibles.Where(b => b.Enabled)
+        var bibles = await dbContext.Bibles.Where(b => b.Enabled && b.RestrictedLicense == request.RestrictedLicense)
             .Select(bible => new Response
             {
                 Name = bible.Name,
@@ -25,7 +25,8 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
                 Id = bible.Id,
                 SerializedLicenseInfo = bible.LicenseInfo,
                 LanguageId = bible.LanguageId,
-                IsLanguageDefault = bible.LanguageDefault
+                IsLanguageDefault = bible.LanguageDefault,
+                RestrictedLicense = bible.RestrictedLicense
             })
             .ToListAsync(ct);
 

@@ -1,4 +1,6 @@
+using Aquifer.API.Common;
 using Aquifer.API.Common.Dtos;
+using Aquifer.API.Services;
 using Aquifer.Common.Extensions;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
@@ -7,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.Get;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -16,6 +18,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
+        var self = await userService.GetUserFromJwtAsync(ct);
         var englishLanguageId = await dbContext.Languages.Where(l => l.ISO6393Code == "eng").Select(l => l.Id).SingleAsync(ct);
         var resourceContent = await dbContext.ResourceContents.Where(x => x.Id == request.Id)
             .Select(rc => new Response
@@ -92,6 +95,18 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         if (relevantContentVersion is null)
         {
             ThrowError("Data integrity issue, no resource content version found.");
+        }
+
+        if (relevantContentVersion.IsDraft && relevantContentVersion.AssignedUserId != self.Id &&
+            userService.HasPermission(PermissionName.SendReviewContent) && Constants.ReviewPendingStatuses.Contains(resourceContent.Status))
+        {
+            resourceContent.CanPullBackToManagerReview = resourceContent.ProjectEntity?.CompanyLeadUserId == self.Id
+                                                         || await dbContext.ResourceContentVersionAssignedUserHistory
+                                                             .Where(h => h.ResourceContentVersionId == relevantContentVersion.Id &&
+                                                                         h.AssignedUserId != null)
+                                                             .OrderByDescending(h => h.Created)
+                                                             .Select(h => h.AssignedUserId == self.Id)
+                                                             .FirstOrDefaultAsync(ct);
         }
 
         var snapshots = await dbContext.ResourceContentVersionSnapshots

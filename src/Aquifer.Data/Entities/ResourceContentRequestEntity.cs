@@ -1,5 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace Aquifer.Data.Entities;
 
+[Index(nameof(Created))]
 public class ResourceContentRequestEntity
 {
     public int Id { get; set; }

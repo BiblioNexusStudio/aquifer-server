@@ -32,6 +32,10 @@ public class AquiferDbContext : DbContext
     public DbSet<CommentEntity> Comments { get; set; }
     public DbSet<CommentThreadEntity> CommentThreads { get; set; }
     public DbSet<CompanyEntity> Companies { get; set; }
+    public DbSet<CompanyReviewerEntity> CompanyReviewers { get; set; }
+    public DbSet<ContentSubscriberEntity> ContentSubscribers { get; set; }
+    public DbSet<ContentSubscriberLanguageEntity> ContentSubscriberLanguages { get; set; }
+    public DbSet<ContentSubscriberParentResourceEntity> ContentSubscriberParentResources { get; set; }
     public DbSet<FeedbackEntity> Feedback { get; set; }
     public DbSet<GreekLemmaEntity> GreekLemmas { get; set; }
     public DbSet<GreekNewTestamentEntity> GreekNewTestaments { get; set; }
@@ -50,6 +54,7 @@ public class AquiferDbContext : DbContext
     public DbSet<PassageResourceEntity> PassageResources { get; set; }
     public DbSet<ProjectEntity> Projects { get; set; }
     public DbSet<ProjectPlatformEntity> ProjectPlatforms { get; set; }
+    public DbSet<ReportEntity> Reports { get; set; }
     public DbSet<ResourceContentEntity> ResourceContents { get; set; }
     public DbSet<ResourceContentRequestEntity> ResourceContentRequests { get; set; }
     public DbSet<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistory { get; set; }
