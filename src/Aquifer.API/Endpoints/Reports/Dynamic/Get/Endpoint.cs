@@ -30,10 +30,15 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         await using var command = connection.CreateCommand();
         command.CommandText = report.StoredProcedureName;
 
+        DateOnly? startDate = null;
+        DateOnly? endDate = null;
+
         if (report.AcceptsDateRange)
         {
-            command.Parameters.Add(new SqlParameter("@StartDate", request.StartDate));
-            command.Parameters.Add(new SqlParameter("@EndDate", request.EndDate));
+            startDate = request.StartDate ?? DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(-report.DefaultDateRangeMonths ?? 3));
+            endDate = request.EndDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+            command.Parameters.Add(new SqlParameter("@StartDate", startDate));
+            command.Parameters.Add(new SqlParameter("@EndDate", endDate));
             command.CommandText += " @StartDate, @EndDate";
         }
 
@@ -78,6 +83,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             AcceptsDateRange = report.AcceptsDateRange,
             AcceptsLanguage = report.AcceptsLanguage,
             AcceptsParentResource = report.AcceptsParentResource,
+            StartDate = startDate,
+            EndDate = endDate,
             Columns = columnNames,
             Results = items
         };
