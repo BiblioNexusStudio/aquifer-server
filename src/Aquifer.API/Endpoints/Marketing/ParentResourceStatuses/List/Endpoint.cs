@@ -57,7 +57,14 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
             Title = b.Title,
             LicenseInfo = b.LicenseInfoValue is not null ? JsonUtilities.DefaultDeserialize<object>(b.LicenseInfoValue) : null,
             Status = ParentResourceStatus.Complete
-        }) : [new Response{ResourceId = null, Status = ParentResourceStatus.ComingSoon, Title = "Open License Needed", LicenseInfo = null, ResourceType = "Bible(s)"}];
+        }) : [ new Response
+        {
+            ResourceId = null,
+            Status = ParentResourceStatus.ComingSoon,
+            Title = "Open License Needed",
+            LicenseInfo = null,
+            ResourceType = "Bible(s)"
+        }];
 
         var selectedRows = rows.Select(x => new Response
         {
