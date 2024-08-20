@@ -9,7 +9,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 {
     public override void Configure()
     {
-        Post("/admin/resources/content/{ContentId}/aquiferize", "/resources/content/{ContentId}/aquiferize");
+        Post("/resources/content/{ContentId}/aquiferize");
         Permissions(PermissionName.CreateContent);
     }
 

@@ -10,7 +10,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 {
     public override void Configure()
     {
-        Get("/users", "/admin/users");
+        Get("/users");
         Permissions(PermissionName.ReadUsers);
     }
 
@@ -20,7 +20,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         var users = await dbContext.Users.Where(x =>
                 (userService.HasPermission(PermissionName.ReadAllUsers) ||
-                (userService.HasPermission(PermissionName.ReadUsers) && self.CompanyId == x.CompanyId)) && x.Enabled)
+                 (userService.HasPermission(PermissionName.ReadUsers) && self.CompanyId == x.CompanyId)) && x.Enabled)
             .OrderBy(x => x.FirstName)
             .ThenBy(x => x.LastName).Select(user => new Response
             {
@@ -28,11 +28,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 Name = $"{user.FirstName} {user.LastName}",
                 Role = user.Role,
                 CompanyName = user.Company.Name,
-                Company = new CompanyResponse
-                {
-                    Id = user.CompanyId,
-                    Name = user.Company.Name
-                },
+                Company = new CompanyResponse { Id = user.CompanyId, Name = user.Company.Name },
                 Email = user.Email,
                 IsEmailVerified = user.EmailVerified
             }).ToListAsync(ct);
