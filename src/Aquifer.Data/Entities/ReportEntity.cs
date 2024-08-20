@@ -23,6 +23,8 @@ public class ReportEntity : IHasUpdatedTimestamp
     public bool AcceptsLanguage { get; set; }
     public bool AcceptsParentResource { get; set; }
 
+    public int? DefaultDateRangeMonths { get; set; }
+
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 }
