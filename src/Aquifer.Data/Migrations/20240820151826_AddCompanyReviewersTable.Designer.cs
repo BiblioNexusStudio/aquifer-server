@@ -4,6 +4,7 @@ using Aquifer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    partial class AquiferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240820151826_AddCompanyReviewersTable")]
+    partial class AddCompanyReviewersTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1008,68 +1011,6 @@ namespace Aquifer.Data.Migrations
                     b.ToTable("ProjectPlatforms");
                 });
 
-            modelBuilder.Entity("Aquifer.Data.Entities.ReportEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("AcceptsDateRange")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("AcceptsLanguage")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("AcceptsParentResource")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("Created")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("Enabled")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Slug")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("StoredProcedureName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Updated")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Slug")
-                        .IsUnique();
-
-                    b.ToTable("Reports", t =>
-                        {
-                            t.HasCheckConstraint("CK_StoredProcedureExists", "dbo.StoredProcedureExists(StoredProcedureName) = 1");
-
-                            t.HasCheckConstraint("CK_StoredProcedureNamingConvention", "dbo.StoredProcedureMatchesNamingConvention(StoredProcedureName) = 1");
-                        });
-                });
-
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -1152,8 +1093,6 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Created");
 
                     b.ToTable("ResourceContentRequests");
                 });
