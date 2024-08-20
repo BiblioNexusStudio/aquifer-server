@@ -28,7 +28,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         await connection.OpenAsync(ct);
 
         await using var command = connection.CreateCommand();
-        command.CommandText = report.StoredProcedureName;
+        command.CommandText = report.SqlStatement;
 
         DateOnly? startDate = null;
         DateOnly? endDate = null;
@@ -37,21 +37,18 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         {
             startDate = request.StartDate ?? DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(-report.DefaultDateRangeMonths ?? 3));
             endDate = request.EndDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
-            command.Parameters.Add(new SqlParameter("@StartDate", startDate));
-            command.Parameters.Add(new SqlParameter("@EndDate", endDate));
-            command.CommandText += " @StartDate, @EndDate";
+            command.Parameters.Add(new SqlParameter("@StartDate", startDate.Value));
+            command.Parameters.Add(new SqlParameter("@EndDate", endDate.Value));
         }
 
         if (report.AcceptsLanguage)
         {
             command.Parameters.Add(new SqlParameter("@LanguageId", request.LanguageId));
-            command.CommandText += " @LanguageId";
         }
 
         if (report.AcceptsParentResource)
         {
             command.Parameters.Add(new SqlParameter("@ParentResourceId", request.ParentResourceId));
-            command.CommandText += " @ParentResourceId";
         }
 
         var items = new List<List<object>>();
