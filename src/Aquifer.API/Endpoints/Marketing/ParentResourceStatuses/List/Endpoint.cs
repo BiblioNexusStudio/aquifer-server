@@ -45,7 +45,29 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
                                                                             """)
             .ToListAsync(ct);
 
-        Response = rows.Select(x => new Response
+        var selectedBibles =  await dbContext.Bibles.Where(b => b.LanguageId == request.LanguageId)
+            .Select(b => new Response
+            {
+                ResourceId = null,
+                ResourceType = "Bible(s)",
+                Title = b.Name,
+                LicenseInfo = b.LicenseInfo != null ? JsonUtilities.DefaultDeserialize<object>(b.LicenseInfo) : null,
+                Status = ParentResourceStatus.Complete
+            }).ToListAsync(ct);
+
+        if (selectedBibles.Count == 0)
+        {
+            selectedBibles.Add(new Response
+            {
+                ResourceId = null,
+                Status = ParentResourceStatus.ComingSoon,
+                Title = "Open License Needed",
+                LicenseInfo = null,
+                ResourceType = "Bible(s)"
+            });
+        }
+
+        var selectedRows = rows.Select(x => new Response
         {
             ResourceId = x.ResourceId,
             ResourceType = x.ResourceType.GetDisplayName(),
@@ -53,6 +75,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
             LicenseInfo = x.LicenseInfoValue is not null ? JsonUtilities.DefaultDeserialize<object>(x.LicenseInfoValue) : null,
             Status = ParentResourceStatusHelpers.GetStatus(x.TotalResources, x.TotalLanguageResources, x.LastPublished)
         });
+
+        Response = selectedBibles.Concat(selectedRows);
     }
 }
 
