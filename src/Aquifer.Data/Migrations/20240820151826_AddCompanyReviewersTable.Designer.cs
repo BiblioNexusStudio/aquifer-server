@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    [Migration("20240819190814_AddCompanyReviewersTable")]
+    [Migration("20240820151826_AddCompanyReviewersTable")]
     partial class AddCompanyReviewersTable
     {
         /// <inheritdoc />
@@ -357,6 +357,36 @@ namespace Aquifer.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Companies");
+                });
+
+            modelBuilder.Entity("Aquifer.Data.Entities.CompanyReviewerEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Created")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.Property<int>("LanguageId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CompanyId", "LanguageId")
+                        .IsUnique();
+
+                    b.ToTable("CompanyReviewers");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ContentSubscriberEntity", b =>
@@ -1606,6 +1636,33 @@ namespace Aquifer.Data.Migrations
                         .HasForeignKey("DefaultReviewerUserId");
 
                     b.Navigation("DefaultReviewerUser");
+                });
+
+            modelBuilder.Entity("Aquifer.Data.Entities.CompanyReviewerEntity", b =>
+                {
+                    b.HasOne("Aquifer.Data.Entities.CompanyEntity", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aquifer.Data.Entities.LanguageEntity", "Language")
+                        .WithMany()
+                        .HasForeignKey("LanguageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Aquifer.Data.Entities.UserEntity", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Language");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ContentSubscriberLanguageEntity", b =>

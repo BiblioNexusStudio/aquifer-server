@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -24,12 +25,30 @@ namespace Aquifer.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_CompanyReviewers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CompanyReviewers_Companies_CompanyId",
+                        column: x => x.CompanyId,
+                        principalTable: "Companies",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CompanyReviewers_Languages_LanguageId",
+                        column: x => x.LanguageId,
+                        principalTable: "Languages",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CompanyReviewers_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_CompanyReviewers_UserId_CompanyId",
+                name: "IX_CompanyReviewers_UserId_CompanyId_LanguageId",
                 table: "CompanyReviewers",
-                columns: new[] { "UserId", "CompanyId" },
+                columns: new[] { "UserId", "CompanyId", "LanguageId" },
                 unique: true);
         }
 
