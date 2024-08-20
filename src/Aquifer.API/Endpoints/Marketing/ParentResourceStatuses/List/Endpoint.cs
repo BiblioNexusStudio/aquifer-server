@@ -45,7 +45,21 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
                                                                             """)
             .ToListAsync(ct);
 
-        Response = rows.Select(x => new Response
+        var bibles = await dbContext.Bibles.Where(b => b.LanguageId == request.LanguageId).Select(b => new BibleParentAndLanguageRow
+        {
+            Title = b.Name, LicenseInfoValue = b.LicenseInfo
+        }).ToListAsync(ct);
+
+        var selectedBibles = bibles.Count > 0 ? bibles.Select(b => new Response
+        {
+            ResourceId = null,
+            ResourceType = "Bible(s)",
+            Title = b.Title,
+            LicenseInfo = b.LicenseInfoValue is not null ? JsonUtilities.DefaultDeserialize<object>(b.LicenseInfoValue) : null,
+            Status = ParentResourceStatus.Complete
+        }) : [new Response{ResourceId = null, Status = ParentResourceStatus.ComingSoon, Title = "Open License Needed", LicenseInfo = null, ResourceType = "Bible(s)"}];
+
+        var selectedRows = rows.Select(x => new Response
         {
             ResourceId = x.ResourceId,
             ResourceType = x.ResourceType.GetDisplayName(),
@@ -53,7 +67,15 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
             LicenseInfo = x.LicenseInfoValue is not null ? JsonUtilities.DefaultDeserialize<object>(x.LicenseInfoValue) : null,
             Status = ParentResourceStatusHelpers.GetStatus(x.TotalResources, x.TotalLanguageResources, x.LastPublished)
         });
+
+        Response = selectedBibles.Concat(selectedRows);
     }
+}
+
+internal class BibleParentAndLanguageRow
+{
+    public string Title { get; set; } = null!;
+    public string? LicenseInfoValue { get; set; }
 }
 
 internal class ParentAndLanguageRow
