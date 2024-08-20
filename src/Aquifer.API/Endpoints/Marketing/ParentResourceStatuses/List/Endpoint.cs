@@ -47,7 +47,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
 
         var bibles = await dbContext.Bibles.Where(b => b.LanguageId == request.LanguageId).Select(b => new BibleParentAndLanguageRow
         {
-            Title = b.Name, LicenseInfoValue = b.LicenseInfo
+            Title = b.Name,
+            LicenseInfoValue = b.LicenseInfo
         }).ToListAsync(ct);
 
         var selectedBibles = bibles.Count > 0 ? bibles.Select(b => new Response
