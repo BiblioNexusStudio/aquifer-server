@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using Aquifer.Common.Tiptap;
 
-namespace Aquifer.Public.API.Endpoints.Resources.GetItem;
+namespace Aquifer.Public.API.Endpoints.Resources.Get;
 
 public record Request
 {
