@@ -9,7 +9,7 @@ namespace Aquifer.Public.API.Endpoints.Resources.Get;
 public static class ResourceHelper
 {
     public static async Task<Response> GetResourceContentAsync(AquiferDbContext dbContext,
-        ByLanguage.Request req,
+        CommonResourceRequest req,
         Action<string, int?> throwError,
         CancellationToken ct)
     {
@@ -52,3 +52,5 @@ public static class ResourceHelper
         return response;
     }
 }
+
+public record CommonResourceRequest(int ContentId, TiptapContentType ContentTextType, string? LanguageCode = null);

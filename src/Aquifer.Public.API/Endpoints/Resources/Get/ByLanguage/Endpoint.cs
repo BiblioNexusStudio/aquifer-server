@@ -19,7 +19,10 @@ public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackin
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        Response = await ResourceHelper.GetResourceContentAsync(dbContext, req, ThrowError, ct);
+        Response = await ResourceHelper.GetResourceContentAsync(dbContext,
+            new CommonResourceRequest(req.ContentId, req.ContentTextType, req.LanguageCode),
+            ThrowError,
+            ct);
     }
 
     public override async Task OnAfterHandleAsync(Request req, Response res, CancellationToken ct)
