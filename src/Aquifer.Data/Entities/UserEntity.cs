@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using Aquifer.Data.EventHandlers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -24,10 +23,6 @@ public class UserEntity : IHasUpdatedTimestamp
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    // this is not used but is needed for EF to understand the relationship from the CompanyEntity side
-    [InverseProperty(nameof(CompanyEntity.DefaultReviewerUser))]
-    public ICollection<CompanyEntity> CompaniesAsDefaultReviewer { get; set; } = [];
-    
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 }
