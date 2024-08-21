@@ -12,6 +12,7 @@ public class CompanyEntity
     public int? DefaultReviewerUserId { get; set; }
 
     public ICollection<UserEntity> Users { get; set; } = [];
+    public ICollection<CompanyReviewerEntity> CompanyReviewers { get; set; } = [];
 
     [InverseProperty(nameof(UserEntity.CompaniesAsDefaultReviewer))]
     public UserEntity? DefaultReviewerUser { get; set; }

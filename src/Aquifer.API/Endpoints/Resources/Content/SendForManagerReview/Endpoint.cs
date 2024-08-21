@@ -22,8 +22,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var contentIds = request.ContentId is not null ? [request.ContentId.Value] : request.ContentIds!;
         List<ResourceContentStatus> allowedStatuses =
         [
-            ResourceContentStatus.AquiferizeInProgress,
-            ResourceContentStatus.TranslationInProgress
+            ResourceContentStatus.AquiferizeInProgress, ResourceContentStatus.TranslationInProgress
         ];
 
         var draftVersions = await dbContext.ResourceContentVersions
@@ -76,9 +75,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     {
         const string errorMessage = "Can't find manager to assign to";
 
-        if (user.Company.DefaultReviewerUserId is not null)
+        var companyReviewer = user.Company.CompanyReviewers.SingleOrDefault(x => x.LanguageId == draftVersion.ResourceContent.LanguageId);
+
+        if (companyReviewer is not null)
         {
-            draftVersion.AssignedUserId = user.Company.DefaultReviewerUserId;
+            draftVersion.AssignedUserId = companyReviewer.UserId;
         }
         else if (project?.CompanyLeadUserId is not null)
         {

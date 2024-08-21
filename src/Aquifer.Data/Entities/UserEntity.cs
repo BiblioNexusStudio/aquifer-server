@@ -5,9 +5,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
-[Index(nameof(ProviderId), IsUnique = true)]
-[Index(nameof(Email), IsUnique = true)]
-[EntityTypeConfiguration(typeof(UserEntityConfiguration))]
+[Index(nameof(ProviderId), IsUnique = true), Index(nameof(Email), IsUnique = true),
+ EntityTypeConfiguration(typeof(UserEntityConfiguration))]
 public class UserEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
@@ -28,6 +27,8 @@ public class UserEntity : IHasUpdatedTimestamp
     // this is not used but is needed for EF to understand the relationship from the CompanyEntity side
     [InverseProperty(nameof(CompanyEntity.DefaultReviewerUser))]
     public ICollection<CompanyEntity> CompaniesAsDefaultReviewer { get; set; } = [];
+
+    public ICollection<CompanyReviewerEntity> CompanyReviewers { get; set; } = [];
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
