@@ -4,6 +4,7 @@ using Aquifer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    partial class AquiferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240820164333_AddDefaultDateRangeMonthsToReports")]
+    partial class AddDefaultDateRangeMonthsToReports
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1048,7 +1051,7 @@ namespace Aquifer.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("SqlStatement")
+                    b.Property<string>("StoredProcedureName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -1065,7 +1068,12 @@ namespace Aquifer.Data.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
-                    b.ToTable("Reports");
+                    b.ToTable("Reports", t =>
+                        {
+                            t.HasCheckConstraint("CK_StoredProcedureExists", "dbo.StoredProcedureExists(StoredProcedureName) = 1");
+
+                            t.HasCheckConstraint("CK_StoredProcedureNamingConvention", "dbo.StoredProcedureMatchesNamingConvention(StoredProcedureName) = 1");
+                        });
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentEntity", b =>

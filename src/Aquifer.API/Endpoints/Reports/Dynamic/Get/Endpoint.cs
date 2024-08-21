@@ -28,25 +28,27 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         await connection.OpenAsync(ct);
 
         await using var command = connection.CreateCommand();
-        command.CommandText = report.StoredProcedureName;
+        command.CommandText = report.SqlStatement;
+
+        DateOnly? startDate = null;
+        DateOnly? endDate = null;
 
         if (report.AcceptsDateRange)
         {
-            command.Parameters.Add(new SqlParameter("@StartDate", request.StartDate));
-            command.Parameters.Add(new SqlParameter("@EndDate", request.EndDate));
-            command.CommandText += " @StartDate, @EndDate";
+            startDate = request.StartDate ?? DateOnly.FromDateTime(DateTime.UtcNow.AddMonths(-(report.DefaultDateRangeMonths ?? 3)));
+            endDate = request.EndDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
+            command.Parameters.Add(new SqlParameter("@StartDate", startDate.Value));
+            command.Parameters.Add(new SqlParameter("@EndDate", endDate.Value));
         }
 
         if (report.AcceptsLanguage)
         {
             command.Parameters.Add(new SqlParameter("@LanguageId", request.LanguageId));
-            command.CommandText += " @LanguageId";
         }
 
         if (report.AcceptsParentResource)
         {
             command.Parameters.Add(new SqlParameter("@ParentResourceId", request.ParentResourceId));
-            command.CommandText += " @ParentResourceId";
         }
 
         var items = new List<List<object>>();
@@ -78,6 +80,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             AcceptsDateRange = report.AcceptsDateRange,
             AcceptsLanguage = report.AcceptsLanguage,
             AcceptsParentResource = report.AcceptsParentResource,
+            StartDate = startDate,
+            EndDate = endDate,
             Columns = columnNames,
             Results = items
         };
