@@ -27,9 +27,7 @@ public class UserEntity : IHasUpdatedTimestamp
     // this is not used but is needed for EF to understand the relationship from the CompanyEntity side
     [InverseProperty(nameof(CompanyEntity.DefaultReviewerUser))]
     public ICollection<CompanyEntity> CompaniesAsDefaultReviewer { get; set; } = [];
-
-    public ICollection<CompanyReviewerEntity> CompanyReviewers { get; set; } = [];
-
+    
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 }
