@@ -28,7 +28,8 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
 
     public async Task<UserEntity> GetUserWithCompanyUsersFromJwtAsync(CancellationToken cancellationToken)
     {
-        return await dbContext.Users.Include(x => x.Company).ThenInclude(x => x.Users)
+        return await dbContext.Users.Include(x => x.Company).ThenInclude(x => x.Users).Include(x => x.Company)
+            .ThenInclude(x => x.CompanyReviewers)
             .SingleAsync(u => u.ProviderId == ProviderId && u.Enabled, cancellationToken);
     }
 
@@ -47,14 +48,14 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
     public bool HasPermission(string permission)
     {
         return httpContextAccessor.HttpContext?.User.HasClaim(c =>
-                c.Type == Constants.PermissionsClaim && c.Value == permission) ??
-            false;
+                   c.Type == Constants.PermissionsClaim && c.Value == permission) ??
+               false;
     }
 
     public async Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken)
     {
         return userId is null ||
-            await dbContext.Users.SingleOrDefaultAsync(u => u.Id == userId && u.Enabled, cancellationToken) is not null;
+               await dbContext.Users.SingleOrDefaultAsync(u => u.Id == userId && u.Enabled, cancellationToken) is not null;
     }
 
     public async Task<UserEntity> GetUserWithCompanyFromJwtAsync(CancellationToken cancellationToken)
