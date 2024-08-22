@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Aquifer.Data.Entities;
 
 [EntityTypeConfiguration(typeof(ResourceContentVersionAssignedUserHistoryEntityConfiguration))]
+[Index(nameof(ResourceContentVersionId), nameof(AssignedUserId))]
 public class ResourceContentVersionAssignedUserHistoryEntity
 {
     public int Id { get; set; }

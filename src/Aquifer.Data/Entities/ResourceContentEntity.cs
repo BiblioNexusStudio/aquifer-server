@@ -1,14 +1,15 @@
 using System.ComponentModel.DataAnnotations;
 using Aquifer.Data.EventHandlers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
+[EntityTypeConfiguration(typeof(ResourceContentEntityConfiguration))]
 [Index(nameof(ResourceId),
     nameof(LanguageId),
     nameof(MediaType),
     IsUnique = true)]
-[Index(nameof(LanguageId), nameof(MediaType))]
 public class ResourceContentEntity : IHasUpdatedTimestamp
 {
     public int ResourceId { get; set; }
@@ -35,6 +36,15 @@ public class ResourceContentEntity : IHasUpdatedTimestamp
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
+}
+
+public class ResourceContentEntityConfiguration : IEntityTypeConfiguration<ResourceContentEntity>
+{
+    public void Configure(EntityTypeBuilder<ResourceContentEntity> builder)
+    {
+        builder.HasIndex(e => new { e.LanguageId, e.MediaType })
+            .IncludeProperties(e => new { e.Created, e.ResourceId, e.Status });
+    }
 }
 
 public enum ResourceContentMediaType
