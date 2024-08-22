@@ -15,7 +15,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
     public override void Configure()
     {
         Get("/marketing/parent-resource-statuses");
-        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
+        Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
         ResponseCache(EndpointHelpers.OneHourInSeconds);
         AllowAnonymous();
     }
@@ -45,7 +45,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
                                                                             """)
             .ToListAsync(ct);
 
-        var selectedBibles =  await dbContext.Bibles.Where(b => b.LanguageId == request.LanguageId)
+        var selectedBibles = await dbContext.Bibles.Where(b => b.LanguageId == request.LanguageId)
             .Select(b => new Response
             {
                 ResourceId = null,

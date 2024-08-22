@@ -10,7 +10,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     public override void Configure()
     {
         Get("/languages");
-        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
+        Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
         Summary(s =>
         {
             s.Summary = "Return language list";

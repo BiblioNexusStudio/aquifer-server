@@ -13,8 +13,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     {
         Get("/resources/parent-resources");
         AllowAnonymous();
-        ResponseCache(EndpointHelpers.TenMinutesInSeconds);
-        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
+        ResponseCache(EndpointHelpers.OneHourInSeconds);
+        Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)

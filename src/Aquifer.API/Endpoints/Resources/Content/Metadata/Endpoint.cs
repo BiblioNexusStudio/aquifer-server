@@ -26,7 +26,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
     public override void Configure()
     {
         Get("/resources/{ContentId}/metadata");
-        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
+        Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
         AllowAnonymous();
     }
 
