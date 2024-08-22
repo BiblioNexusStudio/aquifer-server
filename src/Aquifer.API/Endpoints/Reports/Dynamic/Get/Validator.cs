@@ -7,8 +7,7 @@ public class Validator : Validator<Request>
 {
     public Validator()
     {
-        RuleFor(x => x.EndDate)
-            .GreaterThan(x => x.StartDate).WithMessage("End date must be after start date");
+        RuleFor(x => x.EndDate).GreaterThanOrEqualTo(x => x.StartDate);
         RuleFor(x => x.LanguageId).GreaterThanOrEqualTo(0);
         RuleFor(x => x.ParentResourceId).GreaterThanOrEqualTo(0);
     }
