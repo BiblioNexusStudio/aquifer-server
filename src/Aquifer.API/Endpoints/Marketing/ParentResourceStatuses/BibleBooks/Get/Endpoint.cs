@@ -14,7 +14,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     public override void Configure()
     {
         Get("/marketing/parent-resource-statuses/bible-books");
-        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
+        Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
         ResponseCache(EndpointHelpers.OneHourInSeconds);
         AllowAnonymous();
     }

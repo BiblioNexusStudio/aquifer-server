@@ -1,3 +1,4 @@
+using Aquifer.API.Common;
 using Aquifer.API.Helpers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -82,7 +83,8 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
     public override void Configure()
     {
         Get("/reports/resources/item-totals");
-        EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds);
+        Permissions(PermissionName.ReadReports);
+        ResponseCache(EndpointHelpers.OneHourInSeconds);
     }
 
     public override async Task HandleAsync(CancellationToken cancellationToken)

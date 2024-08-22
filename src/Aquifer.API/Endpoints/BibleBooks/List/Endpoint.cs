@@ -9,7 +9,7 @@ public class Endpoint : EndpointWithoutRequest<IEnumerable<Response>>
     public override void Configure()
     {
         Get("/bible-books");
-        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
+        Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
         ResponseCache(EndpointHelpers.OneHourInSeconds);
         AllowAnonymous();
     }

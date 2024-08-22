@@ -11,7 +11,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     public override void Configure()
     {
         Get("/languages/available-resources");
-        Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
+        Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
         Summary(s =>
         {
             s.Summary = "Get count of resource types per language";

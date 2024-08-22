@@ -11,7 +11,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     public override void Configure()
     {
         Get("/project-platforms");
-        ResponseCache(EndpointHelpers.TenMinutesInSeconds);
+        ResponseCache(EndpointHelpers.OneHourInSeconds);
         Permissions(PermissionName.ReadUsers);
     }
 
