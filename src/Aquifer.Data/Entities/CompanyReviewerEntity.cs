@@ -14,6 +14,8 @@ public class CompanyReviewerEntity
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
     public UserEntity User { get; set; } = null!;
+
     public CompanyEntity Company { get; set; } = null!;
+
     public LanguageEntity Language { get; set; } = null!;
 }
