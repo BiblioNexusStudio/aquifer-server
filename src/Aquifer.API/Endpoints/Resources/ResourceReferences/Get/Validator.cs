@@ -8,6 +8,6 @@ public class Validator : Validator<Request>
     public Validator()
     {
         RuleFor(x => x.ParentResourceId).GreaterThan(0);
-        RuleFor(x => x.ResourceIdOrExternalId).NotEmpty();
+        RuleFor(x => x.ResourceId).GreaterThan(0);
     }
 }

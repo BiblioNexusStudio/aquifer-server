@@ -26,20 +26,20 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
             return;
         }
 
-        var referenceResource = await dbContext.Resources.FindAsync([request.ReferenceResourceId, ct], ct);
-
-        if (referenceResource == null)
-        {
-            await SendNotFoundAsync(ct);
-            return;
-        }
-
         if (!resourceContent.Resource.AssociatedResourceChildren.Any(r => r.Id == request.ReferenceResourceId))
         {
+            var referenceResource = await dbContext.Resources.FindAsync([request.ReferenceResourceId], ct);
+
+            if (referenceResource == null)
+            {
+                await SendNotFoundAsync(ct);
+                return;
+            }
+
             resourceContent.Resource.AssociatedResourceChildren.Add(referenceResource);
+            await dbContext.SaveChangesAsync(ct);
         }
 
-        await dbContext.SaveChangesAsync(ct);
-        await SendOkAsync(ct);
+        await SendNoContentAsync(ct);
     }
 }

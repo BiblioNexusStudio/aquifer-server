@@ -55,6 +55,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
         }
 
         await dbContext.SaveChangesAsync(ct);
-        await SendOkAsync(ct);
+        await SendNoContentAsync(ct);
     }
 }

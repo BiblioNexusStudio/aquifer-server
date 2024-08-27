@@ -16,20 +16,12 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var query = dbContext.Resources.Where(r =>
-            r.ParentResourceId == request.ParentResourceId && (r.EnglishLabel.Contains(request.Query!) || r.ResourceContents.Any(rc =>
-                rc.LanguageId == 1 && rc.Versions.Any(v => v.IsPublished && v.DisplayName.Contains(request.Query!)))));
+            r.ParentResourceId == request.ParentResourceId && r.EnglishLabel.Contains(request.Query));
 
         var resources = await query
             .OrderBy(r => r.SortOrder)
             .ThenBy(r => r.EnglishLabel)
-            .Select(r => new Response
-            {
-                ResourceId = r.Id,
-                EnglishDisplayName =
-                    r.ResourceContents.Where(rc => rc.LanguageId == 1)
-                        .SelectMany(rc => rc.Versions.Where(v => v.IsPublished).Select(v => v.DisplayName)).FirstOrDefault(),
-                EnglishLabel = r.EnglishLabel
-            })
+            .Select(r => new Response { ResourceId = r.Id, EnglishLabel = r.EnglishLabel })
             .ToListAsync(ct);
 
         await SendOkAsync(resources, ct);
