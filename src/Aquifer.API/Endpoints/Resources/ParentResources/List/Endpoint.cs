@@ -39,6 +39,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                              pr.ComplexityLevel,
                              pr.LicenseInfo AS LicenseInfoValue,
                              pr.ShortName,
+                             pr.Code,
                              pr.Id,
                              pr.ResourceType
                          FROM

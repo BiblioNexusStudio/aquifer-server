@@ -41,8 +41,8 @@ public static class Constants
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> PublisherReviewStatuses =
         new([
-                ResourceContentStatus.TranslationPublisherReview,
-                ResourceContentStatus.AquiferizePublisherReview
+            ResourceContentStatus.TranslationPublisherReview,
+            ResourceContentStatus.AquiferizePublisherReview
         ]);
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> ManagerReviewStatuses =
@@ -59,6 +59,7 @@ public static class PermissionName
         ReadCompanyContentAssignments = "read:company-content-assignments",
         EditContent = "edit:content",
         EditContentBibleReferences = "edit:content-bible-references",
+        EditContentResourceReferences = "edit:content-resource-references",
         PublishContent = "publish:content",
         CreateContent = "create:content",
         AssignContent = "assign:content",
