@@ -16,7 +16,7 @@ namespace Aquifer.Data.Migrations
                 column: "IpAddress",
                 principalTable: "IpAddressData",
                 principalColumn: "IpAddress",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.NoAction);
         }
 
         /// <inheritdoc />
