@@ -24,15 +24,16 @@ public class SendGridClient : ISendGridClient
 {
     private const string ApiKeySecretName = "SendGridMarketingApiKey";
     private readonly string _apiToken;
+    private readonly SendGrid.SendGridClient _client;
 
-    public SendGridClient(IAzureKeyVaultClient keyVaultClient, IConfiguration configuration)
+    public SendGridClient(IAzureKeyVaultClient keyVaultClient)
     {
         _apiToken = keyVaultClient.GetSecretAsync(ApiKeySecretName).GetAwaiter().GetResult();
+        _client = new SendGrid.SendGridClient(_apiToken);
     }
 
     public async Task<Response> SendEmail(SendGridEmailConfiguration emailConfiguration, CancellationToken ct)
     {
-        var client = new SendGrid.SendGridClient(_apiToken);
         var from = new EmailAddress(emailConfiguration.FromEmail, emailConfiguration.FromName);
         var msg = new SendGridMessage();
         msg.SetFrom(from);
@@ -44,6 +45,6 @@ public class SendGridClient : ISendGridClient
             msg.PlainTextContent = emailConfiguration.PlainTextContent;
         }
 
-        return await client.SendEmailAsync(msg, ct);
+        return await _client.SendEmailAsync(msg, ct);
     }
 }
