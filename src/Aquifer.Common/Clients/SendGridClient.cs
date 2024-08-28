@@ -7,7 +7,7 @@ namespace Aquifer.Common.Clients;
 
 public interface ISendGridClient
 {
-    Task<Response> SendEmail(AquiferDbContext dbContext, SendGridEmailConfiguration emailConfiguration, CancellationToken ct);
+    Task<Response> SendEmail(SendGridEmailConfiguration emailConfiguration, CancellationToken ct);
 }
 
 public class SendGridEmailConfiguration
@@ -30,7 +30,7 @@ public class SendGridClient : ISendGridClient
         _apiToken = keyVaultClient.GetSecretAsync(ApiKeySecretName).GetAwaiter().GetResult();
     }
 
-    public async Task<Response> SendEmail(AquiferDbContext dbContext, SendGridEmailConfiguration emailConfiguration, CancellationToken ct)
+    public async Task<Response> SendEmail(SendGridEmailConfiguration emailConfiguration, CancellationToken ct)
     {
         var client = new SendGrid.SendGridClient(_apiToken);
         var from = new EmailAddress(emailConfiguration.FromEmail, emailConfiguration.FromName);
