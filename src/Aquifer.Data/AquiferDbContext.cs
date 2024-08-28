@@ -46,6 +46,7 @@ public class AquiferDbContext : DbContext
     public DbSet<GreekSenseEntity> GreekSenses { get; set; }
     public DbSet<GreekSenseGlossEntity> GreekSenseGlosses { get; set; }
     public DbSet<GreekWordEntity> GreekWords { get; set; }
+    public DbSet<IpAddressData> IpAddressData { get; set; }
     public DbSet<LanguageEntity> Languages { get; set; }
     public DbSet<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; }
     public DbSet<ParentResourceEntity> ParentResources { get; set; }
