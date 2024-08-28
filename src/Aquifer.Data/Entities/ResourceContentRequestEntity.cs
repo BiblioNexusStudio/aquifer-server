@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
@@ -15,4 +16,7 @@ public class ResourceContentRequestEntity
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
+
+    [ForeignKey(nameof(IpAddress))]
+    public IpAddressData IpAddressData { get; set; } = null!;
 }
