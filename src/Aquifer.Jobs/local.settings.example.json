@@ -1,20 +1,22 @@
 {
-    "IsEncrypted": false,
-    "ConnectionStrings": {
-        "BiblioNexusDb": "Server=localhost;Database=biblionexus-local-db;User Id=sa;Password=Password!;TrustServerCertificate=true;"
-    },
-    "Values": {
-        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-        "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-        "JobQueues:TrackResourceContentRequestQueue": "aquifer-jobs-local-track-resource-content-request",
-        "IsDevelopment": true,
-        "Analytics:StorageAccountUri": "https://aquiferstoragedev.table.core.windows.net",
-        "Analytics:CustomEventsTableName": "CustomEventsQa",
-        "Analytics:ApiRequestStatsTableName": "ApiRequestStatsQa",
-        "Analytics:PageViewsTableName": "PageViewsQa",
-        "Analytics:AppInsightsResourceId": "/subscriptions/dacfa945-984c-4708-9f2d-7d8358f223d5/resourceGroups/BiblioNexus-Dev/providers/microsoft.insights/components/appinsights-qa",
-        "Analytics:ApiManagementResourceId": "/subscriptions/dacfa945-984c-4708-9f2d-7d8358f223d5/resourceGroups/BiblioNexus-Global/providers/Microsoft.ApiManagement/service/aquifer-api-management",
-        "Analytics:CronSchedule": "0 5 * * * *",
-        "Analytics:HoursBetweenRuns": 1
-    }
+  "IsEncrypted": false,
+  "ConnectionStrings": {
+    "BiblioNexusDb": "Server=localhost;Database=biblionexus-local-db;User Id=sa;Password=Password!;TrustServerCertificate=true;"
+  },
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "JobQueues:TrackResourceContentRequestQueue": "aquifer-jobs-local-track-resource-content-request",
+    "IsDevelopment": true,
+    "Analytics:StorageAccountUri": "https://aquiferstoragedev.table.core.windows.net",
+    "Analytics:CustomEventsTableName": "CustomEventsQa",
+    "Analytics:ApiRequestStatsTableName": "ApiRequestStatsQa",
+    "Analytics:PageViewsTableName": "PageViewsQa",
+    "Analytics:AppInsightsResourceId": "/subscriptions/dacfa945-984c-4708-9f2d-7d8358f223d5/resourceGroups/BiblioNexus-Dev/providers/microsoft.insights/components/appinsights-qa",
+    "Analytics:ApiManagementResourceId": "/subscriptions/dacfa945-984c-4708-9f2d-7d8358f223d5/resourceGroups/BiblioNexus-Global/providers/Microsoft.ApiManagement/service/aquifer-api-management",
+    "Analytics:CronSchedule": "0 5 * * * *",
+    "Analytics:HoursBetweenRuns": 1,
+    "SendGridOptions:SenderEmailAddress": "no-reply@aquifer.bible",
+    "SendGridOptions:SenderName": "Aquifer"
+  }
 }

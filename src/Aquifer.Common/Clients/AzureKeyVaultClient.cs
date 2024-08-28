@@ -1,9 +1,8 @@
-﻿using Aquifer.API.Configuration;
-using Aquifer.Common.Services;
+﻿using Aquifer.Common.Services;
 using Azure.Security.KeyVault.Secrets;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 
-namespace Aquifer.API.Clients;
+namespace Aquifer.Common.Clients;
 
 public interface IAzureKeyVaultClient
 {
@@ -14,9 +13,9 @@ public class AzureKeyVaultClient : IAzureKeyVaultClient
 {
     private readonly SecretClient _client;
 
-    public AzureKeyVaultClient(IOptions<ConfigurationOptions> options, IAzureClientService azureClientService)
+    public AzureKeyVaultClient(IConfiguration configuration, IAzureClientService azureClientService)
     {
-        var kvUri = options.Value.KeyVaultUri;
+        var kvUri = GetKeyVaultUri(configuration);
         _client = new SecretClient(new Uri(kvUri), azureClientService.GetCredential());
     }
 
@@ -24,5 +23,12 @@ public class AzureKeyVaultClient : IAzureKeyVaultClient
     {
         var secret = await _client.GetSecretAsync(secretName);
         return secret.Value.Value;
+    }
+
+    private static string GetKeyVaultUri(IConfiguration configuration)
+    {
+        var keyVaultUri = configuration.GetValue<string>("KeyVaultUri");
+        ArgumentException.ThrowIfNullOrEmpty(keyVaultUri);
+        return keyVaultUri;
     }
 }
