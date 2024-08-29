@@ -92,4 +92,10 @@ public class AquiferDbContext : DbContext
         var entries = ChangeTracker.Entries();
         await ResourceStatusChangeHandler.HandleAsync(_options, entries);
     }
+
+    // This is useful for scripts you don't want changing the Updated timestamp on tables.
+    public void DisableUpdatedTimestampHandler()
+    {
+        ChangeTracker.StateChanged -= OnStateChange;
+    }
 }
