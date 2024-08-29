@@ -1,5 +1,3 @@
-using Aquifer.Data;
-using Microsoft.Extensions.Configuration;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 
@@ -22,14 +20,13 @@ public class SendGridEmailConfiguration
 
 public class SendGridClient : ISendGridClient
 {
-    private const string ApiKeySecretName = "SendGridMarketingApiKey";
-    private readonly string _apiToken;
     private readonly SendGrid.SendGridClient _client;
 
     public SendGridClient(IAzureKeyVaultClient keyVaultClient)
     {
-        _apiToken = keyVaultClient.GetSecretAsync(ApiKeySecretName).GetAwaiter().GetResult();
-        _client = new SendGrid.SendGridClient(_apiToken);
+        const string apiKeySecretName = "SendGridMarketingApiKey";
+        var apiToken = keyVaultClient.GetSecretAsync(apiKeySecretName).GetAwaiter().GetResult();
+        _client = new SendGrid.SendGridClient(apiToken);
     }
 
     public async Task<Response> SendEmail(SendGridEmailConfiguration emailConfiguration, CancellationToken ct)
