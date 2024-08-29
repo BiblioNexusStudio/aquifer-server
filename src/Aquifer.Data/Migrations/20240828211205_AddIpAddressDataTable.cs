@@ -23,6 +23,7 @@ namespace Aquifer.Data.Migrations
                 name: "IpAddress",
                 table: "ResourceContentRequests",
                 type: "nvarchar(64)",
+                maxLength: 64,
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "nvarchar(max)");
@@ -41,23 +42,11 @@ namespace Aquifer.Data.Migrations
                 {
                     table.PrimaryKey("PK_IpAddressData", x => x.IpAddress);
                 });
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_ResourceContentRequests_IpAddressData_IpAddress",
-                table: "ResourceContentRequests",
-                column: "IpAddress",
-                principalTable: "IpAddressData",
-                principalColumn: "IpAddress",
-                onDelete: ReferentialAction.Cascade);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_ResourceContentRequests_IpAddressData_IpAddress",
-                table: "ResourceContentRequests");
-
             migrationBuilder.DropTable(
                 name: "IpAddressData");
 
@@ -67,7 +56,8 @@ namespace Aquifer.Data.Migrations
                 type: "nvarchar(max)",
                 nullable: false,
                 oldClrType: typeof(string),
-                oldType: "nvarchar(64)");
+                oldType: "nvarchar(64)",
+                oldMaxLength: 64);
 
             migrationBuilder.AddColumn<int>(
                 name: "DefaultReviewerUserId",
