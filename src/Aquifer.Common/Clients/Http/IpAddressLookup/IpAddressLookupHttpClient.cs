@@ -1,10 +1,10 @@
-﻿using System.Net.Http.Json;
+﻿using Aquifer.Common.Utilities;
 
 namespace Aquifer.Common.Clients.Http.IpAddressLookup;
 
 public interface IIpAddressLookupHttpClient
 {
-    Task<IpAddressLookupResponse?> LookupIpAddressAsync(string ipAddress);
+    Task<IpAddressLookupResponse> LookupIpAddressAsync(string ipAddress, CancellationToken ct);
 }
 
 public class IpAddressLookupHttpClient : IIpAddressLookupHttpClient
@@ -18,8 +18,10 @@ public class IpAddressLookupHttpClient : IIpAddressLookupHttpClient
         _httpClient.BaseAddress = new Uri(BaseUri);
     }
 
-    public async Task<IpAddressLookupResponse?> LookupIpAddressAsync(string ipAddress)
+    public async Task<IpAddressLookupResponse> LookupIpAddressAsync(string ipAddress, CancellationToken ct)
     {
-        return await _httpClient.GetFromJsonAsync<IpAddressLookupResponse>($"{ipAddress}/json");
+        var response = await _httpClient.GetAsync($"{ipAddress}/json", ct);
+        var responseContent = await response.Content.ReadAsStringAsync(ct);
+        return JsonUtilities.DefaultDeserialize<IpAddressLookupResponse>(responseContent);
     }
 }

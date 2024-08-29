@@ -54,12 +54,12 @@ public class TrackResourceContentRequestJob(
 
     private async Task LookupIpAddressAsync(TrackResourceContentRequestMessage trackingMetadata, CancellationToken ct)
     {
-        var ipDataExists = await dbContext.IpAddressData.AnyAsync(x => x.IpAddress == trackingMetadata.IpAddress, ct);
-        if (!ipDataExists)
+        try
         {
-            var ipData = await ipAddressClient.LookupIpAddressAsync(trackingMetadata.IpAddress);
-            if (ipData is not null)
+            var ipDataExists = await dbContext.IpAddressData.AnyAsync(x => x.IpAddress == trackingMetadata.IpAddress, ct);
+            if (!ipDataExists)
             {
+                var ipData = await ipAddressClient.LookupIpAddressAsync(trackingMetadata.IpAddress, ct);
                 await dbContext.IpAddressData.AddAsync(new IpAddressData
                     {
                         IpAddress = trackingMetadata.IpAddress,
@@ -69,6 +69,10 @@ public class TrackResourceContentRequestJob(
                     },
                     ct);
             }
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "IP Address Lookup failed");
         }
     }
 }
