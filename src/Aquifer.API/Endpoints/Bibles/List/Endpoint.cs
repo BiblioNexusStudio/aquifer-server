@@ -26,7 +26,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                 SerializedLicenseInfo = bible.LicenseInfo,
                 LanguageId = bible.LanguageId,
                 IsLanguageDefault = bible.LanguageDefault,
-                RestrictedLicense = bible.RestrictedLicense
+                RestrictedLicense = bible.RestrictedLicense,
+                GreekAlignment = bible.GreekAlignment
             })
             .ToListAsync(ct);
 
