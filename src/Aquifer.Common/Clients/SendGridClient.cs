@@ -31,17 +31,21 @@ public class SendGridClient : ISendGridClient
 
     public async Task<Response> SendEmail(SendGridEmailConfiguration emailConfiguration, CancellationToken ct)
     {
-        var from = new EmailAddress(emailConfiguration.FromEmail, emailConfiguration.FromName);
-        var msg = new SendGridMessage();
-        msg.SetFrom(from);
-        msg.SetSubject(emailConfiguration.Subject);
-        msg.AddTos(emailConfiguration.ToAddresses);
-        msg.HtmlContent = emailConfiguration.HtmlContent;
-        if (emailConfiguration.PlainTextContent is not null)
+        var message = new SendGridMessage
         {
-            msg.PlainTextContent = emailConfiguration.PlainTextContent;
-        }
+            From = new EmailAddress(emailConfiguration.FromEmail, emailConfiguration.FromName),
+            Subject = emailConfiguration.Subject,
+            Personalizations =
+            [
+                new Personalization
+                {
+                    Tos = emailConfiguration.ToAddresses
+                }
+            ],
+            HtmlContent = emailConfiguration.HtmlContent,
+            PlainTextContent = emailConfiguration.PlainTextContent,
+        };
 
-        return await _client.SendEmailAsync(msg, ct);
+        return await _client.SendEmailAsync(message, ct);
     }
 }
