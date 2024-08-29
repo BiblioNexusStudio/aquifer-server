@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    [Migration("20240828185812_AddIpAddressDataTable")]
+    [Migration("20240828211205_AddIpAddressDataTable")]
     partial class AddIpAddressDataTable
     {
         /// <inheritdoc />
@@ -1168,6 +1168,7 @@ namespace Aquifer.Data.Migrations
 
                     b.Property<string>("IpAddress")
                         .IsRequired()
+                        .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
                     b.Property<int>("ResourceContentId")
@@ -2029,17 +2030,6 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("Language");
 
                     b.Navigation("Resource");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentRequestEntity", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.IpAddressData", "IpAddressData")
-                        .WithMany()
-                        .HasForeignKey("IpAddress")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("IpAddressData");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionAssignedUserHistoryEntity", b =>
