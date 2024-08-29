@@ -14,7 +14,6 @@ public class SendGridEmailConfiguration
     public required string FromName { get; set; }
     public required string Subject { get; set; }
     public required string HtmlContent { get; set; }
-    public string? PlainTextContent { get; set; } = null!;
     public required List<EmailAddress> ToAddresses { get; set; }
 }
 
@@ -43,7 +42,6 @@ public class SendGridClient : ISendGridClient
                 }
             ],
             HtmlContent = emailConfiguration.HtmlContent,
-            PlainTextContent = emailConfiguration.PlainTextContent,
         };
 
         return await _client.SendEmailAsync(message, ct);
