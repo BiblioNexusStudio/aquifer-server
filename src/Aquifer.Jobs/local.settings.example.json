@@ -16,7 +16,7 @@
     "Analytics:ApiManagementResourceId": "/subscriptions/dacfa945-984c-4708-9f2d-7d8358f223d5/resourceGroups/BiblioNexus-Global/providers/Microsoft.ApiManagement/service/aquifer-api-management",
     "Analytics:CronSchedule": "0 5 * * * *",
     "Analytics:HoursBetweenRuns": 1,
-    "SendGridOptions:SenderEmailAddress": "no-reply@aquifer.bible",
-    "SendGridOptions:SenderName": "Aquifer"
+    "MarketingEmail:Address": "no-reply@aquifer.bible",
+    "MarketingEmail:Name": "Aquifer"
   }
 }
