@@ -4,9 +4,9 @@ namespace Aquifer.Common.Clients.Http.IpAddressLookup;
 
 public class IpAddressLookupResponse
 {
-    public string City { get; set; } = null!;
-    public string Region { get; set; } = null!;
+    public string? City { get; set; }
+    public string? Region { get; set; }
 
     [JsonPropertyName("country_name")]
-    public string Country { get; set; } = null!;
+    public string? Country { get; set; }
 }

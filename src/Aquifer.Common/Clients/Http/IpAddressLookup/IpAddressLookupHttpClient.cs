@@ -16,6 +16,8 @@ public class IpAddressLookupHttpClient : IIpAddressLookupHttpClient
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri(BaseUri);
+        // request will fail without User-Agent
+        _httpClient.DefaultRequestHeaders.Add("User-Agent", "bn-user");
     }
 
     public async Task<IpAddressLookupResponse> LookupIpAddressAsync(string ipAddress, CancellationToken ct)

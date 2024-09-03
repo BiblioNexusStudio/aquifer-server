@@ -60,14 +60,17 @@ public class TrackResourceContentRequestJob(
             if (!ipDataExists)
             {
                 var ipData = await ipAddressClient.LookupIpAddressAsync(trackingMetadata.IpAddress, ct);
-                await dbContext.IpAddressData.AddAsync(new IpAddressData
-                    {
-                        IpAddress = trackingMetadata.IpAddress,
-                        City = ipData.City,
-                        Region = ipData.Region,
-                        Country = ipData.Country
-                    },
-                    ct);
+                if (ipData.City is not null && ipData.Country is not null && ipData.Region is not null)
+                {
+                    await dbContext.IpAddressData.AddAsync(new IpAddressData
+                        {
+                            IpAddress = trackingMetadata.IpAddress,
+                            City = ipData.City,
+                            Region = ipData.Region,
+                            Country = ipData.Country
+                        },
+                        ct);
+                }
             }
         }
         catch (Exception e)
