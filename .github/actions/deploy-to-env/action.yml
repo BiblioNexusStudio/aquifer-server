@@ -95,8 +95,8 @@ runs:
           uses: BiblioNexusStudio/github-action-slack-notify-build@main
           with:
               channel_id: C05UPTGQGP9
-              status: ${{ job.status == 'success' && 'SUCCESS' || 'FAILURE' }}
-              color: ${{ job.status == 'success' && 'good' || 'danger' }}
+              status: ${{ github.action_status == 'failure' && 'FAILURE' || 'SUCCESS' }}
+              color: ${{ github.action_status == 'failure' && 'danger' || 'good' }}
               environment: ${{ inputs.full-environment }}
               default_branch_name: master
               service_name: ${{ inputs.service-name }}
