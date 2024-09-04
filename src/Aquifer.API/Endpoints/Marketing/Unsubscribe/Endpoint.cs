@@ -1,5 +1,6 @@
 ﻿using Aquifer.Data;
 using FastEndpoints;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Marketing.Unsubscribe;
 
@@ -15,7 +16,7 @@ public class Endpoint(AquiferDbContext dbContext, ILogger<Endpoint> logger) : En
     {
         try
         {
-            var subscriberToDisable = dbContext.ContentSubscribers.SingleOrDefault(s => s.UnsubscribeId == req.UnsubscribeId);
+            var subscriberToDisable = await dbContext.ContentSubscribers.SingleOrDefaultAsync(s => s.UnsubscribeId == req.UnsubscribeId, ct);
             if (subscriberToDisable is not null)
             {
                 subscriberToDisable.Enabled = false;
