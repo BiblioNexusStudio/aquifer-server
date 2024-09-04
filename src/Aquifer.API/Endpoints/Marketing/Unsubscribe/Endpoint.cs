@@ -1,4 +1,5 @@
-﻿using Aquifer.Data;
+﻿using Aquifer.Common.Utilities;
+using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,7 +23,8 @@ public class Endpoint(AquiferDbContext dbContext, ILogger<Endpoint> logger) : En
         }
         catch (Exception e)
         {
-            logger.LogError(e, "An error occurred. Please try again");
+            logger.LogError(e, "Failed to handle subscriber request: {requestContent}", JsonUtilities.DefaultSerialize(req));
+            await SendOkAsync("An error occurred. Please try again later", ct);
         }
     }
 }
