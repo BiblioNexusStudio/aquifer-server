@@ -12,8 +12,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 {
     public override void Configure()
     {
-        Post("/resources/content/{ContentId}/send-for-manager-review",
-            "/resources/content/send-for-manager-review");
+        Post("/resources/content/{ContentId}/send-for-manager-review", "/resources/content/send-for-manager-review");
         Permissions(PermissionName.AssignContent);
     }
 
@@ -27,7 +26,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         var draftVersions = await dbContext.ResourceContentVersions
             .Where(x => contentIds.Contains(x.ResourceContentId) && allowedStatuses.Contains(x.ResourceContent.Status) && x.IsDraft)
-            .Include(x => x.ResourceContent).ThenInclude(x => x.Projects).ToListAsync(ct);
+            .Include(x => x.ResourceContent)
+            .ThenInclude(x => x.Projects)
+            .ToListAsync(ct);
 
         if (draftVersions.Count != contentIds.Count)
         {
@@ -53,7 +54,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 : ResourceContentStatus.AquiferizeManagerReview;
 
             draftVersion.ResourceContent.Status = reviewPendingStatus;
-            await SetAssignedUserId(user, draftVersion.ResourceContent.Projects.FirstOrDefault(), managerIds, draftVersion);
+            await SetAssignedUserId(user,
+                draftVersion.ResourceContent.Projects.FirstOrDefault(x => x.ActualPublishDate == null),
+                managerIds,
+                draftVersion);
 
             await historyService.AddAssignedUserHistoryAsync(draftVersion, draftVersion.AssignedUserId, user.Id, ct);
             await historyService.AddStatusHistoryAsync(draftVersion, reviewPendingStatus, user.Id, ct);
@@ -62,10 +66,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         await dbContext.SaveChangesAsync(ct);
 
         Response.Assignments = draftVersions.Select(x => new UserAssignment
-        {
-            ResourceContentId = x.ResourceContentId,
-            AssignedUserId = x.AssignedUserId!.Value
-        }).ToList();
+            {
+                ResourceContentId = x.ResourceContentId,
+                AssignedUserId = x.AssignedUserId!.Value
+            })
+            .ToList();
     }
 
     private async Task SetAssignedUserId(UserEntity user,
@@ -92,10 +97,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         else
         {
             var lastAssignmentHistory = await dbContext.ResourceContentVersionAssignedUserHistory
-                .Where(x =>
-                    x.ResourceContentVersionId == draftVersion.Id &&
-                    managers.Contains(x.ChangedByUserId))
-                .OrderByDescending(x => x.Id).FirstOrDefaultAsync();
+                .Where(x => x.ResourceContentVersionId == draftVersion.Id && managers.Contains(x.ChangedByUserId))
+                .OrderByDescending(x => x.Id)
+                .FirstOrDefaultAsync();
 
             if (lastAssignmentHistory is not null)
             {
