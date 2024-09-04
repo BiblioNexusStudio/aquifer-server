@@ -56,8 +56,13 @@ public class TrackResourceContentRequestJob(
     {
         try
         {
-            var ipDataExists = await dbContext.IpAddressData.AnyAsync(x => x.IpAddress == trackingMetadata.IpAddress, ct);
-            if (!ipDataExists)
+            if (trackingMetadata.IpAddress.Length < 7)
+            {
+                return;
+            }
+
+            var ipDataRecord = await dbContext.IpAddressData.SingleOrDefaultAsync(x => x.IpAddress == trackingMetadata.IpAddress, ct);
+            if (ipDataRecord is null)
             {
                 var ipData = await ipAddressClient.LookupIpAddressAsync(trackingMetadata.IpAddress, ct);
                 if (ipData.City is not null && ipData.Country is not null && ipData.Region is not null)
@@ -70,8 +75,15 @@ public class TrackResourceContentRequestJob(
                             Country = ipData.Country
                         },
                         ct);
+
+                    // This will blow up sometimes, so don't want it to affect saving the request.
+                    await dbContext.SaveChangesAsync(ct);
                 }
             }
+        }
+        catch (DbUpdateException)
+        {
+            // Don't care about this since it's a concurrency issue.
         }
         catch (Exception e)
         {
