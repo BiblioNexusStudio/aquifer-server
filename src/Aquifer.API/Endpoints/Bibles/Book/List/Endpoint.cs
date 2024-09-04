@@ -26,7 +26,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             Chapters = x.Chapters.OrderBy(c => c.Number).Select(c => new ResponseChapter
             {
                 Number = c.Number,
-                TotalVerses = c.Verses.Count
+                TotalVerses = c.Verses.Max(v => v.Number)
             })
         }).ToListAsync(ct);
 
