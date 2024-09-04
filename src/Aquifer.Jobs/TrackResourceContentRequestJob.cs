@@ -67,23 +67,27 @@ public class TrackResourceContentRequestJob(
                 var ipData = await ipAddressClient.LookupIpAddressAsync(trackingMetadata.IpAddress, ct);
                 if (ipData.City is not null && ipData.Country is not null && ipData.Region is not null)
                 {
-                    await dbContext.IpAddressData.AddAsync(new IpAddressData
-                        {
-                            IpAddress = trackingMetadata.IpAddress,
-                            City = ipData.City,
-                            Region = ipData.Region,
-                            Country = ipData.Country
-                        },
-                        ct);
+                    var newRecord = new IpAddressData
+                    {
+                        IpAddress = trackingMetadata.IpAddress,
+                        City = ipData.City,
+                        Region = ipData.Region,
+                        Country = ipData.Country
+                    };
 
-                    // This will blow up sometimes, so don't want it to affect saving the request.
-                    await dbContext.SaveChangesAsync(ct);
+                    try
+                    {
+                        await dbContext.IpAddressData.AddAsync(newRecord, ct);
+                        await dbContext.SaveChangesAsync(ct);
+                    }
+                    catch (DbUpdateException)
+                    {
+                        // Don't care about this since it's a concurrency issue. Need to remove it though or the next Save
+                        // will pick it up and blow up.
+                        dbContext.IpAddressData.Remove(newRecord);
+                    }
                 }
             }
-        }
-        catch (DbUpdateException)
-        {
-            // Don't care about this since it's a concurrency issue.
         }
         catch (Exception e)
         {
