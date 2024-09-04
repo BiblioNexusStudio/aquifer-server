@@ -4,6 +4,7 @@ using Aquifer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    partial class AquiferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240829214149_AddGreekAlignmentColumnToBibles")]
+    partial class AddGreekAlignmentColumnToBibles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -404,9 +407,6 @@ namespace Aquifer.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<bool>("Enabled")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("GetNewsletter")
                         .HasColumnType("bit");
 
@@ -418,11 +418,6 @@ namespace Aquifer.Data.Migrations
                     b.Property<string>("Organization")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("UnsubscribeId")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("nvarchar(64)");
 
                     b.Property<DateTime>("Updated")
                         .ValueGeneratedOnAdd()
@@ -458,37 +453,6 @@ namespace Aquifer.Data.Migrations
                     b.HasKey("ContentSubscriberId", "ParentResourceId");
 
                     b.ToTable("ContentSubscriberParentResources");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.EmailTemplateEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Created")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.Property<int>("LanguageId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Subject")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Template")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Updated")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("EmailTemplates");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.FeedbackEntity", b =>
@@ -1828,17 +1792,6 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("ContentSubscriber");
 
                     b.Navigation("ParentResource");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.EmailTemplateEntity", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.LanguageEntity", "Language")
-                        .WithMany()
-                        .HasForeignKey("LanguageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Language");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekLemmaEntity", b =>
