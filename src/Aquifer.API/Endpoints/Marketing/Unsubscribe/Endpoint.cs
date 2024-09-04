@@ -16,13 +16,8 @@ public class Endpoint(AquiferDbContext dbContext, ILogger<Endpoint> logger) : En
     {
         try
         {
-            var subscriberToDisable = await dbContext.ContentSubscribers.SingleOrDefaultAsync(s => s.UnsubscribeId == req.UnsubscribeId, ct);
-            if (subscriberToDisable is not null)
-            {
-                subscriberToDisable.Enabled = false;
-                await dbContext.SaveChangesAsync(ct);
-            }
-
+            await dbContext.ContentSubscribers.Where(s => s.UnsubscribeId == req.UnsubscribeId)
+                .ExecuteUpdateAsync(x => x.SetProperty(p => p.Enabled, false), ct);
             await SendOkAsync("You have been successfully unsubscribed.", ct);
         }
         catch (Exception e)
