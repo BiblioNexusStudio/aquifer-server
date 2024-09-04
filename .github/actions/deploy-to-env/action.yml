@@ -90,19 +90,3 @@ runs:
           with:
               app-name: ${{ inputs.web-app-name }}
               package: ./build/Build.zip
-        - name: Notify Slack deploy status
-          if: ${{ !cancelled() && inputs.environment != 'dev' }}
-          uses: BiblioNexusStudio/github-action-slack-notify-build@main
-          with:
-              channel_id: C05UPTGQGP9
-              status: ${{ github.action_status == 'failure' && 'FAILURE' || 'SUCCESS' }}
-              color: ${{ github.action_status == 'failure' && 'danger' || 'good' }}
-              environment: ${{ inputs.full-environment }}
-              default_branch_name: master
-              service_name: ${{ inputs.service-name }}
-              message_id: ${{ steps.slack-notify.outputs.message_id }}
-          env:
-              SLACK_BOT_TOKEN: ${{ inputs.slack-bot-token }}
-              GITHUB_TOKEN: ${{ inputs.github-token }}
-              LINEAR_API_KEY: ${{ inputs.linear-api-key }}
-
