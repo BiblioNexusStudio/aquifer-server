@@ -1,5 +1,4 @@
-﻿using Aquifer.Common.Utilities;
-using Aquifer.Data;
+﻿using Aquifer.Data;
 using FastEndpoints;
 
 namespace Aquifer.API.Endpoints.Marketing.Unsubscribe;
@@ -22,14 +21,12 @@ public class Endpoint(AquiferDbContext dbContext, ILogger<Endpoint> logger) : En
                 subscriberToDisable.Enabled = false;
                 await dbContext.SaveChangesAsync(ct);
             }
+
+            await SendOkAsync("You have been successfully unsubscribed.", ct);
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Failed to handle subscriber request: {requestContent}", JsonUtilities.DefaultSerialize(req));
-        }
-        finally
-        {
-            await SendOkAsync("You have been successfully unsubscribed.", ct);
+            logger.LogError(e, "An error occurred. Please try again");
         }
     }
 }
