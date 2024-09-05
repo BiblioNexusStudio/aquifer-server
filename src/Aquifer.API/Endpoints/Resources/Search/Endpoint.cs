@@ -1,5 +1,6 @@
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -42,6 +43,12 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             .Select(rcv => new Response
             {
                 Id = rcv.ResourceContentId,
+                DependentOnId =
+                    rcv.ResourceContent.MediaType != ResourceContentMediaType.Text
+                        ? rcv.ResourceContent.Resource.ResourceContents
+                            .Where(rc => rc.LanguageId == req.LanguageId && rc.MediaType == ResourceContentMediaType.Text)
+                            .Select(rc => rc.Id).FirstOrDefault()
+                        : null,
                 DisplayName = rcv.DisplayName,
                 MediaType = rcv.ResourceContent.MediaType.ToString(),
                 ParentResourceId = rcv.ResourceContent.Resource.ParentResourceId,

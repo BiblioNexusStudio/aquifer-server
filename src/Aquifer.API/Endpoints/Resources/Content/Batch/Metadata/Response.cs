@@ -1,3 +1,5 @@
+using Aquifer.Data.Entities;
+
 namespace Aquifer.API.Endpoints.Resources.Content.Batch.Metadata;
 
 public record Response
@@ -13,4 +15,5 @@ public record AssociatedResourceResponse
     public required string? ExternalId { get; set; }
     public required int ResourceId { get; set; }
     public required int ContentId { get; set; }
+    public required ResourceContentMediaType MediaType { get; set; }
 }
