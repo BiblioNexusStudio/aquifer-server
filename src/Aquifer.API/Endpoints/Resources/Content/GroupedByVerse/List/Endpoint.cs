@@ -25,6 +25,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         var query = $"""
                          SELECT
                              COALESCE(rc.Id, rce.Id) AS Id,
+                             rct.Id AS DependentOnId,
                              vr.VerseId,
                              COALESCE(rc.MediaType, rce.MediaType) AS MediaType,
                              pr.ResourceType,
@@ -37,6 +38,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                              LEFT JOIN ResourceContents rc ON rc.ResourceId = r.Id AND rc.LanguageId = {request.LanguageId}
                              LEFT JOIN ResourceContents rce ON rce.ResourceId = r.Id AND rce.LanguageId = 1
                                                                AND rce.MediaType IN ({fallbackMediaTypesSqlArray})
+                             LEFT JOIN ResourceContents rct ON rc.MediaType != {(int)ResourceContentMediaType.Text} AND rct.ResourceId = r.Id
+                                                               AND rct.MediaType = {(int)ResourceContentMediaType.Text} AND rct.LanguageId = {request.LanguageId}
                              INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = COALESCE(rc.Id, rce.Id) AND rcv.IsPublished = 1
                         WHERE
                              pr.Enabled = 1 AND
@@ -46,6 +49,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                      
                          SELECT
                              COALESCE(rc.Id, rce.Id) AS Id,
+                             rct.Id AS DependentOnId,
                              v.Id AS VerseId,
                              COALESCE(rc.MediaType, rce.MediaType) AS MediaType,
                              parr.ResourceType,
@@ -61,6 +65,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                              LEFT JOIN ResourceContents rc ON rc.ResourceId = r.Id AND rc.LanguageId = {request.LanguageId}
                              LEFT JOIN ResourceContents rce ON rce.ResourceId = r.Id AND rce.LanguageId = 1
                                                                AND rce.MediaType IN ({fallbackMediaTypesSqlArray})
+                             LEFT JOIN ResourceContents rct ON rc.MediaType != {(int)ResourceContentMediaType.Text} AND rct.ResourceId = r.Id
+                                                               AND rct.MediaType = {(int)ResourceContentMediaType.Text} AND rct.LanguageId = {request.LanguageId}
                              INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = COALESCE(rc.Id, rce.Id) AND rcv.IsPublished = 1
                          WHERE
                              parr.Enabled = 1 AND
@@ -86,7 +92,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                         MediaType = row.MediaType.ToString(),
                         ParentResourceId = row.ParentResourceId,
                         Version = row.Version,
-                        ResourceType = row.ResourceType.ToString()
+                        ResourceType = row.ResourceType.ToString(),
+                        DependentOnId = row.DependentOnId
                     })
                         .DistinctBy(row => row.Id)
                         .ToList()
@@ -100,6 +107,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 public record ResourceContentRow
 {
     public required int Id { get; set; }
+    public required int? DependentOnId { get; set; }
     public required int VerseId { get; set; }
     public required int Version { get; set; }
     public required ResourceContentMediaType MediaType { get; set; }
