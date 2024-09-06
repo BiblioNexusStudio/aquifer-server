@@ -7,6 +7,5 @@ public record Response
     public required int TextSize { get; set; }
     public required int AudioSize { get; set; }
     public required int ChapterCount { get; set; }
-    public required string TextUrl { get; set; }
     public required object? AudioUrls { get; set; }
 }
