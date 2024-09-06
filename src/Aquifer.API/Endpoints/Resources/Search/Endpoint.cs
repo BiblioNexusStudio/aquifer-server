@@ -26,7 +26,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             ? ((int?)null, (int?)null)
             : BibleUtilities.GetVerseIds(req.BookCode, req.StartChapter, req.EndChapter, req.StartVerse, req.EndVerse);
 
-        return await dbContext.ResourceContentVersions.Where(x =>
+        var query = dbContext.ResourceContentVersions.Where(x =>
                 x.IsPublished &&
                 x.ResourceContent.Resource.ParentResource.Enabled &&
                 (req.Query == null || x.DisplayName.Contains(req.Query) || x.ResourceContent.Resource.EnglishLabel.Contains(req.Query)) &&
@@ -47,6 +47,13 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                 ParentResourceId = rcv.ResourceContent.Resource.ParentResourceId,
                 Version = rcv.Version,
                 ResourceType = rcv.ResourceContent.Resource.ParentResource.ResourceType.ToString()
-            }).ToListAsync(ct);
+            });
+
+        if (req.Offset is not null)
+        {
+            query = query.Skip(req.Offset.Value).Take(req.Limit);
+        }
+
+        return await query.ToListAsync(ct);
     }
 }

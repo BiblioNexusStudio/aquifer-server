@@ -9,8 +9,8 @@ public class Validator : Validator<Request>
 {
     public Validator()
     {
-        RuleFor(x => x).Must(x => x.Query is not null || x.BookCode is not null)
-            .WithMessage("Either search query or bookCode is required.");
+        RuleFor(x => x).Must(x => x.Query is not null || x.BookCode is not null || x.Offset is not null)
+            .WithMessage("Search query, bookCode or offset is required.");
         RuleFor(x => x.BookCode).Must(x => BibleBookCodeUtilities.IdFromCode(x!) != BookId.None)
             .WithMessage("Invalid book code {PropertyValue}. Get a valid list from /bible-books endpoint.")
             .When(x => x.BookCode is not null);
