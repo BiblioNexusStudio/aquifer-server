@@ -33,8 +33,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             BookCode = BibleBookCodeUtilities.CodeFromId(book.BookId),
             ChapterCount = book.ChapterCount,
             DisplayName = book.DisplayName,
-            TextSize = book.TextSize,
-            TextUrl = book.TextUrl
+            TextSize = book.TextSize
         };
 
         await SendOkAsync(response, ct);

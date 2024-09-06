@@ -10,7 +10,6 @@ public class BibleBookContentEntity : IHasUpdatedTimestamp
     public int BibleId { get; set; }
     public BookId BookId { get; set; }
     public string DisplayName { get; set; } = null!;
-    public string TextUrl { get; set; } = null!;
     public string? AudioUrls { get; set; } // JSON
     public int TextSize { get; set; }
     public int AudioSize { get; set; }
