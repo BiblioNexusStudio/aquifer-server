@@ -171,6 +171,9 @@ namespace Aquifer.Data.Migrations
                     b.Property<bool>("Enabled")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("GreekAlignment")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("LanguageDefault")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -344,9 +347,6 @@ namespace Aquifer.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("DefaultReviewerUserId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -404,6 +404,9 @@ namespace Aquifer.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("GetNewsletter")
                         .HasColumnType("bit");
 
@@ -415,6 +418,11 @@ namespace Aquifer.Data.Migrations
                     b.Property<string>("Organization")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("UnsubscribeId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<DateTime>("Updated")
                         .ValueGeneratedOnAdd()
@@ -450,6 +458,37 @@ namespace Aquifer.Data.Migrations
                     b.HasKey("ContentSubscriberId", "ParentResourceId");
 
                     b.ToTable("ContentSubscriberParentResources");
+                });
+
+            modelBuilder.Entity("Aquifer.Data.Entities.EmailTemplateEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Created")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.Property<int>("LanguageId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Template")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Updated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EmailTemplates");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.FeedbackEntity", b =>
@@ -740,6 +779,37 @@ namespace Aquifer.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("GreekWords");
+                });
+
+            modelBuilder.Entity("Aquifer.Data.Entities.IpAddressData", b =>
+                {
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("Created")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.Property<string>("Region")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("IpAddress");
+
+                    b.ToTable("IpAddressData");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.LanguageEntity", b =>
@@ -1137,7 +1207,8 @@ namespace Aquifer.Data.Migrations
 
                     b.Property<string>("IpAddress")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<int>("ResourceContentId")
                         .HasColumnType("int");
@@ -1694,19 +1765,10 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("ResolvedByUser");
                 });
 
-            modelBuilder.Entity("Aquifer.Data.Entities.CompanyEntity", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.UserEntity", "DefaultReviewerUser")
-                        .WithMany("CompaniesAsDefaultReviewer")
-                        .HasForeignKey("DefaultReviewerUserId");
-
-                    b.Navigation("DefaultReviewerUser");
-                });
-
             modelBuilder.Entity("Aquifer.Data.Entities.CompanyReviewerEntity", b =>
                 {
                     b.HasOne("Aquifer.Data.Entities.CompanyEntity", "Company")
-                        .WithMany()
+                        .WithMany("CompanyReviewers")
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1766,6 +1828,17 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("ContentSubscriber");
 
                     b.Navigation("ParentResource");
+                });
+
+            modelBuilder.Entity("Aquifer.Data.Entities.EmailTemplateEntity", b =>
+                {
+                    b.HasOne("Aquifer.Data.Entities.LanguageEntity", "Language")
+                        .WithMany()
+                        .HasForeignKey("LanguageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Language");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.GreekLemmaEntity", b =>
@@ -2254,6 +2327,8 @@ namespace Aquifer.Data.Migrations
 
             modelBuilder.Entity("Aquifer.Data.Entities.CompanyEntity", b =>
                 {
+                    b.Navigation("CompanyReviewers");
+
                     b.Navigation("Users");
                 });
 
@@ -2340,11 +2415,6 @@ namespace Aquifer.Data.Migrations
             modelBuilder.Entity("Aquifer.Data.Entities.StrongNumberEntity", b =>
                 {
                     b.Navigation("GreekLemmas");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.UserEntity", b =>
-                {
-                    b.Navigation("CompaniesAsDefaultReviewer");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.VerseEntity", b =>

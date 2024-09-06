@@ -3,6 +3,7 @@ using System.Net.Mime;
 using System.Text;
 using Aquifer.API.Common;
 using Aquifer.API.Configuration;
+using Aquifer.Common.Clients;
 using Aquifer.Common.Utilities;
 using Microsoft.Extensions.Options;
 
