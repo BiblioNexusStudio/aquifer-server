@@ -45,7 +45,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
                                                                             """)
             .ToListAsync(ct);
 
-        var selectedBibles = await dbContext.Bibles.Where(b => b.LanguageId == request.LanguageId)
+        var selectedBibles = await dbContext.Bibles.Where(b => b.LanguageId == request.LanguageId && !b.RestrictedLicense)
             .Select(b => new Response
             {
                 ResourceId = null,
@@ -53,7 +53,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
                 Title = b.Name,
                 LicenseInfo = b.LicenseInfo != null ? JsonUtilities.DefaultDeserialize<object>(b.LicenseInfo) : null,
                 Status = ParentResourceStatus.Complete
-            }).ToListAsync(ct);
+            })
+            .ToListAsync(ct);
 
         if (selectedBibles.Count == 0)
         {
