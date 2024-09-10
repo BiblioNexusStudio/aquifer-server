@@ -8,7 +8,7 @@ using SendGrid.Helpers.Mail;
 
 namespace Aquifer.Jobs;
 
-public class SendAquiferStatusUpdates(AquiferDbContext dbContext, SendGridClient client, AzureKeyVaultClient _keyVaultClient)
+public class SendAquiferStatusUpdates(AquiferDbContext dbContext, SendGridClient client)
 {
     [Function(nameof(SendAquiferStatusUpdates))]
     public async Task Run([TimerTrigger("%AquiferStatus:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
