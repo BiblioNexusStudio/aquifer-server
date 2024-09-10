@@ -37,7 +37,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                      (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
                      (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
                      (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
-                req.ResourceTypes.Contains(x.ResourceContent.Resource.ParentResource.ResourceType) &&
+                (req.ParentResourceId == x.ResourceContent.Resource.ParentResourceId ||
+                 req.ResourceTypes.Contains(x.ResourceContent.Resource.ParentResource.ResourceType)) &&
                 x.ResourceContent.LanguageId == req.LanguageId).OrderBy(r => r.DisplayName)
             .Select(rcv => new Response
             {
@@ -49,9 +50,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                 ResourceType = rcv.ResourceContent.Resource.ParentResource.ResourceType.ToString()
             });
 
-        if (req.Offset is not null)
+        if (req.ParentResourceId is not null)
         {
-            query = query.Skip(req.Offset.Value).Take(req.Limit);
+            query = query.Skip(req.Offset).Take(req.Limit);
         }
 
         return await query.ToListAsync(ct);
