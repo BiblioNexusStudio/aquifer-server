@@ -41,8 +41,9 @@ public class SendAquiferStatusUpdates(AquiferDbContext dbContext, SendGridClient
                     if (!anythingSubscribedUpdated)
                     {
                         anythingSubscribedUpdated = dbContext.ResourceContentVersions
-                            .Where(rcv => rcv.IsPublished && rcv.ResourceContent.LanguageId == languageEntity.Id &&
-                                          rcv.ResourceContent.Resource.ParentResourceId == parentResourceEntity.Id)
+                            .Where(rcv => rcv.IsPublished
+                                          && rcv.ResourceContent.LanguageId == languageEntity.Id
+                                          && rcv.ResourceContent.Resource.ParentResourceId == parentResourceEntity.Id)
                             .Any(rcv => rcv.ResourceContent.Resource.ResourceContents.Max(rc => rc.Updated) >= oneMonthAgo);
                     }
 
