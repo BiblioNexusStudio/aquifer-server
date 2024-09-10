@@ -36,6 +36,7 @@ public class AquiferDbContext : DbContext
     public DbSet<ContentSubscriberEntity> ContentSubscribers { get; set; }
     public DbSet<ContentSubscriberLanguageEntity> ContentSubscriberLanguages { get; set; }
     public DbSet<ContentSubscriberParentResourceEntity> ContentSubscriberParentResources { get; set; }
+    public DbSet<EmailTemplateEntity> EmailTemplates { get; set; }
     public DbSet<FeedbackEntity> Feedback { get; set; }
     public DbSet<GreekLemmaEntity> GreekLemmas { get; set; }
     public DbSet<GreekNewTestamentEntity> GreekNewTestaments { get; set; }
@@ -46,6 +47,7 @@ public class AquiferDbContext : DbContext
     public DbSet<GreekSenseEntity> GreekSenses { get; set; }
     public DbSet<GreekSenseGlossEntity> GreekSenseGlosses { get; set; }
     public DbSet<GreekWordEntity> GreekWords { get; set; }
+    public DbSet<IpAddressData> IpAddressData { get; set; }
     public DbSet<LanguageEntity> Languages { get; set; }
     public DbSet<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; }
     public DbSet<ParentResourceEntity> ParentResources { get; set; }

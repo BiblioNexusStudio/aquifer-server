@@ -13,7 +13,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                                                       SELECT
                                                           r.ExternalId,
                                                           r.Id AS ResourceId,
-                                                          rc.Id AS ContentId
+                                                          rc.Id AS ContentId,
+                                                          rc.MediaType
                                                       FROM
                                                           AssociatedResources ar
                                                           INNER JOIN Resources r ON r.Id = ar.AssociatedResourceId

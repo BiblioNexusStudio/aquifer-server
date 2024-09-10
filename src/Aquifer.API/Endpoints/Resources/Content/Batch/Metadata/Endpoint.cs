@@ -49,6 +49,7 @@ public class Endpoint(AquiferDbContext dbContext, TelemetryClient telemetry) : E
                                                ar.ResourceId AS AssociatedToResourceId,
                                                r.Id AS ResourceId,
                                                rc.Id AS ContentId,
+                                               rc.MediaType,
                                                rc.LanguageId
                                            FROM
                                                AssociatedResources ar
@@ -76,6 +77,7 @@ public class Endpoint(AquiferDbContext dbContext, TelemetryClient telemetry) : E
                 {
                     ExternalId = r.ExternalId,
                     ResourceId = r.ResourceId,
+                    MediaType = r.MediaType,
                     ContentId = r.ContentId
                 })
         }).ToList();

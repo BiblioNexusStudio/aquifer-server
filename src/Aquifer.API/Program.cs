@@ -1,12 +1,12 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Aquifer.API.Clients;
 using Aquifer.API.Configuration;
 using Aquifer.API.Modules;
 using Aquifer.API.Services;
 using Aquifer.API.Telemetry;
-using Aquifer.Common.Services;
+using Aquifer.Common.Clients;
 using Aquifer.Common.Middleware;
+using Aquifer.Common.Services;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -38,6 +38,7 @@ builder.Services.AddAuth(configuration?.JwtSettings)
     .AddScoped<IResourceHistoryService, ResourceHistoryService>()
     .AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>()
     .AddSingleton<IResourceContentRequestTrackingService, ResourceContentRequestTrackingService>()
+    .AddSingleton<ISendGridClient, SendGridClient>()
     .AddAzureClient(builder.Environment.IsDevelopment())
     .AddFastEndpoints()
     .AddResponseCaching()
