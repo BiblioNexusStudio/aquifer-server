@@ -18,18 +18,14 @@ public class SendAquiferStatusUpdates(AquiferDbContext dbContext, SendGridClient
         var oneMonthAgo = month.AddMonths(-1);
         var subscribers = await dbContext.ContentSubscribers
             .Where(cs => cs.Enabled)
-            .Include(cs => cs.ContentSubscriberLanguages)
-            .ThenInclude(cs => cs.Language)
-            .Include(cs => cs.ContentSubscriberParentResources)
-            .ThenInclude(cs => cs.ParentResource)
             .Select(cs => new SubscriberInfo
-        {
-            Name = cs.Name,
-            Email = cs.Email,
-            UnsubscribeId = cs.UnsubscribeId,
-            LanguagesSubscribed = cs.ContentSubscriberLanguages,
-            ResourcesSubscribed = cs.ContentSubscriberParentResources
-        }).ToListAsync(ct);
+            {
+                Name = cs.Name,
+                Email = cs.Email,
+                UnsubscribeId = cs.UnsubscribeId,
+                Languages = cs.ContentSubscriberLanguages.Select(csl => csl.Language),
+                ParentResources = cs.ContentSubscriberParentResources.Select(pr => pr.ParentResource)
+            }).ToListAsync(ct);;
 
         var htmlTemplate = dbContext.EmailTemplates
             .Single(t => t.Id == (int)EmailTemplate.AquiferMarketingNotification);
@@ -38,19 +34,19 @@ public class SendAquiferStatusUpdates(AquiferDbContext dbContext, SendGridClient
         {
             var anythingSubscribedUpdated = false;
             var resourcesLanguages = "";
-            foreach (var languageEntity in subscriberInfo.LanguagesSubscribed)
+            foreach (var languageEntity in subscriberInfo.Languages)
             {
-                foreach (var parentResourceEntity in subscriberInfo.ResourcesSubscribed)
+                foreach (var parentResourceEntity in subscriberInfo.ParentResources)
                 {
                     if (!anythingSubscribedUpdated)
                     {
                         anythingSubscribedUpdated = dbContext.ResourceContentVersions
-                            .Where(rcv => rcv.IsPublished && rcv.ResourceContent.LanguageId == languageEntity.LanguageId &&
-                                          rcv.ResourceContent.Resource.ParentResourceId == parentResourceEntity.ParentResourceId)
+                            .Where(rcv => rcv.IsPublished && rcv.ResourceContent.LanguageId == languageEntity.Id &&
+                                          rcv.ResourceContent.Resource.ParentResourceId == parentResourceEntity.Id)
                             .Any(rcv => rcv.ResourceContent.Resource.ResourceContents.Max(rc => rc.Updated) >= oneMonthAgo);
                     }
 
-                    resourcesLanguages += $"{parentResourceEntity.ParentResource.DisplayName} - {languageEntity.Language.DisplayName}\n";
+                    resourcesLanguages += $"{parentResourceEntity.DisplayName} - {languageEntity.DisplayName}\n";
                 }
             }
 
@@ -83,7 +79,7 @@ public class SendAquiferStatusUpdates(AquiferDbContext dbContext, SendGridClient
         public required string Name { get; set; }
         public required string Email { get; set; }
         public required string UnsubscribeId { get; set; }
-        public required ICollection<ContentSubscriberLanguageEntity> LanguagesSubscribed { get; set; }
-        public required ICollection<ContentSubscriberParentResourceEntity> ResourcesSubscribed { get; set; }
+        public required IEnumerable<LanguageEntity> Languages { get; set; }
+        public required IEnumerable<ParentResourceEntity> ParentResources { get; set; }
     }
 }
