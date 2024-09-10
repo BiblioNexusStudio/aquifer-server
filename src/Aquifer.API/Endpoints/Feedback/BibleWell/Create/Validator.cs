@@ -1,7 +1,8 @@
 using FastEndpoints;
 using FluentValidation;
 
-namespace Aquifer.API.Endpoints.FeedBack.BibleWell.Create;
+namespace Aquifer.API.Endpoints.Feedback.BibleWell.Create;
+
 public class Validator : Validator<Request>
 {
     public Validator()
