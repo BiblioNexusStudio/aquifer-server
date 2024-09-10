@@ -47,7 +47,7 @@ public class SendAquiferStatusUpdates(AquiferDbContext dbContext, SendGridClient
                             .Any(rcv => rcv.ResourceContent.Resource.ResourceContents.Max(rc => rc.Updated) >= oneMonthAgo);
                     }
 
-                    resourcesLanguages += $"{parentResourceEntity.DisplayName} - {languageEntity.DisplayName}\n";
+                    resourcesLanguages += $"{parentResourceEntity.DisplayName} - {languageEntity.DisplayName}<br/>";
                 }
             }
 
