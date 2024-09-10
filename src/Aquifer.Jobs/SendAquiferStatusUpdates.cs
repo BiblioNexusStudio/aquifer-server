@@ -8,13 +8,13 @@ using SendGrid.Helpers.Mail;
 
 namespace Aquifer.Jobs;
 
-public class SendAquiferStatusUpdates(AquiferDbContext _dbContext, SendGridClient _client, AzureKeyVaultClient _keyVaultClient)
+public class SendAquiferStatusUpdates(AquiferDbContext dbContext, SendGridClient client, AzureKeyVaultClient _keyVaultClient)
 {
     [Function(nameof(SendAquiferStatusUpdates))]
     public async Task Run([TimerTrigger("%AquiferStatus:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
     {
         var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
-        var subscribers = await _dbContext.ContentSubscribers
+        var subscribers = await dbContext.ContentSubscribers
             .Where(cs => cs.Enabled)
             .Include(cs => cs.ContentSubscriberLanguages)
             .ThenInclude(cs => cs.Language)
@@ -29,7 +29,7 @@ public class SendAquiferStatusUpdates(AquiferDbContext _dbContext, SendGridClien
             ResourcesSubscribed = cs.ContentSubscriberParentResources
         }).ToListAsync(ct);
 
-        var htmlTemplate = _dbContext.EmailTemplates
+        var htmlTemplate = dbContext.EmailTemplates
             .Single(t => t.Id == (int)EmailTemplate.AquiferMarketingNotification);
 
         foreach (var subscriberInfo in subscribers)
@@ -42,7 +42,7 @@ public class SendAquiferStatusUpdates(AquiferDbContext _dbContext, SendGridClien
                 {
                     if (!anythingSubscribedUpdated)
                     {
-                        anythingSubscribedUpdated = _dbContext.ResourceContentVersions
+                        anythingSubscribedUpdated = dbContext.ResourceContentVersions
                             .Where(rcv => rcv.IsPublished && rcv.ResourceContent.LanguageId == languageEntity.LanguageId &&
                                           rcv.ResourceContent.Resource.ParentResourceId == parentResourceEntity.ParentResourceId)
                             .Any(rcv => rcv.ResourceContent.Resource.ResourceContents.Max(rc => rc.Updated) >= thirtyDaysAgo);
@@ -62,7 +62,7 @@ public class SendAquiferStatusUpdates(AquiferDbContext _dbContext, SendGridClien
                 .Replace("[RESOURCES]", resourcesLanguages)
                 .Replace("[RESOURCE_LINK]", "https://www.aquifer.bible/aquifer-resources")
                 .Replace("[UNSUBSCRIBE]", $"https://qa.admin.aquifer.bible/marketing/unsubscribe/{subscriberInfo.UnsubscribeId}?api-key=none");
-            await _client.SendEmail(new SendGridEmailConfiguration
+            await client.SendEmail(new SendGridEmailConfiguration
             {
                 FromEmail = "no-reply@aquifer.bible",
                 FromName = "Aquifer",
