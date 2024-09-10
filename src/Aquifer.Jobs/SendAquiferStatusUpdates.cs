@@ -13,7 +13,7 @@ public class SendAquiferStatusUpdates(AquiferDbContext dbContext, SendGridClient
     [Function(nameof(SendAquiferStatusUpdates))]
     public async Task Run([TimerTrigger("%AquiferStatus:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
     {
-        var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+        var oneMonthAgo = DateTime.UtcNow.AddMonths(-1);
         var subscribers = await dbContext.ContentSubscribers
             .Where(cs => cs.Enabled)
             .Include(cs => cs.ContentSubscriberLanguages)
@@ -45,7 +45,7 @@ public class SendAquiferStatusUpdates(AquiferDbContext dbContext, SendGridClient
                         anythingSubscribedUpdated = dbContext.ResourceContentVersions
                             .Where(rcv => rcv.IsPublished && rcv.ResourceContent.LanguageId == languageEntity.LanguageId &&
                                           rcv.ResourceContent.Resource.ParentResourceId == parentResourceEntity.ParentResourceId)
-                            .Any(rcv => rcv.ResourceContent.Resource.ResourceContents.Max(rc => rc.Updated) >= thirtyDaysAgo);
+                            .Any(rcv => rcv.ResourceContent.Resource.ResourceContents.Max(rc => rc.Updated) >= oneMonthAgo);
                     }
 
                     resourcesLanguages += $"{parentResourceEntity.ParentResource.DisplayName} - {languageEntity.Language.DisplayName}\n";
