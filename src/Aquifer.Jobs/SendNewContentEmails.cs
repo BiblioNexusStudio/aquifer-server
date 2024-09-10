@@ -8,10 +8,10 @@ using SendGrid.Helpers.Mail;
 
 namespace Aquifer.Jobs;
 
-public class SendAquiferStatusUpdates(AquiferDbContext dbContext, SendGridClient client)
+public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient client)
 {
-    [Function(nameof(SendAquiferStatusUpdates))]
-    public async Task Run([TimerTrigger("%AquiferStatus:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
+    [Function(nameof(SendNewContentEmails))]
+    public async Task Run([TimerTrigger("%NewContentEmail:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
     {
         var today = DateTime.Today;
         var month = new DateTime(today.Year, today.Month, 1);
