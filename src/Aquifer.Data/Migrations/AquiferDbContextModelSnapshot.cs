@@ -1370,8 +1370,8 @@ namespace Aquifer.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ContactType")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("ContactType")
+                        .HasColumnType("int");
 
                     b.Property<string>("ContactValue")
                         .HasColumnType("nvarchar(max)");

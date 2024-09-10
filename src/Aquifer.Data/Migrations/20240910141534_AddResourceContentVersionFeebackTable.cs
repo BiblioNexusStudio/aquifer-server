@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Aquifer.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddResourceContentVersionFeedbackTable : Migration
+    public partial class AddResourceContentVersionFeebackTable : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -19,7 +19,7 @@ namespace Aquifer.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ResourceContentVersionId = table.Column<int>(type: "int", nullable: false),
                     ContactValue = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ContactType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ContactType = table.Column<int>(type: "int", nullable: true),
                     UserId = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Feedback = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserRating = table.Column<byte>(type: "tinyint", nullable: false),
