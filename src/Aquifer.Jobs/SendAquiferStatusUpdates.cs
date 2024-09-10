@@ -1,40 +1,17 @@
-﻿using Aquifer.API.Helpers;
 using Aquifer.Common;
 using Aquifer.Common.Clients;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
-using FastEndpoints;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using SendGrid.Helpers.Mail;
 
-namespace Aquifer.API.Endpoints.Marketing.Subscribers.Options;
+namespace Aquifer.Jobs;
 
-public class Endpoint(AquiferDbContext dbContext, ISendGridClient sendGridClient) : EndpointWithoutRequest<Response>
+public class SendAquiferStatusUpdates(AquiferDbContext _dbContext, SendGridClient _client, AzureKeyVaultClient _keyVaultClient)
 {
-    public override void Configure()
-    {
-        Get("/marketing/subscribers/options");
-        Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
-        ResponseCache(EndpointHelpers.OneHourInSeconds);
-        AllowAnonymous();
-    }
-
-    public override async Task HandleAsync(CancellationToken ct)
-    {
-        Response.ParentResourceOptions = await dbContext.ParentResources.Where(x => x.ForMarketing == true)
-            .Select(x => new SubscriberOption { Id = x.Id, EnglishDisplayName = x.DisplayName })
-            .ToListAsync(ct);
-
-        Response.LanguageOptions = await dbContext.Languages.Select(x => new SubscriberOption
-        {
-            Id = x.Id,
-            EnglishDisplayName = x.EnglishDisplay
-        })
-            .ToListAsync(ct);
-        await deleteMeAfterTesting(dbContext, sendGridClient, ct);
-    }
-
-    private async Task<string> deleteMeAfterTesting(AquiferDbContext _dbContext, ISendGridClient _client, CancellationToken ct)
+    [Function(nameof(SendAquiferStatusUpdates))]
+    public async Task Run([TimerTrigger("%AquiferStatus:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
     {
         var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
         var subscribers = await _dbContext.ContentSubscribers
@@ -98,8 +75,6 @@ public class Endpoint(AquiferDbContext dbContext, ISendGridClient sendGridClient
             }, ct);
 
         }
-
-        return "ok";
     }
     private class SubscriberInfo
     {
