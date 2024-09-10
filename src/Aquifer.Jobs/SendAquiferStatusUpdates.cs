@@ -13,7 +13,9 @@ public class SendAquiferStatusUpdates(AquiferDbContext dbContext, SendGridClient
     [Function(nameof(SendAquiferStatusUpdates))]
     public async Task Run([TimerTrigger("%AquiferStatus:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
     {
-        var oneMonthAgo = DateTime.UtcNow.AddMonths(-1);
+        var today = DateTime.Today;
+        var month = new DateTime(today.Year, today.Month, 1);
+        var oneMonthAgo = month.AddMonths(-1);
         var subscribers = await dbContext.ContentSubscribers
             .Where(cs => cs.Enabled)
             .Include(cs => cs.ContentSubscriberLanguages)
