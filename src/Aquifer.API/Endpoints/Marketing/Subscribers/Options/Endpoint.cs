@@ -1,11 +1,8 @@
 ﻿using Aquifer.API.Helpers;
-using Aquifer.Common;
 using Aquifer.Common.Clients;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
-using SendGrid.Helpers.Mail;
 
 namespace Aquifer.API.Endpoints.Marketing.Subscribers.Options;
 
