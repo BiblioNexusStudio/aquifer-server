@@ -2,79 +2,93 @@ using Aquifer.Common;
 using Aquifer.Common.Clients;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Aquifer.Jobs.Configuration;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using SendGrid.Helpers.Mail;
 
 namespace Aquifer.Jobs;
 
-public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient client)
+public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient client, IOptions<ConfigurationOptions> options)
 {
     [Function(nameof(SendNewContentEmails))]
     public async Task Run([TimerTrigger("%NewContentEmail:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
     {
         var today = DateTime.Today;
-        var month = new DateTime(today.Year, today.Month, 1);
-        var oneMonthAgo = month.AddMonths(-1);
-        var subscribers = await dbContext.ContentSubscribers
-            .Where(cs => cs.Enabled)
+        var firstOfThisMonth = new DateTime(today.Year, today.Month, 1);
+        var firstOfLastMonth = firstOfThisMonth.AddMonths(-1);
+
+        var subscribers = await dbContext.ContentSubscribers.Where(cs => cs.Enabled)
             .Select(cs => new SubscriberInfo
             {
                 Name = cs.Name,
                 Email = cs.Email,
                 UnsubscribeId = cs.UnsubscribeId,
                 Languages = cs.ContentSubscriberLanguages.Select(csl => csl.Language),
-                ParentResources = cs.ContentSubscriberParentResources.Select(pr => pr.ParentResource)
-            }).ToListAsync(ct);;
+                ParentResources = cs.ContentSubscriberParentResources.Select(cspr => cspr.ParentResource)
+            })
+            .ToListAsync(ct);
 
-        var htmlTemplate = dbContext.EmailTemplates
-            .Single(t => t.Id == (int)EmailTemplate.AquiferMarketingNotification);
+        var alLanguageIds = subscribers.SelectMany(x => x.Languages.Select(l => l.Id));
+        var allParentResourceIds = subscribers.SelectMany(x => x.ParentResources.Select(pr => pr.Id));
 
-        foreach (var subscriberInfo in subscribers)
+        var allNewItems = await dbContext.ResourceContentVersions.Where(x =>
+                x.IsPublished &&
+                x.Updated >= firstOfLastMonth &&
+                x.Updated <= firstOfThisMonth &&
+                alLanguageIds.Contains(x.ResourceContent.LanguageId) &&
+                allParentResourceIds.Contains(x.ResourceContent.Resource.ParentResourceId))
+            .Select(x => new UpdatedParentResources{ParentResourceId = x.ResourceContent.Resource.ParentResourceId,
+                DisplayName = x.ResourceContent.Resource.ParentResource.DisplayName,
+                LanguageId = x.ResourceContent.LanguageId,
+                EnglishDisplay = x.ResourceContent.Language.EnglishDisplay})
+            .ToListAsync(ct);
+
+        var htmlTemplate = dbContext.EmailTemplates.Single(t => t.Id == (int)EmailTemplate.AquiferMarketingNotification);
+
+        foreach (var subscriber in subscribers)
         {
-            var anythingSubscribedUpdated = false;
-            var resourcesLanguages = "";
-            foreach (var languageEntity in subscriberInfo.Languages)
-            {
-                foreach (var parentResourceEntity in subscriberInfo.ParentResources)
-                {
-                    if (!anythingSubscribedUpdated)
-                    {
-                        anythingSubscribedUpdated = dbContext.ResourceContentVersions
-                            .Where(rcv => rcv.IsPublished
-                                          && rcv.ResourceContent.LanguageId == languageEntity.Id
-                                          && rcv.ResourceContent.Resource.ParentResourceId == parentResourceEntity.Id)
-                            .Any(rcv => rcv.ResourceContent.Resource.ResourceContents.Max(rc => rc.Updated) >= oneMonthAgo);
-                    }
+            var subscriberLanguageIds = subscriber.Languages.Select(l => l.Id);
+            var subscriberParentResourceIds = subscriber.ParentResources.Select(pr => pr.Id);
 
-                    resourcesLanguages += $"{parentResourceEntity.DisplayName} - {languageEntity.DisplayName}<br/>";
-                }
-            }
+            var newItems = allNewItems.Where(x =>
+                subscriberLanguageIds.Contains(x.LanguageId) && subscriberParentResourceIds.Contains(x.ParentResourceId)).ToList();
 
-            if (!anythingSubscribedUpdated)
+            if (newItems.Count == 0)
             {
                 continue;
             }
-
+            var resourcesLanguages =
+                newItems.Aggregate("", (current, item) => current + $"{item.DisplayName} - {item.EnglishDisplay}<br />");
             var htmlContent = htmlTemplate.Template
-                .Replace("[NAME]", subscriberInfo.Name)
+                .Replace("[NAME]", subscriber.Name)
                 .Replace("[RESOURCES]", resourcesLanguages)
-                .Replace("[RESOURCE_LINK]", "https://www.aquifer.bible/aquifer-resources")
-                .Replace("[UNSUBSCRIBE]", $"https://qa.admin.aquifer.bible/marketing/unsubscribe/{subscriberInfo.UnsubscribeId}?api-key=none");
+                .Replace("[RESOURCE_LINK]", options.Value.MarketingEmail.ResourceLink)
+                .Replace("[UNSUBSCRIBE]",
+                    $"{options.Value.MarketingEmail.UnsubscribeBaseUrl}/marketing/unsubscribe/{subscriber.UnsubscribeId}?api-key=none");
             await client.SendEmail(new SendGridEmailConfiguration
             {
-                FromEmail = "no-reply@aquifer.bible",
-                FromName = "Aquifer",
+                FromEmail = options.Value.MarketingEmail.Address,
+                FromName = options.Value.MarketingEmail.Name,
                 Subject = htmlTemplate.Subject,
                 ToAddresses =
                 [
-                    new EmailAddress(subscriberInfo.Email, subscriberInfo.Name)
+                    new EmailAddress(subscriber.Email, subscriber.Name)
                 ],
                 HtmlContent = htmlContent
-            }, ct);
-
+                }, ct);
         }
     }
+
+    private class UpdatedParentResources
+    {
+        public required int ParentResourceId { get; set; }
+        public required string DisplayName { get; set; }
+        public required int LanguageId { get; set; }
+        public required string EnglishDisplay { get; set; }
+    }
+
     private class SubscriberInfo
     {
         public required string Name { get; set; }

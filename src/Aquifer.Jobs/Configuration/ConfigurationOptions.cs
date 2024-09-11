@@ -4,6 +4,7 @@ public class ConfigurationOptions
 {
     public bool IsDevelopment { get; init; }
     public required AnalyticsOptions Analytics { get; init; }
+    public required MarketingEmailOptions MarketingEmail { get; init; }
 }
 
 public class AnalyticsOptions
@@ -16,4 +17,12 @@ public class AnalyticsOptions
     public required string ApiManagementResourceId { get; init; }
     public required string CronSchedule { get; init; }
     public required int HoursBetweenRuns { get; init; }
+}
+
+public class MarketingEmailOptions
+{
+    public required string Address { get; init; }
+    public required string Name { get; init; }
+    public required string ResourceLink { get; init; }
+    public required string UnsubscribeBaseUrl { get; init; }
 }
