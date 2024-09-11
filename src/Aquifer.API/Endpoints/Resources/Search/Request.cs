@@ -12,4 +12,7 @@ public record Request
     public int EndChapter { get; init; }
     public int StartVerse { get; init; }
     public int EndVerse { get; init; }
+    public int Limit { get; init; } = 100;
+    public int Offset { get; init; } = 0;
+    public int? ParentResourceId { get; init; }
 }
