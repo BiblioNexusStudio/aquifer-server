@@ -4,6 +4,7 @@ using Aquifer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    partial class AquiferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240906205424_MakeTextUrlNullable")]
+    partial class MakeTextUrlNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -102,6 +105,9 @@ namespace Aquifer.Data.Migrations
 
                     b.Property<int>("TextSize")
                         .HasColumnType("int");
+
+                    b.Property<string>("TextUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("Updated")
                         .ValueGeneratedOnAdd()
@@ -1362,42 +1368,6 @@ namespace Aquifer.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionFeedbackEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("ContactType")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ContactValue")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Created")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.Property<string>("Feedback")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ResourceContentVersionId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<byte>("UserRating")
-                        .HasColumnType("tinyint");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ResourceContentVersionFeedback");
-                });
-
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionMachineTranslationEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -2193,17 +2163,6 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("AssignedUser");
 
                     b.Navigation("ResourceContent");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionFeedbackEntity", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.ResourceContentVersionEntity", "ResourceContentVersion")
-                        .WithMany()
-                        .HasForeignKey("ResourceContentVersionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ResourceContentVersion");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionMachineTranslationEntity", b =>
