@@ -1,5 +1,6 @@
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,7 +27,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             ? ((int?)null, (int?)null)
             : BibleUtilities.GetVerseIds(req.BookCode, req.StartChapter, req.EndChapter, req.StartVerse, req.EndVerse);
 
-        return await dbContext.ResourceContentVersions.Where(x =>
+        var query = dbContext.ResourceContentVersions.Where(x =>
                 x.IsPublished &&
                 x.ResourceContent.Resource.ParentResource.Enabled &&
                 (req.Query == null || x.DisplayName.Contains(req.Query) || x.ResourceContent.Resource.EnglishLabel.Contains(req.Query)) &&
@@ -37,16 +38,30 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                      (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
                      (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
                      (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
-                req.ResourceTypes.Contains(x.ResourceContent.Resource.ParentResource.ResourceType) &&
+                (req.ParentResourceId == x.ResourceContent.Resource.ParentResourceId ||
+                 req.ResourceTypes.Contains(x.ResourceContent.Resource.ParentResource.ResourceType)) &&
                 x.ResourceContent.LanguageId == req.LanguageId).OrderBy(r => r.DisplayName)
             .Select(rcv => new Response
             {
                 Id = rcv.ResourceContentId,
+                DependentOnId =
+                    rcv.ResourceContent.MediaType != ResourceContentMediaType.Text
+                        ? rcv.ResourceContent.Resource.ResourceContents
+                            .Where(rc => rc.LanguageId == req.LanguageId && rc.MediaType == ResourceContentMediaType.Text)
+                            .Select(rc => rc.Id).FirstOrDefault()
+                        : null,
                 DisplayName = rcv.DisplayName,
                 MediaType = rcv.ResourceContent.MediaType.ToString(),
                 ParentResourceId = rcv.ResourceContent.Resource.ParentResourceId,
                 Version = rcv.Version,
                 ResourceType = rcv.ResourceContent.Resource.ParentResource.ResourceType.ToString()
-            }).ToListAsync(ct);
+            });
+
+        if (req.ParentResourceId is not null)
+        {
+            query = query.Skip(req.Offset).Take(req.Limit);
+        }
+
+        return await query.ToListAsync(ct);
     }
 }

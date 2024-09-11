@@ -1,3 +1,4 @@
+using Aquifer.Common.Clients.Http.IpAddressLookup;
 using Aquifer.Common.Clients;
 using Aquifer.Common.Services;
 using Aquifer.Data;
@@ -18,6 +19,7 @@ var host = new HostBuilder().ConfigureFunctionsWorkerDefaults()
         services.AddSingleton<IAquiferAppInsightsClient, AquiferAppInsightsClient>();
         services.AddSingleton<IAzureClientService, AzureClientService>();
         services.AddSingleton<IAquiferApiManagementClient, AquiferApiManagementClient>();
+        services.AddHttpClient<IIpAddressLookupHttpClient, IpAddressLookupHttpClient>();
         services.AddSingleton<ISendGridClient, SendGridClient>();
         services.AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>();
         services.AddAzureClient(context.Configuration.Get<ConfigurationOptions>()!.IsDevelopment);
