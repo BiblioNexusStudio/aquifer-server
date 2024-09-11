@@ -1,12 +1,11 @@
 ﻿using Aquifer.API.Helpers;
-using Aquifer.Common.Clients;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Marketing.Subscribers.Options;
 
-public class Endpoint(AquiferDbContext dbContext, ISendGridClient sendGridClient) : EndpointWithoutRequest<Response>
+public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Response>
 {
     public override void Configure()
     {
