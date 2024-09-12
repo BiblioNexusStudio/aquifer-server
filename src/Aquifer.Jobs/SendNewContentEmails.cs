@@ -19,6 +19,11 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
 
         var allNewItems = await GetAllNewItems(subscribers, ct);
 
+        if (allNewItems.Count == 0)
+        {
+            return;
+        }
+
         await SendNewContentEmailsToSubscribers(subscribers, allNewItems, ct);
     }
 
