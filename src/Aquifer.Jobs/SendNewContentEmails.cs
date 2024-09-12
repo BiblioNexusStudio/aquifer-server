@@ -15,36 +15,15 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
     [Function(nameof(SendNewContentEmails))]
     public async Task Run([TimerTrigger("%NewContentEmail:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
     {
-        var today = DateTime.Today;
-        var firstOfThisMonth = new DateTime(today.Year, today.Month, 1);
-        var firstOfLastMonth = firstOfThisMonth.AddMonths(-1);
+        var subscribers = await GetSubscribers(ct);
 
-        var subscribers = await dbContext.ContentSubscribers.Where(cs => cs.Enabled)
-            .Select(cs => new SubscriberInfo
-            {
-                Name = cs.Name,
-                Email = cs.Email,
-                UnsubscribeId = cs.UnsubscribeId,
-                Languages = cs.ContentSubscriberLanguages.Select(csl => csl.Language),
-                ParentResources = cs.ContentSubscriberParentResources.Select(cspr => cspr.ParentResource)
-            })
-            .ToListAsync(ct);
+        var allNewItems = await GetAllNewItems(subscribers, ct);
 
-        var alLanguageIds = subscribers.SelectMany(x => x.Languages.Select(l => l.Id));
-        var allParentResourceIds = subscribers.SelectMany(x => x.ParentResources.Select(pr => pr.Id));
+        await SendNewContentEmailsToSubscribers(subscribers, allNewItems, ct);
+    }
 
-        var allNewItems = await dbContext.ResourceContentVersions.Where(x =>
-                x.IsPublished &&
-                x.Updated >= firstOfLastMonth &&
-                x.Updated <= firstOfThisMonth &&
-                alLanguageIds.Contains(x.ResourceContent.LanguageId) &&
-                allParentResourceIds.Contains(x.ResourceContent.Resource.ParentResourceId))
-            .Select(x => new UpdatedParentResources{ParentResourceId = x.ResourceContent.Resource.ParentResourceId,
-                DisplayName = x.ResourceContent.Resource.ParentResource.DisplayName,
-                LanguageId = x.ResourceContent.LanguageId,
-                EnglishDisplay = x.ResourceContent.Language.EnglishDisplay})
-            .ToListAsync(ct);
-
+    private async Task SendNewContentEmailsToSubscribers(List<SubscriberInfo> subscribers, List<UpdatedParentResources> allNewItems, CancellationToken ct)
+    {
         var htmlTemplate = dbContext.EmailTemplates.Single(t => t.Id == (int)EmailTemplate.MarketingNewContentNotification);
 
         foreach (var subscriber in subscribers)
@@ -77,9 +56,45 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
                     new EmailAddress(subscriber.Email, subscriber.Name)
                 ],
                 HtmlContent = htmlContent
-                }, ct);
+            }, ct);
         }
     }
+
+    private async Task<List<UpdatedParentResources>> GetAllNewItems(List<SubscriberInfo> subscribers, CancellationToken ct)
+    {
+        var today = DateTime.Today;
+        var firstOfThisMonth = new DateTime(today.Year, today.Month, 1);
+        var firstOfLastMonth = firstOfThisMonth.AddMonths(-1);
+
+        var allLanguageIds = subscribers.SelectMany(x => x.Languages.Select(l => l.Id));
+        var allParentResourceIds = subscribers.SelectMany(x => x.ParentResources.Select(pr => pr.Id));
+        return await dbContext.ResourceContentVersions.Where(x =>
+                x.IsPublished &&
+                x.Updated >= firstOfLastMonth &&
+                x.Updated <= firstOfThisMonth &&
+                allLanguageIds.Contains(x.ResourceContent.LanguageId) &&
+                allParentResourceIds.Contains(x.ResourceContent.Resource.ParentResourceId))
+            .Select(x => new UpdatedParentResources{ParentResourceId = x.ResourceContent.Resource.ParentResourceId,
+                DisplayName = x.ResourceContent.Resource.ParentResource.DisplayName,
+                LanguageId = x.ResourceContent.LanguageId,
+                EnglishDisplay = x.ResourceContent.Language.EnglishDisplay})
+            .ToListAsync(ct);
+    }
+
+    private async Task<List<SubscriberInfo>> GetSubscribers(CancellationToken ct)
+    {
+        return await dbContext.ContentSubscribers.Where(cs => cs.Enabled)
+            .Select(cs => new SubscriberInfo
+            {
+                Name = cs.Name,
+                Email = cs.Email,
+                UnsubscribeId = cs.UnsubscribeId,
+                Languages = cs.ContentSubscriberLanguages.Select(csl => csl.Language),
+                ParentResources = cs.ContentSubscriberParentResources.Select(cspr => cspr.ParentResource)
+            })
+            .ToListAsync(ct);
+    }
+
 
     private class UpdatedParentResources
     {
