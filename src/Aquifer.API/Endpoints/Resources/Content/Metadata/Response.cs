@@ -7,6 +7,7 @@ public record Response
     public required int Id { get; set; }
     public required string? DisplayName { get; set; }
     public required object? Metadata { get; set; }
+    public required ResourceContentVersionReviewLevel ReviewLevel { get; set; }
     public required IEnumerable<AssociatedResourceResponse> AssociatedResources { get; set; }
 }
 
