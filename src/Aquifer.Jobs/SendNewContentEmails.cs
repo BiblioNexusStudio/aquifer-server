@@ -45,7 +45,7 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
                 EnglishDisplay = x.ResourceContent.Language.EnglishDisplay})
             .ToListAsync(ct);
 
-        var htmlTemplate = dbContext.EmailTemplates.Single(t => t.Id == (int)EmailTemplate.AquiferMarketingNotification);
+        var htmlTemplate = dbContext.EmailTemplates.Single(t => t.Id == (int)EmailTemplate.MarketingNewContentNotification);
 
         foreach (var subscriber in subscribers)
         {
