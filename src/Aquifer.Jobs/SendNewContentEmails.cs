@@ -79,7 +79,7 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
         return await dbContext.ResourceContentVersions.Where(x =>
                 x.IsPublished &&
                 x.Updated >= firstOfLastMonth &&
-                x.Updated <= firstOfThisMonth &&
+                x.Updated < firstOfThisMonth &&
                 allLanguageIds.Contains(x.ResourceContent.LanguageId) &&
                 allParentResourceIds.Contains(x.ResourceContent.Resource.ParentResourceId))
             .Select(x => new UpdatedParentResources{ParentResourceId = x.ResourceContent.Resource.ParentResourceId,
