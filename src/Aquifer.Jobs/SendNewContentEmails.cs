@@ -29,7 +29,7 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
 
     private async Task SendNewContentEmailsToSubscribers(List<SubscriberInfo> subscribers, List<UpdatedParentResources> allNewItems, CancellationToken ct)
     {
-        var htmlTemplate = dbContext.EmailTemplates.Single(t => t.Id == (int)EmailTemplate.MarketingNewContentNotification);
+        var htmlTemplate = await dbContext.EmailTemplates.SingleAsync(t => t.Id == (int)EmailTemplate.MarketingNewContentNotification, ct);
 
         foreach (var subscriber in subscribers)
         {
