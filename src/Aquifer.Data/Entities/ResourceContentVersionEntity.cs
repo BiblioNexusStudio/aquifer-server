@@ -22,6 +22,7 @@ public class ResourceContentVersionEntity : IHasUpdatedTimestamp
     public int? SourceWordCount { get; set; }
     public int? InlineMediaSize { get; set; }
     public int? AssignedUserId { get; set; }
+    public ResourceContentVersionReviewLevel ReviewLevel { get; set; }
     public UserEntity? AssignedUser { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
@@ -73,4 +74,11 @@ public class ResourceContentVersionEntityConfiguration : IEntityTypeConfiguratio
         //     .HasDatabaseName("IX_ResourceContentVersions_ResourceContentId_IsPublished")
         //     .IsUnique();
     }
+}
+
+public enum ResourceContentVersionReviewLevel
+{
+    None = 0,
+    Community = 1,
+    Professional = 2
 }

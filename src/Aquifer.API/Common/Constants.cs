@@ -62,6 +62,7 @@ public static class PermissionName
         EditContentResourceReferences = "edit:content-resource-references",
         PublishContent = "publish:content",
         CreateContent = "create:content",
+        CreateCommunityContent = "create:community-content",
         AssignContent = "assign:content",
         AssignOverride = "assign:override",
         AssignOutsideCompany = "assign:outside-company",
