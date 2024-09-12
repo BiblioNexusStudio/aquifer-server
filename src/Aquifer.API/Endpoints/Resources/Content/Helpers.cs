@@ -47,6 +47,7 @@ public static class Helpers
             Version = mostRecentResourceContentVersion.Version + 1,
             IsDraft = true,
             IsPublished = false,
+            ReviewLevel = ResourceContentVersionReviewLevel.Professional,
             DisplayName = mostRecentResourceContentVersion.DisplayName,
             Content = mostRecentResourceContentVersion.Content,
             WordCount = mostRecentResourceContentVersion.WordCount,

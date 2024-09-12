@@ -20,6 +20,7 @@ public class BibleEntity : IHasUpdatedTimestamp
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
+    public LanguageEntity Language { get; set; } = null!;
     public ICollection<BibleBookEntity> BibleBooks { get; set; } = [];
     public ICollection<BibleBookContentEntity> BibleBookContents { get; set; } = [];
     public ICollection<BibleVersionWordEntity> BibleVersionWords { get; set; } = [];

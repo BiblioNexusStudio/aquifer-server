@@ -13,7 +13,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     public override void Configure()
     {
         Post("/resources/content/{BaseContentId}/create-translation");
-        Permissions(PermissionName.CreateContent);
+        Permissions(PermissionName.CreateContent, PermissionName.CreateCommunityContent);
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
@@ -44,10 +44,16 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         var baseVersion = request.UseDraft ? baseContent.Versions.Single(x => x.IsDraft) : baseContent.Versions.Single(x => x.IsPublished);
 
+        var hasFullCreateContentPermission = userService.HasPermission(PermissionName.CreateContent);
+
         var newResourceContentVersion = new ResourceContentVersionEntity
         {
             IsPublished = false,
             IsDraft = true,
+            ReviewLevel =
+                hasFullCreateContentPermission
+                    ? ResourceContentVersionReviewLevel.Professional
+                    : ResourceContentVersionReviewLevel.Community,
             DisplayName = baseVersion.DisplayName,
             Content = baseVersion.Content,
             ContentSize = baseVersion.ContentSize,
