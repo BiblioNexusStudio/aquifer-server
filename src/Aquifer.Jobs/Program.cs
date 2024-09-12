@@ -4,6 +4,7 @@ using Aquifer.Common.Services;
 using Aquifer.Data;
 using Aquifer.Jobs.Clients;
 using Aquifer.Jobs.Configuration;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,7 @@ var host = new HostBuilder().ConfigureFunctionsWorkerDefaults()
         services.AddSingleton<IAquiferApiManagementClient, AquiferApiManagementClient>();
         services.AddHttpClient<IIpAddressLookupHttpClient, IpAddressLookupHttpClient>();
         services.AddSingleton<ISendGridClient, SendGridClient>();
+        services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>();
         services.AddAzureClient(context.Configuration.Get<ConfigurationOptions>()!.IsDevelopment);
         services.AddDbContext<AquiferDbContext>(options =>
