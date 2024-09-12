@@ -38,14 +38,17 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
             {
                 continue;
             }
+
             var resourcesLanguages =
                 newItems.Aggregate("", (current, item) => current + $"{item.DisplayName} - {item.EnglishDisplay}<br />");
+
             var htmlContent = htmlTemplate.Template
                 .Replace("[NAME]", subscriber.Name)
                 .Replace("[RESOURCES]", resourcesLanguages)
                 .Replace("[RESOURCE_LINK]", options.Value.MarketingEmail.ResourceLink)
                 .Replace("[UNSUBSCRIBE]",
                     $"{options.Value.MarketingEmail.UnsubscribeBaseUrl}/marketing/unsubscribe/{subscriber.UnsubscribeId}?api-key=none");
+
             await client.SendEmail(new SendGridEmailConfiguration
             {
                 FromEmail = options.Value.MarketingEmail.Address,
