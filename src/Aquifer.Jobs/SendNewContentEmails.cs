@@ -54,7 +54,7 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
                 .Replace("[UNSUBSCRIBE]",
                     $"{options.Value.MarketingEmail.UnsubscribeBaseUrl}/marketing/unsubscribe/{subscriber.UnsubscribeId}?api-key=none");
 
-            await client.SendEmail(new SendGridEmailConfiguration
+            await client.SendEmailAsync(new SendGridEmailConfiguration
             {
                 FromEmail = options.Value.MarketingEmail.Address,
                 FromName = options.Value.MarketingEmail.Name,
