@@ -26,6 +26,7 @@ public partial class Endpoint(
 
         var prompt = req.Prompt ?? GetPrompt(req);
         var paragraphChunks = ParagraphRegex().Split(req.Content);
+        paragraphChunks = paragraphChunks.Where(x => !string.IsNullOrWhiteSpace(x) && x.Length > 2).ToArray();
 
         foreach (var paragraphChunk in paragraphChunks)
         {
@@ -69,6 +70,6 @@ public partial class Endpoint(
         return $"{options.Value.OpenAiSettings.HtmlSimplifyBasePrompt} {languagePrompt}";
     }
 
-    [GeneratedRegex("/(<h\\d|<p)/")]
+    [GeneratedRegex("(?=<([hH][1-6]|[pP])\\b[^>]*>)")]
     private static partial Regex ParagraphRegex();
 }

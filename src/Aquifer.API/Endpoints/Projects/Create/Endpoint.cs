@@ -71,8 +71,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         var wordCount = await dbContext.ResourceContentVersions
             .Where(rcv => request.ResourceIds.Contains(rcv.ResourceContent.ResourceId) &&
-                rcv.IsPublished &&
-                rcv.ResourceContent.LanguageId == 1)
+                          rcv.IsPublished &&
+                          rcv.ResourceContent.LanguageId == 1)
             .Select(rcv => rcv.WordCount ?? 0)
             .SumAsync(ct);
 
@@ -129,8 +129,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         var resourceContents = await dbContext.ResourceContents
             .Where(rc => request.ResourceIds.Contains(rc.ResourceId) &&
-                rc.LanguageId == language.Id &&
-                rc.MediaType != ResourceContentMediaType.Audio)
+                         rc.LanguageId == language.Id &&
+                         rc.MediaType != ResourceContentMediaType.Audio)
             .Include(rc => rc.Versions.OrderByDescending(v => v.Created))
             .Include(rc => rc.Projects)
             .ToListAsync(ct);
@@ -160,6 +160,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 {
                     IsPublished = false,
                     IsDraft = true,
+                    ReviewLevel = ResourceContentVersionReviewLevel.Professional,
                     DisplayName = firstVersion.DisplayName,
                     Content = firstVersion.Content,
                     ContentSize = firstVersion.ContentSize,
@@ -182,7 +183,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var englishOrLanguageResourceContents = await dbContext.ResourceContents
             .Where(rc => request.ResourceIds.Contains(rc.ResourceId) && rc.MediaType != ResourceContentMediaType.Audio)
             .Where(rc => rc.LanguageId == language.Id ||
-                (rc.Resource.ResourceContents.All(rci => rci.LanguageId != language.Id) && rc.Language.ISO6393Code == "eng"))
+                         (rc.Resource.ResourceContents.All(rci => rci.LanguageId != language.Id) && rc.Language.ISO6393Code == "eng"))
             .Include(rc => rc.Versions)
             .Include(rc => rc.Projects)
             .Include(rc => rc.Language)
@@ -204,6 +205,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 {
                     IsPublished = false,
                     IsDraft = true,
+                    ReviewLevel = ResourceContentVersionReviewLevel.Professional,
                     DisplayName = baseVersion.DisplayName,
                     Content = baseVersion.Content,
                     ContentSize = baseVersion.ContentSize,
