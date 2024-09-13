@@ -4,19 +4,19 @@ namespace Aquifer.API.Endpoints.Projects;
 
 public class ProjectResourceStatusCounts
 {
-    private readonly List<ResourceContentStatus> _inManagerReviewStatuses =
+    internal static readonly List<ResourceContentStatus> InManagerReviewStatuses =
     [
         ResourceContentStatus.AquiferizeManagerReview,
         ResourceContentStatus.TranslationManagerReview
     ];
 
-    private readonly List<ResourceContentStatus> _inProgressStatuses =
+    internal static readonly List<ResourceContentStatus> InProgressStatuses =
     [
         ResourceContentStatus.AquiferizeInProgress,
         ResourceContentStatus.TranslationInProgress
     ];
 
-    private readonly List<ResourceContentStatus> _inPublisherReviewStatuses =
+    internal static readonly List<ResourceContentStatus> InPublisherReviewStatuses =
     [
         ResourceContentStatus.AquiferizePublisherReview,
         ResourceContentStatus.AquiferizeReviewPending,
@@ -24,24 +24,15 @@ public class ProjectResourceStatusCounts
         ResourceContentStatus.TranslationReviewPending
     ];
 
-    private readonly List<ResourceContentStatus> _notStartedStatuses =
+    internal static readonly List<ResourceContentStatus> NotStartedStatuses =
     [
         ResourceContentStatus.New,
         ResourceContentStatus.TranslationNotStarted
     ];
 
-    public ProjectResourceStatusCounts(ICollection<ResourceContentEntity> resourceContents)
-    {
-        NotStarted = resourceContents.Count(rc => _notStartedStatuses.Contains(rc.Status));
-        InProgress = resourceContents.Count(rc => _inProgressStatuses.Contains(rc.Status));
-        InManagerReview = resourceContents.Count(rc => _inManagerReviewStatuses.Contains(rc.Status));
-        InPublisherReview = resourceContents.Count(rc => _inPublisherReviewStatuses.Contains(rc.Status));
-        Completed = resourceContents.Count(rc => rc.Status == ResourceContentStatus.Complete);
-    }
-
-    public int NotStarted { get; private init; }
-    public int InProgress { get; private init; }
-    public int InManagerReview { get; private init; }
-    public int InPublisherReview { get; private init; }
-    public int Completed { get; private init; }
+    public int NotStarted { get; init; }
+    public int InProgress { get; init; }
+    public int InManagerReview { get; init; }
+    public int InPublisherReview { get; init; }
+    public int Completed { get; init; }
 }
