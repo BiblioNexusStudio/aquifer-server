@@ -25,6 +25,7 @@ public class Endpoint(AquiferDbContext dbContext, TelemetryClient telemetry) : E
                 Id = rcv.ResourceContentId,
                 ResourceId = rcv.ResourceContent.ResourceId,
                 DisplayName = rcv.DisplayName,
+                ReviewLevel = rcv.ReviewLevel,
                 MediaType = rcv.ResourceContent.MediaType,
                 Content = rcv.Content,
                 LanguageId = rcv.ResourceContent.LanguageId
@@ -68,6 +69,7 @@ public class Endpoint(AquiferDbContext dbContext, TelemetryClient telemetry) : E
         {
             Id = contentVersion.Id,
             DisplayName = contentVersion.DisplayName,
+            ReviewLevel = contentVersion.ReviewLevel,
             Metadata = contentVersion.MediaType == ResourceContentMediaType.Text
                 ? null
                 : JsonUtilities.DefaultDeserialize(contentVersion.Content),
@@ -97,6 +99,7 @@ public record IntermediateContentVersion
     public int Id { get; set; }
     public int ResourceId { get; set; }
     public string DisplayName { get; set; } = null!;
+    public ResourceContentVersionReviewLevel ReviewLevel { get; set; }
     public ResourceContentMediaType MediaType { get; set; }
     public string Content { get; set; } = null!;
     public int LanguageId { get; set; }

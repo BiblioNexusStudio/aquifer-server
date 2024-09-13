@@ -51,8 +51,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
         var response = new Response
         {
-            Id = contentVersion.Id,
+            Id = contentVersion.ResourceContentId,
             DisplayName = contentVersion.DisplayName,
+            ReviewLevel = contentVersion.ReviewLevel,
             Metadata = contentVersion.ResourceContent.MediaType == ResourceContentMediaType.Text
                 ? null
                 : JsonUtilities.DefaultDeserialize(contentVersion.Content),
