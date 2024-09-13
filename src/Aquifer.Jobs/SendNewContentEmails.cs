@@ -78,6 +78,9 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
                 },
                 {
                     "HtmlContent", htmlContent
+                },
+                {
+                    "ResponseCodeToSentEmail", response.StatusCode.ToString()
                 }
             });
         }
