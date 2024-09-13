@@ -68,7 +68,18 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
                 HtmlContent = htmlContent
             }, ct);
 
-            telemetryClient.TrackEvent("Email Sent");
+            telemetryClient.TrackEvent("Email Sent", new Dictionary<string, string>()
+            {
+                {
+                    "ToEmail", subscriber.Email
+                },
+                {
+                    "ToName", subscriber.Name
+                },
+                {
+                    "HtmlContent", htmlContent
+                }
+            });
         }
     }
 
