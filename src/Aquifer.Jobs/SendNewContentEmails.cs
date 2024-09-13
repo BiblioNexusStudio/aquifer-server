@@ -3,7 +3,6 @@ using Aquifer.Common.Clients;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Jobs.Configuration;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -11,16 +10,11 @@ using SendGrid.Helpers.Mail;
 
 namespace Aquifer.Jobs;
 
-public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient client, IOptions<ConfigurationOptions> options, IHttpContextAccessor httpContextAccessor)
+public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient client, IOptions<ConfigurationOptions> options)
 {
     [Function(nameof(SendNewContentEmails))]
     public async Task Run([TimerTrigger("%NewContentEmail:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
     {
-        if (httpContextAccessor.HttpContext == null)
-        {
-            return;
-        }
-
         var subscribers = await GetSubscribers(ct);
 
         var allNewItems = await GetAllNewItems(subscribers, ct);
@@ -33,7 +27,8 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
         await SendNewContentEmailsToSubscribers(subscribers, allNewItems, ct);
     }
 
-    private async Task SendNewContentEmailsToSubscribers(List<SubscriberInfo> subscribers, List<UpdatedParentResources> allNewItems, CancellationToken ct)
+    private async Task SendNewContentEmailsToSubscribers(List<SubscriberInfo> subscribers, List<UpdatedParentResources> allNewItems,
+        CancellationToken ct)
     {
         var htmlTemplate = await dbContext.EmailTemplates.SingleAsync(t => t.Id == (int)EmailTemplate.MarketingNewContentNotification, ct);
 
@@ -53,14 +48,12 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
             var resourcesLanguages =
                 newItems.Aggregate("", (current, item) => current + $"{item.DisplayName} - {item.EnglishDisplay}<br />");
 
-            var httpRequest = httpContextAccessor.HttpContext!.Request;
-
             var htmlContent = htmlTemplate.Template
                 .Replace("[NAME]", subscriber.Name)
                 .Replace("[RESOURCES]", resourcesLanguages)
                 .Replace("[RESOURCE_LINK]", options.Value.MarketingEmail.ResourceLink)
                 .Replace("[UNSUBSCRIBE]",
-                    $"{httpRequest.Scheme}://{httpRequest.Host.ToUriComponent()}/marketing/unsubscribe/{subscriber.UnsubscribeId}?api-key=none");
+                    $"{options.Value.MarketingEmail.UnsubscribeBaseUrl}/marketing/unsubscribe/{subscriber.UnsubscribeId}?api-key=none");
 
             await client.SendEmailAsync(new SendGridEmailConfiguration
             {
@@ -90,10 +83,13 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
                 x.Updated < firstOfThisMonth &&
                 allLanguageIds.Contains(x.ResourceContent.LanguageId) &&
                 allParentResourceIds.Contains(x.ResourceContent.Resource.ParentResourceId))
-            .Select(x => new UpdatedParentResources{ParentResourceId = x.ResourceContent.Resource.ParentResourceId,
+            .Select(x => new UpdatedParentResources
+            {
+                ParentResourceId = x.ResourceContent.Resource.ParentResourceId,
                 DisplayName = x.ResourceContent.Resource.ParentResource.DisplayName,
                 LanguageId = x.ResourceContent.LanguageId,
-                EnglishDisplay = x.ResourceContent.Language.EnglishDisplay})
+                EnglishDisplay = x.ResourceContent.Language.EnglishDisplay
+            })
             .ToListAsync(ct);
     }
 
@@ -110,7 +106,6 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
             })
             .ToListAsync(ct);
     }
-
 
     private class UpdatedParentResources
     {
