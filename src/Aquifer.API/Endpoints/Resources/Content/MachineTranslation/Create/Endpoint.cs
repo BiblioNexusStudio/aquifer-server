@@ -30,6 +30,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var mt = new ResourceContentVersionMachineTranslationEntity
         {
             ResourceContentVersionId = req.ResourceContentVersionId,
+            DisplayName = req.DisplayName,
             Content = req.Content,
             UserId = user.Id,
             SourceId = req.SourceId
