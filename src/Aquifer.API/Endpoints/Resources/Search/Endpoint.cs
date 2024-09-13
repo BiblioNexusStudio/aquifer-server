@@ -40,7 +40,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                      (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
                 (req.ParentResourceId == x.ResourceContent.Resource.ParentResourceId ||
                  req.ResourceTypes.Contains(x.ResourceContent.Resource.ParentResource.ResourceType)) &&
-                x.ResourceContent.LanguageId == req.LanguageId).OrderBy(r => r.DisplayName)
+                x.ResourceContent.LanguageId == req.LanguageId).OrderBy(r => r.ResourceContent.Resource.SortOrder)
+            .ThenBy(r => r.DisplayName)
             .Select(rcv => new Response
             {
                 Id = rcv.ResourceContentId,
@@ -53,6 +54,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                 DisplayName = rcv.DisplayName,
                 MediaType = rcv.ResourceContent.MediaType.ToString(),
                 ParentResourceId = rcv.ResourceContent.Resource.ParentResourceId,
+                SortOrder = rcv.ResourceContent.Resource.SortOrder,
                 Version = rcv.Version,
                 ResourceType = rcv.ResourceContent.Resource.ParentResource.ResourceType.ToString()
             });
