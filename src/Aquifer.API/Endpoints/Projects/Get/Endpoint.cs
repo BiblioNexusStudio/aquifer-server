@@ -85,7 +85,18 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                              FROM ResourceContents RC
                              INNER JOIN Resources R ON R.Id = RC.ResourceId
                              INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
-                             LEFT JOIN ResourceContentVersions RCVD ON RCVD.ResourceContentId = RC.Id AND RCVD.IsDraft = 1
+                             LEFT JOIN
+                             (
+                                 SELECT *
+                                 FROM
+                                 (
+                                     SELECT
+                                         *,
+                                         ROW_NUMBER() OVER (PARTITION BY ResourceContentId ORDER BY [Version] DESC) AS LatestVersionRank
+                                     FROM ResourceContentVersions
+                                 ) x
+                                 WHERE x.LatestVersionRank = 1
+                             ) RCVD ON RCVD.ResourceContentId = RC.Id
                              LEFT JOIN Users U on U.Id = RCVD.AssignedUserId
                              WHERE RC.Id IN (
                                  SELECT ResourceContentId
