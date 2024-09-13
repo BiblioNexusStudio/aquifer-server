@@ -20,7 +20,9 @@
         </PackageReference>
 
     </ItemGroup>
-
+    <ItemGroup>
+        <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.22.0" />
+    </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj"/>
         <ProjectReference Include="..\Aquifer.Common\Aquifer.Common.csproj"/>

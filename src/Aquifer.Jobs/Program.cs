@@ -24,6 +24,7 @@ var host = new HostBuilder().ConfigureFunctionsWorkerDefaults()
         services.AddSingleton<ISendGridClient, SendGridClient>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>();
+        services.AddApplicationInsightsTelemetryWorkerService();
         services.AddAzureClient(context.Configuration.Get<ConfigurationOptions>()!.IsDevelopment);
         services.AddDbContext<AquiferDbContext>(options =>
             options.UseSqlServer(connectionString, providerOptions => providerOptions.EnableRetryOnFailure(3)));

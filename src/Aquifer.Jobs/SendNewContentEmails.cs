@@ -3,6 +3,7 @@ using Aquifer.Common.Clients;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Jobs.Configuration;
+using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -10,7 +11,7 @@ using SendGrid.Helpers.Mail;
 
 namespace Aquifer.Jobs;
 
-public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient client, IOptions<ConfigurationOptions> options)
+public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient client, IOptions<ConfigurationOptions> options, TelemetryClient telemetryClient)
 {
     [Function(nameof(SendNewContentEmails))]
     public async Task Run([TimerTrigger("%NewContentEmail:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
@@ -55,7 +56,7 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
                 .Replace("[UNSUBSCRIBE]",
                     $"{options.Value.MarketingEmail.UnsubscribeBaseUrl}/marketing/unsubscribe/{subscriber.UnsubscribeId}?api-key=none");
 
-            await client.SendEmailAsync(new SendGridEmailConfiguration
+            var response = await client.SendEmailAsync(new SendGridEmailConfiguration
             {
                 FromEmail = options.Value.MarketingEmail.Address,
                 FromName = options.Value.MarketingEmail.Name,
@@ -66,6 +67,8 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
                 ],
                 HtmlContent = htmlContent
             }, ct);
+
+            telemetryClient.TrackEvent("Email Sent");
         }
     }
 
