@@ -11,18 +11,18 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Azure.Storage.Queues" Version="12.19.1"/>
+        <PackageReference Include="Azure.Storage.Queues" Version="12.19.1" />
         <PackageReference Include="FastEndpoints" Version="5.28.0" />
         <PackageReference Include="FastEndpoints.Swagger" Version="5.28.0" />
-        <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0"/>
+        <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.7" />
         <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.7" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Aquifer.Common\Aquifer.Common.csproj"/>
-        <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj"/>
+        <ProjectReference Include="..\Aquifer.Common\Aquifer.Common.csproj" />
+        <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj" />
     </ItemGroup>
 
 </Project>
