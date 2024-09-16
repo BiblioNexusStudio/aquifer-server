@@ -21,9 +21,9 @@ var host = new HostBuilder().ConfigureFunctionsWorkerDefaults()
         services.AddSingleton<IAzureClientService, AzureClientService>();
         services.AddSingleton<IAquiferApiManagementClient, AquiferApiManagementClient>();
         services.AddHttpClient<IIpAddressLookupHttpClient, IpAddressLookupHttpClient>();
+        services.AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>();
         services.AddSingleton<ISendGridClient, SendGridClient>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-        services.AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>();
         services.AddApplicationInsightsTelemetryWorkerService();
         services.AddAzureClient(context.Configuration.Get<ConfigurationOptions>()!.IsDevelopment);
         services.AddDbContext<AquiferDbContext>(options =>

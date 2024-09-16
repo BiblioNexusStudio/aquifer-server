@@ -1,17 +1,24 @@
 using Aquifer.Common;
 using Aquifer.Common.Clients;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Jobs.Configuration;
 using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SendGrid.Helpers.Mail;
 
 namespace Aquifer.Jobs;
 
-public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient client, IOptions<ConfigurationOptions> options, TelemetryClient telemetryClient)
+public class SendNewContentEmails(
+    AquiferDbContext dbContext,
+    ISendGridClient client,
+    IOptions<ConfigurationOptions> options,
+    TelemetryClient telemetryClient,
+    ILogger<SendNewContentEmails> logger)
 {
     [Function(nameof(SendNewContentEmails))]
     public async Task Run([TimerTrigger("%NewContentEmail:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
@@ -54,7 +61,7 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
                 .Replace("[RESOURCES]", resourcesLanguages)
                 .Replace("[RESOURCE_LINK]", options.Value.MarketingEmail.ResourceLink)
                 .Replace("[UNSUBSCRIBE]",
-                    $"{options.Value.MarketingEmail.UnsubscribeBaseUrl}/marketing/unsubscribe/{subscriber.UnsubscribeId}?api-key=none");
+                    $"{options.Value.BaseUrl}/marketing/unsubscribe/{subscriber.UnsubscribeId}?api-key=none");
 
             var response = await client.SendEmailAsync(new SendGridEmailConfiguration
             {
@@ -68,19 +75,21 @@ public class SendNewContentEmails(AquiferDbContext dbContext, SendGridClient cli
                 HtmlContent = htmlContent
             }, ct);
 
-            telemetryClient.TrackEvent("Email Sent", new Dictionary<string, string>()
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError("Failed to Successfully Send Content Update Email: {response}", JsonUtilities.DefaultSerialize(response));
+            }
+
+            telemetryClient.TrackEvent("marketing-new-content-email-sent", new Dictionary<string, string>
             {
                 {
-                    "ToEmail", subscriber.Email
+                    "to-email", subscriber.Email
                 },
                 {
-                    "ToName", subscriber.Name
+                    "to-name", subscriber.Name
                 },
                 {
-                    "HtmlContent", htmlContent
-                },
-                {
-                    "ResponseCodeToSentEmail", response.StatusCode.ToString()
+                    "html-content", htmlContent
                 }
             });
         }
