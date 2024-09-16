@@ -5,6 +5,7 @@ using Aquifer.Data;
 using Aquifer.Jobs.Clients;
 using Aquifer.Jobs.Configuration;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,6 +26,7 @@ var host = new HostBuilder().ConfigureFunctionsWorkerDefaults()
         services.AddSingleton<ISendGridClient, SendGridClient>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddApplicationInsightsTelemetryWorkerService();
+        services.ConfigureFunctionsApplicationInsights();
         services.AddAzureClient(context.Configuration.Get<ConfigurationOptions>()!.IsDevelopment);
         services.AddDbContext<AquiferDbContext>(options =>
             options.UseSqlServer(connectionString, providerOptions => providerOptions.EnableRetryOnFailure(3)));
