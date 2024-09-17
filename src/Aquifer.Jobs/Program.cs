@@ -24,7 +24,6 @@ var host = new HostBuilder().ConfigureFunctionsWorkerDefaults()
         services.AddHttpClient<IIpAddressLookupHttpClient, IpAddressLookupHttpClient>();
         services.AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>();
         services.AddSingleton<ISendGridClient, SendGridClient>();
-        services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
         services.AddAzureClient(context.Configuration.Get<ConfigurationOptions>()!.IsDevelopment);
