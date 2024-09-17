@@ -1,15 +1,15 @@
-using Aquifer.Common;
 using Aquifer.Common.Clients;
-using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Jobs.Configuration;
 using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SendGrid;
 using SendGrid.Helpers.Mail;
+using ISendGridClient = Aquifer.Common.Clients.ISendGridClient;
 
 namespace Aquifer.Jobs;
 
@@ -17,28 +17,28 @@ public class SendNewContentEmails(
     AquiferDbContext dbContext,
     ISendGridClient client,
     IOptions<ConfigurationOptions> options,
-    TelemetryClient telemetryClient,
-    ILogger<SendNewContentEmails> logger)
+    TelemetryClient telemetryClient)
 {
     [Function(nameof(SendNewContentEmails))]
-    public async Task Run([TimerTrigger("%NewContentEmail:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
+    public async Task Run([TimerTrigger("%MarketingEmail:CronSchedule:NewContent%")] TimerInfo timerInfo, CancellationToken ct)
     {
-        var subscribers = await GetSubscribers(ct);
-
-        var allNewItems = await GetAllNewItems(subscribers, ct);
+        var subscribers = await GetSubscribersAsync(ct);
+        var allNewItems = await GetAllNewItemsAsync(subscribers, ct);
 
         if (allNewItems.Count == 0)
         {
             return;
         }
 
-        await SendNewContentEmailsToSubscribers(subscribers, allNewItems, ct);
+        await SendNewContentEmailsAsync(subscribers, allNewItems, ct);
     }
 
-    private async Task SendNewContentEmailsToSubscribers(List<SubscriberInfo> subscribers, List<UpdatedParentResources> allNewItems,
+    private async Task SendNewContentEmailsAsync(List<SubscriberInfo> subscribers,
+        List<UpdatedParentResources> allNewItems,
         CancellationToken ct)
     {
-        var htmlTemplate = await dbContext.EmailTemplates.SingleAsync(t => t.Id == (int)EmailTemplate.MarketingNewContentNotification, ct);
+        var emailTemplate =
+            await dbContext.EmailTemplates.SingleAsync(t => t.Id == (int)EmailTemplateType.MarketingNewContentNotification, ct);
 
         foreach (var subscriber in subscribers)
         {
@@ -46,80 +46,109 @@ public class SendNewContentEmails(
             var subscriberParentResourceIds = subscriber.ParentResources.Select(pr => pr.Id);
 
             var newItems = allNewItems.Where(x =>
-                subscriberLanguageIds.Contains(x.LanguageId) && subscriberParentResourceIds.Contains(x.ParentResourceId)).ToList();
+                    subscriberLanguageIds.Contains(x.LanguageId) && subscriberParentResourceIds.Contains(x.ParentResourceId))
+                .ToList();
 
             if (newItems.Count == 0)
             {
                 continue;
             }
 
-            var resourcesLanguages =
-                newItems.Aggregate("", (current, item) => current + $"{item.DisplayName} - {item.EnglishDisplay}<br />");
+            var emailContent = BuildEmailContent(newItems, emailTemplate, subscriber);
+            var response = await SendEmailAsync(emailTemplate, subscriber, emailContent, ct);
 
-            var htmlContent = htmlTemplate.Template
-                .Replace("[NAME]", subscriber.Name)
-                .Replace("[RESOURCES]", resourcesLanguages)
-                .Replace("[RESOURCE_LINK]", options.Value.MarketingEmail.ResourceLink)
-                .Replace("[UNSUBSCRIBE]",
-                    $"{options.Value.BaseUrl}/marketing/unsubscribe/{subscriber.UnsubscribeId}?api-key=none");
+            if (!response.IsSuccessStatusCode)
+            {
+                await LogSendFailureAsync(response, subscriber, emailContent, ct);
+                return;
+            }
 
-            var response = await client.SendEmailAsync(new SendGridEmailConfiguration
+            TrackSendEvent(subscriber, emailContent);
+        }
+    }
+
+    private void TrackSendEvent(SubscriberInfo subscriber, string emailContent)
+    {
+        telemetryClient.TrackEvent("marketing-new-content-email-sent",
+            new Dictionary<string, string>
+            {
+                { "email", subscriber.Email },
+                { "name", subscriber.Name },
+                { "content", emailContent }
+            });
+    }
+
+    private async Task LogSendFailureAsync(Response response, SubscriberInfo subscriber, string emailContent, CancellationToken ct)
+    {
+        var responseContent = await response.Body.ReadAsStringAsync(ct);
+        telemetryClient.TrackTrace("Failed to Send Content Update Email",
+            SeverityLevel.Error,
+            new Dictionary<string, string>
+            {
+                { "statusCode", response.StatusCode.ToString() },
+                { "response", responseContent },
+                { "email", subscriber.Email },
+                { "name", subscriber.Name },
+                { "content", emailContent }
+            });
+    }
+
+    private async Task<Response> SendEmailAsync(EmailTemplateEntity emailTemplate,
+        SubscriberInfo subscriber,
+        string emailContent,
+        CancellationToken ct)
+    {
+        return await client.SendEmailAsync(new SendGridEmailConfiguration
             {
                 FromEmail = options.Value.MarketingEmail.Address,
                 FromName = options.Value.MarketingEmail.Name,
-                Subject = htmlTemplate.Subject,
+                Subject = emailTemplate.Subject,
                 ToAddresses =
                 [
                     new EmailAddress(subscriber.Email, subscriber.Name)
                 ],
-                HtmlContent = htmlContent
-            }, ct);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                logger.LogError("Failed to Successfully Send Content Update Email: {response}", JsonUtilities.DefaultSerialize(response));
-            }
-
-            telemetryClient.TrackEvent("marketing-new-content-email-sent", new Dictionary<string, string>
-            {
-                {
-                    "to-email", subscriber.Email
-                },
-                {
-                    "to-name", subscriber.Name
-                },
-                {
-                    "html-content", htmlContent
-                }
-            });
-        }
+                HtmlContent = emailContent
+            },
+            ct);
     }
 
-    private async Task<List<UpdatedParentResources>> GetAllNewItems(List<SubscriberInfo> subscribers, CancellationToken ct)
+    private string BuildEmailContent(List<UpdatedParentResources> newItems, EmailTemplateEntity emailTemplate, SubscriberInfo subscriber)
+    {
+        var resourcesLanguages = newItems.Aggregate("",
+            (current, item) => current + $"{item.ParentResourceDisplayName} - {item.LanguageEnglishDisplayName}<br />");
+
+        return emailTemplate.Template.Replace("[NAME]", subscriber.Name)
+            .Replace("[RESOURCES]", resourcesLanguages)
+            .Replace("[RESOURCE_LINK]", options.Value.MarketingEmail.ResourceLink)
+            .Replace("[UNSUBSCRIBE]", $"{options.Value.AquiferApiBaseUri}/marketing/unsubscribe/{subscriber.UnsubscribeId}?api-key=none");
+    }
+
+    private async Task<List<UpdatedParentResources>> GetAllNewItemsAsync(List<SubscriberInfo> subscribers, CancellationToken ct)
     {
         var today = DateTime.Today;
-        var firstOfThisMonth = new DateTime(today.Year, today.Month, 1);
-        var firstOfLastMonth = firstOfThisMonth.AddMonths(-1);
+        var startOfThisMonth = new DateTime(today.Year, today.Month, 1);
+        var startOfLastMonth = startOfThisMonth.AddMonths(-1);
 
         var allLanguageIds = subscribers.SelectMany(x => x.Languages.Select(l => l.Id));
         var allParentResourceIds = subscribers.SelectMany(x => x.ParentResources.Select(pr => pr.Id));
-        return await dbContext.ResourceContentVersions.Where(x =>
-                x.IsPublished &&
-                x.Updated >= firstOfLastMonth &&
-                x.Updated < firstOfThisMonth &&
+
+        return await dbContext.ResourceContentVersions
+            .Where(x => x.IsPublished &&
+                x.Updated >= startOfLastMonth &&
+                x.Updated < startOfThisMonth &&
                 allLanguageIds.Contains(x.ResourceContent.LanguageId) &&
                 allParentResourceIds.Contains(x.ResourceContent.Resource.ParentResourceId))
             .Select(x => new UpdatedParentResources
             {
                 ParentResourceId = x.ResourceContent.Resource.ParentResourceId,
-                DisplayName = x.ResourceContent.Resource.ParentResource.DisplayName,
+                ParentResourceDisplayName = x.ResourceContent.Resource.ParentResource.DisplayName,
                 LanguageId = x.ResourceContent.LanguageId,
-                EnglishDisplay = x.ResourceContent.Language.EnglishDisplay
+                LanguageEnglishDisplayName = x.ResourceContent.Language.EnglishDisplay
             })
             .ToListAsync(ct);
     }
 
-    private async Task<List<SubscriberInfo>> GetSubscribers(CancellationToken ct)
+    private async Task<List<SubscriberInfo>> GetSubscribersAsync(CancellationToken ct)
     {
         return await dbContext.ContentSubscribers.Where(cs => cs.Enabled)
             .Select(cs => new SubscriberInfo
@@ -135,18 +164,18 @@ public class SendNewContentEmails(
 
     private class UpdatedParentResources
     {
-        public required int ParentResourceId { get; set; }
-        public required string DisplayName { get; set; }
-        public required int LanguageId { get; set; }
-        public required string EnglishDisplay { get; set; }
+        public required int ParentResourceId { get; init; }
+        public required string ParentResourceDisplayName { get; init; }
+        public required int LanguageId { get; init; }
+        public required string LanguageEnglishDisplayName { get; init; }
     }
 
     private class SubscriberInfo
     {
-        public required string Name { get; set; }
-        public required string Email { get; set; }
-        public required string UnsubscribeId { get; set; }
-        public required IEnumerable<LanguageEntity> Languages { get; set; }
-        public required IEnumerable<ParentResourceEntity> ParentResources { get; set; }
+        public required string Name { get; init; }
+        public required string Email { get; init; }
+        public required string UnsubscribeId { get; init; }
+        public required IEnumerable<LanguageEntity> Languages { get; init; }
+        public required IEnumerable<ParentResourceEntity> ParentResources { get; init; }
     }
 }

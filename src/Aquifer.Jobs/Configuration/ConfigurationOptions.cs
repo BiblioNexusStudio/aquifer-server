@@ -3,7 +3,7 @@
 public class ConfigurationOptions
 {
     public bool IsDevelopment { get; init; }
-    public required string BaseUrl { get; init; }
+    public required string AquiferApiBaseUri { get; init; }
     public required string KeyVaultUri { get; init; }
     public required AnalyticsOptions Analytics { get; init; }
     public required MarketingEmailOptions MarketingEmail { get; init; }

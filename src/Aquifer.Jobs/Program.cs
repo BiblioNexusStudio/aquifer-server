@@ -1,10 +1,9 @@
-using Aquifer.Common.Clients.Http.IpAddressLookup;
 using Aquifer.Common.Clients;
+using Aquifer.Common.Clients.Http.IpAddressLookup;
 using Aquifer.Common.Services;
 using Aquifer.Data;
 using Aquifer.Jobs.Clients;
 using Aquifer.Jobs.Configuration;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

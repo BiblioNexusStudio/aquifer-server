@@ -18,7 +18,11 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
     public override async Task HandleAsync(CancellationToken ct)
     {
         Response.ParentResourceOptions = await dbContext.ParentResources.Where(x => x.ForMarketing == true)
-            .Select(x => new SubscriberOption { Id = x.Id, EnglishDisplayName = x.DisplayName })
+            .Select(x => new SubscriberOption
+            {
+                Id = x.Id,
+                EnglishDisplayName = x.DisplayName
+            })
             .ToListAsync(ct);
 
         Response.LanguageOptions = await dbContext.Languages.Select(x => new SubscriberOption
