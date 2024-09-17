@@ -1,22 +1,30 @@
 {
-  "IsEncrypted": false,
-  "ConnectionStrings": {
-    "BiblioNexusDb": "Server=localhost;Database=biblionexus-local-db;User Id=sa;Password=Password!;TrustServerCertificate=true;"
-  },
-  "Values": {
-    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-    "JobQueues:TrackResourceContentRequestQueue": "aquifer-jobs-local-track-resource-content-request",
-    "IsDevelopment": true,
-    "Analytics:StorageAccountUri": "https://aquiferstoragedev.table.core.windows.net",
-    "Analytics:CustomEventsTableName": "CustomEventsQa",
-    "Analytics:ApiRequestStatsTableName": "ApiRequestStatsQa",
-    "Analytics:PageViewsTableName": "PageViewsQa",
-    "Analytics:AppInsightsResourceId": "/subscriptions/dacfa945-984c-4708-9f2d-7d8358f223d5/resourceGroups/BiblioNexus-Dev/providers/microsoft.insights/components/appinsights-qa",
-    "Analytics:ApiManagementResourceId": "/subscriptions/dacfa945-984c-4708-9f2d-7d8358f223d5/resourceGroups/BiblioNexus-Global/providers/Microsoft.ApiManagement/service/aquifer-api-management",
-    "Analytics:CronSchedule": "0 5 * * * *",
-    "Analytics:HoursBetweenRuns": 1,
-    "MarketingEmail:Address": "no-reply@aquifer.bible",
-    "MarketingEmail:Name": "Aquifer"
-  }
+    "IsEncrypted": false,
+    "ConnectionStrings": {
+        "BiblioNexusDb": "Server=localhost;Database=biblionexus-local-db;User Id=sa;Password=Password!;TrustServerCertificate=true;"
+    },
+    "Values": {
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+        "AzureWebJobsDashboard": "UseDevelopmentStorage=true",
+        "JobQueues:TrackResourceContentRequestQueue": "aquifer-jobs-local-track-resource-content-request",
+        "IsDevelopment": true,
+        "Analytics:StorageAccountUri": "https://aquiferstoragedev.table.core.windows.net",
+        "Analytics:CustomEventsTableName": "CustomEventsQa",
+        "Analytics:ApiRequestStatsTableName": "ApiRequestStatsQa",
+        "Analytics:PageViewsTableName": "PageViewsQa",
+        "Analytics:AppInsightsResourceId": "/subscriptions/dacfa945-984c-4708-9f2d-7d8358f223d5/resourceGroups/BiblioNexus-Dev/providers/microsoft.insights/components/appinsights-qa",
+        "Analytics:ApiManagementResourceId": "/subscriptions/dacfa945-984c-4708-9f2d-7d8358f223d5/resourceGroups/BiblioNexus-Global/providers/Microsoft.ApiManagement/service/aquifer-api-management",
+        "Analytics:CronSchedule": "0 5 * * * *",
+        "Analytics:HoursBetweenRuns": 1,
+        "MarketingEmail:CronSchedule:NewContent": "Cron schedule for new content email job",
+        "MarketingEmail:Address": "Email address that the new content email is coming from",
+        "MarketingEmail:Name": "Name that the new content email is under when email is sent",
+        "MarketingEmail:ResourceLink": "Link to resources in new content email template",
+        "BaseUrl": "Base url of Aquifer API",
+        "KeyVaultUri": "Azure Key Vault Uri",
+        "ApplicationInsights": {
+            "ConnectionString": "Application insights connection string. Get from Azure instance."
+        }
+    }
 }

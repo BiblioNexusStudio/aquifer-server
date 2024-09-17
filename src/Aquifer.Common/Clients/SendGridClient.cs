@@ -5,7 +5,7 @@ namespace Aquifer.Common.Clients;
 
 public interface ISendGridClient
 {
-    Task<Response> SendEmail(SendGridEmailConfiguration emailConfiguration, CancellationToken ct);
+    Task<Response> SendEmailAsync(SendGridEmailConfiguration emailConfiguration, CancellationToken ct);
 }
 
 public class SendGridEmailConfiguration
@@ -28,7 +28,7 @@ public class SendGridClient : ISendGridClient
         _client = new SendGrid.SendGridClient(apiToken);
     }
 
-    public async Task<Response> SendEmail(SendGridEmailConfiguration emailConfiguration, CancellationToken ct)
+    public async Task<Response> SendEmailAsync(SendGridEmailConfiguration emailConfiguration, CancellationToken ct)
     {
         var message = new SendGridMessage
         {
