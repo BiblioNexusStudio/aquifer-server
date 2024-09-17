@@ -2,6 +2,7 @@
 using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,8 +39,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     private async Task<Response?> GetProjectAsync(Request req, CancellationToken ct)
     {
-        return await dbContext.Projects
-            .Where(x => x.Id == req.ProjectId).Include(x => x.CompanyLeadUser).Select(x => new Response
+        return await dbContext.Projects.Where(x => x.Id == req.ProjectId)
+            .Include(x => x.CompanyLeadUser)
+            .Select(x => new Response
             {
                 Id = x.Id,
                 Name = x.Name,
@@ -58,8 +60,18 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 ActualPublishDate = x.ActualPublishDate,
                 ProjectedDeliveryDate = x.ProjectedDeliveryDate,
                 ProjectedPublishDate = x.ProjectedPublishDate,
-                Counts = new ProjectResourceStatusCounts(x.ResourceContents)
-            }).SingleOrDefaultAsync(ct);
+                Counts = new ProjectResourceStatusCounts
+                {
+                    NotStarted = x.ResourceContents.Count(rc => ProjectResourceStatusCounts.NotStartedStatuses.Contains(rc.Status)),
+                    InProgress = x.ResourceContents.Count(rc => ProjectResourceStatusCounts.InProgressStatuses.Contains(rc.Status)),
+                    InManagerReview =
+                        x.ResourceContents.Count(rc => ProjectResourceStatusCounts.InManagerReviewStatuses.Contains(rc.Status)),
+                    InPublisherReview =
+                        x.ResourceContents.Count(rc => ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(rc.Status)),
+                    Completed = x.ResourceContents.Count(rc => rc.Status == ResourceContentStatus.Complete)
+                }
+            })
+            .SingleOrDefaultAsync(ct);
     }
 
     private async Task<bool> HasSameCompanyAsProject(int projectId, CancellationToken ct)
@@ -85,7 +97,18 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                              FROM ResourceContents RC
                              INNER JOIN Resources R ON R.Id = RC.ResourceId
                              INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
-                             LEFT JOIN ResourceContentVersions RCVD ON RCVD.ResourceContentId = RC.Id AND RCVD.IsDraft = 1
+                             LEFT JOIN
+                             (
+                                 SELECT *
+                                 FROM
+                                 (
+                                     SELECT
+                                         *,
+                                         ROW_NUMBER() OVER (PARTITION BY ResourceContentId ORDER BY [Version] DESC) AS LatestVersionRank
+                                     FROM ResourceContentVersions
+                                 ) x
+                                 WHERE x.LatestVersionRank = 1
+                             ) RCVD ON RCVD.ResourceContentId = RC.Id
                              LEFT JOIN Users U on U.Id = RCVD.AssignedUserId
                              WHERE RC.Id IN (
                                  SELECT ResourceContentId

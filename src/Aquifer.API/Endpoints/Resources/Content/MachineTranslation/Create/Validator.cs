@@ -8,6 +8,7 @@ public class Validator : Validator<Request>
     public Validator()
     {
         RuleFor(x => x.ResourceContentVersionId).GreaterThan(0);
+        RuleFor(x => x.DisplayName).NotEmpty();
         RuleFor(x => x.Content).NotEmpty();
         RuleFor(x => x.SourceId).IsInEnum();
     }

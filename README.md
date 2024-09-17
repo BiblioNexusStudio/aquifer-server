@@ -48,6 +48,9 @@ dotnet build --no-incremental /p:WarningsAsErrors=true
 
 ## Database Migrations
 
+First initialize the settings file by copying `appsettings.example.json` as `appsettings.Development.json` and providing
+the values needed for your instance.
+
 Entity Framework will generate migrations by comparing the C# Entities defined
 in the project and the current state of the database.
 
