@@ -31,7 +31,8 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
                         x.ResourceContent.Projects.FirstOrDefault() == null ? null : x.ResourceContent.Projects.FirstOrDefault()!.Name,
                     WordCount = x.SourceWordCount,
                     SortOrder = x.ResourceContent.Resource.SortOrder,
-                    ContentUpdated = x.ResourceContent.ContentUpdated
+                    ContentUpdated = x.ResourceContent.ContentUpdated,
+                    ReviewLevel = x.ReviewLevel,
                 }).ToListAsync(ct))
             .OrderByDescending(x => x.DaysSinceStatusChange).ThenBy(x => x.EnglishLabel).ToList();
 
