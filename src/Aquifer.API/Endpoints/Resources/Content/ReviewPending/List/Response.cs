@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Aquifer.Data.Entities;
 
 namespace Aquifer.API.Endpoints.Resources.Content.ReviewPending.List;
 
@@ -10,13 +11,10 @@ public class Response
     public required string LanguageEnglishDisplay { get; set; }
     public required int SortOrder { get; set; }
     public required string? ProjectName { get; set; }
-
     public int DaysSinceStatusChange => (DateTime.UtcNow - LastStatusUpdate).Days;
-
     public required int? WordCount { get; set; }
-
     public int? DaysSinceContentUpdated => ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)ContentUpdated).Days;
-
+    public ResourceContentVersionReviewLevel ReviewLevel { get; set; }
     [JsonIgnore]
     public DateTime? ContentUpdated { get; set; }
 
