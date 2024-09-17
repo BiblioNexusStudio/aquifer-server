@@ -23,7 +23,8 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
 
         Response.LanguageOptions = await dbContext.Languages.Select(x => new SubscriberOption
             {
-                Id = x.Id, EnglishDisplayName = x.EnglishDisplay
+                Id = x.Id,
+                EnglishDisplayName = x.EnglishDisplay
             })
             .ToListAsync(ct);
     }
