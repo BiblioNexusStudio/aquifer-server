@@ -76,6 +76,7 @@ public class Endpoint(AquiferDbContext dbContext, ILogger<Endpoint> logger) : En
         subscriber.GetNewsletter = req.GetNewsletter;
         subscriber.Name = req.Name;
         subscriber.Organization = req.Organization;
+        subscriber.Enabled = true;
     }
 
     private async Task HandleNewSubscriberAsync(Request req, CancellationToken ct)
@@ -90,7 +91,8 @@ public class Endpoint(AquiferDbContext dbContext, ILogger<Endpoint> logger) : En
                     req.SelectedParentResourceIds.Select(id => new ContentSubscriberParentResourceEntity { ParentResourceId = id })
                         .ToList(),
                 ContentSubscriberLanguages = req.SelectedLanguageIds.Select(id => new ContentSubscriberLanguageEntity { LanguageId = id })
-                    .ToList()
+                    .ToList(),
+                Enabled = true
             },
             ct);
     }
