@@ -1,4 +1,4 @@
-﻿namespace Aquifer.Public.API.Endpoints.BibleBooks.List;
+﻿namespace Aquifer.Public.API.Endpoints.Bibles.Books.List;
 
 public record Response
 {
