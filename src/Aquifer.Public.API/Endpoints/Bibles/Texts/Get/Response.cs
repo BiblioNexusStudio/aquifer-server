@@ -7,17 +7,37 @@ public class Response
     public required string BibleAbbreviation { get; set; }
     public required string BookName { get; set; }
     public required string BookCode { get; set; }
-    public required IReadOnlyList<ResponseChapters> Chapters { get; set; }
+    public required IReadOnlyList<ResponseChapter> Chapters { get; set; }
 }
 
-public class ResponseChapters
+public class ResponseChapter
 {
     public required int Number { get; set; }
-    public required IReadOnlyList<ResponseChapterVerses> Verses { get; set; }
+    public required ResponseChapterAudio? Audio { get; set; }
+    public required IReadOnlyList<ResponseChapterVerse> Verses { get; set; }
 }
 
-public class ResponseChapterVerses
+public class ResponseChapterAudio
+{
+    public required ResponseAudioFile? Webm { get; set; }
+    public required ResponseAudioFile? Mp3 { get; set; }
+}
+
+public class ResponseAudioFile
+{
+    public required string Url { get; set; }
+    public required int Size { get; set; }
+}
+
+public class ResponseChapterVerse
 {
     public required int Number { get; set; }
     public required string Text { get; set; }
+    public required ResponseChapterVerseAudioTimestamp? AudioTimestamp { get; set; }
+}
+
+public class ResponseChapterVerseAudioTimestamp
+{
+    public required decimal Start { get; set; }
+    public required decimal End { get; set; }
 }

@@ -32,4 +32,9 @@ public class Request
     /// Optional end verse in the end chapter. Must also provide an end chapter if specified.
     /// </summary>
     public int? EndVerse { get; init; }
+
+    /// <summary>
+    /// If <c>true</c> then any available audio information for each chapter and verse will be included in the response.
+    /// </summary>
+    public bool ShouldReturnAudioData { get; init; }
 }
