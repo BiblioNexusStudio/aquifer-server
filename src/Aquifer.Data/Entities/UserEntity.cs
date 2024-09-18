@@ -20,6 +20,9 @@ public class UserEntity : IHasUpdatedTimestamp
     public int CompanyId { get; set; }
     public CompanyEntity Company { get; set; } = null!;
 
+    public int? LanguageId { get; set; }
+    public LanguageEntity Language { get; set; } = null!;
+
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
@@ -42,5 +45,6 @@ public enum UserRole
     Manager = 2,
     Publisher = 3,
     Admin = 4,
-    ReportViewer = 5
+    ReportViewer = 5,
+    CommunityReviewer = 6,
 }
