@@ -47,6 +47,20 @@ jobs:
         environment:
             name: dev-qa-jobs
         steps:
+            - name: Notify Slack deploy is starting
+              id: slack-notify
+              uses: BiblioNexusStudio/github-action-slack-notify-build@main
+              with:
+                  channel_id: C05UPTGQGP9
+                  status: RUNNING
+                  color: warning
+                  environment: dev-qa
+                  default_branch_name: master
+                  service_name: Jobs
+              env:
+                  SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
             - uses: actions/download-artifact@v4.1.8
               with:
                   name: build
@@ -57,6 +71,21 @@ jobs:
                   app-name: ${{ vars.AZURE_FUNCTION_APP_NAME_DEV_QA }}
                   package: build
                   publish-profile: ${{ secrets.AZURE_FUNCTION_APP_PUBLISH_PROFILE_DEV_QA }}
+            - name: Notify Slack deploy status
+              if: ${{ !cancelled()  }}
+              uses: BiblioNexusStudio/github-action-slack-notify-build@main
+              with:
+                  channel_id: C05UPTGQGP9
+                  status: ${{ job.status == 'failure' && 'FAILURE' || 'SUCCESS' }}
+                  color: ${{ job.status == 'failure' && 'danger' || 'good' }}
+                  environment: dev-qa
+                  default_branch_name: master
+                  service_name: Jobs
+                  message_id: ${{ steps.slack-notify.outputs.message_id }}
+              env:
+                    SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                    LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
 
     deploy_jobs_to_prod:
         if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
@@ -66,6 +95,20 @@ jobs:
         environment:
             name: prod-jobs
         steps:
+            - name: Notify Slack deploy is starting
+              id: slack-notify
+              uses: BiblioNexusStudio/github-action-slack-notify-build@main
+              with:
+                  channel_id: C05UPTGQGP9
+                  status: RUNNING
+                  color: warning
+                  environment: prod
+                  default_branch_name: master
+                  service_name: Jobs
+              env:
+                  SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
             - uses: actions/download-artifact@v4.1.8
               with:
                   name: build
@@ -76,4 +119,19 @@ jobs:
                   app-name: ${{ vars.AZURE_FUNCTION_APP_NAME_PROD }}
                   package: build
                   publish-profile: ${{ secrets.AZURE_FUNCTION_APP_PUBLISH_PROFILE_PROD }}
+            - name: Notify Slack deploy status
+              if: ${{ !cancelled()  }}
+              uses: BiblioNexusStudio/github-action-slack-notify-build@main
+              with:
+                  channel_id: C05UPTGQGP9
+                  status: ${{ job.status == 'failure' && 'FAILURE' || 'SUCCESS' }}
+                  color: ${{ job.status == 'failure' && 'danger' || 'good' }}
+                  environment: prod
+                  default_branch_name: master
+                  service_name: Jobs
+                  message_id: ${{ steps.slack-notify.outputs.message_id }}
+              env:
+                    SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                    LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
 
