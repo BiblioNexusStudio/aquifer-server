@@ -25,16 +25,13 @@ public class Validator : Validator<Request>
             .WithMessage(x => "'{PropertyName}' must also be provided when 'End Verse' is provided.");
 
         RuleFor(x => x.StartChapter)
-            .GreaterThanOrEqualTo(1);
-
+            .InclusiveBetween(1, 999);
         RuleFor(x => x.StartVerse)
-            .GreaterThanOrEqualTo(1);
-
+            .InclusiveBetween(1, 999);
         RuleFor(x => x.EndChapter)
-            .GreaterThanOrEqualTo(1);
-
+            .InclusiveBetween(1, 999);
         RuleFor(x => x.EndVerse)
-            .GreaterThanOrEqualTo(1);
+            .InclusiveBetween(1, 999);
 
         When(
             x => x.StartChapter.HasValue && x.EndChapter.HasValue,
