@@ -8,7 +8,6 @@ namespace Aquifer.Public.API.Endpoints.Bibles.Texts.Get;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 {
-    private readonly AquiferDbContext _dbContext = dbContext;
     public override void Configure()
     {
         Get("/bibles/{BibleId}/texts");
@@ -28,7 +27,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         var startVerse = request.StartVerse ?? 1;
         var endVerse = request.EndVerse ?? 999;
 
-        var bookData = await _dbContext.BibleBooks
+        var bookData = await dbContext.BibleBooks
             .Where(bb => bb.Bible.Enabled && bb.Bible.Id == request.BibleId && bb.Code == request.BookCode!.ToUpper())
             .Select(bb => new
             {
@@ -55,7 +54,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         var parsedAudioUrls = bookData is null || !request.ShouldReturnAudioData
             ? null
             : DeserializeAudioUrls(
-                await _dbContext.BibleBookContents
+                await dbContext.BibleBookContents
                     .Where(bbc => bbc.BibleId == request.BibleId && bbc.BookId == bookData.BookId)
                     .Select(bbc => bbc.AudioUrls)
                     .FirstOrDefaultAsync(ct));

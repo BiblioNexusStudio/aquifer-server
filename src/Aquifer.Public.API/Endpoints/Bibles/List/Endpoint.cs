@@ -6,8 +6,6 @@ namespace Aquifer.Public.API.Endpoints.Bibles.List;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IReadOnlyList<Response>>
 {
-    private readonly AquiferDbContext _dbContext = dbContext;
-
     public override void Configure()
     {
         Get("/bibles");
@@ -22,7 +20,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IReadOnlyL
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var bibles = await _dbContext.Bibles
+        var bibles = await dbContext.Bibles
             .Where(b =>
                 b.Enabled &&
                 !b.RestrictedLicense &&
