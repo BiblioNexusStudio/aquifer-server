@@ -33,7 +33,7 @@ public class BibleBookContentEntity : IHasUpdatedTimestamp
     /// </summary>
     public sealed class AudioUrlsData
     {
-        public required IReadOnlyList<Chapter> Chapters { get; set; }
+        public IReadOnlyList<Chapter>? Chapters { get; set; }
 
         public sealed class Chapter
         {
@@ -41,9 +41,9 @@ public class BibleBookContentEntity : IHasUpdatedTimestamp
             /// The chapter number is a JSON string type but is currently only populated with integer values (this might change in the future).
             /// </summary>
             public required string Number { get; set; }
-            public required AudioUrl? Webm { get; set; }
-            public required AudioUrl? Mp3 { get; set; }
-            public required IReadOnlyList<AudioTimestamp> AudioTimestamps { get; set; }
+            public AudioUrl? Webm { get; set; }
+            public AudioUrl? Mp3 { get; set; }
+            public IReadOnlyList<AudioTimestamp>? AudioTimestamps { get; set; }
 
             public sealed class AudioUrl
             {

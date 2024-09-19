@@ -72,7 +72,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 Chapters = bookData.Chapters
                     .Select(ch =>
                     {
-                        var chapterAudio = parsedAudioUrls?.Chapters.FirstOrDefault(c => c.Number == ch.Number.ToString());
+                        var chapterAudio = parsedAudioUrls?.Chapters?.FirstOrDefault(c => c.Number == ch.Number.ToString());
 
                         return new ResponseChapter
                         {
@@ -82,7 +82,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                                 .Select(v => new ResponseChapterVerse
                                 {
                                     Number = v.Number,
-                                    AudioTimestamp = MapToResponseAudioTimestamp(chapterAudio?.AudioTimestamps.FirstOrDefault(at => at.VerseNumber == v.Number.ToString())),
+                                    AudioTimestamp = MapToResponseAudioTimestamp(chapterAudio?.AudioTimestamps?.FirstOrDefault(at => at.VerseNumber == v.Number.ToString())),
                                     Text = v.Text,
                                 })
                                 .ToList(),
