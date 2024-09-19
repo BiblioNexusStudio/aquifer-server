@@ -8,9 +8,8 @@ public class Endpoint : EndpointWithoutRequest<IEnumerable<Response>>
 {
     public override void Configure()
     {
-        // "/bible-books" is still supported for legacy compatibility
-        // "/bibles/books" is the new hotness
-        Get("/bible-books", "/bibles/books");
+        // "/bible-books" is still supported for legacy compatibility but "/bibles/books" is the new hotness
+        Get("/bibles/books");
         Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
 
         Summary(s =>
