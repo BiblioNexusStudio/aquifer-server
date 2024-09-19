@@ -1,3 +1,4 @@
+using Aquifer.API.Common;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -40,7 +41,12 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                      (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
                 (req.ParentResourceId == x.ResourceContent.Resource.ParentResourceId ||
                  req.ResourceTypes.Contains(x.ResourceContent.Resource.ParentResource.ResourceType)) &&
-                x.ResourceContent.LanguageId == req.LanguageId).OrderBy(r => r.ResourceContent.Resource.SortOrder)
+                // Either it's in the requested language or it's allowed to fallback to English and has no resource in requested language
+                (x.ResourceContent.LanguageId == req.LanguageId ||
+                 (Constants.FallbackToEnglishForMediaTypes.Contains(x.ResourceContent.MediaType) &&
+                  x.ResourceContent.LanguageId == 1 &&
+                  !x.ResourceContent.Resource.ResourceContents.Any(rc => rc.LanguageId == req.LanguageId))))
+            .OrderBy(r => r.ResourceContent.Resource.SortOrder)
             .ThenBy(r => r.DisplayName)
             .Select(rcv => new Response
             {
