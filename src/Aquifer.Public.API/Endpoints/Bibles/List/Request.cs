@@ -3,12 +3,12 @@
 public class Request
 {
     /// <summary>
-    /// Optional language to search on by internal Aquifer language ID. If no language is specified then Bibles for all languages will be returned. Only one of language ID or code may be provided.
+    /// Optional language to search on by internal Aquifer language id. If no language is specified then Bibles for all languages will be returned. Only one of language id or code may be provided.
     /// </summary>
     public int? LanguageId { get; init; }
 
     /// <summary>
-    /// Optional language to search on by ISO 639-3 code that is 3 characters in length (e.g. "eng"). If no language value is specified then Bibles for all languages will be returned. Only one of language ID or code may be provided.
+    /// Optional language to search on by ISO 639-3 code that is 3 characters in length (e.g. "eng"). If no language value is specified then Bibles for all languages will be returned. Only one of language id or code may be provided.
     /// </summary>
     public string? LanguageCode { get; init; }
 

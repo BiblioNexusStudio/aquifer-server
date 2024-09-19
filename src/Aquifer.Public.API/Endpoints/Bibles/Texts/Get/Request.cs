@@ -3,7 +3,7 @@
 public class Request
 {
     /// <summary>
-    /// The ID of the Bible for which to return text.
+    /// The id of the Bible for which to return text.
     /// </summary>
     public int BibleId { get; init; }
 

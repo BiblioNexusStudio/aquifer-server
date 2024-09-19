@@ -14,7 +14,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IReadOnlyL
         {
             s.Summary = "Get a list of Bibles.";
             s.Description =
-                "For a given optional language ID, returns the Bibles in the system including language information, abbreviation codes, whether or not the Bible supports a Greek alignment, and license information.";
+                "For a given optional language id, returns the Bibles in the system including language information, abbreviation codes, whether or not the Bible supports a Greek alignment, and license information.";
         });
     }
 
