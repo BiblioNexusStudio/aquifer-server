@@ -1,4 +1,6 @@
-﻿namespace Aquifer.Public.API.Endpoints.Bibles.Texts.Get;
+﻿using System.Text.Json.Serialization;
+
+namespace Aquifer.Public.API.Endpoints.Bibles.Texts.Get;
 
 public class Response
 {
@@ -13,7 +15,10 @@ public class Response
 public class ResponseChapter
 {
     public required int Number { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public required ResponseChapterAudio? Audio { get; set; }
+
     public required IReadOnlyList<ResponseChapterVerse> Verses { get; set; }
 }
 
@@ -33,6 +38,8 @@ public class ResponseChapterVerse
 {
     public required int Number { get; set; }
     public required string Text { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public required ResponseChapterVerseAudioTimestamp? AudioTimestamp { get; set; }
 }
 
