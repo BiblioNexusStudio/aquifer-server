@@ -10,7 +10,6 @@ public record Response
     public required string Abbreviation { get; set; }
     public required int LanguageId { get; set; }
     public required bool IsLanguageDefault { get; set; }
-    public required bool HasGreekAlignment { get; set; }
     public required bool HasAudio { get; set; }
 
     public object? LicenseInfo =>

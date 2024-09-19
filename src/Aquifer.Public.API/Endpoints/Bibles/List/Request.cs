@@ -18,11 +18,6 @@ public class Request
     public bool? IsLanguageDefault { get; init; }
 
     /// <summary>
-    /// If specified then only Bibles that have Greek alignment (for <c>true</c>) or that don't have a Greek alignment (for <c>false</c>) will be returned. If no value is provided then all Bibles will be returned.
-    /// </summary>
-    public bool? HasGreekAlignment { get; init; }
-
-    /// <summary>
     /// If specified then only Bibles that have audio files (for <c>true</c>) or that don't have audio files (for <c>false</c>) will be returned. If no value is provided then all Bibles will be returned.
     /// </summary>
     public bool? HasAudio { get; init; }
