@@ -22,11 +22,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var startChapter = request.StartChapter ?? 1;
-        var endChapter = request.EndChapter ?? 999;
-        var startVerse = request.StartVerse ?? 1;
-        var endVerse = request.EndVerse ?? 999;
-
         var bookData = await dbContext.BibleBooks
             .Where(bb => bb.Bible.Enabled && bb.Bible.Id == request.BibleId && bb.Code == request.BookCode.ToUpper())
             .Select(bb => new
@@ -38,13 +33,13 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 BookId = bb.Number,
                 BookName = bb.LocalizedName,
                 Chapters = bb.Chapters
-                    .Where(ch => ch.Number >= startChapter && ch.Number <= endChapter)
+                    .Where(ch => ch.Number >= request.StartChapter && ch.Number <= request.EndChapter)
                     .Select(ch => new
                     {
                         ch.Number,
                         Verses = ch.Verses
-                            .Where(v => (ch.Number != startChapter || v.Number >= startVerse) &&
-                                (ch.Number != endChapter || v.Number <= endVerse))
+                            .Where(v => (ch.Number != request.StartChapter || v.Number >= request.StartVerse) &&
+                                (ch.Number != request.EndChapter || v.Number <= request.EndVerse))
                             .ToList(),
                     })
                     .ToList(),
