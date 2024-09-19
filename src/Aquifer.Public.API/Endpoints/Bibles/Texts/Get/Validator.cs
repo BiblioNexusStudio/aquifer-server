@@ -11,7 +11,7 @@ public class Validator : Validator<Request>
     {
         RuleFor(x => x.BookCode).NotEmpty();
         RuleFor(x => x.BookCode)
-            .Must(code => BibleBookCodeUtilities.IdFromCode(code!) != BookId.None)
+            .Must(code => BibleBookCodeUtilities.IdFromCode(code) != BookId.None)
             .When(x => x.BookCode is not null)
             .WithMessage(x => "Invalid '{PropertyName}': \"{PropertyValue}\".");
 

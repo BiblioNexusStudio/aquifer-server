@@ -11,7 +11,7 @@ public class Request
     /// Book code based off USFM book identifier (e.g. GEN, EXO, etc.). Can get a list of available books and identifiers
     /// from the /bible-books endpoint. This parameter is required.
     /// </summary>
-    public string? BookCode { get; init; }
+    public string BookCode { get; init; } = null!;
 
     /// <summary>
     /// Optional start chapter in the book. Required if start verse is specified.

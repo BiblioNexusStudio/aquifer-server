@@ -28,7 +28,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         var endVerse = request.EndVerse ?? 999;
 
         var bookData = await dbContext.BibleBooks
-            .Where(bb => bb.Bible.Enabled && bb.Bible.Id == request.BibleId && bb.Code == request.BookCode!.ToUpper())
+            .Where(bb => bb.Bible.Enabled && bb.Bible.Id == request.BibleId && bb.Code == request.BookCode.ToUpper())
             .Select(bb => new
             {
                 BibleId = bb.Bible.Id,
