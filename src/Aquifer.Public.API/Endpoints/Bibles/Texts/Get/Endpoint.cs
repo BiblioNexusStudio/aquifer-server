@@ -23,7 +23,11 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var bookData = await dbContext.BibleBooks
-            .Where(bb => bb.Bible.Enabled && bb.Bible.Id == request.BibleId && bb.Code == request.BookCode.ToUpper())
+            .Where(bb =>
+                bb.Bible.Enabled &&
+                !bb.Bible.RestrictedLicense &&
+                bb.Bible.Id == request.BibleId &&
+                bb.Code == request.BookCode.ToUpper())
             .Select(bb => new
             {
                 BibleId = bb.Bible.Id,
