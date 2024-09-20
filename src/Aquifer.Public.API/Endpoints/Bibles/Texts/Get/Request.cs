@@ -14,22 +14,22 @@ public class Request
     public string BookCode { get; init; } = null!;
 
     /// <summary>
-    /// Optional start chapter in the book. Required if start verse is specified.
+    /// Optional start chapter in the book.
     /// </summary>
     public int StartChapter { get; init; } = 1;
 
     /// <summary>
-    /// Optional start verse in the start chapter. Must also provide a start chapter if specified.
+    /// Optional start verse in the start chapter.
     /// </summary>
     public int StartVerse { get; init; } = 1;
 
     /// <summary>
-    /// Optional end chapter in the book. Required if end verse is specified.
+    /// Optional end chapter in the book.
     /// </summary>
     public int EndChapter { get; init; } = 999;
 
     /// <summary>
-    /// Optional end verse in the end chapter. Must also provide an end chapter if specified.
+    /// Optional end verse in the end chapter.
     /// </summary>
     public int EndVerse { get; init; } = 999;
 
