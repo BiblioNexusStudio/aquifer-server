@@ -2,13 +2,13 @@ using Aquifer.Common.Utilities;
 using Aquifer.Public.API.Helpers;
 using FastEndpoints;
 
-namespace Aquifer.Public.API.Endpoints.BibleBooks.List;
+namespace Aquifer.Public.API.Endpoints.Bibles.Books.List;
 
 public class Endpoint : EndpointWithoutRequest<IEnumerable<Response>>
 {
     public override void Configure()
     {
-        Get("/bible-books");
+        Get("/bibles/books");
         Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
 
         Summary(s =>
