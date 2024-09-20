@@ -39,6 +39,7 @@ public static class SwaggerDocumentSettings
                                   """;
                 td["Languages"] = "Endpoints for pulling data specific to languages.";
                 td["Bible-Books"] = "Endpoints for pulling data specific to Bible books.";
+                td["Bibles"] = "Endpoints for discovering available Bibles and pulling down Bible text and audio information.";
             };
         });
     }
