@@ -1,4 +1,5 @@
-﻿using FastEndpoints.Swagger;
+﻿using Aquifer.Public.API.Helpers;
+using FastEndpoints.Swagger;
 using NSwag;
 
 namespace Aquifer.Public.API.OpenApi;
@@ -11,6 +12,7 @@ public static class SwaggerDocumentSettings
         {
             sd.ShortSchemaNames = true;
             sd.EnableJWTBearerAuth = false;
+            sd.EndpointFilter = ep => ep.EndpointTags?.Contains(EndpointHelpers.EndpointTags.ExcludeFromSwaggerDocument) != true;
             sd.DocumentSettings = ds =>
             {
                 ds.Title = "Aquifer API";
@@ -38,7 +40,7 @@ public static class SwaggerDocumentSettings
                                   is "Dictionary".
                                   """;
                 td["Languages"] = "Endpoints for pulling data specific to languages.";
-                td["Bible-Books"] = "Endpoints for pulling data specific to Bible books.";
+                td["Bibles"] = "Endpoints for discovering available Bibles and pulling down Bible text and audio information.";
             };
         });
     }

@@ -6,11 +6,8 @@ public class LegacyEndpoint : Endpoint
 {
     public override void Configure()
     {
-        // "/bible-books" is still supported for legacy compatibility but "/bibles/books" is the new hotness
         Get("/bible-books");
+        Tags(EndpointHelpers.EndpointTags.ExcludeFromSwaggerDocument);
         Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
-
-        // we can eventually hide this endpoint from the docs altogether: https://fast-endpoints.com/docs/swagger-support#filtering-endpoints
-        Summary(s => s.Summary = "Deprecated: Use '/bibles/books' instead.");
     }
 }
