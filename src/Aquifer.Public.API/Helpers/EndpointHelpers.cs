@@ -10,6 +10,7 @@ public static class EndpointHelpers
     {
         return x => x.CacheOutput(c => c.Expire(TimeSpan.FromSeconds(seconds)));
     }
+
     public static class EndpointTags
     {
         public const string ExcludeFromSwaggerDocument = nameof(ExcludeFromSwaggerDocument);
