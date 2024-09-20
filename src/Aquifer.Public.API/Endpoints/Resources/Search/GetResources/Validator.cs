@@ -19,7 +19,7 @@ public class Validator : Validator<Request>
 
         RuleFor(x => x.BookCode).NotNull().When(x => x.StartChapter > 0);
         RuleFor(x => x.BookCode).Must(x => BibleBookCodeUtilities.IdFromCode(x!) != BookId.None)
-            .WithMessage("Invalid book code {PropertyValue}. Get a valid list from /bible-books endpoint.")
+            .WithMessage("Invalid book code {PropertyValue}. Get a valid list from /bibles/books endpoint.")
             .When(x => x.BookCode is not null);
 
         RuleFor(x => x).Must(x =>

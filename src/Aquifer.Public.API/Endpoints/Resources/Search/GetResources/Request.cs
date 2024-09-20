@@ -13,7 +13,7 @@ public record Request
 
     /// <summary>
     ///     Book code based off USFM book identifier (e.g. GEN, EXO, etc.). Can get a list of available books and identifiers
-    ///     from the /bible-books endpoint. Use this by itself to search across an entire book. Required if no query parameter provided.
+    ///     from the /bibles/books endpoint. Use this by itself to search across an entire book. Required if no query parameter provided.
     /// </summary>
     public string? BookCode { get; init; }
 
