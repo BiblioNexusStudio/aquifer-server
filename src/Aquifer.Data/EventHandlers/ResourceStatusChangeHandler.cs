@@ -64,6 +64,7 @@ public static class ResourceStatusChangeHandler
             await using var dbContext = new AquiferDbContext(dbContextOptions);
             await dbContext.Projects.Where(x =>
                     x.ActualDeliveryDate != null &&
+                    x.ActualPublishDate == null &&
                     x.ResourceContents.Any(rc => inProgressIds.Contains(rc.Id)) &&
                     x.ResourceContents.Where(rc => !inProgressIds.Contains(rc.Id))
                         .All(rc => InReviewOrGreaterStatuses.Contains(rc.Status)))

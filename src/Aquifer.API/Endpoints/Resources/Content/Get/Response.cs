@@ -34,7 +34,12 @@ public class Response
     public ProjectResponse? Project =>
         ProjectEntity == null
             ? null
-            : new ProjectResponse { Id = ProjectEntity.Id, Name = ProjectEntity.Name };
+            : new ProjectResponse
+            {
+                Id = ProjectEntity.Id,
+                Name = ProjectEntity.Name,
+                IsComplete = ProjectEntity.ActualPublishDate is not null
+            };
 
     public CommentThreadsResponse CommentThreads { get; set; } = null!;
 
@@ -73,6 +78,7 @@ public class ProjectResponse
 {
     public required int Id { get; set; }
     public required string Name { get; set; }
+    public required bool IsComplete { get; set; }
 }
 
 public class VerseReferenceResponse

@@ -42,6 +42,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 ItemCount = x.ResourceContents.Count,
                 WordCount = x.SourceWordCount,
                 IsStarted = x.Started != null,
+                IsCompleted = x.ActualPublishDate != null,
                 Days =
                     x.ProjectedDeliveryDate.HasValue
                         ? x.ProjectedDeliveryDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber
