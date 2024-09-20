@@ -11,6 +11,7 @@ public record Response
     public required int LanguageId { get; set; }
     public required bool IsLanguageDefault { get; set; }
     public required bool HasAudio { get; set; }
+    public required bool HasGreekAlignment { get; set; }
 
     public object? LicenseInfo =>
         SerializedLicenseInfo == null ? null : JsonUtilities.DefaultDeserialize(SerializedLicenseInfo);
