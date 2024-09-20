@@ -1,4 +1,6 @@
-﻿namespace Aquifer.Public.API.Endpoints.Bibles.Texts.Get;
+﻿using System.ComponentModel;
+
+namespace Aquifer.Public.API.Endpoints.Bibles.Texts.Get;
 
 public class Request
 {
@@ -16,25 +18,30 @@ public class Request
     /// <summary>
     /// Optional start chapter in the book.
     /// </summary>
+    [DefaultValue(1)]
     public int StartChapter { get; init; } = 1;
 
     /// <summary>
     /// Optional start verse in the start chapter.
     /// </summary>
+    [DefaultValue(1)]
     public int StartVerse { get; init; } = 1;
 
     /// <summary>
     /// Optional end chapter in the book.
     /// </summary>
+    [DefaultValue(999)]
     public int EndChapter { get; init; } = 999;
 
     /// <summary>
     /// Optional end verse in the end chapter.
     /// </summary>
+    [DefaultValue(999)]
     public int EndVerse { get; init; } = 999;
 
     /// <summary>
-    /// If <c>true</c> then any available audio information for each chapter and verse will be included in the response.
+    /// Optional. If <c>true</c> then any available audio information for each chapter and verse will be included in the response.
     /// </summary>
+    [DefaultValue(false)]
     public bool ShouldReturnAudioData { get; init; }
 }
