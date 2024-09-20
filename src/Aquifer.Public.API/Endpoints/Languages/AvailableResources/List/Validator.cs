@@ -11,7 +11,7 @@ public class Validator : Validator<Request>
     {
         // Should look into not having to duplicate this logic. It's also in /resources/Search/GetResources.
         RuleFor(x => x.BookCode).Must(x => x != null && BibleBookCodeUtilities.IdFromCode(x) != BookId.None)
-            .WithMessage("Invalid book code {PropertyValue}. Get a valid list from /bible-books endpoint.");
+            .WithMessage("Invalid book code {PropertyValue}. Get a valid list from /bibles/books endpoint.");
 
         RuleFor(x => x.StartChapter).InclusiveBetween(0, 150);
         RuleFor(x => x.EndChapter).InclusiveBetween(0, 150);

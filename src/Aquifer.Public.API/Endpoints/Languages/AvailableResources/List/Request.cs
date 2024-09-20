@@ -6,7 +6,7 @@ public record Request
 {
     /// <summary>
     ///     Required book code based off USFM book identifier (e.g. GEN, EXO, etc.). Can get a list of available books and identifiers
-    ///     from the /bible-books endpoint. Use this by itself to search across an entire book.
+    ///     from the /bibles/books endpoint. Use this by itself to search across an entire book.
     /// </summary>
     public required string BookCode { get; init; }
 

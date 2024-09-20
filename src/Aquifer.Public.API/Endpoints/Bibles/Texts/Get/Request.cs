@@ -9,7 +9,7 @@ public class Request
 
     /// <summary>
     /// Book code based off USFM book identifier (e.g. GEN, EXO, etc.). Can get a list of available books and identifiers
-    /// from the /bible-books endpoint. This parameter is required.
+    /// from the /bibles/books endpoint. This parameter is required.
     /// </summary>
     public string BookCode { get; init; } = null!;
 
