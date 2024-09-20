@@ -44,6 +44,9 @@ public class ResourceContentEntityConfiguration : IEntityTypeConfiguration<Resou
     {
         builder.HasIndex(e => new { e.LanguageId, e.MediaType })
             .IncludeProperties(e => new { e.Created, e.ResourceId, e.Status });
+
+        builder.HasIndex(e => new { e.Status })
+            .IncludeProperties(e => new { e.ContentUpdated, e.LanguageId, e.ResourceId });
     }
 }
 
