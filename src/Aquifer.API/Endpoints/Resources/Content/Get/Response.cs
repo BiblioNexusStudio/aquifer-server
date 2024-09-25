@@ -30,6 +30,7 @@ public class Response
     public IEnumerable<SnapshotResponse> Snapshots { get; set; } = null!;
     public IEnumerable<VersionResponse> Versions { get; set; } = null!;
     public MachineTranslationResponse? MachineTranslation { get; set; }
+    public IEnumerable<MachineTranslationResponse> MachineTranslations { get; set; } = null!;
 
     public ProjectResponse? Project =>
         ProjectEntity == null
@@ -170,6 +171,7 @@ public class CommentResponse
 public class MachineTranslationResponse
 {
     public int Id { get; set; }
+    public int ContentIndex { get; set; }
     public int UserId { get; set; }
     public byte UserRating { get; set; }
     public bool ImproveClarity { get; set; }
