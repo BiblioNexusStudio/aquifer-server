@@ -19,7 +19,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         var existingMt =
             await dbContext.ResourceContentVersionMachineTranslations
-                .FirstOrDefaultAsync(x => x.ResourceContentVersionId == req.ResourceContentVersionId, ct);
+                .FirstOrDefaultAsync(x => x.ResourceContentVersionId == req.ResourceContentVersionId && x.ContentIndex == req.ContentIndex, ct);
 
         if (existingMt is not null)
         {
@@ -32,6 +32,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ResourceContentVersionId = req.ResourceContentVersionId,
             DisplayName = req.DisplayName,
             Content = req.Content,
+            ContentIndex = req.ContentIndex,
             UserId = user.Id,
             SourceId = req.SourceId
         };

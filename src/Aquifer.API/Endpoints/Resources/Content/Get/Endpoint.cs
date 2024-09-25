@@ -83,11 +83,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             .ToListAsync(ct);
 
         resourceContent.PassageReferences = await dbContext.PassageResources.Where(x => x.ResourceId == resourceContent.ResourceId)
-            .Select(pr => new PassageReferenceResponse
-            {
-                StartVerseId = pr.Passage.StartVerseId,
-                EndVerseId = pr.Passage.EndVerseId
-            })
+            .Select(pr => new PassageReferenceResponse { StartVerseId = pr.Passage.StartVerseId, EndVerseId = pr.Passage.EndVerseId })
             .ToListAsync(ct);
 
         var relevantContentVersion = await dbContext.ResourceContentVersions.Where(rcv => rcv.ResourceContentId == request.Id)
@@ -136,15 +132,22 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var versions = await dbContext.ResourceContentVersions
             .Where(rcv => rcv.Id != relevantContentVersion.Id && rcv.ResourceContentId == relevantContentVersion.ResourceContentId)
             .OrderByDescending(rcv => rcv.Created)
-            .Select(rcv => new VersionResponse
-            {
-                Id = rcv.Id,
-                Created = rcv.Created,
-                Version = rcv.Version,
-                IsPublished = rcv.IsPublished
-            })
+            .Select(rcv => new VersionResponse { Id = rcv.Id, Created = rcv.Created, Version = rcv.Version, IsPublished = rcv.IsPublished })
             .ToListAsync(ct);
 
+        resourceContent.MachineTranslations = relevantContentVersion.MachineTranslations.Select(mt => new MachineTranslationResponse
+        {
+            Id = mt.Id,
+            ContentIndex = mt.ContentIndex,
+            UserId = mt.UserId,
+            UserRating = mt.UserRating,
+            ImproveClarity = mt.ImproveClarity,
+            ImproveConsistency = mt.ImproveConsistency,
+            ImproveTone = mt.ImproveTone
+        })
+            .ToList();
+
+        // TODO: remove after deploy
         resourceContent.MachineTranslation = relevantContentVersion.MachineTranslations.Select(mt => new MachineTranslationResponse
         {
             Id = mt.Id,

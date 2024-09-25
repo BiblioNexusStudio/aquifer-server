@@ -11,7 +11,8 @@ public class ResourceContentVersionMachineTranslationEntity : IHasUpdatedTimesta
     public int ResourceContentVersionId { get; set; }
     public MachineTranslationSourceId SourceId { get; set; }
     public string? DisplayName { get; set; }
-    public string Content { get; set; } = null!; // JSON
+    public string Content { get; set; } = null!; // HTML
+    public int ContentIndex { get; set; }
     public int UserId { get; set; }
     public byte UserRating { get; set; }
     public bool ImproveClarity { get; set; }
