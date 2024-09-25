@@ -1,4 +1,5 @@
-﻿using Aquifer.API.Services;
+﻿using Aquifer.API.Common;
+using Aquifer.API.Services;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override void Configure()
     {
         Get("/resources/content/assigned-to-self/history");
+        Permissions(PermissionName.ReadResources);
     }
 
     public override async Task HandleAsync(CancellationToken ct)
@@ -17,8 +19,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var user = await userService.GetUserFromJwtAsync(ct);
         var queryResults = await dbContext.ResourceContentVersionAssignedUserHistory
             .Where(x => x.ChangedByUserId == user.Id &&
-                x.Created > DateTime.UtcNow.AddDays(-45) &&
-                x.ResourceContentVersion.AssignedUserId != user.Id)
+                        x.Created > DateTime.UtcNow.AddDays(-45) &&
+                        x.ResourceContentVersion.AssignedUserId != user.Id)
             .Select(x => new Response
             {
                 Id = x.ResourceContentVersion.ResourceContentId,

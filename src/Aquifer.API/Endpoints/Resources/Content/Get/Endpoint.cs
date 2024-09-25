@@ -15,6 +15,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override void Configure()
     {
         Get("/resources/content/{Id}");
+        Permissions(PermissionName.ReadResources);
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
@@ -112,11 +113,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             Constants.ReviewPendingStatuses.Contains(resourceContent.Status))
         {
             resourceContent.CanPullBackToManagerReview = resourceContent.ProjectEntity?.CompanyLeadUserId == self.Id ||
-                await dbContext.ResourceContentVersionAssignedUserHistory
-                    .Where(h => h.ResourceContentVersionId == relevantContentVersion.Id && h.AssignedUserId != null)
-                    .OrderByDescending(h => h.Created)
-                    .Select(h => h.AssignedUserId == self.Id)
-                    .FirstOrDefaultAsync(ct);
+                                                         await dbContext.ResourceContentVersionAssignedUserHistory
+                                                             .Where(h => h.ResourceContentVersionId == relevantContentVersion.Id &&
+                                                                         h.AssignedUserId != null)
+                                                             .OrderByDescending(h => h.Created)
+                                                             .Select(h => h.AssignedUserId == self.Id)
+                                                             .FirstOrDefaultAsync(ct);
         }
 
         var snapshots = await dbContext.ResourceContentVersionSnapshots

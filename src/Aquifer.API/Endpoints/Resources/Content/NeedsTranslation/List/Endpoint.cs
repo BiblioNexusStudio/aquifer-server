@@ -1,4 +1,5 @@
 using Aquifer.API.Common;
+using Aquifer.API.Services;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -6,28 +7,29 @@ using FastEndpoints;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.Content.List;
+namespace Aquifer.API.Endpoints.Resources.Content.NeedsTranslation.List;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
-        Get("/resources/content");
-        Permissions(PermissionName.ReadResourceLists);
+        Get("/resources/content/needs-translation");
+        Permissions(PermissionName.ReadResources);
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
+        var user = await userService.GetUserFromJwtAsync(ct);
         var (hasSearchQuery, isExactSearch) = GetSearchParams(req.SearchQuery);
         var likeKey = isExactSearch ? "" : "%";
         var searchParameter = new SqlParameter("SearchQuery", hasSearchQuery ? $"{likeKey}{req.SearchQuery!.Trim('"')}{likeKey}" : "");
 
-        var total = (await dbContext.Database.SqlQueryRaw<int>(BuildQuery(req, true, hasSearchQuery, isExactSearch), searchParameter)
+        var total = (await dbContext.Database.SqlQueryRaw<int>(BuildQuery(req, user, true, hasSearchQuery, isExactSearch), searchParameter)
             .ToListAsync(ct)).Single();
         var resourceContent = total == 0
             ? []
             : await dbContext.Database
-                .SqlQueryRaw<ResourceContentResponse>(BuildQuery(req, false, hasSearchQuery, isExactSearch), searchParameter)
+                .SqlQueryRaw<ResourceContentResponse>(BuildQuery(req, user, false, hasSearchQuery, isExactSearch), searchParameter)
                 .ToListAsync(ct);
 
         var response = new Response
@@ -39,17 +41,16 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         await SendOkAsync(response, ct);
     }
 
-    private static string BuildQuery(Request req, bool getTotalCount, bool hasSearchQuery, bool isExactSearch)
+    private static string BuildQuery(Request req, UserEntity user, bool getTotalCount, bool hasSearchQuery, bool isExactSearch)
     {
         const string selectCount = "SELECT COUNT(DISTINCT(RC.Id)) AS Count";
         const string selectProperties = """
                                         SELECT RC.Id AS Id, R.EnglishLabel, PR.DisplayName AS ParentResourceName,
-                                        L.EnglishDisplay AS LanguageEnglishDisplay, RC.Status AS StatusValue,
-                                        IIF(MAX(CAST(RCV.IsPublished as INT)) = 1, 1, 0) AS IsPublishedValue
+                                        COALESCE(RCV.SourceWordCount, RCV.WordCount) AS WordCount
                                         """;
 
         var groupingWithOffset = $"""
-                                  GROUP BY RC.Id, R.EnglishLabel, PR.DisplayName, L.EnglishDisplay, RC.Status, R.SortOrder
+                                  GROUP BY RC.Id, R.EnglishLabel, PR.DisplayName, L.EnglishDisplay, COALESCE(RCV.SourceWordCount, RCV.WordCount), R.SortOrder
                                   ORDER BY PR.DisplayName, R.SortOrder, R.EnglishLabel
                                   OFFSET {req.Offset} ROWS FETCH NEXT {req.Limit} ROWS ONLY
                                   """;
@@ -58,22 +59,26 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 {(getTotalCount ? selectCount : selectProperties)}
                 FROM ResourceContents RC
                     INNER JOIN Resources R ON R.Id = RC.ResourceId
-                    INNER JOIN ParentResources PR ON PR.id =R.ParentResourceId
+                    INNER JOIN ParentResources PR ON PR.id = R.ParentResourceId
                     INNER JOIN Languages L ON L.Id = RC.LanguageId
                     INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
                 WHERE RC.MediaType != {(int)ResourceContentMediaType.Audio}
-                {ApplyLanguageIdFilter(req.LanguageId)}
+                {ApplyLanguageIdFilter(user.LanguageId ?? 1)}
                 {ApplyParentResourceIdFilter(req.ParentResourceId)}
-                {ApplyIsPublishedFilter(req.IsPublished)}
                 {ApplySearchQueryFilter(hasSearchQuery, isExactSearch)}
                 {ApplyBookAndChapterFilter(req.BookCode, req.StartChapter, req.EndChapter)}
                 {(getTotalCount ? "" : groupingWithOffset)}
                 """;
     }
 
-    private static string ApplyLanguageIdFilter(int? languageId)
+    private static string ApplyLanguageIdFilter(int languageId)
     {
-        return languageId.HasValue ? $"AND RC.LanguageId = {languageId.Value}" : "";
+        return $"""
+                AND RC.LanguageId = 1 AND RCV.IsPublished = 1 AND NOT EXISTS (
+                    SELECT 1 FROM ResourceContents RCL
+                    WHERE RCL.ResourceId = R.Id AND RCL.LanguageId = {languageId}
+                )
+                """;
     }
 
     private static string ApplyParentResourceIdFilter(int? parentResourceId)
@@ -114,16 +119,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                     WHERE [R].[Id] = [p3].[ResourceId] AND [p4].[StartVerseId] <= {startVerseId} AND [p4].[EndVerseId] >= {endVerseId})
                 )
                 """;
-    }
-
-    private static string ApplyIsPublishedFilter(bool? isPublished)
-    {
-        if (!isPublished.HasValue)
-        {
-            return "";
-        }
-
-        return isPublished.Value ? "AND RCV.IsPublished = 1" : "AND RCV.IsDraft = 1";
     }
 
     private static string ApplySearchQueryFilter(bool hasSearchQuery, bool isExactSearch)

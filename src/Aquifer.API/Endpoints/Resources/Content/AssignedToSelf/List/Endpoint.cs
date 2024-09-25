@@ -1,3 +1,4 @@
+using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Common.Extensions;
 using Aquifer.Data;
@@ -32,6 +33,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override void Configure()
     {
         Get("/resources/content/assigned-to-self");
+        Permissions(PermissionName.ReadResources);
     }
 
     public override async Task HandleAsync(CancellationToken ct)
