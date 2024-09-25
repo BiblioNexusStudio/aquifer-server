@@ -15,6 +15,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override void Configure()
     {
         Get("/resources/content/{Id}");
+        Permissions(PermissionName.ReadResources);
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
