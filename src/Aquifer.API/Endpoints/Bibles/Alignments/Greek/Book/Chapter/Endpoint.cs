@@ -60,8 +60,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var bookCodeEnum = BibleBookCodeUtilities.IdFromCode(request.BookCode);
-        var lowerBounds = AlignmentUtilities.LowerBoundOfChapter(bookCodeEnum, request.Chapter);
-        var upperBounds = AlignmentUtilities.UpperBoundOfChapter(bookCodeEnum, request.Chapter);
+        var lowerBounds = new BibleWordIdentifier(bookCodeEnum, request.Chapter).WordIdentifier;
+        var upperBounds = BibleWordIdentifier.GetUpperBoundOfChapter(bookCodeEnum, request.Chapter).WordIdentifier;
 
         var baseQueryResults = await dbContext.Database
             .SqlQueryRaw<BaseQueryResult>(BaseQuery, new SqlParameter("LowerBounds", lowerBounds),
@@ -79,7 +79,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
             .ToListAsync(ct);
 
         Response = baseQueryResults
-            .GroupBy(r => (int)(r.WordIdentifier / 10000 % 1000))
+            .GroupBy(r => r.BibleWordIdentifier.Verse)
             .Select(v => new Response
             {
                 Verse = v.Key,
@@ -116,6 +116,10 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
         public long WordIdentifier { get; set; }
         public string EnglishWord { get; set; } = null!;
         public int? BibleVersionWordGroupId { get; set; }
+
+        public BibleWordIdentifier BibleWordIdentifier => _bibleWordIdentifier ??= new BibleWordIdentifier(WordIdentifier);
+
+        private BibleWordIdentifier? _bibleWordIdentifier = null;
     }
 
     public record GreekWords
