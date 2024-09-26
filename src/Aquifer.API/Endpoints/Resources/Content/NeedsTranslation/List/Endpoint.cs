@@ -94,29 +94,21 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             return "";
         }
 
-        var startVerseId = verseRange.Value.Item1;
-        var endVerseId = verseRange.Value.Item2;
+        var (startVerseId, endVerseId) = verseRange.Value;
 
         return $"""
                 AND (
                 EXISTS (SELECT 1
                     FROM [VerseResources] AS [v]
-                    WHERE [R].[Id] = [v].[ResourceId] AND [v].[VerseId] >= {startVerseId} AND [v].[VerseId] <= {endVerseId})
+                    WHERE [R].[Id] = [v].[ResourceId] AND [v].[VerseId] BETWEEN {startVerseId} AND {endVerseId})
                 OR
                 EXISTS (SELECT 1
                     FROM [PassageResources] AS [p]
                     INNER JOIN [Passages] AS [p0] ON [p].[PassageId] = [p0].[Id]
-                    WHERE [R].[Id] = [p].[ResourceId] AND [p0].[StartVerseId] >= {startVerseId} AND [p0].[StartVerseId] <= {endVerseId})
-                OR
-                EXISTS (SELECT 1
-                    FROM [PassageResources] AS [p1]
-                    INNER JOIN [Passages] AS [p2] ON [p1].[PassageId] = [p2].[Id]
-                    WHERE [R].[Id] = [p1].[ResourceId] AND [p2].[EndVerseId] >= {startVerseId} AND [p2].[EndVerseId] <= {endVerseId})
-                OR
-                EXISTS (SELECT 1
-                    FROM [PassageResources] AS [p3]
-                    INNER JOIN [Passages] AS [p4] ON [p3].[PassageId] = [p4].[Id]
-                    WHERE [R].[Id] = [p3].[ResourceId] AND [p4].[StartVerseId] <= {startVerseId} AND [p4].[EndVerseId] >= {endVerseId})
+                    WHERE [R].[Id] = [p].[ResourceId]
+                          AND ([p0].[StartVerseId] BETWEEN {startVerseId} AND {endVerseId}
+                               OR [p0].[EndVerseId] BETWEEN {startVerseId} AND {endVerseId}
+                               OR ([p0].[StartVerseId] <= {startVerseId} AND [p0].[EndVerseId] >= {endVerseId})))
                 )
                 """;
     }
@@ -133,7 +125,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     private static (bool hasSearchQuery, bool isExactQuery) GetSearchParams(string? searchQuery)
     {
-        var hasSearchQuery = searchQuery is not null;
+        var hasSearchQuery = !string.IsNullOrWhiteSpace(searchQuery);
         return (hasSearchQuery, hasSearchQuery && searchQuery![0].Equals('"') && searchQuery[^1].Equals('"'));
     }
 }

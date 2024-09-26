@@ -17,7 +17,7 @@ public class Validator : Validator<Request>
 
         RuleFor(x => x.ProjectPlatformId).GreaterThan(0);
 
-        RuleFor(x => x.CompanyLeadUserId).GreaterThan(0).When(x => x.CompanyLeadUserId.HasValue);
+        RuleFor(x => x.CompanyLeadUserId).GreaterThan(0);
 
         RuleForEach(x => x.ResourceIds).GreaterThan(0);
     }
