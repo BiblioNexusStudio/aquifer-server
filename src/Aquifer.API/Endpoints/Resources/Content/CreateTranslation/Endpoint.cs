@@ -19,7 +19,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var isCommunityUser = userService.HasPermission(PermissionName.CreateCommunityContent);
+        var isCommunityUser = !userService.HasPermission(PermissionName.CreateContent);
 
         if (isCommunityUser) {
             var isUserAssigned = await dbContext.ResourceContentVersions
