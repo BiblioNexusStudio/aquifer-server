@@ -7,21 +7,17 @@ public class Validator : Validator<Request>
 {
     public Validator()
     {
-        RuleFor(x => x.LanguageId)
-            .GreaterThan(0).When(x => x.LanguageId.HasValue);
+        RuleFor(x => x.LanguageId).GreaterThan(0);
 
-        RuleFor(x => x.ParentResourceId)
-            .GreaterThan(0).When(x => x.ParentResourceId.HasValue);
+        RuleFor(x => x.ParentResourceId).GreaterThan(0);
 
         RuleFor(x => x.BookCode)
             .NotEmpty().When(x => x.StartChapter.HasValue && x.EndChapter.HasValue)
             .WithMessage("BookCode must be specified if StartChapter and EndChapter are specified.");
 
-        RuleFor(x => x.StartChapter)
-            .GreaterThan(0).When(x => x.StartChapter.HasValue);
+        RuleFor(x => x.StartChapter).GreaterThan(0);
 
-        RuleFor(x => x.EndChapter)
-            .GreaterThan(0).When(x => x.EndChapter.HasValue);
+        RuleFor(x => x.EndChapter).GreaterThan(0);
 
         RuleFor(x => x)
             .Must(x => x.EndChapter!.Value >= x.StartChapter!.Value)

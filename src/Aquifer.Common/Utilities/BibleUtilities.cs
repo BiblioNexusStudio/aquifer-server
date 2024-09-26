@@ -47,7 +47,7 @@ public static class BibleUtilities
             : chapters.Select(c => (LowerBoundOfChapter(bookId, c), UpperBoundOfChapter(bookId, c))).ToList();
     }
 
-    public static (int, int)? VerseRangeForBookAndChapters(string? bookCode, int? startChapter, int? endChapter)
+    public static (int startVerseId, int endVerseId)? VerseRangeForBookAndChapters(string? bookCode, int? startChapter, int? endChapter)
     {
         if (bookCode is null)
         {
