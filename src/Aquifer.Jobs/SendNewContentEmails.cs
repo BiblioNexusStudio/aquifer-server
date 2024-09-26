@@ -145,6 +145,7 @@ public class SendNewContentEmails(
                 LanguageId = x.ResourceContent.LanguageId,
                 LanguageEnglishDisplayName = x.ResourceContent.Language.EnglishDisplay
             })
+            .Distinct()
             .ToListAsync(ct);
     }
 
