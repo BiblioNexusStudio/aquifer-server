@@ -101,9 +101,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                     FROM [PassageResources] AS [p]
                     INNER JOIN [Passages] AS [p0] ON [p].[PassageId] = [p0].[Id]
                     WHERE [R].[Id] = [p].[ResourceId]
-                          AND [p0].[StartVerseId] BETWEEN {startVerseId} AND {endVerseId}
-                          AND [p0].[EndVerseId] BETWEEN {startVerseId} AND {endVerseId}
-                          AND [p0].[StartVerseId] <= {startVerseId} AND [p0].[EndVerseId] >= {endVerseId})
+                          AND ([p0].[StartVerseId] BETWEEN {startVerseId} AND {endVerseId}
+                               OR [p0].[EndVerseId] BETWEEN {startVerseId} AND {endVerseId}
+                               OR ([p0].[StartVerseId] <= {startVerseId} AND [p0].[EndVerseId] >= {endVerseId})))
                 )
                 """;
     }
