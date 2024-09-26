@@ -18,6 +18,18 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
+        var user = await userService.GetUserFromJwtAsync(ct);
+        var isCommunityUser = userService.HasPermission(PermissionName.CreateCommunityContent);
+
+        if (isCommunityUser) {
+            var isUserAssigned = await dbContext.ResourceContentVersions
+                .AnyAsync(x => x.AssignedUserId == user.Id, ct);
+
+            if (isUserAssigned) {
+                ThrowError("User can only create one translation at a time");
+            }
+        }
+
         var baseContent = await dbContext.ResourceContents.Where(x => x.Id == request.BaseContentId)
             .Include(x => x.Versions)
             .SingleOrDefaultAsync(ct);
@@ -62,20 +74,31 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             Version = 1
         };
 
+        if (isCommunityUser) {
+            newResourceContentVersion.AssignedUserId = user.Id;
+        }
+
         var newResourceContent = new ResourceContentEntity
         {
             LanguageId = language.Id,
             ResourceId = baseContent.ResourceId,
             MediaType = baseContent.MediaType,
-            Status = ResourceContentStatus.TranslationNotStarted,
+            Status = isCommunityUser 
+                ? ResourceContentStatus.TranslationInProgress 
+                : ResourceContentStatus.TranslationNotStarted,
             Trusted = true,
             Versions = [newResourceContentVersion]
         };
 
         await dbContext.ResourceContents.AddAsync(newResourceContent, ct);
-
-        var user = await userService.GetUserFromJwtAsync(ct);
-        await historyService.AddStatusHistoryAsync(newResourceContentVersion, ResourceContentStatus.TranslationNotStarted, user.Id, ct);
+        await historyService.AddStatusHistoryAsync(
+            newResourceContentVersion, 
+            isCommunityUser 
+                ? ResourceContentStatus.TranslationInProgress 
+                : ResourceContentStatus.TranslationNotStarted,
+            user.Id, 
+            ct
+        );
 
         await dbContext.SaveChangesAsync(ct);
         await SendOkAsync(new Response(newResourceContent.Id), ct);
