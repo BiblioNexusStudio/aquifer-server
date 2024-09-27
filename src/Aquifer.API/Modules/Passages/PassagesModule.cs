@@ -73,10 +73,6 @@ public class PassagesModule : IModule
             return TypedResults.NotFound();
         }
 
-        var englishLanguageId = (await dbContext.Languages.Where(language => language.ISO6393Code.ToLower() == "eng")
-                                    .FirstOrDefaultAsync(cancellationToken))?.Id ??
-                                -1;
-
         var passageResourceContent = await dbContext.PassageResources
             // find all passages that overlap with the current passage
             .Where(pr => (pr.Passage.StartVerseId >= passage.StartVerseId &&
@@ -85,7 +81,7 @@ public class PassagesModule : IModule
                           pr.Passage.EndVerseId <= passage.EndVerseId))
             .SelectMany(pr => pr.Resource.ResourceContents
                 .Where(rc => rc.LanguageId == languageId ||
-                             (rc.LanguageId == englishLanguageId &&
+                             (rc.LanguageId == Constants.EnglishLanguageId &&
                               Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
                 .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
                     .Select(rcv =>
@@ -105,7 +101,7 @@ public class PassagesModule : IModule
             .Where(vr => vr.VerseId >= passage.StartVerseId && vr.VerseId <= passage.EndVerseId)
             .SelectMany(vr => vr.Resource.ResourceContents
                 .Where(rc => rc.LanguageId == languageId ||
-                             (rc.LanguageId == englishLanguageId &&
+                             (rc.LanguageId == Constants.EnglishLanguageId &&
                               Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
                 .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
                     .Select(rcv =>
@@ -124,7 +120,7 @@ public class PassagesModule : IModule
             .SelectMany(pr => pr.Resource.AssociatedResourceChildren
                 .SelectMany(sr => sr.ResourceContents
                     .Where(rc => rc.LanguageId == languageId ||
-                                 (rc.LanguageId == englishLanguageId &&
+                                 (rc.LanguageId == Constants.EnglishLanguageId &&
                                   Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
                     .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
                         .Select(rcv =>
@@ -143,7 +139,11 @@ public class PassagesModule : IModule
         // This filters them by grouping appropriately and selecting the current language resource (if available) then falling back to English.
         var filteredDownToOneLanguage = passageResourceContent.Concat(verseResourceContent)
             .Concat(associatedResourceContent)
-            .GroupBy(rc => new { rc.MediaTypeName, rc.ResourceId })
+            .GroupBy(rc => new
+            {
+                rc.MediaTypeName,
+                rc.ResourceId
+            })
             .Select(grc =>
             {
                 var first = grc.OrderBy(rc => rc.LanguageId == languageId ? 0 : 1).First();
