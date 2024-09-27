@@ -10,8 +10,9 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration.Get<ConfigurationOptions>();
 
-builder.Services.AddDbContext<AquiferDbContext>(options =>
-    options.UseSqlServer(configuration?.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3)));
+builder.Services.AddDbContext<AquiferDbContext>(options => options
+    .UseSqlServer(configuration?.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
+    .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: builder.Environment.IsDevelopment()));
 
 builder.Services.AddFastEndpoints()
     .AddSingleton<IResourceContentRequestTrackingService, ResourceContentRequestTrackingService>()

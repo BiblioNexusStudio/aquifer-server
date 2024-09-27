@@ -23,8 +23,9 @@ builder.Services.AddAuth(configuration?.JwtSettings)
     .AddOutputCache()
     .AddApplicationInsightsTelemetry()
     .AddSingleton<ITelemetryInitializer, RequestTelemetryInitializer>()
-    .AddDbContext<AquiferDbContext>(options =>
-        options.UseSqlServer(configuration?.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3)))
+    .AddDbContext<AquiferDbContext>(options => options
+        .UseSqlServer(configuration?.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
+        .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: builder.Environment.IsDevelopment()))
     .RegisterModules()
     .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))
     .AddHttpLogging(logging =>
