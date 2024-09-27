@@ -5,6 +5,7 @@ namespace Aquifer.Data.Entities;
 
 [PrimaryKey(nameof(ProjectId), nameof(ResourceContentId))]
 [Index(nameof(ResourceContentId), IsUnique = true)]
+[EntityTypeConfiguration(typeof(ProjectResourceContentEntityConfiguration))]
 public class ProjectResourceContentEntity
 {
     public int ProjectId { get; set; }
@@ -20,13 +21,13 @@ public class ProjectResourceContentEntityConfiguration
     {
         builder
             .HasOne(x => x.Project)
-            .WithMany()
+            .WithMany(x => x.ProjectResourceContents)
             .HasForeignKey(nameof(ProjectResourceContentEntity.ProjectId))
             .OnDelete(DeleteBehavior.Restrict);
 
         builder
             .HasOne(x => x.ResourceContent)
-            .WithMany()
+            .WithMany(x => x.ProjectResourceContents)
             .HasForeignKey(nameof(ProjectResourceContentEntity.ResourceContentId))
             .OnDelete(DeleteBehavior.Restrict);
     }

@@ -71,8 +71,8 @@ public static class ResourceStatusChangeHandler
             await dbContext.Projects.Where(x =>
                     x.ActualDeliveryDate != null &&
                     x.ActualPublishDate == null &&
-                    x.ResourceContents.Any(rc => inProgressIds.Contains(rc.Id)) &&
-                    x.ResourceContents.Where(rc => !inProgressIds.Contains(rc.Id)).All(rc => InReviewOrGreaterStatuses.Contains(rc.Status)))
+                    x.ProjectResourceContents.Any(prc => inProgressIds.Contains(prc.ResourceContent.Id)) &&
+                    x.ProjectResourceContents.Where(prc => !inProgressIds.Contains(prc.ResourceContent.Id)).All(prc => InReviewOrGreaterStatuses.Contains(prc.ResourceContent.Status)))
                 .ExecuteUpdateAsync(x => x
                     .SetProperty(p => p.ActualDeliveryDate, null as DateOnly?)
                     .SetProperty(p => p.Updated, DateTime.UtcNow));
