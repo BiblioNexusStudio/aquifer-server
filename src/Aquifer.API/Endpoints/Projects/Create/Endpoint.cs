@@ -80,7 +80,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         {
             Name = request.Title,
             SourceWordCount = wordCount,
-            ResourceContents = resourceContents,
+            ProjectResourceContents = resourceContents
+                .Select(rc => new ProjectResourceContentEntity
+                {
+                    ResourceContent = rc,
+                })
+                .ToList(),
             Language = language,
             ProjectManagerUser = projectManagerUser,
             CompanyLeadUser = companyLeadUser,
@@ -132,7 +137,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                          rc.LanguageId == languageId &&
                          rc.MediaType != ResourceContentMediaType.Audio)
             .Include(rc => rc.Versions.OrderByDescending(v => v.Created))
-            .Include(rc => rc.Projects)
+            .Include(rc => rc.ProjectResourceContents)
             .ToListAsync(ct);
 
         if (resourceContents.Count < request.ResourceIds.Length)
@@ -147,7 +152,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 ThrowError(r => r.ResourceIds, "All resources must be in the New status.");
             }
 
-            if (resourceContent.Projects.Count > 0)
+            if (resourceContent.ProjectResourceContents.Count > 0)
             {
                 ThrowError(r => r.ResourceIds, "One or more resources are already in a project.");
             }
@@ -186,7 +191,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                          (rc.Resource.ResourceContents.All(rci => rci.LanguageId != languageId) &&
                           rc.LanguageId == Constants.EnglishLanguageId))
             .Include(rc => rc.Versions)
-            .Include(rc => rc.Projects)
+            .Include(rc => rc.ProjectResourceContents)
+            .Include(rc => rc.Language)
             .ToListAsync(ct);
 
         List<ResourceContentEntity> resourceContents = [];
@@ -236,7 +242,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             }
             else
             {
-                if (resourceContent.Projects.Count > 0)
+                if (resourceContent.ProjectResourceContents.Count > 0)
                 {
                     ThrowError(r => r.ResourceIds, "One or more resources are already in a project.");
                 }

@@ -30,7 +30,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         ValidateProject(project);
 
         var resourceContentVersions = await dbContext.ResourceContentVersions
-            .Where(rcv => rcv.ResourceContent.Projects.Contains(project) && rcv.IsDraft)
+            .Where(rcv => rcv.ResourceContent.ProjectResourceContents.Any(prc => prc.Project.Id == project.Id) && rcv.IsDraft)
             .Include(rcv => rcv.ResourceContent)
             .ThenInclude(rc => rc.Language).ToListAsync(ct);
 

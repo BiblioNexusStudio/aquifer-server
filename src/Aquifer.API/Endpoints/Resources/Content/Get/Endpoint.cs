@@ -64,7 +64,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     ParentResourceName = ar.ParentResource.DisplayName,
                     MediaTypes = ar.ResourceContents.Select(arrc => arrc.MediaType)
                 }),
-                ProjectEntity = rc.Projects.FirstOrDefault(),
+                ProjectEntity = rc.ProjectResourceContents.FirstOrDefault(prc => prc.ResourceContentId == request.Id) == null
+                    ? null
+                    : rc.ProjectResourceContents.First(prc => prc.ResourceContentId == request.Id).Project,
                 HasPublishedVersion = rc.Versions.Any(rcv => rcv.IsPublished)
             })
             .AsSplitQuery()

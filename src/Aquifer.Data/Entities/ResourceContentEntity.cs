@@ -26,7 +26,7 @@ public class ResourceContentEntity : IHasUpdatedTimestamp
     public LanguageEntity Language { get; set; } = null!;
     public ResourceEntity Resource { get; set; } = null!;
 
-    public ICollection<ProjectEntity> Projects { get; set; } = new List<ProjectEntity>();
+    public ICollection<ProjectResourceContentEntity> ProjectResourceContents { get; set; } = new List<ProjectResourceContentEntity>();
     public int Id { get; set; }
     public ResourceContentStatus Status { get; set; }
 

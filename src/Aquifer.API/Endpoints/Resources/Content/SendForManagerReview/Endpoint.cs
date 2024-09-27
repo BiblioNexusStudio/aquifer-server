@@ -27,7 +27,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var draftVersions = await dbContext.ResourceContentVersions
             .Where(x => contentIds.Contains(x.ResourceContentId) && allowedStatuses.Contains(x.ResourceContent.Status) && x.IsDraft)
             .Include(x => x.ResourceContent)
-            .ThenInclude(x => x.Projects)
+            .ThenInclude(x => x.ProjectResourceContents)
+            .ThenInclude(x => x.Project)
             .ToListAsync(ct);
 
         if (draftVersions.Count != contentIds.Count)
@@ -55,7 +56,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
             draftVersion.ResourceContent.Status = reviewPendingStatus;
             await SetAssignedUserId(user,
-                draftVersion.ResourceContent.Projects.FirstOrDefault(x => x.ActualPublishDate == null),
+                draftVersion.ResourceContent.ProjectResourceContents.FirstOrDefault(x => x.Project.ActualPublishDate == null)?.Project,
                 managerIds,
                 draftVersion);
 

@@ -1,10 +1,8 @@
 using Aquifer.Data.EventHandlers;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
-[EntityTypeConfiguration(typeof(ProjectEntityConfiguration))]
 [Index(nameof(Name), IsUnique = true)]
 public class ProjectEntity : IHasUpdatedTimestamp
 {
@@ -32,32 +30,11 @@ public class ProjectEntity : IHasUpdatedTimestamp
     public DateOnly? ProjectedPublishDate { get; set; }
     public DateOnly? ActualPublishDate { get; set; }
 
-    public ICollection<ResourceContentEntity> ResourceContents { get; set; } = new List<ResourceContentEntity>();
+    public ICollection<ProjectResourceContentEntity> ProjectResourceContents { get; set; } = new List<ProjectResourceContentEntity>();
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
-}
-
-public class ProjectEntityConfiguration : IEntityTypeConfiguration<ProjectEntity>
-{
-    public void Configure(EntityTypeBuilder<ProjectEntity> builder)
-    {
-        builder
-            .HasMany(x => x.ResourceContents)
-            .WithMany(y => y.Projects)
-            .UsingEntity(
-                "ProjectResourceContents",
-                l => l.HasOne(typeof(ResourceContentEntity)).WithMany().HasForeignKey("ResourceContentId")
-                    .HasPrincipalKey(nameof(ResourceContentEntity.Id)).OnDelete(DeleteBehavior.Restrict),
-                r => r.HasOne(typeof(ProjectEntity)).WithMany().HasForeignKey("ProjectId").HasPrincipalKey(nameof(ProjectEntity.Id))
-                    .OnDelete(DeleteBehavior.Restrict),
-                j =>
-                {
-                    j.HasKey("ProjectId", "ResourceContentId");
-                    j.HasIndex("ResourceContentId").IsUnique();
-                });
-    }
 }
