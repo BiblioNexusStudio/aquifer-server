@@ -93,9 +93,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         await dbContext.ResourceContents.AddAsync(newResourceContent, ct);
         await historyService.AddStatusHistoryAsync(
             newResourceContentVersion, 
-            isCommunityUser 
-                ? ResourceContentStatus.TranslationInProgress 
-                : ResourceContentStatus.TranslationNotStarted,
+            newResourceContent.Status,
             user.Id, 
             ct
         );
