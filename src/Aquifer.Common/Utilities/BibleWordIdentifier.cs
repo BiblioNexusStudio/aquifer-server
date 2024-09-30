@@ -124,20 +124,33 @@ public sealed class BibleWordIdentifier
         WordIdentifier = CalculateWordIdentifier((int)bookId - 1, chapter, verse, word, wordSegment);
     }
 
+    /// <summary>
+    /// Creates a <see cref="BibleWordIdentifier"/> representing the upper bound of a Book.
+    /// </summary>
     public static BibleWordIdentifier GetUpperBoundOfBook(BookId bookId)
     {
         return new BibleWordIdentifier(bookId, _maxChapter, _maxVerse, _maxWord, _maxWordSegment);
     }
 
+    /// <summary>
+    /// Creates a <see cref="BibleWordIdentifier"/> representing the upper bound of a Chapter.
+    /// </summary>
     public static BibleWordIdentifier GetUpperBoundOfChapter(BookId bookId, int chapter)
     {
         return new BibleWordIdentifier(bookId, chapter, _maxVerse, _maxWord, _maxWordSegment);
     }
+
+    /// <summary>
+    /// Creates a <see cref="BibleWordIdentifier"/> representing the upper bound of a Verse.
+    /// </summary>
     public static BibleWordIdentifier GetUpperBoundOfVerse(BookId bookId, int chapter, int verse)
     {
         return new BibleWordIdentifier(bookId, chapter, verse, _maxWord, _maxWordSegment);
     }
 
+    /// <summary>
+    /// Creates a <see cref="BibleWordIdentifier"/> representing the upper bound of a Word.
+    /// </summary>
     public static BibleWordIdentifier GetUpperBoundOfWord(BookId bookId, int chapter, int verse, int word)
     {
         return new BibleWordIdentifier(bookId, chapter, verse, word, _maxWordSegment);

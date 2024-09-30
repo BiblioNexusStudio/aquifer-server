@@ -50,4 +50,10 @@ public class Request
     /// </summary>
     [DefaultValue(999)]
     public int EndWord { get; init; } = 999;
+
+    /// <summary>
+    /// Optional. If <c>true</c> then any available Greek word sense information for each Greek word (definition and glosses) will be included in the response.
+    /// </summary>
+    [DefaultValue(false)]
+    public bool ShouldReturnSenseData { get; init; }
 }

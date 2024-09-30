@@ -34,6 +34,10 @@ public class EnglishWordWithGreekAlignment
 public class GreekWord
 {
     public required string Word { get; init; }
+    public required string GrammarType { get; init; }
+    public required string UsageCode { get; init; }
+    public required string Lemma { get; init; }
+    public required string StrongsNumber { get; init; }
     public required IReadOnlyList<GreekSense> Senses { get; init; }
 }
 
