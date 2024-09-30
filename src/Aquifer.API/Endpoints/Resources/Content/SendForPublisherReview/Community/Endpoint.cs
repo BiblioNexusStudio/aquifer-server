@@ -12,17 +12,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 {
     public override void Configure()
     {
-        Post("/resources/content/{ContentId}/send-for-publisher-review-community", "/resources/content/send-for-publisher-review-community");
+        Post("/resources/content/{ContentId}/send-for-publisher-review-community");
         Permissions(PermissionName.SendReviewCommunityContent);
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        if (request.ContentId is null)
-        {
-            ThrowError("ContentId is required");
-        }
-
         var user = await userService.GetUserFromJwtAsync(ct);
         var contentVersion = await dbContext.ResourceContentVersions
             .Where(x => x.ResourceContentId == request.ContentId && x.AssignedUserId == user.Id && x.IsDraft)

@@ -2,5 +2,5 @@ namespace Aquifer.API.Endpoints.Resources.Content.SendForPublisherReview.Communi
 
 public class Request
 {
-    public int? ContentId { get; set; }
+    public int ContentId { get; set; }
 }
