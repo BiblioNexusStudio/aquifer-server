@@ -167,6 +167,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         resourceContent.WordCount = relevantContentVersion.WordCount;
         resourceContent.Snapshots = snapshots;
         resourceContent.Versions = versions;
+        resourceContent.ReviewLevel = relevantContentVersion.ReviewLevel;
 
         if (resourceContent.IsDraft)
         {
