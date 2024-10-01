@@ -120,7 +120,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         }
 
         var greekAlignmentSource = await dbContext.Database.GetDbConnection()
-            .QueryFirstOrDefaultAsync<string>(new CommandDefinition(GreekAlignmentSourceQuery, new { bibleId = request.BibleId }));
+            .QueryFirstOrDefaultAsync<string>(new CommandDefinition(GreekAlignmentSourceQuery, new { bibleId = request.BibleId }, cancellationToken: ct));
 
         if (greekAlignmentSource == null)
         {
