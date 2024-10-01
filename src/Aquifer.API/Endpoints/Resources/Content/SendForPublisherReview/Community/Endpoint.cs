@@ -56,6 +56,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         );
 
         await dbContext.SaveChangesAsync(ct);
-        await SendOkAsync(ct);
+        await SendNoContentAsync(ct);
     }
 }
