@@ -7,7 +7,7 @@ public class Response
     public required IEnumerable<string> Permissions { get; set; }
     public required CompanyResponse Company { get; set; }
     public int? LanguageId { get; set; }
-    public bool? HasAssignedContent { get; set; }
+    public bool CanBeAssignedContent { get; set; }
 }
 
 public class CompanyResponse

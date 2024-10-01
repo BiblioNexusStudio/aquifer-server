@@ -25,11 +25,17 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             Permissions = permissions,
             Company = new CompanyResponse { Id = user.CompanyId },
             LanguageId = user.LanguageId,
+            CanBeAssignedContent = true,
         };
 
-        if (userService.HasPermission(PermissionName.CreateCommunityContent)) {
-            response.HasAssignedContent = await dbContext.ResourceContentVersions
+        if (userService.HasPermission(PermissionName.CreateCommunityContent) && 
+            !userService.HasPermission(PermissionName.CreateContent)) {
+            var isAssignedContent = await dbContext.ResourceContentVersions
                 .AnyAsync(x => x.AssignedUserId == user.Id, ct);
+            
+            if (isAssignedContent) {
+                response.CanBeAssignedContent = false;
+            }
         }
 
         await SendOkAsync(response, ct);
