@@ -1,4 +1,6 @@
-﻿namespace Aquifer.Public.API.Endpoints.Bibles.Alignments.Greek;
+﻿using System.Text.Json.Serialization;
+
+namespace Aquifer.Public.API.Endpoints.Bibles.Alignments.Greek;
 
 public class Response
 {
@@ -38,7 +40,9 @@ public class GreekWord
     public required string UsageCode { get; init; }
     public required string Lemma { get; init; }
     public required string StrongsNumber { get; init; }
-    public required IReadOnlyList<GreekSense> Senses { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public required IReadOnlyList<GreekSense>? Senses { get; init; }
 }
 
 public class GreekSense

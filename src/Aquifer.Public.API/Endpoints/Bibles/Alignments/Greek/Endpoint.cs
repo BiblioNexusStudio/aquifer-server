@@ -1,5 +1,6 @@
 ﻿using Aquifer.Common.Utilities;
 using Aquifer.Data;
+using Aquifer.Public.API.Helpers;
 using Dapper;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
@@ -213,14 +214,16 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                                                             UsageCode = greekWordResult.UsageCode,
                                                             Lemma = greekWordResult.Lemma,
                                                             StrongsNumber = greekWordResult.StrongsNumber,
-                                                            Senses = greekSenseResults
-                                                                .OrderBy(s => s.Definition)
-                                                                .Select(gsr => new GreekSense
-                                                                {
-                                                                    Definition = gsr.Definition,
-                                                                    Glosses = gsr.Glosses?.Split("||").Order().ToList() ?? []
-                                                                })
-                                                                .ToList(),
+                                                            Senses = !request.ShouldReturnSenseData
+                                                                ? null
+                                                                : greekSenseResults
+                                                                    .OrderBy(s => s.Definition)
+                                                                    .Select(gsr => new GreekSense
+                                                                    {
+                                                                        Definition = gsr.Definition,
+                                                                        Glosses = gsr.Glosses?.Split("||").Order().ToList() ?? []
+                                                                    })
+                                                                    .ToList(),
                                                         };
                                                     })
                                                     .ToList()
