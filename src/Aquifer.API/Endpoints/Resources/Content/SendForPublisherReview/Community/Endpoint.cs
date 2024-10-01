@@ -22,7 +22,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var contentVersion = await dbContext.ResourceContentVersions
             .Where(x => x.ResourceContentId == request.ContentId && x.AssignedUserId == user.Id && x.IsDraft)
             .Include(x => x.ResourceContent)
-            .SingleAsync(ct);
+            .SingleOrDefaultAsync(ct);
 
         if (contentVersion is null)
         {
