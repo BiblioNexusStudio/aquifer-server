@@ -80,7 +80,8 @@ public static class PermissionName
         ReadResources = "read:resources",
         ReadUsers = "read:users",
         ReviewContent = "review:content",
-        SendReviewContent = "send-review:content";
+        SendReviewContent = "send-review:content",
+        SendReviewCommunityContent = "send-review:community-content";
 }
 
 public static class KeyVaultSecretName
