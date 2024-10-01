@@ -30,7 +30,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     private async Task<Response> CreateResourceContentVersionCommentThreadAsync(Request req, CancellationToken ct)
     {
         var resourceContentVersion = await dbContext.ResourceContentVersions
-            .Include(x => x.CommentThreads).SingleOrDefaultAsync(x => x.Id == req.TypeId, ct);
+            .AsTracking()
+            .Include(x => x.CommentThreads)
+            .SingleOrDefaultAsync(x => x.Id == req.TypeId, ct);
 
         EndpointHelpers.ThrowErrorIfNull<Request>(resourceContentVersion, x => x.TypeId, "No type found for given id.", 404);
 

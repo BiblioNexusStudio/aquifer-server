@@ -31,13 +31,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         var user = await userService.GetUserFromJwtAsync(ct);
 
-        var language = await dbContext.Languages.SingleOrDefaultAsync(l => l.Id == request.LanguageId, ct);
+        var language = await dbContext.Languages.AsTracking().SingleOrDefaultAsync(l => l.Id == request.LanguageId, ct);
         if (language is null)
         {
             ThrowEntityNotFoundError<Request>(r => r.LanguageId);
         }
 
-        var projectManagerUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.ProjectManagerUserId && u.Enabled, ct);
+        var projectManagerUser = await dbContext.Users.AsTracking().SingleOrDefaultAsync(u => u.Id == request.ProjectManagerUserId && u.Enabled, ct);
         if (projectManagerUser is null)
         {
             ThrowEntityNotFoundError<Request>(r => r.ProjectManagerUserId);
@@ -48,19 +48,19 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ThrowError(r => r.ProjectManagerUserId, "Project manager must be a Publisher.");
         }
 
-        var company = await dbContext.Companies.SingleOrDefaultAsync(c => c.Id == request.CompanyId, ct);
+        var company = await dbContext.Companies.AsTracking().SingleOrDefaultAsync(c => c.Id == request.CompanyId, ct);
         if (company is null)
         {
             ThrowEntityNotFoundError<Request>(r => r.CompanyId);
         }
 
-        var projectPlatform = await dbContext.ProjectPlatforms.SingleOrDefaultAsync(p => p.Id == request.ProjectPlatformId, ct);
+        var projectPlatform = await dbContext.ProjectPlatforms.AsTracking().SingleOrDefaultAsync(p => p.Id == request.ProjectPlatformId, ct);
         if (projectPlatform is null)
         {
             ThrowEntityNotFoundError<Request>(r => r.ProjectPlatformId);
         }
 
-        if (dbContext.Projects.Any(p => p.Name == request.Title))
+        if (dbContext.Projects.AsTracking().Any(p => p.Name == request.Title))
         {
             ThrowError(r => r.Title, "A project with this title already exists.");
         }
@@ -70,6 +70,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var resourceContents = await CreateOrFindResourceContentFromResourceIds(language.Id, request, user, ct);
 
         var wordCount = await dbContext.ResourceContentVersions
+            .AsTracking()
             .Where(rcv => request.ResourceIds.Contains(rcv.ResourceContent.ResourceId) &&
                           rcv.IsPublished &&
                           rcv.ResourceContent.LanguageId == 1)
@@ -98,7 +99,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         if (projectPlatform?.Name == "Aquifer")
         {
-            var companyLeadUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.CompanyLeadUserId && u.Enabled, ct);
+            var companyLeadUser = await dbContext.Users
+                .AsTracking()
+                .SingleOrDefaultAsync(u => u.Id == request.CompanyLeadUserId && u.Enabled, ct);
             if (companyLeadUser is null)
             {
                 ThrowEntityNotFoundError<Request>(r => r.CompanyLeadUserId);
@@ -133,6 +136,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         CancellationToken ct)
     {
         var resourceContents = await dbContext.ResourceContents
+            .AsTracking()
             .Where(rc => request.ResourceIds.Contains(rc.ResourceId) &&
                          rc.LanguageId == languageId &&
                          rc.MediaType != ResourceContentMediaType.Audio)
@@ -186,6 +190,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         CancellationToken ct)
     {
         var englishOrLanguageResourceContents = await dbContext.ResourceContents
+            .AsTracking()
             .Where(rc => request.ResourceIds.Contains(rc.ResourceId) && rc.MediaType != ResourceContentMediaType.Audio)
             .Where(rc => rc.LanguageId == languageId ||
                          (rc.Resource.ResourceContents.All(rci => rci.LanguageId != languageId) &&

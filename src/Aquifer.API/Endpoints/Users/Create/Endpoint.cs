@@ -38,7 +38,9 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
 
     private async Task ValidateCompanyIdAsync(int companyId, CancellationToken ct)
     {
-        var newUserCompany = await dbContext.Companies.SingleOrDefaultAsync(x => x.Id == companyId, ct);
+        var newUserCompany = await dbContext.Companies
+            .AsTracking()
+            .SingleOrDefaultAsync(x => x.Id == companyId, ct);
         if (newUserCompany is null)
         {
             ThrowError(x => x.CompanyId, "Invalid company id");

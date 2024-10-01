@@ -27,6 +27,7 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
         var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
 
         var draftVersions = await dbContext.ResourceContentVersions
+            .AsTracking()
             .Where(x => contentIds.Contains(x.ResourceContentId) &&
                         x.IsDraft &&
                         (x.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
@@ -71,7 +72,9 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
 
     private async Task ValidateAssignedUser(Request request, CancellationToken ct)
     {
-        var assignedUser = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.AssignedUserId && u.Enabled, ct);
+        var assignedUser = await dbContext.Users
+            .AsTracking()
+            .SingleOrDefaultAsync(u => u.Id == request.AssignedUserId && u.Enabled, ct);
         if (assignedUser is null)
         {
             ThrowEntityNotFoundError<Request>(r => r.AssignedUserId);

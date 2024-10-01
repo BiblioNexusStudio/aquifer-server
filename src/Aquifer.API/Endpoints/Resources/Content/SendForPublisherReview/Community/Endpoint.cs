@@ -20,6 +20,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     {
         var user = await userService.GetUserFromJwtAsync(ct);
         var contentVersion = await dbContext.ResourceContentVersions
+            .AsTracking()
             .Where(x => x.ResourceContentId == request.ContentId && x.AssignedUserId == user.Id && x.IsDraft)
             .Include(x => x.ResourceContent)
             .SingleOrDefaultAsync(ct);

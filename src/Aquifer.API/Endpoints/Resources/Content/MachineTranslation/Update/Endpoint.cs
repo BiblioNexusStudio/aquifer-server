@@ -17,7 +17,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var existingMt = await dbContext.ResourceContentVersionMachineTranslations.FirstOrDefaultAsync(x => x.Id == req.Id, ct);
+        var existingMt = await dbContext.ResourceContentVersionMachineTranslations
+            .AsTracking()
+            .FirstOrDefaultAsync(x => x.Id == req.Id, ct);
 
         if (existingMt is null || existingMt.UserId != user.Id)
         {

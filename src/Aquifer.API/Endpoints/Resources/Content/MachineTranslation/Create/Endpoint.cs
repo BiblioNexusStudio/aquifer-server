@@ -17,9 +17,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var existingMt =
-            await dbContext.ResourceContentVersionMachineTranslations
-                .FirstOrDefaultAsync(x => x.ResourceContentVersionId == req.ResourceContentVersionId && x.ContentIndex == req.ContentIndex, ct);
+        var existingMt = await dbContext.ResourceContentVersionMachineTranslations
+            .AsTracking()
+            .FirstOrDefaultAsync(x => x.ResourceContentVersionId == req.ResourceContentVersionId && x.ContentIndex == req.ContentIndex, ct);
 
         if (existingMt is not null)
         {

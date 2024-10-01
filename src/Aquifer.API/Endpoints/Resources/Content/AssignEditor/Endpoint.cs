@@ -19,7 +19,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var userToAssign = await dbContext.Users.SingleOrDefaultAsync(u => u.Id == request.AssignedUserId && u.Enabled, ct);
+        var userToAssign = await dbContext.Users
+            .AsTracking()
+            .SingleOrDefaultAsync(u => u.Id == request.AssignedUserId && u.Enabled, ct);
         var hasSendReviewContentPermission = userService.HasPermission(PermissionName.SendReviewContent);
         var hasAssignOverridePermission = userService.HasPermission(PermissionName.AssignOverride);
         var hasAssignOutsideCompanyPermission = userService.HasPermission(PermissionName.AssignOutsideCompany);
@@ -37,6 +39,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
 
         var draftVersions = await dbContext.ResourceContentVersions
+            .AsTracking()
             .Where(rcv => contentIds.Contains(rcv.ResourceContentId) && rcv.IsDraft).Include(rcv => rcv.ResourceContent)
             .Include(rcv => rcv.AssignedUser).Include(rcv => rcv.ResourceContentVersionSnapshots)
             .ToListAsync(ct);
@@ -110,6 +113,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     private async Task<bool> WasLastAssignedToSelfOrIsCompanyLead(ResourceContentVersionEntity version, int userId, CancellationToken ct)
     {
         var wasLastAssignedToSelf = await dbContext.ResourceContentVersionAssignedUserHistory
+            .AsTracking()
             .Where(h => h.ResourceContentVersionId == version.Id && h.AssignedUserId != null)
             .OrderByDescending(h => h.Created)
             .Select(h => h.AssignedUserId == userId)
@@ -121,6 +125,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
 
         var isCompanyLead = await dbContext.Projects
+            .AsTracking()
             .Where(p => p.ProjectResourceContents.Any(prc => prc.ResourceContent.Id == version.ResourceContentId))
             .Select(p => p.CompanyLeadUserId == userId)
             .FirstOrDefaultAsync(ct);

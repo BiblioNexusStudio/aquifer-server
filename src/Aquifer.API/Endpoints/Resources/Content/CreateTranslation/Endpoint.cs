@@ -23,6 +23,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         if (isCommunityUser) {
             var isUserAssigned = await dbContext.ResourceContentVersions
+                .AsTracking()
                 .AnyAsync(x => x.AssignedUserId == user.Id, ct);
 
             if (isUserAssigned) {
@@ -30,7 +31,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             }
         }
 
-        var baseContent = await dbContext.ResourceContents.Where(x => x.Id == request.BaseContentId)
+        var baseContent = await dbContext.ResourceContents
+            .AsTracking()
+            .Where(x => x.Id == request.BaseContentId)
             .Include(x => x.Versions)
             .SingleOrDefaultAsync(ct);
         if (baseContent is null ||
@@ -40,8 +43,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ThrowError("Base version not found");
         }
 
-        var isExistingTranslation = await dbContext.ResourceContents.AnyAsync(x =>
-                x.LanguageId == request.LanguageId && x.ResourceId == baseContent.ResourceId,
+        var isExistingTranslation = await dbContext.ResourceContents
+            .AsTracking()
+            .AnyAsync(x => x.LanguageId == request.LanguageId && x.ResourceId == baseContent.ResourceId,
             ct);
         if (isExistingTranslation)
         {

@@ -20,7 +20,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     {
         var user = await userService.GetUserFromJwtAsync(ct);
 
-        var project = await dbContext.Projects.Include(p => p.ProjectPlatform).SingleOrDefaultAsync(p => p.Id == request.Id, ct);
+        var project = await dbContext.Projects
+            .AsTracking()
+            .Include(p => p.ProjectPlatform)
+            .SingleOrDefaultAsync(p => p.Id == request.Id, ct);
+
         if (project is null)
         {
             await SendNotFoundAsync(ct);
@@ -30,6 +34,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         ValidateProject(project);
 
         var resourceContentVersions = await dbContext.ResourceContentVersions
+            .AsTracking()
             .Where(rcv => rcv.ResourceContent.ProjectResourceContents.Any(prc => prc.Project.Id == project.Id) && rcv.IsDraft)
             .Include(rcv => rcv.ResourceContent)
             .ThenInclude(rc => rc.Language).ToListAsync(ct);

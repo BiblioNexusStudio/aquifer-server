@@ -16,7 +16,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var thread = await dbContext.CommentThreads.SingleOrDefaultAsync(x => x.Id == req.ThreadId && !x.Resolved, ct);
+        var thread = await dbContext.CommentThreads
+            .AsTracking()
+            .SingleOrDefaultAsync(x => x.Id == req.ThreadId && !x.Resolved, ct);
+
         EndpointHelpers.ThrowErrorIfNull<Request>(thread, x => x.ThreadId, "No open thread found for id", 404);
 
         var user = await userService.GetUserFromJwtAsync(ct);

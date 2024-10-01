@@ -17,6 +17,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         var user = await userService.GetUserFromJwtAsync(ct);
         var comment = await dbContext.Comments
+            .AsTracking()
             .SingleOrDefaultAsync(x => x.Id == req.CommentId && x.UserId == user.Id && !x.Thread.Resolved, ct);
 
         EndpointHelpers.ThrowErrorIfNull<Request>(comment, x => x.CommentId, "No owned, unresolved comment found", 404);
