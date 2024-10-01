@@ -26,7 +26,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         if (contentVersion is null)
         {
-            ThrowError("Content not found");
+            await SendNotFoundAsync(ct);
+            return;
         }
 
         if (contentVersion.ResourceContent.Status != ResourceContentStatus.TranslationInProgress)
