@@ -15,9 +15,9 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
         Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
         Summary(s =>
         {
-            s.Summary = "Search resources by keyword query, passage, or both.";
+            s.Summary = "Search resources by keyword query, passage, resource type or collection code, or a combination of the above.";
             s.Description =
-                "For a given query, language, and content type, search for matching resources. Can narrow results by resource type or collection.";
+                "For a given query, language, and content type, search for matching resources. Can also search by passage, resource type, or resource collection code.";
         });
     }
 
