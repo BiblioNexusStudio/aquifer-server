@@ -98,7 +98,8 @@ public class Endpoint(AquiferDbContext _dbContext, ICachingLanguageService _cach
     {
         var languageCodeByIdMap = await _cachingLanguageService.GetLanguageCodeByIdMapAsync(ct);
 
-        var resources = await query.OrderBy(x => x.ResourceContent.Resource.EnglishLabel)
+        var resources = await query
+            .OrderBy(x => x.ResourceContent.Resource.Id)
             .Skip(req.Offset)
             .Take(req.Limit)
             .Select(x => new ResponseContent
