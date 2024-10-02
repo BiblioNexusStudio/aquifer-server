@@ -1,3 +1,4 @@
+using Aquifer.Common.Services.Caching;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -7,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Search.GetResources;
 
-public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext _dbContext, ICachingLanguageService _cachingLanguageService) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -36,7 +37,7 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var query = GetQuery(req);
+        var query = await GetQueryAsync(req, ct);
         var totalCount = await GetTotalResourceCountAsync(req, query, ct);
 
         if (totalCount == 0)
@@ -51,28 +52,32 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
         await SendOkAsync(response, ct);
     }
 
-    private IQueryable<ResourceContentVersionEntity> GetQuery(Request req)
+    private async Task<IQueryable<ResourceContentVersionEntity>> GetQueryAsync(Request req, CancellationToken ct)
     {
+        var languageId = req.LanguageCode is not null
+            ? await _cachingLanguageService.GetLanguageIdAsync(req.LanguageCode, ct) ?? 0
+            : req.LanguageId;
+
         var (startVerseId, endVerseId) = req.BookCode is null
             ? ((int?)null, (int?)null)
             : BibleUtilities.GetVerseIds(req.BookCode, req.StartChapter, req.EndChapter, req.StartVerse, req.EndVerse);
 
-        return _dbContext.ResourceContentVersions.Where(x =>
-            x.IsPublished &&
-            x.ResourceContent.Resource.ParentResource.Enabled &&
-            (req.Query == null || x.DisplayName.Contains(req.Query) || x.ResourceContent.Resource.EnglishLabel.Contains(req.Query)) &&
-            (startVerseId == null ||
-             x.ResourceContent.Resource.VerseResources.Any(vr =>
-                 vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
-             x.ResourceContent.Resource.PassageResources.Any(pr =>
-                 (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
-                 (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
-                 (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
-            (req.ResourceType == default || x.ResourceContent.Resource.ParentResource.ResourceType == req.ResourceType) &&
-            (req.ResourceCollectionCode == null ||
-             x.ResourceContent.Resource.ParentResource.Code.ToLower() == req.ResourceCollectionCode.ToLower()
-            ) &&
-            (x.ResourceContent.LanguageId == req.LanguageId || x.ResourceContent.Language.ISO6393Code == req.LanguageCode));
+        return _dbContext.ResourceContentVersions
+            .Where(x =>
+                x.IsPublished &&
+                x.ResourceContent.Resource.ParentResource.Enabled &&
+                (req.Query == null || x.DisplayName.Contains(req.Query) || x.ResourceContent.Resource.EnglishLabel.Contains(req.Query)) &&
+                (startVerseId == null ||
+                 x.ResourceContent.Resource.VerseResources.Any(vr =>
+                     vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
+                 x.ResourceContent.Resource.PassageResources.Any(pr =>
+                     (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
+                     (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
+                     (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
+                (req.ResourceType == default || x.ResourceContent.Resource.ParentResource.ResourceType == req.ResourceType) &&
+                (req.ResourceCollectionCode == null ||
+                    x.ResourceContent.Resource.ParentResource.Code.ToLower() == req.ResourceCollectionCode.ToLower()) &&
+                x.ResourceContent.LanguageId == languageId);
     }
 
     private async Task<int> GetTotalResourceCountAsync(Request req, IQueryable<ResourceContentVersionEntity> query, CancellationToken ct)
@@ -86,10 +91,13 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
         return totalCount;
     }
 
-    private async Task<List<ResponseContent>> GetResourcesAsync(Request req,
+    private async Task<List<ResponseContent>> GetResourcesAsync(
+        Request req,
         IQueryable<ResourceContentVersionEntity> query,
         CancellationToken ct)
     {
+        var languageCodeByIdMap = await _cachingLanguageService.GetLanguageCodeByIdMapAsync(ct);
+
         var resources = await query.OrderBy(x => x.ResourceContent.Resource.EnglishLabel)
             .Skip(req.Offset)
             .Take(req.Limit)
@@ -98,7 +106,7 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
                 Id = x.ResourceContent.Id,
                 Name = x.ResourceContent.Resource.EnglishLabel,
                 LocalizedName = x.DisplayName,
-                LanguageCode = x.ResourceContent.Language.ISO6393Code,
+                LanguageCode = languageCodeByIdMap[x.ResourceContent.LanguageId],
                 MediaType = x.ResourceContent.MediaType,
                 Grouping = new ResourceTypeMetadata
                 {
