@@ -10,8 +10,8 @@ public class Validator : Validator<Request>
 {
     public Validator()
     {
-        RuleFor(x => x).Must(x => x.Query is not null || x.BookCode is not null)
-            .WithMessage("Either search query or bookCode is required.");
+        RuleFor(x => x).Must(x => x.Query is not null || x.BookCode is not null || x.ResourceType is not ResourceType.None || x.ResourceCollectionCode is not null)
+            .WithMessage("One of search query, bookCode, resourceType, or resourceCollectionCode is required.");
 
         RuleFor(x => x)
             .Must(x => (x.LanguageCode is not null && x.LanguageId == default) || (x.LanguageId != default && x.LanguageCode is null))

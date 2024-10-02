@@ -7,13 +7,13 @@ public record Request
 {
     /// <summary>
     ///     The keyword to search on. Currently only searches against content names (not inside content).
-    ///     Non-English names are supported. Must be at least 3 characters in length. Optional if bookCode is provided.
+    ///     Non-English names are supported. Must be at least 3 characters in length. Optional if a bookCode or a resource type or collection code is provided.
     /// </summary>
     public string? Query { get; init; }
 
     /// <summary>
     ///     Book code based off USFM book identifier (e.g. GEN, EXO, etc.). Can get a list of available books and identifiers
-    ///     from the /bibles/books endpoint. Use this by itself to search across an entire book. Required if no query parameter provided.
+    ///     from the /bibles/books endpoint. Use this by itself to search across an entire book. Required if no query parameter and no resource type or collection code are provided.
     /// </summary>
     public string? BookCode { get; init; }
 
@@ -55,6 +55,7 @@ public record Request
     /// <summary>
     ///     The type of resource to search for, such as "Dictionary". If none specified, will default to None.
     ///     If sending resourceType, do not send resourceCollectionCode.
+    ///     A resource type or collection code is required if no book code and no query are provided.
     /// </summary>
     [DefaultValue(ResourceType.None)]
     public ResourceType ResourceType { get; init; }
@@ -62,6 +63,7 @@ public record Request
     /// <summary>
     ///     Optional resource collection code to search for. Search by code retrieved from /resources/types endpoint such as
     ///     "TyndaleBibleDictionary". If sending resourceCollectionCode, do not send resourceType.
+    ///     A resource type or collection code is required if no book code and no query are provided.
     /// </summary>
     public string? ResourceCollectionCode { get; init; }
 
