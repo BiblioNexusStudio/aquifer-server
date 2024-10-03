@@ -1,3 +1,6 @@
 ﻿namespace Aquifer.API.Endpoints.Resources.Content.CreateTranslation;
 
-public record Response(int ResourceContentId);
+public class Response{
+    public required int ResourceContentId { get; set; }
+    public string? Message { get; set; }
+}
