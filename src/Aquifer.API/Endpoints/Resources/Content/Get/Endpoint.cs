@@ -52,17 +52,17 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                         HasPublished = orc.Versions.Any(x => x.IsPublished),
                         ResourceContentStatus = orc.Status
                     }),
-                AssociatedResources = rc.Resource.AssociatedResourceChildren.Select(ar => new AssociatedContentResponse
+                AssociatedResources = rc.Resource.AssociatedResources.Select(ar => new AssociatedContentResponse
                 {
                     // Get the associated resource content for the current content's language or fallback to English
                     ResourceContent =
-                        ar.ResourceContents.Where(rci => rci.MediaType == ResourceContentMediaType.Text)
+                        ar.AssociatedResource.ResourceContents.Where(rci => rci.MediaType == ResourceContentMediaType.Text)
                             .OrderByDescending(rci =>
                                 rci.LanguageId == rc.LanguageId ? 2 : rci.LanguageId == Constants.EnglishLanguageId ? 1 : 0)
                             .FirstOrDefault(),
-                    EnglishLabel = ar.EnglishLabel,
-                    ParentResourceName = ar.ParentResource.DisplayName,
-                    MediaTypes = ar.ResourceContents.Select(arrc => arrc.MediaType)
+                    EnglishLabel = ar.AssociatedResource.EnglishLabel,
+                    ParentResourceName = ar.AssociatedResource.ParentResource.DisplayName,
+                    MediaTypes = ar.AssociatedResource.ResourceContents.Select(arrc => arrc.MediaType)
                 }),
                 ProjectEntity = rc.ProjectResourceContents.FirstOrDefault(prc => prc.ResourceContentId == request.Id) == null
                     ? null

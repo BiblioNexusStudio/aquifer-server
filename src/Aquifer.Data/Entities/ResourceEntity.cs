@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
-[Index(nameof(ParentResourceId),
-     nameof(ExternalId),
-     IsUnique = true), EntityTypeConfiguration(typeof(ResourceEntityConfiguration))]
+[Index(nameof(ExternalId))]
+[Index(nameof(ParentResourceId), nameof(ExternalId), IsUnique = true)]
+[EntityTypeConfiguration(typeof(ResourceEntityConfiguration))]
 public class ResourceEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
@@ -28,11 +28,8 @@ public class ResourceEntity : IHasUpdatedTimestamp
     public ICollection<ResourceContentEntity> ResourceContents { get; set; } =
         new List<ResourceContentEntity>();
 
-    public ICollection<ResourceEntity> AssociatedResourceChildren { get; set; } =
-        new List<ResourceEntity>();
-
-    public ICollection<ResourceEntity> AssociatedResourceParents { get; set; } =
-        new List<ResourceEntity>();
+    public ICollection<AssociatedResourceEntity> AssociatedResources { get; set; } =
+        new List<AssociatedResourceEntity>();
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
@@ -42,17 +39,9 @@ public class ResourceEntityConfiguration : IEntityTypeConfiguration<ResourceEnti
 {
     public void Configure(EntityTypeBuilder<ResourceEntity> builder)
     {
-        builder.HasMany(e => e.AssociatedResourceChildren)
-            .WithMany(j => j.AssociatedResourceParents)
-            .UsingEntity("AssociatedResources",
-                j => j
-                    .HasOne(typeof(ResourceEntity))
-                    .WithMany()
-                    .HasForeignKey("AssociatedResourceId"),
-                j => j
-                    .HasOne(typeof(ResourceEntity))
-                    .WithMany()
-                    .HasForeignKey("ResourceId"));
+        builder.HasMany(r => r.AssociatedResources)
+            .WithOne(ar => ar.Resource)
+            .HasForeignKey(ar => ar.ResourceId);
 
         builder.Property(r => r.SortOrder).HasDefaultValue(0);
     }
