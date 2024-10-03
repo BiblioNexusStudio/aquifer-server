@@ -27,6 +27,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IReadOnlyL
                 (!request.LanguageId.HasValue || b.LanguageId == request.LanguageId) &&
                 (request.LanguageCode == null || b.Language.ISO6393Code == request.LanguageCode) &&
                 (!request.IsLanguageDefault.HasValue || b.LanguageDefault == request.IsLanguageDefault) &&
+                (!request.HasGreekAlignment.HasValue || b.GreekAlignment == request.HasGreekAlignment) &&
                 (!request.HasAudio.HasValue || b.BibleBookContents.Any(bbc => bbc.AudioUrls != null) == request.HasAudio))
             .Select(bible => new Response
             {
@@ -37,6 +38,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IReadOnlyL
                 LanguageId = bible.LanguageId,
                 IsLanguageDefault = bible.LanguageDefault,
                 HasAudio = bible.BibleBookContents.Any(bbc => bbc.AudioUrls != null),
+                HasGreekAlignment = bible.GreekAlignment,
             })
             .ToListAsync(ct);
 

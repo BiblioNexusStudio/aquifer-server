@@ -9,15 +9,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{51DD9DE3
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.API", "src\Aquifer.API\Aquifer.API.csproj", "{831A381B-68CF-4ED8-A5FC-FD2A4D94F18B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Data", "src\Aquifer.Data\Aquifer.Data.csproj", "{2CE9009D-784B-4A78-BBA9-8B0043AA9277}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Data", "src\Aquifer.Data\Aquifer.Data.csproj", "{2CE9009D-784B-4A78-BBA9-8B0043AA9277}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Migrations", "src\Aquifer.Migrations\Aquifer.Migrations.csproj", "{47A55D6A-68CE-4DAE-82BD-6DC78CF701F1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Migrations", "src\Aquifer.Migrations\Aquifer.Migrations.csproj", "{47A55D6A-68CE-4DAE-82BD-6DC78CF701F1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Public.API", "src\Aquifer.Public.API\Aquifer.Public.API.csproj", "{7BE90A99-0E5B-43D8-81EE-960EDDAE05B3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Public.API", "src\Aquifer.Public.API\Aquifer.Public.API.csproj", "{7BE90A99-0E5B-43D8-81EE-960EDDAE05B3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Common", "src\Aquifer.Common\Aquifer.Common.csproj", "{9AB0BF9D-39CC-4DD1-8D88-976EC77C0B78}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Common", "src\Aquifer.Common\Aquifer.Common.csproj", "{9AB0BF9D-39CC-4DD1-8D88-976EC77C0B78}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Jobs", "src\Aquifer.Jobs\Aquifer.Jobs.csproj", "{CDDA72AF-C879-4CFC-9015-B0CB4979837F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Jobs", "src\Aquifer.Jobs\Aquifer.Jobs.csproj", "{CDDA72AF-C879-4CFC-9015-B0CB4979837F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Common.UnitTests", "Aquifer.Common.UnitTests\Aquifer.Common.UnitTests.csproj", "{93508A60-45FD-4A2E-9EFC-8D7C18259B20}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +51,10 @@ Global
 		{CDDA72AF-C879-4CFC-9015-B0CB4979837F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CDDA72AF-C879-4CFC-9015-B0CB4979837F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CDDA72AF-C879-4CFC-9015-B0CB4979837F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93508A60-45FD-4A2E-9EFC-8D7C18259B20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93508A60-45FD-4A2E-9EFC-8D7C18259B20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93508A60-45FD-4A2E-9EFC-8D7C18259B20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93508A60-45FD-4A2E-9EFC-8D7C18259B20}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -60,6 +66,7 @@ Global
 		{7BE90A99-0E5B-43D8-81EE-960EDDAE05B3} = {795E7203-D40F-4962-837D-DD39BAF2C930}
 		{9AB0BF9D-39CC-4DD1-8D88-976EC77C0B78} = {795E7203-D40F-4962-837D-DD39BAF2C930}
 		{CDDA72AF-C879-4CFC-9015-B0CB4979837F} = {795E7203-D40F-4962-837D-DD39BAF2C930}
+		{93508A60-45FD-4A2E-9EFC-8D7C18259B20} = {51DD9DE3-DA20-4C0B-82D6-029445F6BD42}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8E32492B-EA66-40E4-A7A8-67E4ABA14A53}
