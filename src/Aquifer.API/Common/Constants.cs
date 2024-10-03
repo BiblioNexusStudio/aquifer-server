@@ -12,6 +12,8 @@ public static class Constants
     // ID 1 = FIA (formerly CBBT-ER)
     public static readonly ReadOnlyCollection<int> PredeterminedPassageGuideIds = new([1]);
 
+    public static readonly int EnglishLanguageId = 1;
+
     // this represents the media types that we default to English for
     public static readonly ReadOnlyCollection<ResourceContentMediaType> FallbackToEnglishForMediaTypes =
         new([ResourceContentMediaType.Image, ResourceContentMediaType.Video]);

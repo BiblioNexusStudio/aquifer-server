@@ -21,7 +21,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var self = await userService.GetUserFromJwtAsync(ct);
-        var englishLanguageId = await dbContext.Languages.Where(l => l.ISO6393Code == "eng").Select(l => l.Id).SingleAsync(ct);
         var resourceContent = await dbContext.ResourceContents.Where(x => x.Id == request.Id)
             .Select(rc => new Response
             {
@@ -58,7 +57,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     // Get the associated resource content for the current content's language or fallback to English
                     ResourceContent =
                         ar.ResourceContents.Where(rci => rci.MediaType == ResourceContentMediaType.Text)
-                            .OrderByDescending(rci => rci.LanguageId == rc.LanguageId ? 2 : rci.LanguageId == englishLanguageId ? 1 : 0)
+                            .OrderByDescending(rci =>
+                                rci.LanguageId == rc.LanguageId ? 2 : rci.LanguageId == Constants.EnglishLanguageId ? 1 : 0)
                             .FirstOrDefault(),
                     EnglishLabel = ar.EnglishLabel,
                     ParentResourceName = ar.ParentResource.DisplayName,
@@ -83,7 +83,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             .ToListAsync(ct);
 
         resourceContent.PassageReferences = await dbContext.PassageResources.Where(x => x.ResourceId == resourceContent.ResourceId)
-            .Select(pr => new PassageReferenceResponse { StartVerseId = pr.Passage.StartVerseId, EndVerseId = pr.Passage.EndVerseId })
+            .Select(pr => new PassageReferenceResponse
+            {
+                StartVerseId = pr.Passage.StartVerseId,
+                EndVerseId = pr.Passage.EndVerseId
+            })
             .ToListAsync(ct);
 
         var relevantContentVersion = await dbContext.ResourceContentVersions.Where(rcv => rcv.ResourceContentId == request.Id)
@@ -132,7 +136,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var versions = await dbContext.ResourceContentVersions
             .Where(rcv => rcv.Id != relevantContentVersion.Id && rcv.ResourceContentId == relevantContentVersion.ResourceContentId)
             .OrderByDescending(rcv => rcv.Created)
-            .Select(rcv => new VersionResponse { Id = rcv.Id, Created = rcv.Created, Version = rcv.Version, IsPublished = rcv.IsPublished })
+            .Select(rcv => new VersionResponse
+            {
+                Id = rcv.Id,
+                Created = rcv.Created,
+                Version = rcv.Version,
+                IsPublished = rcv.IsPublished
+            })
             .ToListAsync(ct);
 
         resourceContent.MachineTranslations = relevantContentVersion.MachineTranslations.Select(mt => new MachineTranslationResponse

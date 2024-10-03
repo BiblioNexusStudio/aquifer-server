@@ -28,13 +28,12 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
 
         var draftVersions = await dbContext.ResourceContentVersions
             .Where(x => contentIds.Contains(x.ResourceContentId) &&
-                x.IsDraft &&
-                (x.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
-                    x.ResourceContent.Status == ResourceContentStatus.AquiferizePublisherReview ||
-                    x.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending ||
-                    x.ResourceContent.Status == ResourceContentStatus.TranslationPublisherReview))
+                        x.IsDraft &&
+                        (x.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
+                         x.ResourceContent.Status == ResourceContentStatus.AquiferizePublisherReview ||
+                         x.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending ||
+                         x.ResourceContent.Status == ResourceContentStatus.TranslationPublisherReview))
             .Include(x => x.ResourceContent)
-            .ThenInclude(x => x.Language)
             .ToListAsync(ct);
 
         if (draftVersions.Count != contentIds.Length)
@@ -44,7 +43,7 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
 
         foreach (var draftVersion in draftVersions)
         {
-            var newStatus = draftVersion.ResourceContent.Language.ISO6393Code == "eng"
+            var newStatus = draftVersion.ResourceContent.LanguageId == Constants.EnglishLanguageId
                 ? ResourceContentStatus.AquiferizePublisherReview
                 : ResourceContentStatus.TranslationPublisherReview;
 

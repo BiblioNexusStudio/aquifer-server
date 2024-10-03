@@ -31,10 +31,6 @@ public static class LanguageResourcesEndpoints
             return TypedResults.BadRequest("parentResourceIds query param must be specified");
         }
 
-        var englishLanguageId = (await dbContext.Languages.Where(language => language.ISO6393Code.ToLower() == "eng")
-                                    .FirstOrDefaultAsync(cancellationToken))?.Id ??
-                                -1;
-
         var parentResourceEntities = await dbContext.ParentResources
             .Where(pr => parentResourceIds.Contains(pr.Id))
             .ToListAsync(cancellationToken);
@@ -48,7 +44,7 @@ public static class LanguageResourcesEndpoints
                            pr.Passage.EndVerseId < BibleUtilities.UpperBoundOfBook(bookId))))
             .SelectMany(pr => pr.Resource.ResourceContents
                 .Where(rc => rc.LanguageId == languageId ||
-                             (rc.LanguageId == englishLanguageId &&
+                             (rc.LanguageId == Constants.EnglishLanguageId &&
                               Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
                 .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
                     .Select(rcv =>
@@ -74,7 +70,7 @@ public static class LanguageResourcesEndpoints
                          vr.VerseId < BibleUtilities.UpperBoundOfBook(bookId))
             .SelectMany(vr => vr.Resource.ResourceContents
                 .Where(rc => rc.LanguageId == languageId ||
-                             (rc.LanguageId == englishLanguageId &&
+                             (rc.LanguageId == Constants.EnglishLanguageId &&
                               Constants.FallbackToEnglishForMediaTypes.Contains(rc.MediaType)))
                 .SelectMany(rc => rc.Versions.Where(rcv => rcv.IsPublished)
                     .Select(rcv =>
@@ -96,7 +92,13 @@ public static class LanguageResourcesEndpoints
         // The above queries return resource contents in English + the current language (if available).
         // This filters them by grouping appropriately and selecting the current language resource (if available) then falling back to English.
         var filteredDownToOneLanguage = passageResourceContent.Concat(verseResourceContent)
-            .GroupBy(rc => new { rc.StartChapter, rc.EndChapter, rc.MediaType, rc.ResourceId })
+            .GroupBy(rc => new
+            {
+                rc.StartChapter,
+                rc.EndChapter,
+                rc.MediaType,
+                rc.ResourceId
+            })
             .Select(grc => grc.OrderBy(rc => rc.LanguageId == languageId ? 0 : 1).First());
 
         var groupedContent = filteredDownToOneLanguage
