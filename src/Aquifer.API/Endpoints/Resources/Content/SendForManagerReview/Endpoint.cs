@@ -25,6 +25,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         ];
 
         var draftVersions = await dbContext.ResourceContentVersions
+            .AsTracking()
             .Where(x => contentIds.Contains(x.ResourceContentId) && allowedStatuses.Contains(x.ResourceContent.Status) && x.IsDraft)
             .Include(x => x.ResourceContent)
             .ThenInclude(x => x.ProjectResourceContents)
@@ -98,6 +99,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         else
         {
             var lastAssignmentHistory = await dbContext.ResourceContentVersionAssignedUserHistory
+                .AsTracking()
                 .Where(x => x.ResourceContentVersionId == draftVersion.Id && managers.Contains(x.ChangedByUserId))
                 .OrderByDescending(x => x.Id)
                 .FirstOrDefaultAsync();

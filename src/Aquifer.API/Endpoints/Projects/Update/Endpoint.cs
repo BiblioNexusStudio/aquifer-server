@@ -17,7 +17,11 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var project = await dbContext.Projects.Include(p => p.ProjectPlatform).SingleOrDefaultAsync(p => p.Id == request.Id, ct);
+        var project = await dbContext.Projects
+            .AsTracking()
+            .Include(p => p.ProjectPlatform)
+            .SingleOrDefaultAsync(p => p.Id == request.Id, ct);
+
         if (project is null)
         {
             await SendNotFoundAsync(ct);

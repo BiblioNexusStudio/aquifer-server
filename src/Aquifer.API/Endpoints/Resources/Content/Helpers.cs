@@ -22,7 +22,9 @@ public static class Helpers
         Task<(ResourceContentVersionEntity? latestVersion, ResourceContentVersionEntity? publishedVersion, ResourceContentVersionEntity?
             draftVersion)> GetResourceContentVersions(int contentId, AquiferDbContext dbContext, CancellationToken cancellationToken)
     {
-        var resourceContentVersions = await dbContext.ResourceContentVersions.Where(x => x.ResourceContentId == contentId)
+        var resourceContentVersions = await dbContext.ResourceContentVersions
+            .AsTracking()
+            .Where(x => x.ResourceContentId == contentId)
             .Include(x => x.ResourceContent)
             .ToListAsync(cancellationToken);
 
@@ -94,6 +96,7 @@ public static class Helpers
         CancellationToken ct)
     {
         var assignmentHistory = await dbContext.ResourceContentVersionAssignedUserHistory
+            .AsTracking()
             .Where(x => resourceContentVersionIds.Contains(x.ResourceContentVersionId))
             .OrderByDescending(x => x.Id)
             .Include(x => x.AssignedUser)

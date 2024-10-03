@@ -30,7 +30,8 @@ public class TrackResourceContentRequestJob(
             }
 
             await LookupIpAddressAsync(trackingMetadata, ct);
-            await dbContext.ResourceContentRequests.AddRangeAsync(trackingMetadata.ResourceContentIds.Select(x =>
+            await dbContext.ResourceContentRequests
+                .AddRangeAsync(trackingMetadata.ResourceContentIds.Select(x =>
                     new ResourceContentRequestEntity
                     {
                         ResourceContentId = x,
@@ -61,7 +62,9 @@ public class TrackResourceContentRequestJob(
                 return;
             }
 
-            var ipDataRecord = await dbContext.IpAddressData.SingleOrDefaultAsync(x => x.IpAddress == trackingMetadata.IpAddress, ct);
+            var ipDataRecord = await dbContext.IpAddressData
+                .AsTracking()
+                .SingleOrDefaultAsync(x => x.IpAddress == trackingMetadata.IpAddress, ct);
             if (ipDataRecord is null)
             {
                 var ipData = await ipAddressClient.LookupIpAddressAsync(trackingMetadata.IpAddress, ct);
