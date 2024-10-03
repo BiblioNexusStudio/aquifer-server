@@ -1074,6 +1074,22 @@ namespace Aquifer.Data.Migrations
                     b.ToTable("ProjectPlatforms");
                 });
 
+            modelBuilder.Entity("Aquifer.Data.Entities.ProjectResourceContentEntity", b =>
+                {
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ResourceContentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProjectId", "ResourceContentId");
+
+                    b.HasIndex("ResourceContentId")
+                        .IsUnique();
+
+                    b.ToTable("ProjectResourceContents");
+                });
+
             modelBuilder.Entity("Aquifer.Data.Entities.ReportEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -1699,22 +1715,6 @@ namespace Aquifer.Data.Migrations
                     b.ToTable("AssociatedResources");
                 });
 
-            modelBuilder.Entity("ProjectResourceContents", b =>
-                {
-                    b.Property<int>("ProjectId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ResourceContentId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ProjectId", "ResourceContentId");
-
-                    b.HasIndex("ResourceContentId")
-                        .IsUnique();
-
-                    b.ToTable("ProjectResourceContents");
-                });
-
             modelBuilder.Entity("Aquifer.Data.Entities.BibleBookChapterEntity", b =>
                 {
                     b.HasOne("Aquifer.Data.Entities.BibleBookEntity", "BibleBook")
@@ -2126,6 +2126,25 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("ProjectPlatform");
                 });
 
+            modelBuilder.Entity("Aquifer.Data.Entities.ProjectResourceContentEntity", b =>
+                {
+                    b.HasOne("Aquifer.Data.Entities.ProjectEntity", "Project")
+                        .WithMany("ProjectResourceContents")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Aquifer.Data.Entities.ResourceContentEntity", "ResourceContent")
+                        .WithMany("ProjectResourceContents")
+                        .HasForeignKey("ResourceContentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+
+                    b.Navigation("ResourceContent");
+                });
+
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentEntity", b =>
                 {
                     b.HasOne("Aquifer.Data.Entities.LanguageEntity", "Language")
@@ -2354,21 +2373,6 @@ namespace Aquifer.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ProjectResourceContents", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.ProjectEntity", null)
-                        .WithMany()
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Aquifer.Data.Entities.ResourceContentEntity", null)
-                        .WithMany()
-                        .HasForeignKey("ResourceContentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Aquifer.Data.Entities.BibleBookChapterEntity", b =>
                 {
                     b.Navigation("Verses");
@@ -2465,8 +2469,15 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("PassageResources");
                 });
 
+            modelBuilder.Entity("Aquifer.Data.Entities.ProjectEntity", b =>
+                {
+                    b.Navigation("ProjectResourceContents");
+                });
+
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentEntity", b =>
                 {
+                    b.Navigation("ProjectResourceContents");
+
                     b.Navigation("Versions");
                 });
 

@@ -40,13 +40,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                         : null,
                 Counts = new ProjectResourceStatusCounts
                 {
-                    NotStarted = x.ResourceContents.Count(rc => ProjectResourceStatusCounts.NotStartedStatuses.Contains(rc.Status)),
-                    InProgress = x.ResourceContents.Count(rc => ProjectResourceStatusCounts.InProgressStatuses.Contains(rc.Status)),
+                    NotStarted = x.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.NotStartedStatuses.Contains(prc.ResourceContent.Status)),
+                    InProgress = x.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.InProgressStatuses.Contains(prc.ResourceContent.Status)),
                     InManagerReview =
-                        x.ResourceContents.Count(rc => ProjectResourceStatusCounts.InManagerReviewStatuses.Contains(rc.Status)),
+                        x.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.InManagerReviewStatuses.Contains(prc.ResourceContent.Status)),
                     InPublisherReview =
-                        x.ResourceContents.Count(rc => ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(rc.Status)),
-                    Completed = x.ResourceContents.Count(rc => rc.Status == ResourceContentStatus.Complete)
+                        x.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(prc.ResourceContent.Status)),
+                    Completed = x.ProjectResourceContents.Count(prc => prc.ResourceContent.Status == ResourceContentStatus.Complete)
                 }
             })
             .ToListAsync(ct);

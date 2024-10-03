@@ -29,33 +29,33 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             .Where(x => (x.ActualPublishDate == null || x.ActualPublishDate.Value > DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-30)) &&
                 (userService.HasPermission(PermissionName.ReadProject) ||
                     (userService.HasPermission(PermissionName.ReadProjectsInCompany) && self.CompanyId == x.CompanyId)))
-            .Select(x => new Response
+            .Select(p => new Response
             {
-                Id = x.Id,
-                Name = x.Name,
-                Company = x.Company.Name,
-                Language = x.Language.EnglishDisplay,
-                ProjectPlatform = x.ProjectPlatform.Name,
-                ProjectLead = $"{x.ProjectManagerUser.FirstName} {x.ProjectManagerUser.LastName}",
-                Manager = x.CompanyLeadUser != null ? $"{x.CompanyLeadUser.FirstName} {x.CompanyLeadUser.LastName}" : null,
-                Resource = x.ResourceContents.First().Resource.ParentResource.DisplayName,
-                ItemCount = x.ResourceContents.Count,
-                WordCount = x.SourceWordCount,
-                IsStarted = x.Started != null,
-                IsCompleted = x.ActualPublishDate != null,
+                Id = p.Id,
+                Name = p.Name,
+                Company = p.Company.Name,
+                Language = p.Language.EnglishDisplay,
+                ProjectPlatform = p.ProjectPlatform.Name,
+                ProjectLead = $"{p.ProjectManagerUser.FirstName} {p.ProjectManagerUser.LastName}",
+                Manager = p.CompanyLeadUser != null ? $"{p.CompanyLeadUser.FirstName} {p.CompanyLeadUser.LastName}" : null,
+                Resource = p.ProjectResourceContents.First().ResourceContent.Resource.ParentResource.DisplayName,
+                ItemCount = p.ProjectResourceContents.Count,
+                WordCount = p.SourceWordCount,
+                IsStarted = p.Started != null,
+                IsCompleted = p.ActualPublishDate != null,
                 Days =
-                    x.ProjectedDeliveryDate.HasValue
-                        ? x.ProjectedDeliveryDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber
+                    p.ProjectedDeliveryDate.HasValue
+                        ? p.ProjectedDeliveryDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber
                         : null,
                 Counts = new ProjectResourceStatusCounts
                 {
-                    NotStarted = x.ResourceContents.Count(rc => ProjectResourceStatusCounts.NotStartedStatuses.Contains(rc.Status)),
-                    InProgress = x.ResourceContents.Count(rc => ProjectResourceStatusCounts.InProgressStatuses.Contains(rc.Status)),
+                    NotStarted = p.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.NotStartedStatuses.Contains(prc.ResourceContent.Status)),
+                    InProgress = p.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.InProgressStatuses.Contains(prc.ResourceContent.Status)),
                     InManagerReview =
-                        x.ResourceContents.Count(rc => ProjectResourceStatusCounts.InManagerReviewStatuses.Contains(rc.Status)),
+                        p.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.InManagerReviewStatuses.Contains(prc.ResourceContent.Status)),
                     InPublisherReview =
-                        x.ResourceContents.Count(rc => ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(rc.Status)),
-                    Completed = x.ResourceContents.Count(rc => rc.Status == ResourceContentStatus.Complete)
+                        p.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(prc.ResourceContent.Status)),
+                    Completed = p.ProjectResourceContents.Count(prc => prc.ResourceContent.Status == ResourceContentStatus.Complete)
                 }
             })
             .ToListAsync(ct);

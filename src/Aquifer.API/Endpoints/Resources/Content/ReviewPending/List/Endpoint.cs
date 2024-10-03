@@ -16,25 +16,31 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var resourceContents = (await dbContext.ResourceContentVersions
-                .Where(rcv => rcv.IsDraft &&
-                              (rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
-                               rcv.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending))
-                .Select(x => new Response
+        var resourceContents =
+            (await dbContext.ResourceContentVersions
+                .Where(rcv =>
+                    rcv.IsDraft &&
+                    (rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
+                    rcv.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending))
+                .Select(rcv => new Response
                 {
-                    Id = x.ResourceContentId,
-                    EnglishLabel = x.ResourceContent.Resource.EnglishLabel,
-                    LanguageEnglishDisplay = x.ResourceContent.Language.EnglishDisplay,
-                    ParentResourceName = x.ResourceContent.Resource.ParentResource.DisplayName,
-                    LastStatusUpdate = x.ResourceContent.Updated,
-                    ProjectName =
-                        x.ResourceContent.Projects.FirstOrDefault() == null ? null : x.ResourceContent.Projects.FirstOrDefault()!.Name,
-                    WordCount = x.SourceWordCount,
-                    SortOrder = x.ResourceContent.Resource.SortOrder,
-                    ContentUpdated = x.ResourceContent.ContentUpdated,
-                    ReviewLevel = x.ReviewLevel,
-                }).ToListAsync(ct))
-            .OrderByDescending(x => x.DaysSinceStatusChange).ThenBy(x => x.EnglishLabel).ToList();
+                    Id = rcv.ResourceContentId,
+                    EnglishLabel = rcv.ResourceContent.Resource.EnglishLabel,
+                    LanguageEnglishDisplay = rcv.ResourceContent.Language.EnglishDisplay,
+                    ParentResourceName = rcv.ResourceContent.Resource.ParentResource.DisplayName,
+                    LastStatusUpdate = rcv.ResourceContent.Updated,
+                    ProjectName = rcv.ResourceContent.ProjectResourceContents.FirstOrDefault() == null
+                        ? null
+                        : rcv.ResourceContent.ProjectResourceContents.First().Project.Name,
+                    WordCount = rcv.SourceWordCount,
+                    SortOrder = rcv.ResourceContent.Resource.SortOrder,
+                    ContentUpdated = rcv.ResourceContent.ContentUpdated,
+                    ReviewLevel = rcv.ReviewLevel,
+                })
+                .ToListAsync(ct))
+            .OrderByDescending(x => x.DaysSinceStatusChange)
+            .ThenBy(x => x.EnglishLabel)
+            .ToList();
 
         await SendOkAsync(resourceContents, ct);
     }

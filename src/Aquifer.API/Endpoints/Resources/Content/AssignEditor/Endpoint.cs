@@ -121,7 +121,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
 
         var isCompanyLead = await dbContext.Projects
-            .Where(p => p.ResourceContents.Any(rc => rc.Id == version.ResourceContentId))
+            .Where(p => p.ProjectResourceContents.Any(prc => prc.ResourceContent.Id == version.ResourceContentId))
             .Select(p => p.CompanyLeadUserId == userId)
             .FirstOrDefaultAsync(ct);
 
