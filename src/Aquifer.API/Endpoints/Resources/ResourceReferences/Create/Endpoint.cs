@@ -1,5 +1,6 @@
 using Aquifer.API.Common;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,7 +18,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
     {
         var resourceContent = await dbContext.ResourceContents
             .Include(rc => rc.Resource)
-            .ThenInclude(r => r.AssociatedResourceChildren)
+            .ThenInclude(r => r.AssociatedResources)
             .SingleOrDefaultAsync(rc => rc.Id == request.ResourceContentId, ct);
 
         if (resourceContent == null)
@@ -26,7 +27,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
             return;
         }
 
-        if (!resourceContent.Resource.AssociatedResourceChildren.Any(r => r.Id == request.ReferenceResourceId))
+        if (!resourceContent.Resource.AssociatedResources.Any(r => r.AssociatedResourceId == request.ReferenceResourceId))
         {
             var referenceResource = await dbContext.Resources.FindAsync([request.ReferenceResourceId], ct);
 
@@ -36,7 +37,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
                 return;
             }
 
-            resourceContent.Resource.AssociatedResourceChildren.Add(referenceResource);
+            resourceContent.Resource.AssociatedResources.Add(new AssociatedResourceEntity { AssociatedResource = referenceResource });
             await dbContext.SaveChangesAsync(ct);
         }
 

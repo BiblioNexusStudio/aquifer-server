@@ -21,6 +21,7 @@ public class AquiferDbContext : DbContext
         SavedChanges += async (s, e) => await OnSavingChanges(s, e);
     }
 
+    public DbSet<AssociatedResourceEntity> AssociatedResources { get; set; }
     public DbSet<BibleBookChapterEntity> BibleBookChapters { get; set; }
     public DbSet<BibleBookChapterVerseEntity> BibleBookChapterVerses { get; set; }
     public DbSet<BibleBookContentEntity> BibleBookContents { get; set; }

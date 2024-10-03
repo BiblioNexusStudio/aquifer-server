@@ -17,7 +17,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
     {
         var resourceContent = await dbContext.ResourceContents
             .Include(rc => rc.Resource)
-            .ThenInclude(r => r.AssociatedResourceChildren)
+            .ThenInclude(r => r.AssociatedResources)
             .SingleOrDefaultAsync(rc => rc.Id == request.ResourceContentId, ct);
 
         if (resourceContent == null)
@@ -26,8 +26,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
             return;
         }
 
-        var associatedResource = resourceContent.Resource.AssociatedResourceChildren
-            .FirstOrDefault(r => r.Id == request.ReferenceResourceId);
+        var associatedResource = resourceContent.Resource.AssociatedResources
+            .FirstOrDefault(ar => ar.AssociatedResourceId == request.ReferenceResourceId);
 
         if (associatedResource == null)
         {
@@ -35,7 +35,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
             return;
         }
 
-        resourceContent.Resource.AssociatedResourceChildren.Remove(associatedResource);
+        dbContext.AssociatedResources.Remove(associatedResource);
 
         await dbContext.SaveChangesAsync(ct);
         await SendNoContentAsync(ct);
