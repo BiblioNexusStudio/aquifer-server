@@ -18,7 +18,9 @@ public static class ResourceStatusChangeHandler
         List<int> inProgressIds = [];
 
         entityEntries.Where(entry => entry is { State: EntityState.Unchanged, Entity: ResourceContentEntity })
-            .Select(x => x.Entity as ResourceContentEntity).ToList().ForEach(x =>
+            .Select(x => x.Entity as ResourceContentEntity)
+            .ToList()
+            .ForEach(x =>
             {
                 switch (x?.Status)
                 {
@@ -35,9 +37,15 @@ public static class ResourceStatusChangeHandler
                 }
             });
 
+        if (completedContentIds.Count + inReviewContentIds.Count + inProgressIds.Count == 0)
+        {
+            return;
+        }
+
+        await using var dbContext = new AquiferDbContext(dbContextOptions);
+
         if (completedContentIds.Count > 0)
         {
-            await using var dbContext = new AquiferDbContext(dbContextOptions);
             await dbContext.Projects.Where(x =>
                     x.ResourceContents.Any(rc => completedContentIds.Contains(rc.Id)) &&
                     x.ResourceContents.Where(rc => !completedContentIds.Contains(rc.Id))
@@ -49,7 +57,6 @@ public static class ResourceStatusChangeHandler
 
         if (inReviewContentIds.Count > 0)
         {
-            await using var dbContext = new AquiferDbContext(dbContextOptions);
             await dbContext.Projects.Where(x =>
                     x.ResourceContents.Any(rc => inReviewContentIds.Contains(rc.Id)) &&
                     x.ResourceContents.Where(rc => !inReviewContentIds.Contains(rc.Id))
@@ -61,13 +68,11 @@ public static class ResourceStatusChangeHandler
 
         if (inProgressIds.Count > 0)
         {
-            await using var dbContext = new AquiferDbContext(dbContextOptions);
             await dbContext.Projects.Where(x =>
                     x.ActualDeliveryDate != null &&
                     x.ActualPublishDate == null &&
                     x.ResourceContents.Any(rc => inProgressIds.Contains(rc.Id)) &&
-                    x.ResourceContents.Where(rc => !inProgressIds.Contains(rc.Id))
-                        .All(rc => InReviewOrGreaterStatuses.Contains(rc.Status)))
+                    x.ResourceContents.Where(rc => !inProgressIds.Contains(rc.Id)).All(rc => InReviewOrGreaterStatuses.Contains(rc.Status)))
                 .ExecuteUpdateAsync(x => x
                     .SetProperty(p => p.ActualDeliveryDate, null as DateOnly?)
                     .SetProperty(p => p.Updated, DateTime.UtcNow));
