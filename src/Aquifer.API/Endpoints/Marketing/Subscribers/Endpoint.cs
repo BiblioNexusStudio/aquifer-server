@@ -18,7 +18,9 @@ public class Endpoint(AquiferDbContext dbContext, ILogger<Endpoint> logger) : En
     {
         try
         {
-            var subscriber = await dbContext.ContentSubscribers.Where(x => x.Email == req.Email)
+            var subscriber = await dbContext.ContentSubscribers
+                .AsTracking()
+                .Where(x => x.Email == req.Email)
                 .Include(x => x.ContentSubscriberLanguages)
                 .Include(x => x.ContentSubscriberParentResources)
                 .SingleOrDefaultAsync(ct);

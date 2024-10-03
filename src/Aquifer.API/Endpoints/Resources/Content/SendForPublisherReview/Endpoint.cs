@@ -25,6 +25,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         ];
 
         var draftVersions = await dbContext.ResourceContentVersions
+            .AsTracking()
             .Where(x => contentIds.Contains(x.ResourceContentId) && allowedStatuses.Contains(x.ResourceContent.Status) && x.IsDraft)
             .Include(x => x.ResourceContent).ToListAsync(ct);
 

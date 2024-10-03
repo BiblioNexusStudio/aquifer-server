@@ -5,6 +5,7 @@ using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Users.Disable;
 
@@ -24,7 +25,9 @@ public class Endpoint(
     {
         var currentUser = await userService.GetUserFromJwtAsync(ct);
         var currentUserPermissions = userService.GetAllJwtPermissions();
-        var userToDisable = dbContext.Users.SingleOrDefault(x => x.Id == req.UserId && x.Enabled);
+        var userToDisable = dbContext.Users
+            .AsTracking()
+            .SingleOrDefault(x => x.Id == req.UserId && x.Enabled);
         if (userToDisable is null ||
             (!currentUserPermissions.Contains(PermissionName.DisableUser) && currentUser.CompanyId != userToDisable.CompanyId))
         {

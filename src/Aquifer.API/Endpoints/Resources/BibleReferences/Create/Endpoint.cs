@@ -17,6 +17,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var resourceContent = await dbContext.ResourceContents
+            .AsTracking()
             .Include(rc => rc.Resource)
             .ThenInclude(r => r.VerseResources)
             .Include(rc => rc.Resource)
@@ -50,9 +51,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
                     pr.Passage.StartVerseId == request.StartVerseId && pr.Passage.EndVerseId == request.EndVerseId))
             {
                 var passage = await dbContext.Passages
-                                  .SingleOrDefaultAsync(p => p.StartVerseId == request.StartVerseId && p.EndVerseId == request.EndVerseId,
-                                      ct) ??
-                              new PassageEntity { StartVerseId = request.StartVerseId, EndVerseId = request.EndVerseId };
+                    .AsTracking()
+                    .SingleOrDefaultAsync(p => p.StartVerseId == request.StartVerseId && p.EndVerseId == request.EndVerseId, ct)
+                    ?? new PassageEntity { StartVerseId = request.StartVerseId, EndVerseId = request.EndVerseId };
                 ;
 
                 await dbContext.PassageResources.AddAsync(

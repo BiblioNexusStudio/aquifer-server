@@ -75,8 +75,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             }
             else
             {
-                var resourceContent = await dbContext.ResourceContents.FirstOrDefaultAsync(x => x.Id == contentId, ct) ??
-                                      throw new ArgumentNullException();
+                var resourceContent = await dbContext.ResourceContents
+                    .AsTracking()
+                    .FirstOrDefaultAsync(x => x.Id == contentId, ct)
+                    ?? throw new ArgumentNullException();
                 resourceContent.Status = ResourceContentStatus.Complete;
 
                 await historyService.AddStatusHistoryAsync(mostRecentContentVersion, ResourceContentStatus.Complete, user.Id, ct);
