@@ -13,7 +13,11 @@ public class Validator : Validator<Request>
             .Cascade(CascadeMode.Stop)
             .NotEmpty()
             .Must(code => BibleBookCodeUtilities.IdFromCode(code) != BookId.None)
-            .WithMessage("Invalid '{PropertyName}': \"{PropertyValue}\".");
+            .WithMessage("Invalid '{PropertyName}': \"{PropertyValue}\".")
+            .Must(code => BibleBookCodeUtilities.IdFromCode(code) is
+                >= BookId.BookMAT and
+                <= BookId.BookREV)
+            .WithMessage("Invalid '{PropertyName}': \"{PropertyValue}\". Must be a valid New Testament book.");
 
         RuleFor(x => x.StartChapter)
             .LessThanOrEqualTo(x => x.EndChapter);

@@ -1,5 +1,7 @@
-﻿using Aquifer.Common.Utilities;
+﻿using System.Data.Common;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
+using Aquifer.Data.Enums;
 using Aquifer.Public.API.Helpers;
 using Dapper;
 using FastEndpoints;
@@ -9,74 +11,6 @@ namespace Aquifer.Public.API.Endpoints.Bibles.Alignments.Greek;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 {
-    private const string GreekAlignmentSourceQuery = """
-        SELECT TOP 1 gnt.[Name]
-        FROM BibleVersionWords bvw
-        LEFT JOIN BibleVersionWordGroupWords bvwgw ON bvwgw.BibleVersionWordId = bvw.Id
-        LEFT JOIN NewTestamentAlignments nta ON nta.BibleVersionWordGroupId = bvwgw.BibleVersionWordGroupId
-        LEFT JOIN GreekNewTestamentWordGroupWords gntwgw ON gntwgw.GreekNewTestamentWordGroupId = nta.GreekNewTestamentWordGroupId
-        LEFT JOIN GreekNewTestamentWords gntw ON gntw.Id = gntwgw.GreekNewTestamentWordId
-        LEFT JOIN GreekNewTestaments gnt ON gntw.GreekNewTestamentId = gnt.Id
-        WHERE bvw.BibleId = @bibleId
-        """;
-
-    // Fetches all Bible text in the range for the given Bible.
-    // Includes foreign key links to Greek Word and Greek Sense for later lookup.
-    // Note that if there is more than one Greek sense for a Greek word then there will be multiple rows returned, one for each sense.
-    private const string BibleTextWithGreekAlignmentForeignKeysQuery = """
-        SELECT
-            bvw.Id,
-            bvw.WordIdentifier,
-            bvw.[Text] AS EnglishWord,
-            bvw.IsPunctuation,
-            bvwgw.BibleVersionWordGroupId,
-            gntws.GreekSenseId,
-            gntw.GreekWordId
-        FROM BibleVersionWords bvw
-            LEFT JOIN BibleVersionWordGroupWords bvwgw ON bvwgw.BibleVersionWordId = bvw.Id
-            LEFT JOIN BibleVersionWordGroups bvwg ON bvwg.Id = bvwgw.BibleVersionWordGroupId
-            LEFT JOIN NewTestamentAlignments nta ON nta.BibleVersionWordGroupId = BVWG.Id
-            LEFT JOIN GreekNewTestamentWordGroups gntwg ON gntwg.Id = nta.GreekNewTestamentWordGroupId
-            LEFT JOIN GreekNewTestamentWordGroupWords gntwgw ON gntwgw.GreekNewTestamentWordGroupId = GNTWG.Id
-            LEFT JOIN GreekNewTestamentWords gntw ON gntw.Id = gntwgw.GreekNewTestamentWordId
-            LEFT JOIN GreekNewTestamentWordSenses gntws ON gntws.GreekNewTestamentWordId = gntw.Id
-        WHERE
-            bvw.BibleId = @bibleId AND
-            bvw.WordIdentifier BETWEEN @lowerBounds AND @upperBounds AND
-            gntw.Id IS NOT NULL
-        ORDER BY
-            bvw.WordIdentifier,
-            gntw.WordIdentifier,
-            gntws.GreekSenseId
-        """;
-
-    private const string GreekWordsQuery = """
-        SELECT
-            gw.Id,
-            gw.[Text] AS Word,
-            gw.GrammarType,
-            gw.UsageCode,
-            gl.[Text] AS Lemma,
-            sn.[Value] AS StrongsNumber
-        FROM GreekWords gw
-            JOIN GreekLemmas gl ON gw.GreekLemmaId = gl.Id
-            JOIN StrongNumbers sn ON gl.StrongNumberId = sn.Id
-        WHERE gw.Id IN @greekWordIds
-        """;
-
-    private const string GreekSensesQuery = """
-        SELECT
-            gs.Id,
-            gs.DefinitionShort AS [Definition],
-            STRING_AGG(gsg.[Text], '||') AS Glosses
-        FROM GreekSenses gs
-            JOIN GreekSenseGlosses gsg ON gsg.GreekSenseId = gs.Id
-        WHERE gs.Id IN @greekSenseIds
-        GROUP BY
-            gs.Id,
-            gs.DefinitionShort
-        """;
-
     public override void Configure()
     {
         Get("/bibles/{BibleId}/alignments/greek");
@@ -92,26 +26,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var bookCodeEnum = BibleBookCodeUtilities.IdFromCode(request.BookCode);
-        var lowerBounds = new BibleWordIdentifier(bookCodeEnum, request.StartChapter, request.StartVerse, request.StartWord).WordIdentifier;
-        var upperBounds = BibleWordIdentifier.GetUpperBoundOfWord(bookCodeEnum, request.EndChapter, request.EndVerse, request.EndWord).WordIdentifier;
+        var bookId = BibleBookCodeUtilities.IdFromCode(request.BookCode);
 
-        var bookData = await dbContext.BibleBooks
-            .Where(bb =>
-                bb.Bible.Enabled &&
-                !bb.Bible.RestrictedLicense &&
-                bb.Bible.GreekAlignment &&
-                bb.Bible.Id == request.BibleId &&
-                bb.Code == request.BookCode.ToUpper())
-            .Select(bb => new
-            {
-                BibleId = bb.Bible.Id,
-                BibleName = bb.Bible.Name,
-                BibleAbbreviation = bb.Bible.Abbreviation,
-                BookCode = bb.Code,
-                BookName = bb.LocalizedName,
-            })
-            .FirstOrDefaultAsync(ct);
+        var bookData = await GetBookDataAsync(request.BibleId, bookId, ct);
 
         if (bookData == null)
         {
@@ -119,116 +36,78 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             return;
         }
 
-        var greekAlignmentSource = await dbContext.Database.GetDbConnection()
-            .QueryFirstOrDefaultAsync<string>(new CommandDefinition(GreekAlignmentSourceQuery, new { bibleId = request.BibleId }, cancellationToken: ct));
+        var greekAlignmentNewTestamentName = await GetAssociatedGreekAlignmentNewTestamentNameForBibleAsync(
+            dbContext.Database.GetDbConnection(),
+            request.BibleId,
+            ct);
 
-        if (greekAlignmentSource == null)
+        if (greekAlignmentNewTestamentName == null)
         {
             await SendNotFoundAsync(ct);
             return;
         }
 
-        var bibleText = (await dbContext.Database.GetDbConnection()
-                .QueryAsync<BibleTextWithGreekAlignmentForeignKeysResult>(
-                    new CommandDefinition(
-                        BibleTextWithGreekAlignmentForeignKeysQuery,
-                        new
-                        {
-                            lowerBounds,
-                            upperBounds,
-                            bibleId = request.BibleId,
-                        },
-                        cancellationToken: ct)))
-            .ToList();
+        var bibleText = await GetBibleTextAsync(
+            dbContext.Database.GetDbConnection(),
+            request.BibleId,
+            textLowerBounds: new BibleWordIdentifier(bookId, request.StartChapter, request.StartVerse, request.StartWord),
+            textUpperBounds: BibleWordIdentifier.GetUpperBoundOfWord(bookId, request.EndChapter, request.EndVerse, request.EndWord),
+            ct);
 
-        List<GreekWordResult> greekWordResults = [];
-        foreach (var batch in bibleText.Select(r => r.GreekWordId).Distinct().Order().Chunk(size: 2000))
-        {
-            greekWordResults.AddRange(await dbContext.Database.GetDbConnection()
-                .QueryAsync<GreekWordResult>(new CommandDefinition(GreekWordsQuery, new { greekWordIds = batch }, cancellationToken: ct)));
-        }
+        var greekWordResultByIdMap = await GetGreekWordResultByGreekWordIdMapAsync(
+            dbContext.Database.GetDbConnection(),
+            bibleText.Where(bt => bt.GreekWordId is not null).Select(r => r.GreekWordId!.Value),
+            ct);
 
-        var greekWordResultById = greekWordResults.ToDictionary(gwr => gwr.Id);
-
-        List<GreekSenseResult> greekSenseResults = [];
-        if (request.ShouldReturnSenseData)
-        {
-            foreach (var batch in bibleText.Select(r => r.GreekSenseId).Distinct().Order().Chunk(size: 2000))
-            {
-                greekSenseResults.AddRange(await dbContext.Database.GetDbConnection()
-                    .QueryAsync<GreekSenseResult>(new CommandDefinition(GreekSensesQuery, new { greekSenseIds = batch }, cancellationToken: ct)));
-            }
-        }
-
-        var greekSenseResultById = greekSenseResults.ToLookup(r => r.Id);
+        var greekSenseResultsByIdMap = request.ShouldReturnSenseData
+            ? await GetGreekSenseResultsByGreekSenseIdMapAsync(
+                dbContext.Database.GetDbConnection(),
+                bibleText.Where(bt => bt.GreekSenseId is not null).Select(r => r.GreekSenseId!.Value),
+                ct)
+            : null;
 
         var response = new Response
         {
             BibleId = bookData.BibleId,
             BibleName = bookData.BibleName,
             BibleAbbreviation = bookData.BibleAbbreviation,
-            GreekBibleAbbreviation = greekAlignmentSource,
+            GreekBibleAbbreviation = greekAlignmentNewTestamentName,
             BookCode = bookData.BookCode,
             BookName = bookData.BookName,
             Chapters = bibleText
                 .GroupBy(r => r.BibleWordIdentifier.Chapter)
-                .Select(chapterGrouping => new ResponseChapter
+                .Select(wordsInChapter => new ResponseChapter
                 {
-                    Number = chapterGrouping.Key,
-                    Verses = chapterGrouping
+                    Number = wordsInChapter.Key,
+                    Verses = wordsInChapter
                         .GroupBy(r => r.BibleWordIdentifier.Verse)
-                        .Select(verseGrouping =>
+                        .Select(wordsInVerse =>
                         {
-                            var bibleVersionWordIdBookendsInBibleVersionWordGroupByBibleVersionWordGroupId = verseGrouping
+                            var bibleVersionWordIdBookendsInGroupByGroupId = wordsInVerse
                                 .GroupBy(r => r.BibleVersionWordGroupId)
-                                .ToDictionary(grp => grp.Key, grp => (First: grp.First().Id, Last: grp.Last().Id));
+                                .Where(grp => grp.Key is not null)
+                                .ToDictionary(grp => grp.Key!.Value, grp => (First: grp.First().Id, Last: grp.Last().Id));
 
                             return new ResponseChapterVerse
                             {
-                                Number = verseGrouping.Key,
-                                Words = verseGrouping
+                                Number = wordsInVerse.Key,
+                                Words = wordsInVerse
                                     .GroupBy(r => r.BibleWordIdentifier.Word)
-                                    .Select(wordGrouping =>
+                                    .Select(greekWordsForWord =>
                                     {
-                                        var word = wordGrouping.First();
-                                        return new EnglishWordWithGreekAlignment
-                                        {
-                                            Number = word.BibleWordIdentifier.Word,
-                                            Word = word.EnglishWord,
-                                            NextWordIsInGroup = bibleVersionWordIdBookendsInBibleVersionWordGroupByBibleVersionWordGroupId[word.BibleVersionWordGroupId].Last != word.Id,
-                                            GreekWords =
-                                                bibleVersionWordIdBookendsInBibleVersionWordGroupByBibleVersionWordGroupId[word.BibleVersionWordGroupId].First == word.Id
-                                                ? wordGrouping
-                                                    .GroupBy(r => r.GreekWordId)
-                                                    .Select(greekWordGrouping =>
-                                                    {
-                                                        var greekWordResult = greekWordResultById[greekWordGrouping.Key];
-                                                        var greekSenseResults = greekWordGrouping
-                                                            .SelectMany(r => greekSenseResultById[r.GreekSenseId])
-                                                            .ToList();
+                                        var bibleWord = greekWordsForWord.First();
+                                        var (firstWordIdInGroup, lastWordIdInGroup) = bibleWord.BibleVersionWordGroupId is null
+                                            ? (bibleWord.Id, bibleWord.Id)
+                                            : bibleVersionWordIdBookendsInGroupByGroupId[bibleWord.BibleVersionWordGroupId!.Value];
 
-                                                        return new GreekWord
-                                                        {
-                                                            Word = greekWordResult.Word,
-                                                            GrammarType = greekWordResult.GrammarType,
-                                                            UsageCode = greekWordResult.UsageCode,
-                                                            Lemma = greekWordResult.Lemma,
-                                                            StrongsNumber = greekWordResult.StrongsNumber,
-                                                            Senses = !request.ShouldReturnSenseData
-                                                                ? null
-                                                                : greekSenseResults
-                                                                    .OrderBy(s => s.Definition)
-                                                                    .Select(gsr => new GreekSense
-                                                                    {
-                                                                        Definition = gsr.Definition,
-                                                                        Glosses = gsr.Glosses?.Split("||").Order().ToList() ?? []
-                                                                    })
-                                                                    .ToList(),
-                                                        };
-                                                    })
-                                                    .ToList()
-                                                : [],
-                                        };
+                                        return MapToBibleWordResponse(
+                                            wordNumber: bibleWord.BibleWordIdentifier.Word,
+                                            bibleWord.Word,
+                                            greekWordsForWord.Where(r => r.GreekWordId is not null).ToList(),
+                                            isFirstWordInGroup: firstWordIdInGroup == bibleWord.Id,
+                                            isLastWordInGroup: lastWordIdInGroup == bibleWord.Id,
+                                            greekWordResultByIdMap,
+                                            greekSenseResultsByIdMap);
                                     })
                                     .ToList(),
                             };
@@ -241,35 +120,266 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         await SendOkAsync(response, ct);
     }
 
-    public record BibleTextWithGreekAlignmentForeignKeysResult
+    private static ResponseWordWithGreekAlignment MapToBibleWordResponse(
+        int wordNumber,
+        string word,
+        IReadOnlyList<BibleTextWithGreekAlignmentForeignKeysResult> greekWordsForWord,
+        bool isFirstWordInGroup,
+        bool isLastWordInGroup,
+        IReadOnlyDictionary<int, GreekWordResult> greekWordResultById,
+        IReadOnlyDictionary<int, IReadOnlyList<GreekSenseResult>>? greekSenseResultsById)
     {
-        public int Id { get; set; }
-        public long WordIdentifier { get; set; }
-        public string EnglishWord { get; set; } = null!;
-        public bool IsPunctuation { get; set; }
-        public int BibleVersionWordGroupId { get; set; }
-        public int GreekSenseId { get; set; }
-        public int GreekWordId { get; set; }
+        return new ResponseWordWithGreekAlignment
+        {
+            Number = wordNumber,
+            Word = word,
+            NextWordIsInGroup = !isLastWordInGroup,
+            GreekWords = isFirstWordInGroup
+                ? greekWordsForWord
+                    .GroupBy(r => r.GreekWordId!.Value)
+                    .Select(greekSensesForGreekWord =>
+                    {
+                        var greekWordResult = greekWordResultById[greekSensesForGreekWord.Key];
+                        var greekSenseResultsForGreekWord = greekSenseResultsById == null
+                            ? null
+                            : greekSensesForGreekWord
+                                .Where(r => r.GreekSenseId is not null)
+                                .SelectMany(r => greekSenseResultsById[r.GreekSenseId!.Value])
+                                .ToList();
 
+                        return MapToGreekWordResponse(greekWordResult, greekSenseResultsForGreekWord);
+                    })
+                    .ToList()
+                : [],
+        };
+    }
+
+    private static ResponseGreekWord MapToGreekWordResponse(
+        GreekWordResult greekWordResult,
+        IReadOnlyList<GreekSenseResult>? greekSenseResultsForGreekWord)
+    {
+        return new ResponseGreekWord
+        {
+            Word = greekWordResult.Word,
+            GrammarType = greekWordResult.GrammarType,
+            UsageCode = greekWordResult.UsageCode,
+            Lemma = greekWordResult.Lemma,
+            StrongsNumber = greekWordResult.StrongsNumber,
+            Senses = greekSenseResultsForGreekWord
+                ?.Select(gsr => new ResponseGreekSense
+                {
+                    Definition = gsr.Definition,
+                    Glosses = gsr.ExpandedGlosses,
+                })
+                .ToList(),
+        };
+    }
+
+    private async Task<BookData?> GetBookDataAsync(int bibleId, BookId bookId, CancellationToken ct)
+    {
+        return await dbContext.BibleBooks
+            .Where(bb =>
+                bb.Bible.Enabled &&
+                !bb.Bible.RestrictedLicense &&
+                bb.Bible.GreekAlignment &&
+                bb.Bible.Id == bibleId &&
+                bb.Code == BibleBookCodeUtilities.CodeFromId(bookId))
+            .Select(bb => new BookData(
+                bb.Bible.Id,
+                bb.Bible.Name,
+                bb.Bible.Abbreviation,
+                bb.Code,
+                bb.LocalizedName))
+            .FirstOrDefaultAsync(ct);
+    }
+
+    private sealed record BookData(
+        int BibleId,
+        string BibleName,
+        string BibleAbbreviation,
+        string BookCode,
+        string BookName);
+
+    private static async Task<string?> GetAssociatedGreekAlignmentNewTestamentNameForBibleAsync(
+        DbConnection dbConnection,
+        int bibleId,
+        CancellationToken ct)
+    {
+        const string greekAlignmentSourceQuery = """
+            SELECT TOP 1 gnt.[Name]
+            FROM BibleVersionWords bvw
+                LEFT JOIN BibleVersionWordGroupWords bvwgw ON bvwgw.BibleVersionWordId = bvw.Id
+                LEFT JOIN NewTestamentAlignments nta ON nta.BibleVersionWordGroupId = bvwgw.BibleVersionWordGroupId
+                LEFT JOIN GreekNewTestamentWordGroupWords gntwgw ON gntwgw.GreekNewTestamentWordGroupId = nta.GreekNewTestamentWordGroupId
+                LEFT JOIN GreekNewTestamentWords gntw ON gntw.Id = gntwgw.GreekNewTestamentWordId
+                LEFT JOIN GreekNewTestaments gnt ON gntw.GreekNewTestamentId = gnt.Id
+            WHERE bvw.BibleId = @bibleId
+            """;
+
+        return await dbConnection.QueryFirstOrDefaultAsync<string>(
+            new CommandDefinition(
+                greekAlignmentSourceQuery,
+                new
+                {
+                    bibleId
+                },
+                cancellationToken: ct));
+    }
+
+    private static async Task<IReadOnlyList<BibleTextWithGreekAlignmentForeignKeysResult>> GetBibleTextAsync(
+        DbConnection dbConnection,
+        int bibleId,
+        BibleWordIdentifier textLowerBounds,
+        BibleWordIdentifier textUpperBounds,
+        CancellationToken ct)
+    {
+        // Fetches all Bible text in the range for the given Bible.
+        // Includes foreign key links to Greek Word and Greek Sense for later lookup.
+        // Note that if there is more than one Greek sense for a Greek word then there will be multiple rows returned, one for each sense.
+        const string bibleTextWithGreekAlignmentForeignKeysQuery = """
+            SELECT
+                bvw.Id,
+                bvw.WordIdentifier,
+                bvw.[Text] AS Word,
+                bvw.IsPunctuation,
+                bvwgw.BibleVersionWordGroupId,
+                gntws.GreekSenseId,
+                gntw.GreekWordId
+            FROM BibleVersionWords bvw
+                LEFT JOIN BibleVersionWordGroupWords bvwgw ON bvwgw.BibleVersionWordId = bvw.Id
+                LEFT JOIN BibleVersionWordGroups bvwg ON bvwg.Id = bvwgw.BibleVersionWordGroupId
+                LEFT JOIN NewTestamentAlignments nta ON nta.BibleVersionWordGroupId = BVWG.Id
+                LEFT JOIN GreekNewTestamentWordGroups gntwg ON gntwg.Id = nta.GreekNewTestamentWordGroupId
+                LEFT JOIN GreekNewTestamentWordGroupWords gntwgw ON gntwgw.GreekNewTestamentWordGroupId = GNTWG.Id
+                LEFT JOIN GreekNewTestamentWords gntw ON gntw.Id = gntwgw.GreekNewTestamentWordId
+                LEFT JOIN GreekNewTestamentWordSenses gntws ON gntws.GreekNewTestamentWordId = gntw.Id
+            WHERE
+                bvw.BibleId = @bibleId AND
+                bvw.WordIdentifier BETWEEN @lowerBounds AND @upperBounds
+            ORDER BY
+                bvw.WordIdentifier,
+                gntw.WordIdentifier,
+                gntws.GreekSenseId
+            """;
+
+        return (await dbConnection.QueryAsync<BibleTextWithGreekAlignmentForeignKeysResult>(
+                new CommandDefinition(
+                    bibleTextWithGreekAlignmentForeignKeysQuery,
+                    new
+                    {
+                        bibleId,
+                        lowerBounds = textLowerBounds.WordIdentifier,
+                        upperBounds = textUpperBounds.WordIdentifier,
+                    },
+                    cancellationToken: ct)))
+            .ToList();
+    }
+
+    public sealed record BibleTextWithGreekAlignmentForeignKeysResult(
+        int Id,
+        long WordIdentifier,
+        string Word,
+        bool IsPunctuation,
+        int? BibleVersionWordGroupId,
+        int? GreekSenseId,
+        int? GreekWordId)
+    {
         public BibleWordIdentifier BibleWordIdentifier => _bibleWordIdentifier ??= new BibleWordIdentifier(WordIdentifier);
 
-        private BibleWordIdentifier? _bibleWordIdentifier = null;
+        private BibleWordIdentifier? _bibleWordIdentifier;
     }
 
-    public record GreekWordResult
+    private static async Task<IReadOnlyDictionary<int, GreekWordResult>> GetGreekWordResultByGreekWordIdMapAsync(
+        DbConnection dbConnection,
+        IEnumerable<int> greekWordIds,
+        CancellationToken ct)
     {
-        public int Id { get; set; }
-        public string Word { get; set; } = null!;
-        public string GrammarType { get; set; } = null!;
-        public string UsageCode { get; set; } = null!;
-        public string Lemma { get; set; } = null!;
-        public string StrongsNumber { get; set; } = null!;
+        const string greekWordsQuery = """
+            SELECT
+                gw.Id,
+                gw.[Text] AS Word,
+                gw.GrammarType,
+                gw.UsageCode,
+                gl.[Text] AS Lemma,
+                sn.[Value] AS StrongsNumber
+            FROM GreekWords gw
+                JOIN GreekLemmas gl ON gw.GreekLemmaId = gl.Id
+                JOIN StrongNumbers sn ON gl.StrongNumberId = sn.Id
+            WHERE gw.Id IN @greekWordIds
+            """;
+
+        List<GreekWordResult> greekWordResults = [];
+        foreach (var batch in greekWordIds.Distinct().Order().Chunk(size: MaxSqlParameterLimit))
+        {
+            greekWordResults.AddRange(
+                await dbConnection.QueryAsync<GreekWordResult>(
+                    new CommandDefinition(
+                        greekWordsQuery,
+                        new
+                        {
+                            greekWordIds = batch
+                        },
+                        cancellationToken: ct)));
+        }
+
+        return greekWordResults
+            .ToDictionary(gwr => gwr.Id);
+    }
+    public sealed record GreekWordResult(
+        int Id,
+        string Word,
+        string GrammarType,
+        string UsageCode,
+        string Lemma,
+        string StrongsNumber);
+
+    private static async Task<IReadOnlyDictionary<int, IReadOnlyList<GreekSenseResult>>> GetGreekSenseResultsByGreekSenseIdMapAsync(
+        DbConnection dbConnection,
+        IEnumerable<int> greekSenseIds,
+        CancellationToken ct)
+    {
+        const string greekSensesQuery = """
+            SELECT
+                gs.Id,
+                gs.DefinitionShort AS [Definition],
+                STRING_AGG(gsg.[Text], '||') AS Glosses
+            FROM GreekSenses gs
+                JOIN GreekSenseGlosses gsg ON gsg.GreekSenseId = gs.Id
+            WHERE gs.Id IN @greekSenseIds
+            GROUP BY
+                gs.Id,
+                gs.DefinitionShort
+            """;
+
+        List<GreekSenseResult> greekSenseResults = [];
+        foreach (var batch in greekSenseIds.Distinct().Order().Chunk(size: 2000))
+        {
+            greekSenseResults.AddRange(
+                await dbConnection.QueryAsync<GreekSenseResult>(
+                    new CommandDefinition(
+                        greekSensesQuery,
+                        new
+                        {
+                            greekSenseIds = batch
+                        },
+                        cancellationToken: ct)));
+        }
+
+        return new Dictionary<int, IReadOnlyList<GreekSenseResult>>(
+            greekSenseResults
+                .GroupBy(gsr => gsr.Id)
+                .Select(grp => new KeyValuePair<int, IReadOnlyList<GreekSenseResult>>(grp.Key, [.. grp])));
     }
 
-    public record GreekSenseResult
+    public sealed record GreekSenseResult(
+        int Id,
+        string Definition,
+        string? Glosses)
     {
-        public int Id { get; set; }
-        public string Definition { get; set; } = null!;
-        public string? Glosses { get; set; }
+        public IReadOnlyList<string> ExpandedGlosses => _expandedGlosses ??= Glosses?.Split("||").Order().ToList() ?? [];
+
+        private IReadOnlyList<string>? _expandedGlosses;
     }
+
+    private const int MaxSqlParameterLimit = 2000;
 }

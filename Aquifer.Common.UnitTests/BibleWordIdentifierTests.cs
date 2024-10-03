@@ -3,7 +3,7 @@ using Aquifer.Data.Enums;
 
 namespace Aquifer.Common.UnitTests;
 
-public sealed class BibleWordIdentiferTests
+public sealed class BibleWordIdentifierTests
 {
     [Theory]
     [InlineData(0L, BookId.BookGEN, 0, 0, 0, 0)]

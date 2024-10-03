@@ -3,7 +3,7 @@
 namespace Aquifer.Common.Utilities;
 
 /// <summary>
-/// Only use with Bible word identifiers, NOT Greek word identifers!!!
+/// Only use with Bible word identifiers, NOT Greek word identifiers!!!
 /// The word identifier in the dbo.BibleVersionWords.WordIdentifier column has one more digit than the dbo.GreekNewTestamentWords.WordIdentifier column
 /// because Greek alignment data does not include word segments.
 /// Format for Bible word identifiers is BBCCCVVVWWWS.
@@ -29,9 +29,9 @@ public sealed class BibleWordIdentifier
     /// </summary>
     public BibleWordIdentifier(long wordIdentifier)
     {
-        if (wordIdentifier < _minWordIdentifier || wordIdentifier > _maxWordIdentifier)
+        if (wordIdentifier < MinWordIdentifier || wordIdentifier > s_maxWordIdentifier)
         {
-            throw new ArgumentOutOfRangeException(nameof(wordIdentifier), wordIdentifier, $"{nameof(wordIdentifier)} must be between {_minWordIdentifier} and {_maxWordIdentifier} but was \"{wordIdentifier}\".");
+            throw new ArgumentOutOfRangeException(nameof(wordIdentifier), wordIdentifier, $"{nameof(wordIdentifier)} must be between {MinWordIdentifier} and {s_maxWordIdentifier} but was \"{wordIdentifier}\".");
         }
 
         WordIdentifier = wordIdentifier;
@@ -57,7 +57,7 @@ public sealed class BibleWordIdentifier
     /// Creates a <see cref="BibleWordIdentifier"/> representing the lower bound of a Book.
     /// </summary>
     public BibleWordIdentifier(BookId bookId)
-:       this(bookId, _minChapter, _minVerse, _minWord, _minWordSegment)
+:       this(bookId, MinChapter, MinVerse, MinWord, MinWordSegment)
     {
     }
 
@@ -65,7 +65,7 @@ public sealed class BibleWordIdentifier
     /// Creates a <see cref="BibleWordIdentifier"/> representing the lower bound of a Chapter.
     /// </summary>
     public BibleWordIdentifier(BookId bookId, int chapter)
-:       this(bookId, chapter, _minVerse, word: _minWord, _minWordSegment)
+:       this(bookId, chapter, MinVerse, word: MinWord, MinWordSegment)
     {
     }
 
@@ -73,7 +73,7 @@ public sealed class BibleWordIdentifier
     /// Creates a <see cref="BibleWordIdentifier"/> representing the lower bound of a Verse.
     /// </summary>
     public BibleWordIdentifier(BookId bookId, int chapter, int verse)
-    : this(bookId, chapter, verse, _minWord, _minWordSegment)
+    : this(bookId, chapter, verse, MinWord, MinWordSegment)
     {
     }
 
@@ -81,7 +81,7 @@ public sealed class BibleWordIdentifier
     /// Creates a <see cref="BibleWordIdentifier"/> representing the lower bound of a Word.
     /// </summary>
     public BibleWordIdentifier(BookId bookId, int chapter, int verse, int word)
-        : this(bookId, chapter, verse, word, _minWordSegment)
+        : this(bookId, chapter, verse, word, MinWordSegment)
     {
     }
 
@@ -90,29 +90,29 @@ public sealed class BibleWordIdentifier
     /// </summary>
     public BibleWordIdentifier(BookId bookId, int chapter, int verse, int word, int wordSegment)
     {
-        if (bookId <= BookId.None || bookId > _maxBookId)
+        if (bookId <= BookId.None || bookId > s_maxBookId)
         {
-            throw new ArgumentOutOfRangeException($"Invalid {nameof(BookId)} value for calculating word identifiers: \"{bookId}\".", nameof(bookId));
+            throw new ArgumentOutOfRangeException(nameof(bookId), $"Invalid {nameof(BookId)} value for calculating word identifiers: \"{bookId}\".");
         }
 
-        if (chapter is < _minChapter or > _maxChapter)
+        if (chapter is < MinChapter or > MaxChapter)
         {
-            throw new ArgumentOutOfRangeException(nameof(chapter), chapter, $"{nameof(chapter)} must be between {_minChapter} and {_maxChapter} but was \"{chapter}\".");
+            throw new ArgumentOutOfRangeException(nameof(chapter), chapter, $"{nameof(chapter)} must be between {MinChapter} and {MaxChapter} but was \"{chapter}\".");
         }
 
-        if (verse is < _minVerse or > _maxVerse)
+        if (verse is < MinVerse or > MaxVerse)
         {
-            throw new ArgumentOutOfRangeException(nameof(chapter), chapter, $"{nameof(chapter)} must be between {_minVerse} and {_maxVerse} but was \"{verse}\".");
+            throw new ArgumentOutOfRangeException(nameof(chapter), chapter, $"{nameof(chapter)} must be between {MinVerse} and {MaxVerse} but was \"{verse}\".");
         }
 
-        if (word is < _minWord or > _maxWord)
+        if (word is < MinWord or > MaxWord)
         {
-            throw new ArgumentOutOfRangeException(nameof(chapter), chapter, $"{nameof(chapter)} must be between {_minWord} and {_maxWord} but was \"{word}\".");
+            throw new ArgumentOutOfRangeException(nameof(chapter), chapter, $"{nameof(chapter)} must be between {MinWord} and {MaxWord} but was \"{word}\".");
         }
 
-        if (wordSegment is < _minWordSegment or > _maxWordSegment)
+        if (wordSegment is < MinWordSegment or > MaxWordSegment)
         {
-            throw new ArgumentOutOfRangeException(nameof(chapter), chapter, $"{nameof(chapter)} must be between {_minWordSegment} and {_maxWordSegment} but was \"{wordSegment}\".");
+            throw new ArgumentOutOfRangeException(nameof(chapter), chapter, $"{nameof(chapter)} must be between {MinWordSegment} and {MaxWordSegment} but was \"{wordSegment}\".");
         }
 
         BookId = bookId;
@@ -129,7 +129,7 @@ public sealed class BibleWordIdentifier
     /// </summary>
     public static BibleWordIdentifier GetUpperBoundOfBook(BookId bookId)
     {
-        return new BibleWordIdentifier(bookId, _maxChapter, _maxVerse, _maxWord, _maxWordSegment);
+        return new BibleWordIdentifier(bookId, MaxChapter, MaxVerse, MaxWord, MaxWordSegment);
     }
 
     /// <summary>
@@ -137,7 +137,7 @@ public sealed class BibleWordIdentifier
     /// </summary>
     public static BibleWordIdentifier GetUpperBoundOfChapter(BookId bookId, int chapter)
     {
-        return new BibleWordIdentifier(bookId, chapter, _maxVerse, _maxWord, _maxWordSegment);
+        return new BibleWordIdentifier(bookId, chapter, MaxVerse, MaxWord, MaxWordSegment);
     }
 
     /// <summary>
@@ -145,7 +145,7 @@ public sealed class BibleWordIdentifier
     /// </summary>
     public static BibleWordIdentifier GetUpperBoundOfVerse(BookId bookId, int chapter, int verse)
     {
-        return new BibleWordIdentifier(bookId, chapter, verse, _maxWord, _maxWordSegment);
+        return new BibleWordIdentifier(bookId, chapter, verse, MaxWord, MaxWordSegment);
     }
 
     /// <summary>
@@ -153,7 +153,7 @@ public sealed class BibleWordIdentifier
     /// </summary>
     public static BibleWordIdentifier GetUpperBoundOfWord(BookId bookId, int chapter, int verse, int word)
     {
-        return new BibleWordIdentifier(bookId, chapter, verse, word, _maxWordSegment);
+        return new BibleWordIdentifier(bookId, chapter, verse, word, MaxWordSegment);
     }
 
     public static implicit operator long(BibleWordIdentifier source)
@@ -168,28 +168,28 @@ public sealed class BibleWordIdentifier
 
     private static long CalculateWordIdentifier(int book, int chapter, int verse, int word, int wordSegment)
     {
-        return (book * _bookMultiplier) + (chapter * _chapterMultiplier) + (verse * _verseMultiplier) + (word * _wordMultiplier) + wordSegment;
+        return (book * BookMultiplier) + (chapter * ChapterMultiplier) + (verse * VerseMultiplier) + (word * WordMultiplier) + wordSegment;
     }
 
-    private static readonly BookId _maxBookId = Enum.GetValues(typeof(BookId)).Cast<BookId>().Max();
+    private static readonly BookId s_maxBookId = Enum.GetValues(typeof(BookId)).Cast<BookId>().Max();
 
-    private const long _bookMultiplier = _chapterMultiplier * 1000L;
-    private const long _chapterMultiplier = _verseMultiplier * 1000L;
-    private const long _verseMultiplier = _wordMultiplier * 1000L;
-    private const long _wordMultiplier = 10L;
+    private const long BookMultiplier = ChapterMultiplier * 1000L;
+    private const long ChapterMultiplier = VerseMultiplier * 1000L;
+    private const long VerseMultiplier = WordMultiplier * 1000L;
+    private const long WordMultiplier = 10L;
 
-    private const int _minChapter = 0;
-    private const int _maxChapter = 999;
+    private const int MinChapter = 0;
+    private const int MaxChapter = 999;
 
-    private const int _minVerse = 0;
-    private const int _maxVerse = 999;
+    private const int MinVerse = 0;
+    private const int MaxVerse = 999;
 
-    private const int _minWord = 0;
-    private const int _maxWord = 999;
+    private const int MinWord = 0;
+    private const int MaxWord = 999;
 
-    private const int _minWordSegment = 0;
-    private const int _maxWordSegment = 9;
+    private const int MinWordSegment = 0;
+    private const int MaxWordSegment = 9;
 
-    private const long _minWordIdentifier = 0L;
-    private static readonly long _maxWordIdentifier = (((int)_maxBookId) * _bookMultiplier) - 1L;
+    private const long MinWordIdentifier = 0L;
+    private static readonly long s_maxWordIdentifier = (((int)s_maxBookId) * BookMultiplier) - 1L;
 }
