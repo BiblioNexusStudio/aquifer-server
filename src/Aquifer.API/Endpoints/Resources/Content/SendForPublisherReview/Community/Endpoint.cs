@@ -42,7 +42,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ct
         );
 
-        Helpers.SanitizeTiptapContent(contentVersion);
+        if (contentVersion.ResourceContent.MediaType == ResourceContentMediaType.Text)
+        {
+            Helpers.SanitizeTiptapContent(contentVersion);
+        }
 
         contentVersion.ResourceContent.Status = ResourceContentStatus.TranslationReviewPending;
 
