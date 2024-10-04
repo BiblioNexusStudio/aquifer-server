@@ -344,7 +344,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 gs.DefinitionShort AS [Definition],
                 STRING_AGG(gsg.[Text], '||') AS Glosses
             FROM GreekSenses gs
-                JOIN GreekSenseGlosses gsg ON gsg.GreekSenseId = gs.Id
+                LEFT JOIN GreekSenseGlosses gsg ON gsg.GreekSenseId = gs.Id
             WHERE gs.Id IN @greekSenseIds
             GROUP BY
                 gs.Id,
