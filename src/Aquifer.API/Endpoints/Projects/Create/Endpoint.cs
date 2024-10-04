@@ -37,7 +37,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ThrowEntityNotFoundError<Request>(r => r.LanguageId);
         }
 
-        var projectManagerUser = await dbContext.Users.AsTracking().SingleOrDefaultAsync(u => u.Id == request.ProjectManagerUserId && u.Enabled, ct);
+        var projectManagerUser = await dbContext.Users.AsTracking()
+            .SingleOrDefaultAsync(u => u.Id == request.ProjectManagerUserId && u.Enabled, ct);
         if (projectManagerUser is null)
         {
             ThrowEntityNotFoundError<Request>(r => r.ProjectManagerUserId);
@@ -54,7 +55,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ThrowEntityNotFoundError<Request>(r => r.CompanyId);
         }
 
-        var projectPlatform = await dbContext.ProjectPlatforms.AsTracking().SingleOrDefaultAsync(p => p.Id == request.ProjectPlatformId, ct);
+        var projectPlatform =
+            await dbContext.ProjectPlatforms.AsTracking().SingleOrDefaultAsync(p => p.Id == request.ProjectPlatformId, ct);
         if (projectPlatform is null)
         {
             ThrowEntityNotFoundError<Request>(r => r.ProjectPlatformId);
@@ -82,10 +84,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             Name = request.Title,
             SourceWordCount = wordCount,
             ProjectResourceContents = resourceContents
-                .Select(rc => new ProjectResourceContentEntity
-                {
-                    ResourceContent = rc,
-                })
+                .Select(rc => new ProjectResourceContentEntity { ResourceContent = rc })
                 .ToList(),
             Language = language,
             ProjectManagerUser = projectManagerUser,
@@ -204,7 +203,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         foreach (var resourceContent in englishOrLanguageResourceContents)
         {
-            if (languageId == Constants.EnglishLanguageId)
+            if (resourceContent.LanguageId == Constants.EnglishLanguageId)
             {
                 var baseVersion = resourceContent.Versions.FirstOrDefault(v => v.IsPublished);
                 if (baseVersion is null)
