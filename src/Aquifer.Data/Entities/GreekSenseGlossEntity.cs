@@ -1,4 +1,8 @@
-﻿namespace Aquifer.Data.Entities;
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace Aquifer.Data.Entities;
+
+[Index(nameof(GreekSenseId))]
 public class GreekSenseGlossEntity
 {
     public int Id { get; set; }

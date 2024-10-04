@@ -309,7 +309,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             """;
 
         List<GreekWordResult> greekWordResults = [];
-        foreach (var batch in greekWordIds.Distinct().Order().Chunk(size: MaxSqlParameterLimit))
+        foreach (var batch in greekWordIds.Distinct().Order().Chunk(size: SqlParameterBatchSize))
         {
             greekWordResults.AddRange(
                 await dbConnection.QueryAsync<GreekWordResult>(
@@ -352,7 +352,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             """;
 
         List<GreekSenseResult> greekSenseResults = [];
-        foreach (var batch in greekSenseIds.Distinct().Order().Chunk(size: 2000))
+        foreach (var batch in greekSenseIds.Distinct().Order().Chunk(size: SqlParameterBatchSize))
         {
             greekSenseResults.AddRange(
                 await dbConnection.QueryAsync<GreekSenseResult>(
@@ -381,5 +381,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         private IReadOnlyList<string>? _expandedGlosses;
     }
 
-    private const int MaxSqlParameterLimit = 2000;
+    // SQL Server's max is 2,100 but batching in smaller numbers seems to help with DB performance
+    private const int SqlParameterBatchSize = 1000;
 }
