@@ -325,6 +325,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         return greekWordResults
             .ToDictionary(gwr => gwr.Id);
     }
+
     public sealed record GreekWordResult(
         int Id,
         string Word,
