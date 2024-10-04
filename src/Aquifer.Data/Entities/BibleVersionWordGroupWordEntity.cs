@@ -2,7 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
+
 [PrimaryKey(nameof(BibleVersionWordGroupId), nameof(BibleVersionWordId))]
+[Index(nameof(BibleVersionWordId))]
+
 public class BibleVersionWordGroupWordEntity
 {
     public int BibleVersionWordGroupId { get; set; }
