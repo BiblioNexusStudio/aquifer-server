@@ -248,9 +248,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             FROM BibleVersionWords bvw
                 LEFT JOIN BibleVersionWordGroupWords bvwgw ON bvwgw.BibleVersionWordId = bvw.Id
                 LEFT JOIN BibleVersionWordGroups bvwg ON bvwg.Id = bvwgw.BibleVersionWordGroupId
-                LEFT JOIN NewTestamentAlignments nta ON nta.BibleVersionWordGroupId = BVWG.Id
+                LEFT JOIN NewTestamentAlignments nta ON nta.BibleVersionWordGroupId = bvwg.Id
                 LEFT JOIN GreekNewTestamentWordGroups gntwg ON gntwg.Id = nta.GreekNewTestamentWordGroupId
-                LEFT JOIN GreekNewTestamentWordGroupWords gntwgw ON gntwgw.GreekNewTestamentWordGroupId = GNTWG.Id
+                LEFT JOIN GreekNewTestamentWordGroupWords gntwgw ON gntwgw.GreekNewTestamentWordGroupId = gntwg.Id
                 LEFT JOIN GreekNewTestamentWords gntw ON gntw.Id = gntwgw.GreekNewTestamentWordId
                 LEFT JOIN GreekNewTestamentWordSenses gntws ON gntws.GreekNewTestamentWordId = gntw.Id
             WHERE
