@@ -10,6 +10,7 @@ public record Response
     public required bool AcceptsDateRange { get; set; }
     public required bool AcceptsLanguage { get; set; }
     public required bool AcceptsParentResource { get; set; }
+    public required bool AcceptsCompany { get; set; }
     public required DateOnly? StartDate { get; set; }
     public required DateOnly? EndDate { get; set; }
     public required IEnumerable<string> Columns { get; set; }

@@ -51,6 +51,11 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             command.Parameters.Add(new SqlParameter("@ParentResourceId", request.ParentResourceId));
         }
 
+        if (report.AcceptsCompany)
+        {
+            command.Parameters.Add(new SqlParameter("@CompanyId", request.CompanyId));
+        }
+
         var items = new List<List<object>>();
         var columnNames = new List<string>();
 
@@ -80,6 +85,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             AcceptsDateRange = report.AcceptsDateRange,
             AcceptsLanguage = report.AcceptsLanguage,
             AcceptsParentResource = report.AcceptsParentResource,
+            AcceptsCompany = report.AcceptsCompany,
             StartDate = startDate,
             EndDate = endDate,
             Columns = columnNames,
