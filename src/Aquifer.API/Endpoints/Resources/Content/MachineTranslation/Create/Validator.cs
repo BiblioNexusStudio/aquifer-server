@@ -11,5 +11,6 @@ public class Validator : Validator<Request>
         RuleFor(x => x.DisplayName).NotEmpty();
         RuleFor(x => x.Content).NotEmpty();
         RuleFor(x => x.SourceId).IsInEnum();
+        RuleFor(x => x.ReasonForReTranslation).MaximumLength(200);
     }
 }
