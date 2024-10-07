@@ -21,7 +21,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             .AsTracking()
             .FirstOrDefaultAsync(x => x.ResourceContentVersionId == req.ResourceContentVersionId && x.ContentIndex == req.ContentIndex, ct);
 
-        if (existingMt is not null)
+        if (existingMt is not null && !(existingMt.Created > DateTime.UtcNow.AddMinutes(-60)))
         {
             ThrowError(x => x.ResourceContentVersionId, "Machine translation already exists for this resource content version id");
         }
