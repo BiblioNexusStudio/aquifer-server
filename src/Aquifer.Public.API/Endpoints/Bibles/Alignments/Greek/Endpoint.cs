@@ -213,7 +213,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 LEFT JOIN GreekNewTestamentWordGroupWords gntwgw ON gntwgw.GreekNewTestamentWordGroupId = nta.GreekNewTestamentWordGroupId
                 LEFT JOIN GreekNewTestamentWords gntw ON gntw.Id = gntwgw.GreekNewTestamentWordId
                 LEFT JOIN GreekNewTestaments gnt ON gntw.GreekNewTestamentId = gnt.Id
-            WHERE bvw.BibleId = @bibleId
+            WHERE
+                bvw.BibleId = @bibleId AND
+                gnt.Id IS NOT NULL
             """;
 
         return await dbConnection.QueryFirstOrDefaultAsync<string>(

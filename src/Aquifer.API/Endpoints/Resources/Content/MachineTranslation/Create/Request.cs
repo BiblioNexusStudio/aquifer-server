@@ -9,4 +9,5 @@ public class Request
     public string Content { get; set; } = null!;
     public int ContentIndex { get; set; }
     public MachineTranslationSourceId SourceId { get; set; }
+    public string? ReasonForReTranslation { get; set; }
 }
