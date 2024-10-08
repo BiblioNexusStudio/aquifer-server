@@ -27,7 +27,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 .AnyAsync(x => x.AssignedUserId == user.Id, ct);
 
             if (isUserAssigned) {
-                ThrowError("User can only create one translation at a time");
+                AddError("User can only create one translation at a time");
+                await SendErrorsAsync(cancellation: ct);
+                return;
             }
         }
 
@@ -112,6 +114,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
 
         await dbContext.SaveChangesAsync(ct);
+
         await SendOkAsync(new Response(newResourceContent.Id), ct);
     }
 }
