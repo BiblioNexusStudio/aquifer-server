@@ -61,7 +61,7 @@ public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryC
 
                 return
                     (LanguageCodeById,
-                    LanguageIdByCode: LanguageCodeById.ToDictionary(li => li.Value, li => li.Key));
+                    LanguageIdByCode: LanguageCodeById.ToDictionary(li => li.Value, li => li.Key, StringComparer.OrdinalIgnoreCase));
             });
     }
 }
