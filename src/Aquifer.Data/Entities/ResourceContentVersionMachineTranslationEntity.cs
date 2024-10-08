@@ -21,7 +21,7 @@ public class ResourceContentVersionMachineTranslationEntity : IHasUpdatedTimesta
     public bool ImproveConsistency { get; set; }
     
     [MaxLength(200)]
-    public string? ReasonForReTranslation { get; set; }
+    public string? RetranslationReason { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
