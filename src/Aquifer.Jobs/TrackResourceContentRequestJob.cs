@@ -1,3 +1,4 @@
+using System.Data;
 using System.Text.Json;
 using Aquifer.Common.Clients.Http.IpAddressLookup;
 using Aquifer.Common.Jobs.Messages;
@@ -62,32 +63,27 @@ public class TrackResourceContentRequestJob(
                 return;
             }
 
-            var ipDataRecord = await dbContext.IpAddressData
-                .AsTracking()
-                .SingleOrDefaultAsync(x => x.IpAddress == trackingMetadata.IpAddress, ct);
-            if (ipDataRecord is null)
+            using (var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct))
             {
-                var ipData = await ipAddressClient.LookupIpAddressAsync(trackingMetadata.IpAddress, ct);
-                if (ipData.City is not null && ipData.Country is not null && ipData.Region is not null)
+                var ipDataRecord = await dbContext.IpAddressData
+                    .AsTracking()
+                    .SingleOrDefaultAsync(x => x.IpAddress == trackingMetadata.IpAddress, ct);
+                if (ipDataRecord is null)
                 {
-                    var newRecord = new IpAddressData
+                    var ipData = await ipAddressClient.LookupIpAddressAsync(trackingMetadata.IpAddress, ct);
+                    if (ipData.City is not null && ipData.Country is not null && ipData.Region is not null)
                     {
-                        IpAddress = trackingMetadata.IpAddress,
-                        City = ipData.City,
-                        Region = ipData.Region,
-                        Country = ipData.Country
-                    };
+                        var newRecord = new IpAddressData
+                        {
+                            IpAddress = trackingMetadata.IpAddress,
+                            City = ipData.City,
+                            Region = ipData.Region,
+                            Country = ipData.Country
+                        };
 
-                    try
-                    {
                         await dbContext.IpAddressData.AddAsync(newRecord, ct);
                         await dbContext.SaveChangesAsync(ct);
-                    }
-                    catch (DbUpdateException)
-                    {
-                        // Don't care about this since it's a concurrency issue. Need to remove it though or the next Save
-                        // will pick it up and blow up.
-                        dbContext.IpAddressData.Remove(newRecord);
+                        await transaction.CommitAsync(ct);
                     }
                 }
             }
