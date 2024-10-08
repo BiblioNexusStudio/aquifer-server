@@ -23,7 +23,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         if (existingMt is not null && !(existingMt.Created > DateTime.UtcNow.AddMinutes(-60)))
         {
-            ThrowError(x => x.ResourceContentVersionId, "Machine translation already exists for this resource content version id");
+            ThrowError(x => x.ResourceContentVersionId,
+                "Machine translation already exists for this resource content version id and 1 hour has passed since the first translation");
         }
 
         var user = await userService.GetUserFromJwtAsync(ct);
@@ -34,7 +35,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             Content = req.Content,
             ContentIndex = req.ContentIndex,
             UserId = user.Id,
-            SourceId = req.SourceId
+            SourceId = req.SourceId,
+            RetranslationReason = req.RetranslationReason ?? null
         };
 
         await dbContext.ResourceContentVersionMachineTranslations.AddAsync(mt, ct);

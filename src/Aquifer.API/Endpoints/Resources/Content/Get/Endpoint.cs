@@ -156,10 +156,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 ImproveClarity = mt.ImproveClarity,
                 ImproveConsistency = mt.ImproveConsistency,
                 ImproveTone = mt.ImproveTone,
+                RetranslationReason = mt.RetranslationReason,
                 Created = mt.Created
             })
             .ToList();
-        
+
         resourceContent.IsDraft = relevantContentVersion.IsDraft;
         resourceContent.ResourceContentVersionId = relevantContentVersion.Id;
         resourceContent.ContentValue = relevantContentVersion.Content;
