@@ -56,7 +56,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             command.Parameters.Add(new SqlParameter("@CompanyId", request.CompanyId));
         }
 
-        var items = new List<List<object>>();
+        var items = new List<List<object?>>();
         var columnNames = new List<string>();
 
         await using var reader = await command.ExecuteReaderAsync(ct);
@@ -68,10 +68,10 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
         while (await reader.ReadAsync(ct))
         {
-            var item = new List<object>();
+            var item = new List<object?>();
             for (var i = 0; i < reader.FieldCount; i++)
             {
-                item.Add(reader[i]);
+                item.Add(reader.IsDBNull(i) ? null : reader[i]);
             }
 
             items.Add(item);
