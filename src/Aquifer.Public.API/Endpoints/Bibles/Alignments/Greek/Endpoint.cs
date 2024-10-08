@@ -213,7 +213,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 LEFT JOIN GreekNewTestamentWordGroupWords gntwgw ON gntwgw.GreekNewTestamentWordGroupId = nta.GreekNewTestamentWordGroupId
                 LEFT JOIN GreekNewTestamentWords gntw ON gntw.Id = gntwgw.GreekNewTestamentWordId
                 LEFT JOIN GreekNewTestaments gnt ON gntw.GreekNewTestamentId = gnt.Id
-            WHERE bvw.BibleId = @bibleId
+            WHERE
+                bvw.BibleId = @bibleId AND
+                gnt.Id IS NOT NULL
             """;
 
         return await dbConnection.QueryFirstOrDefaultAsync<string>(
@@ -248,9 +250,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             FROM BibleVersionWords bvw
                 LEFT JOIN BibleVersionWordGroupWords bvwgw ON bvwgw.BibleVersionWordId = bvw.Id
                 LEFT JOIN BibleVersionWordGroups bvwg ON bvwg.Id = bvwgw.BibleVersionWordGroupId
-                LEFT JOIN NewTestamentAlignments nta ON nta.BibleVersionWordGroupId = BVWG.Id
+                LEFT JOIN NewTestamentAlignments nta ON nta.BibleVersionWordGroupId = bvwg.Id
                 LEFT JOIN GreekNewTestamentWordGroups gntwg ON gntwg.Id = nta.GreekNewTestamentWordGroupId
-                LEFT JOIN GreekNewTestamentWordGroupWords gntwgw ON gntwgw.GreekNewTestamentWordGroupId = GNTWG.Id
+                LEFT JOIN GreekNewTestamentWordGroupWords gntwgw ON gntwgw.GreekNewTestamentWordGroupId = gntwg.Id
                 LEFT JOIN GreekNewTestamentWords gntw ON gntw.Id = gntwgw.GreekNewTestamentWordId
                 LEFT JOIN GreekNewTestamentWordSenses gntws ON gntws.GreekNewTestamentWordId = gntw.Id
             WHERE
@@ -309,7 +311,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             """;
 
         List<GreekWordResult> greekWordResults = [];
-        foreach (var batch in greekWordIds.Distinct().Order().Chunk(size: MaxSqlParameterLimit))
+        foreach (var batch in greekWordIds.Distinct().Order().Chunk(size: SqlParameterBatchSize))
         {
             greekWordResults.AddRange(
                 await dbConnection.QueryAsync<GreekWordResult>(
@@ -325,6 +327,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         return greekWordResults
             .ToDictionary(gwr => gwr.Id);
     }
+
     public sealed record GreekWordResult(
         int Id,
         string Word,
@@ -344,7 +347,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 gs.DefinitionShort AS [Definition],
                 STRING_AGG(gsg.[Text], '||') AS Glosses
             FROM GreekSenses gs
-                JOIN GreekSenseGlosses gsg ON gsg.GreekSenseId = gs.Id
+                LEFT JOIN GreekSenseGlosses gsg ON gsg.GreekSenseId = gs.Id
             WHERE gs.Id IN @greekSenseIds
             GROUP BY
                 gs.Id,
@@ -352,7 +355,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             """;
 
         List<GreekSenseResult> greekSenseResults = [];
-        foreach (var batch in greekSenseIds.Distinct().Order().Chunk(size: 2000))
+        foreach (var batch in greekSenseIds.Distinct().Order().Chunk(size: SqlParameterBatchSize))
         {
             greekSenseResults.AddRange(
                 await dbConnection.QueryAsync<GreekSenseResult>(
@@ -381,5 +384,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         private IReadOnlyList<string>? _expandedGlosses;
     }
 
-    private const int MaxSqlParameterLimit = 2000;
+    // SQL Server's max is 2,100 but batching in smaller numbers seems to help with DB performance
+    private const int SqlParameterBatchSize = 1000;
 }

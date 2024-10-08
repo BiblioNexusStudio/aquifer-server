@@ -23,12 +23,16 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
 
     public async Task<UserEntity> GetUserFromJwtAsync(CancellationToken cancellationToken)
     {
-        return await dbContext.Users.SingleAsync(u => u.ProviderId == ProviderId && u.Enabled, cancellationToken);
+        return await dbContext.Users
+            .AsTracking()
+            .SingleAsync(u => u.ProviderId == ProviderId && u.Enabled, cancellationToken);
     }
 
     public async Task<UserEntity> GetUserWithCompanyUsersFromJwtAsync(CancellationToken cancellationToken)
     {
-        return await dbContext.Users.Include(x => x.Company).ThenInclude(x => x.Users).Include(x => x.Company)
+        return await dbContext.Users
+            .AsTracking()
+            .Include(x => x.Company).ThenInclude(x => x.Users).Include(x => x.Company)
             .ThenInclude(x => x.CompanyReviewers)
             .SingleAsync(u => u.ProviderId == ProviderId && u.Enabled, cancellationToken);
     }
@@ -55,11 +59,16 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
     public async Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken)
     {
         return userId is null ||
-               await dbContext.Users.SingleOrDefaultAsync(u => u.Id == userId && u.Enabled, cancellationToken) is not null;
+               await dbContext.Users
+               .AsTracking()
+               .SingleOrDefaultAsync(u => u.Id == userId && u.Enabled, cancellationToken) is not null;
     }
 
     public async Task<UserEntity> GetUserWithCompanyFromJwtAsync(CancellationToken cancellationToken)
     {
-        return await dbContext.Users.Include(x => x.Company).SingleAsync(u => u.ProviderId == ProviderId && u.Enabled, cancellationToken);
+        return await dbContext.Users
+            .AsTracking()
+            .Include(x => x.Company)
+            .SingleAsync(u => u.ProviderId == ProviderId && u.Enabled, cancellationToken);
     }
 }

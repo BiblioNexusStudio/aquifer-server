@@ -20,6 +20,7 @@ public class ReportEntity : IHasUpdatedTimestamp
     public bool AcceptsDateRange { get; set; }
     public bool AcceptsLanguage { get; set; }
     public bool AcceptsParentResource { get; set; }
+    public bool AcceptsCompany { get; set; }
 
     public int? DefaultDateRangeMonths { get; set; }
 

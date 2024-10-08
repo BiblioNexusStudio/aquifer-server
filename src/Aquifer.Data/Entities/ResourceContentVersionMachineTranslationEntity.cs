@@ -1,4 +1,5 @@
-﻿using Aquifer.Data.Enums;
+﻿using System.ComponentModel.DataAnnotations;
+using Aquifer.Data.Enums;
 using Aquifer.Data.EventHandlers;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +19,9 @@ public class ResourceContentVersionMachineTranslationEntity : IHasUpdatedTimesta
     public bool ImproveClarity { get; set; }
     public bool ImproveTone { get; set; }
     public bool ImproveConsistency { get; set; }
+    
+    [MaxLength(200)]
+    public string? ReasonForReTranslation { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;

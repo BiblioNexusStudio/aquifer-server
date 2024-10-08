@@ -7,4 +7,5 @@ public record Request
     public DateOnly? EndDate { get; init; }
     public int LanguageId { get; set; }
     public int ParentResourceId { get; set; }
+    public int CompanyId { get; set; }
 }

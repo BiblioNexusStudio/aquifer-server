@@ -1,4 +1,5 @@
-﻿using Aquifer.Common.Utilities;
+﻿using Aquifer.API.Common;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -32,8 +33,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                          FROM ResourceContents rc
                          INNER JOIN Resources r ON r.Id = rc.ResourceId
                          INNER JOIN ResourceContentVersions rcv ON rc.Id = rcv.ResourceContentId
-                         INNER JOIN Languages l ON l.Id = rc.LanguageId
-                         WHERE l.ISO6393Code = 'eng'
+                         WHERE rc.LanguageId = {Constants.EnglishLanguageId}
                          AND r.ParentResourceId = @ParentResourceId
                          AND rcv.IsPublished = 1
                          AND rc.MediaType = {(int)ResourceContentMediaType.Text}

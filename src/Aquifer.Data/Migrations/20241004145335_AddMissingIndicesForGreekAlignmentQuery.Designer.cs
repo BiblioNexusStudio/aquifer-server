@@ -4,6 +4,7 @@ using Aquifer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    partial class AquiferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241004145335_AddMissingIndicesForGreekAlignmentQuery")]
+    partial class AddMissingIndicesForGreekAlignmentQuery
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -755,8 +758,6 @@ namespace Aquifer.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GreekSenseId");
-
                     b.ToTable("GreekSenseGlosses");
                 });
 
@@ -1117,9 +1118,6 @@ namespace Aquifer.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("AcceptsCompany")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("AcceptsDateRange")
                         .HasColumnType("bit");
 
@@ -1478,10 +1476,6 @@ namespace Aquifer.Data.Migrations
 
                     b.Property<bool>("ImproveTone")
                         .HasColumnType("bit");
-
-                    b.Property<string>("ReasonForReTranslation")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
 
                     b.Property<int>("ResourceContentVersionId")
                         .HasColumnType("int");
