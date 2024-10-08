@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Aquifer.Public.API.Endpoints.Resources.Updates.List;
+﻿namespace Aquifer.Public.API.Endpoints.Resources.Updates.List;
 
 public class Response
 {
@@ -10,7 +8,6 @@ public class Response
 
 public class ResponseContent
 {
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public required ResponseContentUpdateType UpdateType { get; set; }
 
     public required int LanguageId { get; set; }
