@@ -20,10 +20,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     {
         var user = await userService.GetUserFromJwtAsync(ct);
         var isCommunityUser = !userService.HasPermission(PermissionName.CreateContent);
-        var response = new Response
-        {
-            ResourceContentId = 0,
-        };
 
         if (isCommunityUser) {
             var isUserAssigned = await dbContext.ResourceContentVersions
@@ -31,8 +27,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 .AnyAsync(x => x.AssignedUserId == user.Id, ct);
 
             if (isUserAssigned) {
-                response.Message = "User can only create one translation at a time";
-                await SendAsync(response, 400, ct);
+                AddError("User can only create one translation at a time");
+                await SendErrorsAsync(cancellation: ct);
                 return;
             }
         }
@@ -119,8 +115,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         await dbContext.SaveChangesAsync(ct);
 
-        response.ResourceContentId = newResourceContent.Id;
-
-        await SendOkAsync(response, ct);
+        await SendOkAsync(new Response(newResourceContent.Id), ct);
     }
 }
