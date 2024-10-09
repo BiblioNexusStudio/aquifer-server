@@ -63,10 +63,12 @@ jobs:
                   path: build
 
     deploy_public_api_to_dev:
-        if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+        if: needs.check_should_deploy.outputs.should_deploy == 'true'
         name: Deploy Public API to dev
         runs-on: ubuntu-latest
-        needs: build
+        needs:
+            - build
+            - check_should_deploy
         environment:
             name: dev-public
             url: ${{ vars.URL_DEV }}
@@ -85,10 +87,12 @@ jobs:
                   azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     deploy_public_api_to_qa:
-        if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+        if: needs.check_should_deploy.outputs.should_deploy == 'true'
         name: Deploy Public API to qa
         runs-on: ubuntu-latest
-        needs: build
+        needs:
+            - build
+            - check_should_deploy
         environment:
             name: qa-public
             url: ${{ vars.URL_QA }}
@@ -112,10 +116,12 @@ jobs:
                   service-name: Public API
 
     deploy_public_api_to_prod:
-        if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+        if: needs.check_should_deploy.outputs.should_deploy == 'true'
         name: Deploy Public API to prod
         runs-on: ubuntu-latest
-        needs: build
+        needs:
+            - build
+            - check_should_deploy
         environment:
             name: prod-public
             url: ${{ vars.URL_PROD }}
