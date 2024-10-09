@@ -148,28 +148,18 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             .ToListAsync(ct);
 
         resourceContent.MachineTranslations = relevantContentVersion.MachineTranslations.Select(mt => new MachineTranslationResponse
-        {
-            Id = mt.Id,
-            ContentIndex = mt.ContentIndex,
-            UserId = mt.UserId,
-            UserRating = mt.UserRating,
-            ImproveClarity = mt.ImproveClarity,
-            ImproveConsistency = mt.ImproveConsistency,
-            ImproveTone = mt.ImproveTone
-        })
+            {
+                Id = mt.Id,
+                ContentIndex = mt.ContentIndex,
+                UserId = mt.UserId,
+                UserRating = mt.UserRating,
+                ImproveClarity = mt.ImproveClarity,
+                ImproveConsistency = mt.ImproveConsistency,
+                ImproveTone = mt.ImproveTone,
+                HadRetranslation = mt.RetranslationReason != null,
+                Created = mt.Created
+            })
             .ToList();
-
-        // TODO: remove after deploy
-        resourceContent.MachineTranslation = relevantContentVersion.MachineTranslations.Select(mt => new MachineTranslationResponse
-        {
-            Id = mt.Id,
-            UserId = mt.UserId,
-            UserRating = mt.UserRating,
-            ImproveClarity = mt.ImproveClarity,
-            ImproveConsistency = mt.ImproveConsistency,
-            ImproveTone = mt.ImproveTone
-        })
-            .FirstOrDefault();
 
         resourceContent.IsDraft = relevantContentVersion.IsDraft;
         resourceContent.ResourceContentVersionId = relevantContentVersion.Id;
@@ -187,18 +177,18 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             {
                 ThreadTypeId = relevantContentVersion.Id,
                 Threads = relevantContentVersion.CommentThreads.Select(x => new ThreadResponse
-                {
-                    Id = x.CommentThreadId,
-                    Resolved = x.CommentThread.Resolved,
-                    Comments = x.CommentThread.Comments.Select(c => new CommentResponse
                     {
-                        Id = c.Id,
-                        Comment = c.Comment,
-                        User = UserDto.FromUserEntity(c.User)!,
-                        DateTime = c.Updated
-                    })
+                        Id = x.CommentThreadId,
+                        Resolved = x.CommentThread.Resolved,
+                        Comments = x.CommentThread.Comments.Select(c => new CommentResponse
+                            {
+                                Id = c.Id,
+                                Comment = c.Comment,
+                                User = UserDto.FromUserEntity(c.User)!,
+                                DateTime = c.Updated
+                            })
                             .ToList()
-                })
+                    })
                     .ToList()
             };
 
