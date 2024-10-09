@@ -16,6 +16,7 @@ public class FeedbackEntity
 
 public enum FeedbackType
 {
-    WellContactForm = 0,
-    WellContactPrompt = 1
+    None = 0,
+    WellContactForm = 1,
+    WellContactPrompt = 2
 }
