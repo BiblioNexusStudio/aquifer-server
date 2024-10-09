@@ -48,12 +48,33 @@ public partial class Endpoint(
                     sentence += ".&nbsp;";
                 }
 
-                using var clientResponse = await openAiClient.PostChatCompletionsAsync(prompt, sentence, ct);
-                clientResponse.EnsureSuccessStatusCode();
+                await StreamCompletionToResponseBody(prompt, sentence, ct);
+            }
+        }
+    }
 
-                await using var stream = await clientResponse.Content.ReadAsStreamAsync(ct);
-                await stream.CopyToAsync(HttpContext.Response.Body, ct);
-                await HttpContext.Response.Body.FlushAsync(ct);
+    private async Task StreamCompletionToResponseBody(string prompt, string sentence, CancellationToken ct, int retries = 0)
+    {
+        try
+        {
+            using var clientResponse = await openAiClient.PostChatCompletionsAsync(prompt, sentence, ct);
+            clientResponse.EnsureSuccessStatusCode();
+
+            await using var stream = await clientResponse.Content.ReadAsStreamAsync(ct);
+            await stream.CopyToAsync(HttpContext.Response.Body, ct);
+            await HttpContext.Response.Body.FlushAsync(ct);
+        }
+        catch (Exception)
+        {
+            if (++retries < 3)
+            {
+                // Wait a moment before trying again
+                await Task.Delay(500, ct);
+                await StreamCompletionToResponseBody(prompt, sentence, ct, retries + 1);
+            }
+            else
+            {
+                throw;
             }
         }
     }
