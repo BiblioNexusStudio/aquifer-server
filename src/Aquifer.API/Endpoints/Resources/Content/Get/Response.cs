@@ -178,4 +178,6 @@ public class MachineTranslationResponse
     public bool ImproveClarity { get; set; }
     public bool ImproveTone { get; set; }
     public bool ImproveConsistency { get; set; }
+    public bool HadRetranslation { get; set; }
+    public DateTime Created { get; set; }
 }

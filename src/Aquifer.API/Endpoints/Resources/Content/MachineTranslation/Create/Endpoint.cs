@@ -17,14 +17,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var existingMt = await dbContext.ResourceContentVersionMachineTranslations
+        var existingMts = await dbContext.ResourceContentVersionMachineTranslations
             .AsTracking()
-            .FirstOrDefaultAsync(x => x.ResourceContentVersionId == req.ResourceContentVersionId && x.ContentIndex == req.ContentIndex, ct);
+            .Where(x => x.ResourceContentVersionId == req.ResourceContentVersionId && x.ContentIndex == req.ContentIndex)
+            .ToListAsync(ct);
 
-        if (existingMt is not null)
-        {
-            ThrowError(x => x.ResourceContentVersionId, "Machine translation already exists for this resource content version id");
-        }
+        ValidateExistingMachineTranslations(existingMts, req);
 
         var user = await userService.GetUserFromJwtAsync(ct);
         var mt = new ResourceContentVersionMachineTranslationEntity
@@ -34,12 +32,35 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             Content = req.Content,
             ContentIndex = req.ContentIndex,
             UserId = user.Id,
-            SourceId = req.SourceId
+            SourceId = req.SourceId,
+            RetranslationReason = req.RetranslationReason
         };
 
         await dbContext.ResourceContentVersionMachineTranslations.AddAsync(mt, ct);
         await dbContext.SaveChangesAsync(ct);
 
         await SendOkAsync(new Response(mt.Id), ct);
+    }
+
+    private void ValidateExistingMachineTranslations(List<ResourceContentVersionMachineTranslationEntity> existingMts, Request req)
+    {
+        if (existingMts.Count > 2 || existingMts.Any(x => x.RetranslationReason != null))
+        {
+            ThrowError(x => x.ResourceContentVersionId,
+                "No more machine translations are allowed for this resource content version");
+        }
+
+        if (existingMts.Count == 1)
+        {
+            if (string.IsNullOrEmpty(req.RetranslationReason))
+            {
+                ThrowError(x => x.RetranslationReason, "Retranslation reason is required when retranslating a machine translation");
+            }
+
+            if (existingMts.Single().Created.AddHours(1) < DateTime.UtcNow)
+            {
+                ThrowError(x => x.RetranslationReason, "Retranslation time period of 1 hour has expired");
+            }
+        }
     }
 }
