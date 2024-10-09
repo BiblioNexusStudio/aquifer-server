@@ -156,7 +156,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 ImproveClarity = mt.ImproveClarity,
                 ImproveConsistency = mt.ImproveConsistency,
                 ImproveTone = mt.ImproveTone,
-                RetranslationReason = mt.RetranslationReason,
+                HadRetranslation = mt.RetranslationReason != null,
                 Created = mt.Created
             })
             .ToList();

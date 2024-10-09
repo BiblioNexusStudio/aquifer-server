@@ -17,14 +17,15 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var existingMt = await dbContext.ResourceContentVersionMachineTranslations
+        var existingMts = await dbContext.ResourceContentVersionMachineTranslations
             .AsTracking()
-            .FirstOrDefaultAsync(x => x.ResourceContentVersionId == req.ResourceContentVersionId && x.ContentIndex == req.ContentIndex, ct);
+            .Where(x => x.ResourceContentVersionId == req.ResourceContentVersionId && x.ContentIndex == req.ContentIndex)
+            .ToListAsync(ct);
 
-        if (existingMt is not null && !(existingMt.Created > DateTime.UtcNow.AddMinutes(-60)))
+        if (existingMts.Any(x => x.RetranslationReason != null))
         {
             ThrowError(x => x.ResourceContentVersionId,
-                "Machine translation already exists for this resource content version id and 1 hour has passed since the first translation");
+                "Machine translation already exists for this resource content version id and has a non-null retranslation reason");
         }
 
         var user = await userService.GetUserFromJwtAsync(ct);
@@ -36,7 +37,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ContentIndex = req.ContentIndex,
             UserId = user.Id,
             SourceId = req.SourceId,
-            RetranslationReason = req.RetranslationReason ?? null
+            RetranslationReason = req.RetranslationReason
         };
 
         await dbContext.ResourceContentVersionMachineTranslations.AddAsync(mt, ct);
