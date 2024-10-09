@@ -8,7 +8,14 @@ public class FeedbackEntity
     public string? UserId { get; set; }
     public string? Phone { get; set; }
     public string Feedback { get; set; } = null!;
+    public FeedbackType FeedbackType { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
+}
+
+public enum FeedbackType
+{
+    WellContactForm = 0,
+    WellContactPrompt = 1
 }

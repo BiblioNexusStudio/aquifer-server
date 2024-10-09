@@ -20,7 +20,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
             Email = req.Email,
             Phone = req.Phone,
             UserId = HttpContext.Request.Headers["bn-user-id"],
-            Feedback = req.Feedback
+            Feedback = req.Feedback,
+            FeedbackType = req.FeedbackType
         };
 
         await dbContext.Feedback.AddAsync(feedback, ct);
