@@ -1,5 +1,8 @@
-﻿namespace Aquifer.Data.Entities;
+﻿using Microsoft.EntityFrameworkCore;
 
+namespace Aquifer.Data.Entities;
+
+[Index(nameof(UserId), nameof(Created))]
 public class ResourceContentVersionEditTimeEntity
 {
     public int Id { get; set; }
