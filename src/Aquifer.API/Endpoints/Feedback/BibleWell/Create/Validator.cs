@@ -9,6 +9,5 @@ public class Validator : Validator<Request>
     {
         RuleFor(x => x.Name).NotEmpty();
         RuleFor(x => x.Feedback).NotEmpty();
-        RuleFor(x => x.FeedbackType).NotEmpty();
     }
 }
