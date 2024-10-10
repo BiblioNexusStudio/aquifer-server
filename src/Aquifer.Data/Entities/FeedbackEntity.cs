@@ -8,6 +8,8 @@ public class FeedbackEntity
     public string? UserId { get; set; }
     public string? Phone { get; set; }
     public string Feedback { get; set; } = null!;
+    public string? ContactValue { get; set; }
+    public FeedbackContactType? ContactType { get; set; }
     public FeedbackType FeedbackType { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
@@ -17,6 +19,6 @@ public class FeedbackEntity
 public enum FeedbackType
 {
     None = 0,
-    WellContactForm = 1,
-    WellContactPrompt = 2
+    WellSettingsFeedbackForm = 1,
+    WellPopupFeedbackForm = 2
 }
