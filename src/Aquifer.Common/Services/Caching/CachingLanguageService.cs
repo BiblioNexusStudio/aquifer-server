@@ -10,6 +10,19 @@ public interface ICachingLanguageService
     Task<IReadOnlyDictionary<int, string>> GetLanguageCodeByIdMapAsync(CancellationToken ct);
     Task<int?> GetLanguageIdAsync(string languageCode, CancellationToken ct);
     Task<IReadOnlyDictionary<string, int>> GetLanguageIdByCodeMapAsync(CancellationToken ct);
+
+    Task<(bool IsValidLanguageId, bool IsValidLanguageCode, int? ValidLanguageId)>
+        ValidateLanguageIdOrCodeAsync(int? languageId, string? languageCode, bool shouldRequireInput, CancellationToken ct);
+
+    Task<
+        (IReadOnlyList<int> InvalidLanguageIds,
+        IReadOnlyList<string> InvalidLanguageCodes,
+        IReadOnlyList<int>? ValidLanguageIds)>
+        ValidateLanguageIdsOrCodesAsync(
+            IReadOnlyList<int>? languageIds,
+            IReadOnlyList<string>? languageCodes,
+            bool shouldRequireInput,
+            CancellationToken ct);
 }
 
 public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryCache _memoryCache) : ICachingLanguageService
@@ -57,11 +70,113 @@ public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryC
                 cacheEntry.SlidingExpiration = s_cacheLifetime;
 
                 var LanguageCodeById = await _dbContext.Languages
-                    .ToDictionaryAsync(li => li.Id, li => li.ISO6393Code, ct);
+                    .Select(l => new { l.Id, l.ISO6393Code })
+                    .ToDictionaryAsync(l => l.Id, l => l.ISO6393Code, ct);
 
                 return
                     (LanguageCodeById,
                     LanguageIdByCode: LanguageCodeById.ToDictionary(li => li.Value, li => li.Key, StringComparer.OrdinalIgnoreCase));
             });
+    }
+
+    public async Task<(bool IsValidLanguageId, bool IsValidLanguageCode, int? ValidLanguageId)>
+        ValidateLanguageIdOrCodeAsync(int? languageId, string? languageCode, bool shouldRequireInput, CancellationToken ct)
+    {
+        if (languageId is not null && languageCode is not null)
+        {
+            throw new ArgumentException($"Only one of {nameof(languageId)} or {nameof(languageCode)} may be provided.");
+        }
+
+        if (languageId is not null)
+        {
+            return (
+                IsValidLanguageId: await GetLanguageCodeAsync(languageId.Value, ct) is not null,
+                IsValidLanguageCode: true,
+                languageId.Value);
+        }
+
+        if (languageCode is not null)
+        {
+            var languageIdForCode = await GetLanguageIdAsync(languageCode, ct);
+            return (
+                IsValidLanguageId: true,
+                IsValidLanguageCode: languageIdForCode is not null,
+                languageIdForCode.GetValueOrDefault());
+        }
+
+        if (!shouldRequireInput)
+        {
+            return (
+                IsValidLanguageId: true,
+                IsValidLanguageCode: true,
+                ValidLanguageId: null);
+        }
+
+        throw new ArgumentException($"One of {nameof(languageId)} or {nameof(languageCode)} must be non-null.");
+    }
+
+    public async Task<
+            (IReadOnlyList<int> InvalidLanguageIds,
+            IReadOnlyList<string> InvalidLanguageCodes,
+            IReadOnlyList<int>? ValidLanguageIds)>
+        ValidateLanguageIdsOrCodesAsync(
+            IReadOnlyList<int>? languageIds,
+            IReadOnlyList<string>? languageCodes,
+            bool shouldRequireInput,
+            CancellationToken ct)
+    {
+        if (languageIds is not null && languageCodes is not null)
+        {
+            throw new ArgumentException($"Only one of {nameof(languageIds)} or {nameof(languageCodes)} may be provided.");
+        }
+
+        if (languageIds is not null or [])
+        {
+            var languageCodeByIdMap = await GetLanguageCodeByIdMapAsync(ct);
+
+            var invalidLanguageIds = new List<int>();
+            var validLanguageIds = new List<int>();
+            foreach (var languageId in languageIds)
+            {
+                if (!languageCodeByIdMap.ContainsKey(languageId))
+                {
+                    invalidLanguageIds.Add(languageId);
+                }
+                else
+                {
+                    validLanguageIds.Add(languageId);
+                }
+            }
+
+            return (invalidLanguageIds, InvalidLanguageCodes: [], validLanguageIds);
+        }
+
+        if (languageCodes is not null or [])
+        {
+            var languageIdByCodeMap = await GetLanguageIdByCodeMapAsync(ct);
+
+            var invalidLanguageCodes = new List<string>();
+            var validLanguageIds = new List<int>();
+            foreach (var languageCode in languageCodes)
+            {
+                if (!languageIdByCodeMap.TryGetValue(languageCode, out var id))
+                {
+                    invalidLanguageCodes.Add(languageCode);
+                }
+                else
+                {
+                    validLanguageIds.Add(id);
+                }
+            }
+
+            return (InvalidLanguageIds: [], invalidLanguageCodes, validLanguageIds);
+        }
+
+        if (!shouldRequireInput)
+        {
+            return (InvalidLanguageIds: [], InvalidLanguageCodes: [], ValidLanguageIds: null);
+        }
+
+        throw new ArgumentException($"One of {nameof(languageIds)} or {nameof(languageCodes)} must be non-null and non-empty.");
     }
 }
