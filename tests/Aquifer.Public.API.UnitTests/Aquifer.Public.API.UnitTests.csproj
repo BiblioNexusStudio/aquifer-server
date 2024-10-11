@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Aquifer.Common\Aquifer.Common.csproj" />
+    <ProjectReference Include="..\..\src\Aquifer.Public.API\Aquifer.Public.API.csproj" />
   </ItemGroup>
 
   <ItemGroup>

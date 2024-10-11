@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Aquifer.Common.Middleware;
 using Aquifer.Common.Services;
 using Aquifer.Data;
@@ -6,17 +7,19 @@ using Aquifer.Public.API.Configuration;
 using Aquifer.Public.API.OpenApi;
 using Aquifer.Public.API.Services;
 using FastEndpoints;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration.Get<ConfigurationOptions>();
 
-builder.Services.AddDbContext<AquiferDbContext>(options => options
-    .UseSqlServer(configuration?.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
-    .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: builder.Environment.IsDevelopment())
-    .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
-
-builder.Services.AddFastEndpoints()
+builder.Services
+    .AddDbContext<AquiferDbContext>(options => options
+        .UseSqlServer(configuration?.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
+        .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: builder.Environment.IsDevelopment())
+        .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
+    .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))
+    .AddFastEndpoints()
     .AddMemoryCache()
     .AddCachingServices()
     .AddSingleton<IResourceContentRequestTrackingService, ResourceContentRequestTrackingService>()
