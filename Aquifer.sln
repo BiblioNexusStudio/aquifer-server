@@ -19,7 +19,20 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Common", "src\Aquif
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Jobs", "src\Aquifer.Jobs\Aquifer.Jobs.csproj", "{CDDA72AF-C879-4CFC-9015-B0CB4979837F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Common.UnitTests", "Aquifer.Common.UnitTests\Aquifer.Common.UnitTests.csproj", "{93508A60-45FD-4A2E-9EFC-8D7C18259B20}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Common.UnitTests", "Aquifer.Common.UnitTests\Aquifer.Common.UnitTests.csproj", "{93508A60-45FD-4A2E-9EFC-8D7C18259B20}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2CA3FDD3-907D-4B4B-A657-A802AC9D0316}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitignore = .gitignore
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{6893088B-7C0B-414B-B98F-181474574125}"
+	ProjectSection(SolutionItems) = preProject
+		docs\infrastructure.md = docs\infrastructure.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -67,6 +80,7 @@ Global
 		{9AB0BF9D-39CC-4DD1-8D88-976EC77C0B78} = {795E7203-D40F-4962-837D-DD39BAF2C930}
 		{CDDA72AF-C879-4CFC-9015-B0CB4979837F} = {795E7203-D40F-4962-837D-DD39BAF2C930}
 		{93508A60-45FD-4A2E-9EFC-8D7C18259B20} = {51DD9DE3-DA20-4C0B-82D6-029445F6BD42}
+		{6893088B-7C0B-414B-B98F-181474574125} = {2CA3FDD3-907D-4B4B-A657-A802AC9D0316}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8E32492B-EA66-40E4-A7A8-67E4ABA14A53}
