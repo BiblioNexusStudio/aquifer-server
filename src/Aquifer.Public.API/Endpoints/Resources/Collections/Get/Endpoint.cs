@@ -41,7 +41,9 @@ public sealed class Endpoint(AquiferDbContext _dbContext, ICachingLanguageServic
             ThrowError(r => r.LanguageCodes, $"Invalid 'Language Codes': \"{string.Join("\", \"", invalidLanguageCodes)}\"");
         }
 
-        var parentResource = await GetParentResourceAsync(_dbContext.Database.GetDbConnection(), req.Code, ct);
+        var dbConnection = _dbContext.Database.GetDbConnection();
+
+        var parentResource = await GetParentResourceAsync(dbConnection, req.Code, ct);
         if (parentResource is null)
         {
             await SendNotFoundAsync(ct);
@@ -49,7 +51,7 @@ public sealed class Endpoint(AquiferDbContext _dbContext, ICachingLanguageServic
         }
 
         var localizations = await GetParentResourceLocalizationWithResourceContentCountAsync(
-            _dbContext.Database.GetDbConnection(),
+            dbConnection,
             parentResource.Id,
             validLanguageIds,
             ct);
