@@ -19,7 +19,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Common", "src\Aquif
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Jobs", "src\Aquifer.Jobs\Aquifer.Jobs.csproj", "{CDDA72AF-C879-4CFC-9015-B0CB4979837F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Common.UnitTests", "Aquifer.Common.UnitTests\Aquifer.Common.UnitTests.csproj", "{93508A60-45FD-4A2E-9EFC-8D7C18259B20}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Common.UnitTests", "Aquifer.Common.UnitTests\Aquifer.Common.UnitTests.csproj", "{93508A60-45FD-4A2E-9EFC-8D7C18259B20}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

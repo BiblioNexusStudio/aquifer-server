@@ -30,6 +30,9 @@ builder.Services.AddFastEndpoints()
 builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
 
 var app = builder.Build();
+
+StaticLoggerFactory.LoggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+
 app.UseHealthChecks("/_health")
     .UseResponseCaching()
     .UseOutputCache()
