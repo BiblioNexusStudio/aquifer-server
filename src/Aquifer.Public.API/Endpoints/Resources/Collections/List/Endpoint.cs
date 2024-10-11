@@ -27,7 +27,7 @@ public sealed class Endpoint(AquiferDbContext _dbContext)
             .Where(pr =>
                 pr.Enabled &&
                 (req.ResourceType == ResourceType.None || pr.ResourceType == req.ResourceType))
-            .OrderBy(pr => pr.Id)
+            .OrderBy(pr => pr.DisplayName)
             .Skip(req.Offset)
             .Take(req.Limit)
             .Select(pr => new Response
