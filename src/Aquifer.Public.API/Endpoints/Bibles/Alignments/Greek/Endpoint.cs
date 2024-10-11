@@ -36,8 +36,10 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             return;
         }
 
+        var dbConnection = dbContext.Database.GetDbConnection();
+
         var greekAlignmentNewTestamentName = await GetAssociatedGreekAlignmentNewTestamentNameForBibleAsync(
-            dbContext.Database.GetDbConnection(),
+            dbConnection,
             request.BibleId,
             ct);
 
@@ -48,20 +50,20 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         }
 
         var bibleText = await GetBibleTextAsync(
-            dbContext.Database.GetDbConnection(),
+            dbConnection,
             request.BibleId,
             textLowerBounds: new BibleWordIdentifier(bookId, request.StartChapter, request.StartVerse, request.StartWord),
             textUpperBounds: BibleWordIdentifier.GetUpperBoundOfWord(bookId, request.EndChapter, request.EndVerse, request.EndWord),
             ct);
 
         var greekWordResultByIdMap = await GetGreekWordResultByGreekWordIdMapAsync(
-            dbContext.Database.GetDbConnection(),
+            dbConnection,
             bibleText.Where(bt => bt.GreekWordId is not null).Select(r => r.GreekWordId!.Value),
             ct);
 
         var greekSenseResultsByIdMap = request.ShouldReturnSenseData
             ? await GetGreekSenseResultsByGreekSenseIdMapAsync(
-                dbContext.Database.GetDbConnection(),
+                dbConnection,
                 bibleText.Where(bt => bt.GreekSenseId is not null).Select(r => r.GreekSenseId!.Value),
                 ct)
             : null;
