@@ -96,13 +96,13 @@ public sealed class Endpoint(AquiferDbContext _dbContext, ICachingLanguageServic
                 pr.[Enabled] = 1;
             """;
 
-        return await dbConnection.QuerySingleOrDefaultAsync<ParentResource>(new CommandDefinition(
+        return await dbConnection.QuerySingleOrDefaultWithRetriesAsync<ParentResource>(
             query,
             new
             {
                 code
             },
-            cancellationToken: ct));
+            cancellationToken: ct);
     }
 
     private sealed record ParentResource(
@@ -178,10 +178,10 @@ public sealed class Endpoint(AquiferDbContext _dbContext, ICachingLanguageServic
             """;
 
         // querying separately and joining in memory saves significant time over trying to join in the DB
-        var reader = await dbConnection.QueryMultipleAsync(new CommandDefinition(
+        var reader = await dbConnection.QueryMultipleWithRetriesAsync(
             query,
             parameters,
-            cancellationToken: ct));
+            cancellationToken: ct);
 
         var parentResourceLocalizations = reader.Read<ParentResourceLocalization>().ToList();
         var resourceContentCounts = reader.Read<ResourceContentCount>().ToList();
