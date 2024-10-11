@@ -55,6 +55,8 @@ builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
 
 var app = builder.Build();
 
+StaticLoggerFactory.LoggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+
 app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseHealthChecks("/_health");
 if (builder.Environment.IsDevelopment())
