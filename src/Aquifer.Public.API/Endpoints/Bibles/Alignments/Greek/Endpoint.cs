@@ -36,8 +36,10 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             return;
         }
 
+        var dbConnection = dbContext.Database.GetDbConnection();
+
         var greekAlignmentNewTestamentName = await GetAssociatedGreekAlignmentNewTestamentNameForBibleAsync(
-            dbContext.Database.GetDbConnection(),
+            dbConnection,
             request.BibleId,
             ct);
 
@@ -48,20 +50,20 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         }
 
         var bibleText = await GetBibleTextAsync(
-            dbContext.Database.GetDbConnection(),
+            dbConnection,
             request.BibleId,
             textLowerBounds: new BibleWordIdentifier(bookId, request.StartChapter, request.StartVerse, request.StartWord),
             textUpperBounds: BibleWordIdentifier.GetUpperBoundOfWord(bookId, request.EndChapter, request.EndVerse, request.EndWord),
             ct);
 
         var greekWordResultByIdMap = await GetGreekWordResultByGreekWordIdMapAsync(
-            dbContext.Database.GetDbConnection(),
+            dbConnection,
             bibleText.Where(bt => bt.GreekWordId is not null).Select(r => r.GreekWordId!.Value),
             ct);
 
         var greekSenseResultsByIdMap = request.ShouldReturnSenseData
             ? await GetGreekSenseResultsByGreekSenseIdMapAsync(
-                dbContext.Database.GetDbConnection(),
+                dbConnection,
                 bibleText.Where(bt => bt.GreekSenseId is not null).Select(r => r.GreekSenseId!.Value),
                 ct)
             : null;
@@ -264,16 +266,15 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 gntws.GreekSenseId
             """;
 
-        return (await dbConnection.QueryAsync<BibleTextWithGreekAlignmentForeignKeysResult>(
-                new CommandDefinition(
-                    bibleTextWithGreekAlignmentForeignKeysQuery,
-                    new
-                    {
-                        bibleId,
-                        lowerBounds = textLowerBounds.WordIdentifier,
-                        upperBounds = textUpperBounds.WordIdentifier,
-                    },
-                    cancellationToken: ct)))
+        return (await dbConnection.QueryWithRetriesAsync<BibleTextWithGreekAlignmentForeignKeysResult>(
+                bibleTextWithGreekAlignmentForeignKeysQuery,
+                new
+                {
+                    bibleId,
+                    lowerBounds = textLowerBounds.WordIdentifier,
+                    upperBounds = textUpperBounds.WordIdentifier,
+                },
+                cancellationToken: ct))
             .ToList();
     }
 
@@ -314,14 +315,13 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         foreach (var batch in greekWordIds.Distinct().Order().Chunk(size: SqlParameterBatchSize))
         {
             greekWordResults.AddRange(
-                await dbConnection.QueryAsync<GreekWordResult>(
-                    new CommandDefinition(
-                        greekWordsQuery,
-                        new
-                        {
-                            greekWordIds = batch
-                        },
-                        cancellationToken: ct)));
+                await dbConnection.QueryWithRetriesAsync<GreekWordResult>(
+                    greekWordsQuery,
+                    new
+                    {
+                        greekWordIds = batch
+                    },
+                    cancellationToken: ct));
         }
 
         return greekWordResults
@@ -358,14 +358,13 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         foreach (var batch in greekSenseIds.Distinct().Order().Chunk(size: SqlParameterBatchSize))
         {
             greekSenseResults.AddRange(
-                await dbConnection.QueryAsync<GreekSenseResult>(
-                    new CommandDefinition(
-                        greekSensesQuery,
-                        new
-                        {
-                            greekSenseIds = batch
-                        },
-                        cancellationToken: ct)));
+                await dbConnection.QueryWithRetriesAsync<GreekSenseResult>(
+                    greekSensesQuery,
+                    new
+                    {
+                        greekSenseIds = batch
+                    },
+                    cancellationToken: ct));
         }
 
         return new Dictionary<int, IReadOnlyList<GreekSenseResult>>(
