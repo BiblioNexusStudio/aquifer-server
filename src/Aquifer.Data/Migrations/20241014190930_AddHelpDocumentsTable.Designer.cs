@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    [Migration("20241011154110_AddHelpDocumentsTable")]
+    [Migration("20241014190930_AddHelpDocumentsTable")]
     partial class AddHelpDocumentsTable
     {
         /// <inheritdoc />
@@ -811,6 +811,9 @@ namespace Aquifer.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("getutcdate()");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Title")
                         .IsRequired()
