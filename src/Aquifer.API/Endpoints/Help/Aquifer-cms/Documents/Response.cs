@@ -1,6 +1,6 @@
 using Aquifer.Data.Entities;
 
-namespace Aquifer.API.Endpoints.Help;
+namespace Aquifer.API.Endpoints.Help.Aquifer_cms.Documents;
 
 public class Response
 {

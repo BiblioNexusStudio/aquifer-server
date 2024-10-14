@@ -3,13 +3,13 @@ using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Help;
+namespace Aquifer.API.Endpoints.Help.Aquifer_cms.Documents;
 
 public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Response>
 {
     public override void Configure()
     {
-        Get("/help");
+        Get("/help/aquifer-cms/documents");
     }
 
     public override async Task HandleAsync(CancellationToken ct)
