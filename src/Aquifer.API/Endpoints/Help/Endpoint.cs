@@ -14,29 +14,27 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
 
     public override async Task HandleAsync(CancellationToken ct)
     {
+        var helpDocuments = await GetHelpDocumentsAsync(ct);
         var response = new Response
         {
-            Releases = await GetReleasesAsync(ct),
-            HowTos = await GetHowTosAsync(ct)
+            Releases = helpDocuments.FindAll(x => x.Type == HelpDocumentType.Release),
+            HowTos = helpDocuments.FindAll(x => x.Type == HelpDocumentType.HowTo)
         };
         await SendOkAsync(response, ct);
     }
 
-    private async Task<List<HelpDocumentEntity>> GetReleasesAsync(CancellationToken ct)
+    private async Task<List<HelpDocumentResponse>> GetHelpDocumentsAsync(CancellationToken ct)
     {
         return await dbContext
             .HelpDocuments
-            .Where(x => x.Type == HelpDocumentType.Release)
             .OrderByDescending(x => x.Updated)
-            .ToListAsync(ct);
-    }
-
-    private async Task<List<HelpDocumentEntity>> GetHowTosAsync(CancellationToken ct)
-    {
-        return await dbContext
-            .HelpDocuments
-            .Where(x => x.Type == HelpDocumentType.HowTo)
-            .OrderByDescending(x => x.Updated)
+            .Select(x => new HelpDocumentResponse
+            {
+                Id = x.Id,
+                Title = x.Title,
+                Type = x.Type,
+                Url = x.Url,
+            })
             .ToListAsync(ct);
     }
 }
