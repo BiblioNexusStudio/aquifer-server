@@ -28,7 +28,6 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
             .HelpDocuments
             .Where(x => x.Type == HelpDocumentType.Release)
             .OrderByDescending(x => x.Updated)
-            .Take(10)
             .ToListAsync(ct);
     }
 
