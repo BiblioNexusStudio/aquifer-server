@@ -11,7 +11,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
     public override void Configure()
     {
         Get("/help/aquifer-cms/documents");
-        ResponseCache(EndpointHelpers.OneDayInSeconds);
+        ResponseCache(EndpointHelpers.OneHourInSeconds);
     }
 
     public override async Task HandleAsync(CancellationToken ct)
@@ -19,8 +19,8 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
         var helpDocuments = await GetHelpDocumentsAsync(ct);
         var response = new Response
         {
-            Releases = helpDocuments.FindAll(x => x.Type == HelpDocumentType.Release),
-            HowTos = helpDocuments.FindAll(x => x.Type == HelpDocumentType.HowTo)
+            Releases = helpDocuments.Where(x => x.Type == HelpDocumentType.Release),
+            HowTos = helpDocuments.Where(x => x.Type == HelpDocumentType.HowTo)
         };
         await SendOkAsync(response, ct);
     }
@@ -29,10 +29,10 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
     {
         return await dbContext
             .HelpDocuments
-            .OrderByDescending(x => x.Updated)
+            .Where(x => x.Enabled)
+            .OrderByDescending(x => x.Created)
             .Select(x => new HelpDocumentResponse
             {
-                Id = x.Id,
                 Title = x.Title,
                 Type = x.Type,
                 Url = x.Url,

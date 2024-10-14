@@ -3,15 +3,16 @@ namespace Aquifer.Data.Entities;
 public class HelpDocumentEntity
 {
     public int Id { get; set; }
-    public required HelpDocumentType Type { get; set; }
-    public required string Title { get; set; }
-    public required string Url { get; set; }
+    public HelpDocumentType Type { get; set; }
+    public string Title { get; set; } = null!;
+    public string Url { get; set; } = null!;
+    public bool Enabled { get; set; } = false;
     
     [SqlDefaultValue("getutcdate()")]
-    public DateTime Created { get; set; }
+    public DateTime Created { get; set; } = DateTime.UtcNow;
 
     [SqlDefaultValue("getutcdate()")]
-    public DateTime Updated { get; set; }
+    public DateTime Updated { get; set; } = DateTime.UtcNow;
 }
 
 public enum HelpDocumentType
