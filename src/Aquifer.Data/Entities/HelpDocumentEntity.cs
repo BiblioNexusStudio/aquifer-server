@@ -1,5 +1,3 @@
-
-
 namespace Aquifer.Data.Entities;
 
 public class HelpDocumentEntity
