@@ -54,13 +54,14 @@ the values needed for your instance.
 Entity Framework will generate migrations by comparing the C# Entities defined
 in the project and the current state of the database.
 
-### Create a New Migration
+### Add New Entity/Migration
 First, create your entity in the `Aquifer.Data/Entities` directory.
 
-Next, add your entitiy definition to the `src/Aquifer.Data/AquiferDbContext.cs` file.
+Next, add your entity definition to the `src/Aquifer.Data/AquiferDbContext.cs` file.
 Entities are listed in an alphabetical order.
 
-Next, to create a new migration, run:
+### Create a New Migration
+To create a new migration, run:
 ```bash
 dotnet ef migrations add --startup-project src/Aquifer.Migrations --project src/Aquifer.Data <MigrationNameHere>
 ```
