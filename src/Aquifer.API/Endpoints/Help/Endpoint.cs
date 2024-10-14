@@ -16,13 +16,13 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
     {
         var response = new Response
         {
-            Releases = await GetRelesesAsync(ct),
+            Releases = await GetReleasesAsync(ct),
             HowTos = await GetHowTosAsync(ct)
         };
         await SendOkAsync(response, ct);
     }
 
-    private async Task<List<HelpDocumentEntity>> GetRelesesAsync(CancellationToken ct)
+    private async Task<List<HelpDocumentEntity>> GetReleasesAsync(CancellationToken ct)
     {
         return await dbContext
             .HelpDocuments
@@ -38,7 +38,6 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
             .HelpDocuments
             .Where(x => x.Type == HelpDocumentType.HowTo)
             .OrderByDescending(x => x.Updated)
-            .Take(10)
             .ToListAsync(ct);
     }
 }
