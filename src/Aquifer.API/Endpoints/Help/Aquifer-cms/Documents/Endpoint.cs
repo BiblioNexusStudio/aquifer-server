@@ -1,3 +1,4 @@
+using Aquifer.API.Helpers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -10,6 +11,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
     public override void Configure()
     {
         Get("/help/aquifer-cms/documents");
+        ResponseCache(EndpointHelpers.OneDayInSeconds);
     }
 
     public override async Task HandleAsync(CancellationToken ct)
