@@ -48,22 +48,30 @@ dotnet build --no-incremental /p:WarningsAsErrors=true
 
 ## Database Migrations
 
-First initialize the settings file by copying `appsettings.example.json` as `appsettings.Development.json` and providing
+***Important***: Initialize the settings file in the `src/Aquifer.Migrations` directory by copying `appsettings.example.json` as `appsettings.Development.json` and providing
 the values needed for your instance.
 
 Entity Framework will generate migrations by comparing the C# Entities defined
 in the project and the current state of the database.
 
-To create a new migration:
+### Create a New Migration
+First, create your entity in the `Aquifer.Data/Entities` directory.
+
+Next, add your entitiy definition to the `src/Aquifer.Data/AquiferDbContext.cs` file.
+Entities are listed in an alphabetical order.
+
+Next, to create a new migration, run:
 ```bash
-dotnet ef migrations add --startup-project src/Aquifer.Migrations --project src/Aquifer.Data MigrationNameHere
+dotnet ef migrations add --startup-project src/Aquifer.Migrations --project src/Aquifer.Data <MigrationNameHere>
 ```
+Your new migration will be created in the `src/Aquifer.Data/Migrations` directory along with the `.Designer` file and updated `AquiferDbContextModelSnapshot.cs` file.
+
 
 If you run that command and the new migration file is empty, that means there
 were no changes detected between the C# Entities and the database. You can use
 this to your advantage to create empty migrations and add your own custom code.
 
-To run migrations:
+To run migrations and add your changes to the DB, run:
 ```bash
 dotnet ef database update --startup-project src/Aquifer.Migrations --project src/Aquifer.Data
 ```
