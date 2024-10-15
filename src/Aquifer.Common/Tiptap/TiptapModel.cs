@@ -8,6 +8,7 @@ public class TiptapModel
 public class TiptapModel<TRootContent> where TRootContent : TiptapRootContent<TRootContent>
 {
     public TiptapRoot<TRootContent> Tiptap { get; set; } = null!;
+    public int? StepNumber { get; set; }
 }
 
 public class TiptapRoot<TRootContent>
