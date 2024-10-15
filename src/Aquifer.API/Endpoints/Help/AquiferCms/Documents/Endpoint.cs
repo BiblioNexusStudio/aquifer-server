@@ -4,7 +4,7 @@ using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Help.Aquifer_cms.Documents;
+namespace Aquifer.API.Endpoints.Help.AquiferCms.Documents;
 
 public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Response>
 {
