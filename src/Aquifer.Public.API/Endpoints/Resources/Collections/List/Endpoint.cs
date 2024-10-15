@@ -13,9 +13,12 @@ public sealed class Endpoint(AquiferDbContext _dbContext)
     {
         Get("/resources/collections");
         Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
+        Description(d => d
+            .WithTags("Resources/Collections")
+            .ProducesProblemFE());
         Summary(s =>
         {
-            s.Summary = "Gets a list of resource collections.";
+            s.Summary = "Get a list of resource collections.";
             s.Description =
                 "Returns summary data for all resource collections, optionally filtering by resource type.  Note that additional collection information can be retrieved via the individual GET route.";
         });

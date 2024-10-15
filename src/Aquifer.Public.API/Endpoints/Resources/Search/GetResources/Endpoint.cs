@@ -14,6 +14,9 @@ public class Endpoint(AquiferDbContext _dbContext, ICachingLanguageService _cach
     {
         Get("/resources/search");
         Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
+        Description(d => d
+            .WithTags("Resources")
+            .ProducesProblemFE());
         Summary(s =>
         {
             s.Summary = "Search resources by keyword query, passage, resource type or collection code, or a combination of the above.";

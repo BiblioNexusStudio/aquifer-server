@@ -10,6 +10,9 @@ public static class SwaggerDocumentSettings
     {
         return service.SwaggerDocument(sd =>
         {
+            // turn off auto-grouping (but now must manually tag each endpoint using `WithTags()`)
+            sd.AutoTagPathSegmentIndex = 0;
+
             sd.ShortSchemaNames = true;
             sd.EnableJWTBearerAuth = false;
             sd.EndpointFilter = ep => ep.EndpointTags?.Contains(EndpointHelpers.EndpointTags.ExcludeFromSwaggerDocument) != true;
@@ -39,6 +42,8 @@ public static class SwaggerDocumentSettings
                                   title of the collection to which it belongs is "Bible Dictionary (Tyndale)", and the resource type
                                   is "Dictionary".
                                   """;
+                td["Resources/Collections"] = "Endpoints for retrieving collections of resources.";
+                td["Resources/Types"] = "Endpoints for retrieving the different types of resource collections and resources.";
                 td["Languages"] = "Endpoints for pulling data specific to languages.";
                 td["Bibles"] = "Endpoints for discovering available Bibles and pulling down Bible text and audio information.";
             };

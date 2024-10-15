@@ -11,10 +11,13 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
     public override void Configure()
     {
         Get("/bibles/{BibleId}/texts");
-        Description(d => d.ProducesProblemFE());
+        Description(d => d
+            .WithTags("Bibles")
+            .ProducesProblemFE()
+            .ProducesProblemFE(404));
         Summary(s =>
         {
-            s.Summary = "Gets the Bible text contained within a book of the Bible.";
+            s.Summary = "Get the Bible text contained within a book of the Bible.";
             s.Description =
                 "For a given Bible and book of the Bible, returns the Bible text (and optional audio information if available) for all verses within the chapter and verse parameters.";
         });

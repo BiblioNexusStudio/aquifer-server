@@ -10,7 +10,7 @@ public class Endpoint : EndpointWithoutRequest<IEnumerable<Response>>
     {
         Get("/bibles/books");
         Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
-
+        Description(x => x.WithTags("Bibles"));
         Summary(s =>
         {
             s.Summary = "Get a list of Bible books.";

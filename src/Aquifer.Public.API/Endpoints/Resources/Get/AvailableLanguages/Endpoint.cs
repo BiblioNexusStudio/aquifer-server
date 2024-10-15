@@ -9,7 +9,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
     public override void Configure()
     {
         Get("/resources/{ContentId}/available-languages");
-        Description(d => d.ProducesProblemFE(404));
+        Description(d => d
+            .WithTags("Resources")
+            .ProducesProblemFE(404));
         Summary(s =>
         {
             s.Summary = "For a given resource content id, see in what other languages it is available.";
