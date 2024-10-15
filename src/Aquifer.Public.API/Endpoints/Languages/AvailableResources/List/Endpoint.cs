@@ -12,9 +12,12 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     {
         Get("/languages/available-resources");
         Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
+        Description(d => d
+            .ProducesProblemFE()
+            .WithTags("Languages"));
         Summary(s =>
         {
-            s.Summary = "Get count of resource types per language";
+            s.Summary = "Get count of resource types per language.";
             s.Description =
                 "For a given range, get a count of resources available per language and type.";
         });

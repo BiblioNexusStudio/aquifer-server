@@ -14,6 +14,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     {
         Get("/resources/types");
         Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
+        Description(d => d.WithTags("Resources/Types"));
         Summary(s =>
         {
             s.Summary = "Get a list of available resource types and collections.";

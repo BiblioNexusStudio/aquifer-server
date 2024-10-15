@@ -15,10 +15,13 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
     {
         Get("/bibles/{BibleId}/alignments/greek");
         Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
-        Description(d => d.ProducesProblemFE());
+        Description(d => d
+            .WithTags("Bibles")
+            .ProducesProblemFE()
+            .ProducesProblemFE(404));
         Summary(s =>
         {
-            s.Summary = "Gets a Bible's Greek alignment information.";
+            s.Summary = "Get a Bible's Greek alignment information.";
             s.Description =
                 "For a given Bible and book of the Bible, returns the Bible's text along with associated Greek alignment information and Greek sense data for each verse, similar to a reverse interlinear Bible. Data is returned for all verses within the chapter and verse parameters.";
         });

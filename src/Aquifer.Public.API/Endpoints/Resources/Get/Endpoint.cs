@@ -9,7 +9,10 @@ public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackin
     public override void Configure()
     {
         Get("/resources/{ContentId}");
-        Description(d => d.ProducesProblemFE(404));
+        Description(d => d
+            .WithTags("Resources")
+            .ProducesProblemFE()
+            .ProducesProblemFE(404));
         Summary(s =>
         {
             s.Summary = "Get specific resource information.";
