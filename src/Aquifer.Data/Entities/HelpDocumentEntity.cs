@@ -6,7 +6,7 @@ public class HelpDocumentEntity
     public HelpDocumentType Type { get; set; }
     public string Title { get; set; } = null!;
     public string Url { get; set; } = null!;
-    public bool Enabled { get; set; } = false;
+    public bool Enabled { get; set; }
     
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
