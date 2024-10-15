@@ -21,7 +21,6 @@ public class Response
 
 public class ResourceTypeMetadata
 {
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public ResourceType Type { get; init; }
 
     public string Name { get; set; } = null!;
