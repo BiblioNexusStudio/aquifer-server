@@ -1,4 +1,3 @@
-using Aquifer.Common.Services;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Dapper;
@@ -7,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Get.Associations;
 
-public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackingService trackingService)
+public class Endpoint(AquiferDbContext dbContext)
     : Endpoint<Request, Response>
 {
     public override void Configure()
