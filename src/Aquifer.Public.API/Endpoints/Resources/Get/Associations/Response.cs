@@ -8,7 +8,8 @@ public class Response
 
 public class PassageAssociation
 {
-    public string BookCode { get; set; }
+    public string StartBookCode { get; set; }
+    public string EndBookCode { get; set; }
     public int StartChapter { get; set; }
     public int StartVerse { get; set; }
     public int EndChapter { get; set; }

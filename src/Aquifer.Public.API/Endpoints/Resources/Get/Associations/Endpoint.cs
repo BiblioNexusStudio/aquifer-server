@@ -18,7 +18,7 @@ public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackin
         {
             s.Summary = "Get specific resource associations.";
             s.Description =
-                "For a given resource id, return the associations for that resource. This can be passages and resource items.";
+                "For a given resource id, return the associations for that resource in their given language. This can be passages and resource items.";
         });
     }
 
@@ -38,17 +38,20 @@ public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackin
 
         var associatedResources = await dbConnection.QueryAsync<AssociatedResourceContent>(associatedResourceQuery, new { req.ResourceId });
 
-        var assocatedVerseResources = await dbContext.ResourceContents
-            .Where(rc => rc.ResourceId == req.ResourceId)
-            .SelectMany(rc => rc.Resource.VerseResources.Select(v => new VerseReference { VerseId = v.VerseId }))
+        var resourceId = await dbContext.ResourceContents.Where(rc => rc.Id == req.ResourceId)
+            .Select(rc => rc.ResourceId)
+            .FirstOrDefaultAsync(ct);
+
+        var assocatedVerseResources = await dbContext.VerseResources.Where(vr => vr.ResourceId == resourceId)
+            .Select(vr => new VerseReference { VerseId = vr.VerseId })
             .ToListAsync(ct);
 
-        var assocatedPassageReferences = await dbContext.ResourceContents.Where(rc => rc.ResourceId == req.ResourceId)
-            .SelectMany(rc => rc.Resource.PassageResources.Where(x => x.ResourceId == rc.ResourceId).Select(pr => new PassageReference
+        var assocatedPassageReferences = await dbContext.PassageResources.Where(vr => vr.ResourceId == resourceId)
+            .Select(pr => new PassageReference
             {
                 StartVerseId = pr.Passage.StartVerseId,
                 EndVerseId = pr.Passage.EndVerseId
-            }))
+            })
             .ToListAsync(ct);
 
         var response = new Response
@@ -61,14 +64,16 @@ public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackin
                 }).ToList(),
             PassageAssociations = assocatedVerseResources.Select(vr => new PassageAssociation
             {
-                BookCode = vr.BookCode,
+                StartBookCode = vr.BookCode,
+                EndBookCode = vr.BookCode,
                 StartChapter = vr.Chapter,
                 StartVerse = vr.Verse,
                 EndChapter = vr.Chapter,
                 EndVerse = vr.Verse
             }).Concat(assocatedPassageReferences.Select(apr => new PassageAssociation
             {
-                BookCode = apr.StartBookCode,
+                StartBookCode = apr.StartBookCode,
+                EndBookCode = apr.EndBookCode,
                 StartChapter = apr.StartChapter,
                 StartVerse = apr.StartVerse,
                 EndChapter = apr.EndChapter,
