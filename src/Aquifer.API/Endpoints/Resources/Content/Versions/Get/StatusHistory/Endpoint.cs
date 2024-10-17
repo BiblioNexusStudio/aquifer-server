@@ -4,13 +4,13 @@ using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Aquifer.API.Endpoints.Resources.Content.Versions.History;
+namespace Aquifer.API.Endpoints.Resources.Content.Versions.Get.StatusHistory;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Response>>
 {
     public override void Configure()
     {
-        Get("/resources/content/versions/history/{VersionId}");
+        Get("/resources/content/versions/{VersionId}/status-history");
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
@@ -34,6 +34,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             .ToListAsync(ct);
 
         userHistory.RemoveAll(h => h.Event.IsNullOrEmpty());
-        Response = [.. statusHistory.Concat(userHistory).OrderBy(h => h.DateOfEvent)];
+        Response = [.. Enumerable.Concat(statusHistory, userHistory).OrderBy(h => h.DateOfEvent)];
     }
 }
