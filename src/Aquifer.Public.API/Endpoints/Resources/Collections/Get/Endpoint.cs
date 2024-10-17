@@ -182,7 +182,7 @@ public sealed class Endpoint(AquiferDbContext _dbContext, ICachingLanguageServic
             """;
 
         // querying separately and joining in memory saves significant time over trying to join in the DB
-        var reader = await dbConnection.QueryMultipleWithRetriesAsync(
+        await using var reader = await dbConnection.QueryMultipleWithRetriesAsync(
             query,
             parameters,
             cancellationToken: ct);
