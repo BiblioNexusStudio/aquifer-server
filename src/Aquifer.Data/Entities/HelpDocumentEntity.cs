@@ -7,6 +7,7 @@ public class HelpDocumentEntity
     public string Title { get; set; } = null!;
     public string Url { get; set; } = null!;
     public bool Enabled { get; set; }
+    public string? ThumbnailUrl { get; set; }
     
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
