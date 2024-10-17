@@ -11,9 +11,10 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     {
         Get("/languages");
         Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
+        Description(d => d.WithTags("Languages"));
         Summary(s =>
         {
-            s.Summary = "Return language list";
+            s.Summary = "Return language list.";
             s.Description = "Return a list of languages that can have associated resources in the Aquifer.";
         });
     }

@@ -16,9 +16,13 @@ public sealed class Endpoint(AquiferDbContext _dbContext, ICachingLanguageServic
     {
         Get("/resources/collections/{code}");
         Options(EndpointHelpers.UnauthenticatedServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
+        Description(d => d
+            .WithTags("Resources/Collections")
+            .ProducesProblemFE()
+            .ProducesProblemFE(404));
         Summary(s =>
         {
-            s.Summary = "Gets a resource collection with language localization data for the given collection code.";
+            s.Summary = "Get a resource collection with language localization data for the given collection code.";
             s.Description =
                 "Returns the resource collection matching the collection code including the count of resource items in each available language.";
         });

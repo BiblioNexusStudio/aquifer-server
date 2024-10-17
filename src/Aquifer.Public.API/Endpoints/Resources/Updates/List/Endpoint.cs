@@ -9,10 +9,12 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
     public override void Configure()
     {
         Get("/resources/updates");
-        Description(d => d.ProducesProblemFE());
+        Description(d => d
+            .WithTags("Resources")
+            .ProducesProblemFE());
         Summary(s =>
         {
-            s.Summary = "Get resource ids that are new or updated since the given UTC timestamp";
+            s.Summary = "Get resource ids that are new or updated since the given UTC timestamp.";
             s.Description =
                 "For a given UTC timestamp and optional language id, get a list of resource ids that are new or have been updated since the provided timestamp. This is intended for users who are storing Aquifer data locally and want to fetch new content.";
         });

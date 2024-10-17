@@ -9,7 +9,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IReadOnlyL
     public override void Configure()
     {
         Get("/bibles");
-        Description(d => d.ProducesProblemFE());
+        Description(d => d
+            .WithTags("Bibles")
+            .ProducesProblemFE());
         Summary(s =>
         {
             s.Summary = "Get a list of Bibles.";
