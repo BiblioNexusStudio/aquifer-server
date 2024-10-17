@@ -12,4 +12,5 @@ public class HelpDocumentResponse
     public required string Title { get; set; }
     public required HelpDocumentType Type { get; set; }
     public required string Url { get; set; }
+    public string? ThumbnailUrl { get; set; }
 }

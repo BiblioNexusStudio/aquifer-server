@@ -36,6 +36,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
                 Title = x.Title,
                 Type = x.Type,
                 Url = x.Url,
+                ThumbnailUrl = x.ThumbnailUrl
             })
             .ToListAsync(ct);
     }
