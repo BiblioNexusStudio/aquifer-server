@@ -34,6 +34,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             .ToListAsync(ct);
 
         userHistory.RemoveAll(h => h.Event.IsNullOrEmpty());
-        Response = [.. Enumerable.Concat(statusHistory, userHistory).OrderBy(h => h.DateOfEvent)];
+        Response = [.. statusHistory.Concat(userHistory).OrderByDescending(h => h.DateOfEvent)];
     }
 }
