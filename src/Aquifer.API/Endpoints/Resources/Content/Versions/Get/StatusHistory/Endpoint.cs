@@ -25,10 +25,10 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             .ToListAsync(ct);
 
         var userHistory = await dbContext.ResourceContentVersionAssignedUserHistory
-            .Where(h => h.ResourceContentVersionId == request.VersionId)
+            .Where(h => h.ResourceContentVersionId == request.VersionId && h.AssignedUser != null)
             .Select(h => new Response
             {
-                Event = h.AssignedUser != null ? $"{h.AssignedUser.FirstName} {h.AssignedUser.LastName}" : "",
+                Event = $"{h.AssignedUser!.FirstName} {h.AssignedUser.LastName}",
                 DateOfEvent = h.Created
             })
             .ToListAsync(ct);
