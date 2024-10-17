@@ -31,6 +31,6 @@ public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackin
     public override async Task OnAfterHandleAsync(Request req, Response res, CancellationToken ct)
     {
         const string endpointId = "public-resources-get-by-language";
-        await trackingService.TrackAsync(HttpContext, res.Id, endpointId, "public-api");
+        await trackingService.TrackAsync(HttpContext, res.Id, endpointId, "public-api", ct);
     }
 }
