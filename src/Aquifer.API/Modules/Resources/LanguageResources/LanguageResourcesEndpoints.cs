@@ -31,6 +31,10 @@ public static class LanguageResourcesEndpoints
             return TypedResults.BadRequest("parentResourceIds query param must be specified");
         }
 
+        var lastChapterInBook = await dbContext.BibleBookChapters
+            .Where(bbc => bbc.BibleBook.BibleId == 1 && bbc.BibleBook.Number == bookId)
+            .MaxAsync(bbc => bbc.Number, cancellationToken);
+
         var parentResourceEntities = await dbContext.ParentResources
             .Where(pr => parentResourceIds.Contains(pr.Id))
             .ToListAsync(cancellationToken);
@@ -50,8 +54,8 @@ public static class LanguageResourcesEndpoints
                     .Select(rcv =>
                         new IntermediateResourceItem
                         {
-                            StartChapter = pr.Passage.StartVerseId / 1000 % 1000,
-                            EndChapter = pr.Passage.EndVerseId / 1000 % 1000,
+                            StartVerseId = pr.Passage.StartVerseId,
+                            EndVerseId = pr.Passage.EndVerseId,
                             ContentId = rc.Id,
                             Version = rcv.Version,
                             ContentSize = rcv.ContentSize,
@@ -76,8 +80,8 @@ public static class LanguageResourcesEndpoints
                     .Select(rcv =>
                         new IntermediateResourceItem
                         {
-                            StartChapter = vr.VerseId / 1000 % 1000,
-                            EndChapter = vr.VerseId / 1000 % 1000,
+                            StartVerseId = vr.VerseId,
+                            EndVerseId = vr.VerseId,
                             ContentId = rc.Id,
                             Version = rcv.Version,
                             ContentSize = rcv.ContentSize,
@@ -92,28 +96,38 @@ public static class LanguageResourcesEndpoints
         // The above queries return resource contents in English + the current language (if available).
         // This filters them by grouping appropriately and selecting the current language resource (if available) then falling back to English.
         var filteredDownToOneLanguage = passageResourceContent.Concat(verseResourceContent)
-            .GroupBy(rc => new
+            .GroupBy(rc =>
             {
-                rc.StartChapter,
-                rc.EndChapter,
-                rc.MediaType,
-                rc.ResourceId
+                var startVerse = BibleUtilities.TranslateVerseId(rc.StartVerseId);
+                var endVerse = BibleUtilities.TranslateVerseId(rc.EndVerseId);
+
+                return new
+                {
+                    StartBook = startVerse.bookId,
+                    StartChapter = startVerse.chapter,
+                    EndBook = endVerse.bookId,
+                    EndChapter = endVerse.chapter,
+                    rc.MediaType,
+                    rc.ResourceId
+                };
             })
-            .Select(grc => grc.OrderBy(rc => rc.LanguageId == languageId ? 0 : 1).First());
+            .Select(grc =>
+                (Passage: (grc.Key.StartBook, grc.Key.StartChapter, grc.Key.EndBook, grc.Key.EndChapter),
+                ResourceItem: grc.OrderBy(rc => rc.LanguageId == languageId ? 0 : 1).First()));
 
         var groupedContent = filteredDownToOneLanguage
-            .SelectMany(content => Enumerable.Range(content.StartChapter, content.EndChapter - content.StartChapter + 1)
+            .SelectMany(x => GetPassageChapterOverlapWithBook(x.Passage, bookId, lastChapterInBook)
                 .Select(chapter => new
                 {
                     ChapterNumber = chapter,
                     Content = new ResourceItemResponse
                     {
-                        ContentId = content.ContentId,
-                        ContentSize = content.ContentSize,
-                        InlineMediaSize = content.InlineMediaSize,
-                        Version = content.Version,
-                        MediaTypeName = content.MediaType,
-                        ParentResourceId = content.ParentResource.Id
+                        ContentId = x.ResourceItem.ContentId,
+                        ContentSize = x.ResourceItem.ContentSize,
+                        InlineMediaSize = x.ResourceItem.InlineMediaSize,
+                        Version = x.ResourceItem.Version,
+                        MediaTypeName = x.ResourceItem.MediaType,
+                        ParentResourceId = x.ResourceItem.ParentResource.Id
                     }
                 }))
             .GroupBy(item => item.ChapterNumber)
@@ -123,24 +137,32 @@ public static class LanguageResourcesEndpoints
                 Contents = g
                     .Select(item => item.Content)
                     .DistinctBy(item => item.ContentId)
+                    .OrderBy(item => item.ContentId)
             })
             .OrderBy(item => item.ChapterNumber)
             .ToList();
 
         return TypedResults.Ok(new ResourceItemsByChapterResponse { Chapters = groupedContent });
     }
+
+    private static IEnumerable<int> GetPassageChapterOverlapWithBook((BookId StartBook, int StartChapter, BookId EndBook, int EndChapter) passage, BookId bookId, int lastChapterInBook)
+    {
+        var startChapter = passage.StartBook == bookId ? passage.StartChapter : 1;
+        var endChapter = passage.EndBook == bookId ? passage.EndChapter : lastChapterInBook;
+        return Enumerable.Range(startChapter, endChapter - startChapter + 1);
+    }
 }
 
 public record IntermediateResourceItem
 {
-    public int StartChapter { get; set; }
-    public int EndChapter { get; set; }
-    public int ContentId { get; set; }
-    public int Version { get; set; }
-    public int ContentSize { get; set; }
-    public int? InlineMediaSize { get; set; }
-    public ResourceContentMediaType MediaType { get; set; }
-    public int LanguageId { get; set; }
-    public int ResourceId { get; set; }
-    public ParentResourceEntity ParentResource { get; set; } = null!;
+    public required int StartVerseId { get; init; }
+    public required int EndVerseId { get; init; }
+    public required int ContentId { get; init; }
+    public required int Version { get; init; }
+    public required int ContentSize { get; init; }
+    public required int? InlineMediaSize { get; init; }
+    public required ResourceContentMediaType MediaType { get; init; }
+    public required int LanguageId { get; init; }
+    public required int ResourceId { get; init; }
+    public required ParentResourceEntity ParentResource { get; init; }
 }
