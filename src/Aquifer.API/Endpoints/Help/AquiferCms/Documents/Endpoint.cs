@@ -20,7 +20,9 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
         var response = new Response
         {
             Releases = helpDocuments.Where(x => x.Type == HelpDocumentType.Release),
-            HowTos = helpDocuments.Where(x => x.Type == HelpDocumentType.HowTo)
+            HowTos = helpDocuments
+                .Where(x => x.Type == HelpDocumentType.HowTo)
+                .OrderBy(x => x.Title)
         };
         await SendOkAsync(response, ct);
     }
