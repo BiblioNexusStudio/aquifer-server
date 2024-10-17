@@ -1,123 +1,104 @@
-using Aquifer.Common.Utilities;
+using System.Data.Common;
 using Aquifer.Data;
-using Dapper;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Get.Associations;
 
-public class Endpoint(AquiferDbContext dbContext)
-    : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
-        Get("/resources/{ResourceId}/associations");
-        Description(d => d.ProducesProblemFE(404));
+        Get("/resources/{ContentId}/associations");
+        Description(d => d.WithTags("Resources"));
         Summary(s =>
         {
-            s.Summary = "Get specific resource associations.";
+            s.Summary = "Get resource content associations.";
             s.Description =
-                "For a given resource id, return the associations for that resource in their given language. This can be passages and resource items.";
+                "For a given resource id, return the associations for that resource in its given language. Resource associations are language dependent. In general, all resource associations will be available in English.";
         });
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         var dbConnection = dbContext.Database.GetDbConnection();
-
-        const string associatedResourceQuery = """
-                                               SELECT RC2.Id AS AssociatedResourceContentId, RCV.DisplayName
-                                               FROM ResourceContents RC
-                                                   INNER JOIN AssociatedResources AR ON AR.ResourceId = RC.ResourceId
-                                                   INNER JOIN ResourceContents RC2 ON AR.AssociatedResourceId = RC2.ResourceId AND RC2.LanguageId = RC.LanguageId
-                                                   INNER JOIN ResourceContentVersions RCV ON RC2.Id = RCV.ResourceContentId AND RCV.IsPublished = 1
-                                               WHERE
-                                                RC.Id = @ResourceId
-                                               """;
-
-        var associatedResources = await dbConnection.QueryAsync<AssociatedResourceContent>(associatedResourceQuery, new { req.ResourceId });
-
-        var resourceId = await dbContext.ResourceContents.Where(rc => rc.Id == req.ResourceId)
-            .Select(rc => rc.ResourceId)
-            .FirstOrDefaultAsync(ct);
-
-        var assocatedVerseResources = await dbContext.VerseResources.Where(vr => vr.ResourceId == resourceId)
-            .Select(vr => new VerseReference { VerseId = vr.VerseId })
-            .ToListAsync(ct);
-
-        var assocatedPassageReferences = await dbContext.PassageResources.Where(vr => vr.ResourceId == resourceId)
-            .Select(pr => new PassageReference
-            {
-                StartVerseId = pr.Passage.StartVerseId,
-                EndVerseId = pr.Passage.EndVerseId
-            })
-            .ToListAsync(ct);
+        var verses = await GetAssociatedVerseReferencesAsync(dbConnection, req, ct);
+        var passages = await GetAssociatedPassageReferencesAsync(dbConnection, req, ct);
+        var associatedResources = await GetResourceReferencesAsync(dbConnection, req, ct);
 
         var response = new Response
         {
-            ResourceItemAssociations =
-                associatedResources.Select(ar => new ResourceItemAssociation
+            ResourceAssociations = associatedResources.Select(ar => new ResourceAssociation
                 {
-                    ContentId = ar.AssociatedResourceContentId,
+                    ContentId = ar.ContentId,
                     DisplayName = ar.DisplayName
-                }).ToList(),
-            PassageAssociations = assocatedVerseResources.Select(vr => new PassageAssociation
-            {
-                StartBookCode = vr.BookCode,
-                EndBookCode = vr.BookCode,
-                StartChapter = vr.Chapter,
-                StartVerse = vr.Verse,
-                EndChapter = vr.Chapter,
-                EndVerse = vr.Verse
-            }).Concat(assocatedPassageReferences.Select(apr => new PassageAssociation
-            {
-                StartBookCode = apr.StartBookCode,
-                EndBookCode = apr.EndBookCode,
-                StartChapter = apr.StartChapter,
-                StartVerse = apr.StartVerse,
-                EndChapter = apr.EndChapter,
-                EndVerse = apr.EndVerse
-            })).ToList()
+                })
+                .ToList(),
+            PassageAssociations = verses.Select(vr => new PassageAssociation
+                {
+                    StartVerseId = vr.VerseId,
+                    EndVerseId = vr.VerseId
+                })
+                .Concat(passages.Select(pr => new PassageAssociation
+                {
+                    StartVerseId = pr.StartVerseId,
+                    EndVerseId = pr.EndVerseId
+                }))
+                .ToList()
         };
 
         await SendOkAsync(response, ct);
     }
 
-    private class AssociatedResourceContent
+    private static async Task<IReadOnlyList<VerseReference>> GetAssociatedVerseReferencesAsync(DbConnection dbConnection,
+        Request req,
+        CancellationToken ct)
     {
-        public int AssociatedResourceContentId { get; set; }
-        public string DisplayName { get; set; }
+        const string query = """
+                             SELECT VR.VerseId
+                             FROM VerseResources VR
+                             INNER JOIN Resources R ON VR.ResourceId = R.Id
+                             INNER JOIN ResourceContents RC ON R.Id = RC.ResourceId AND RC.Id = @ContentId
+                             """;
+
+        return (await dbConnection.QueryWithRetriesAsync<VerseReference>(query, new { req.ContentId }, cancellationToken: ct)).ToList();
     }
 
-    private class VerseReference
+    private static async Task<IReadOnlyList<PassageReference>> GetAssociatedPassageReferencesAsync(DbConnection dbConnection,
+        Request req,
+        CancellationToken ct)
     {
-        public required int VerseId { get; init; }
+        const string query = """
+                             SELECT P.StartVerseId, P.EndVerseId
+                             FROM Passages P
+                                     INNER JOIN PassageResources PR ON P.Id = PR.PassageId
+                                      INNER JOIN Resources R ON PR.ResourceId = R.Id
+                                      INNER JOIN ResourceContents RC ON R.Id = RC.ResourceId AND RC.Id = @ContentId
+                             """;
 
-        private (Data.Enums.BookId BookId, int Chapter, int Verse) TranslatedVerse =>
-            BibleUtilities.TranslateVerseId(VerseId);
-
-        public string BookCode => BibleBookCodeUtilities.CodeFromId(TranslatedVerse.BookId);
-        public int Chapter => TranslatedVerse.Chapter;
-        public int Verse => TranslatedVerse.Verse;
+        return (await dbConnection.QueryWithRetriesAsync<PassageReference>(query, new { req.ContentId }, cancellationToken: ct)).ToList();
     }
 
-    private class PassageReference
+    private static async Task<IReadOnlyList<ResourceReference>> GetResourceReferencesAsync(DbConnection dbConnection,
+        Request req,
+        CancellationToken ct)
     {
-        public required int StartVerseId { get; init; }
-        public required int EndVerseId { get; init; }
+        const string query = """
+                             SELECT RC2.Id AS ContentId, RCV.DisplayName
+                             FROM ResourceContents RC
+                                 INNER JOIN AssociatedResources AR ON AR.ResourceId = RC.ResourceId
+                                 INNER JOIN ResourceContents RC2 ON AR.AssociatedResourceId = RC2.ResourceId AND RC2.LanguageId = RC.LanguageId
+                                 INNER JOIN ResourceContentVersions RCV ON RC2.Id = RCV.ResourceContentId AND RCV.IsPublished = 1
+                             WHERE
+                              RC.Id = @ContentId
+                             """;
 
-        private (Data.Enums.BookId BookId, int Chapter, int Verse) StartTranslatedVerse =>
-            BibleUtilities.TranslateVerseId(StartVerseId);
-
-        public string StartBookCode => BibleBookCodeUtilities.CodeFromId(StartTranslatedVerse.BookId);
-        public int StartChapter => StartTranslatedVerse.Chapter;
-        public int StartVerse => StartTranslatedVerse.Verse;
-
-        private (Data.Enums.BookId BookId, int Chapter, int Verse) EndTranslatedVerse =>
-            BibleUtilities.TranslateVerseId(EndVerseId);
-
-        public string EndBookCode => BibleBookCodeUtilities.CodeFromId(EndTranslatedVerse.BookId);
-        public int EndChapter => EndTranslatedVerse.Chapter;
-        public int EndVerse => EndTranslatedVerse.Verse;
+        return (await dbConnection.QueryWithRetriesAsync<ResourceReference>(query, new { req.ContentId }, cancellationToken: ct)).ToList();
     }
+
+    private record ResourceReference(int ContentId, string DisplayName);
+
+    private record VerseReference(int VerseId);
+
+    private record PassageReference(int StartVerseId, int EndVerseId);
 }
