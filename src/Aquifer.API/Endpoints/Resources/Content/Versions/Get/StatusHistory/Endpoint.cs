@@ -2,7 +2,6 @@ using Aquifer.Common.Extensions;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Aquifer.API.Endpoints.Resources.Content.Versions.Get.StatusHistory;
 
@@ -33,7 +32,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             })
             .ToListAsync(ct);
 
-        userHistory.RemoveAll(h => h.Event.IsNullOrEmpty());
         Response = [.. statusHistory.Concat(userHistory).OrderByDescending(h => h.DateOfEvent)];
     }
 }
