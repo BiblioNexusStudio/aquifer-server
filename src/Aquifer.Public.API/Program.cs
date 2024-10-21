@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Aquifer.Common.Jobs;
 using Aquifer.Common.Middleware;
 using Aquifer.Common.Services;
 using Aquifer.Data;
@@ -22,6 +23,7 @@ builder.Services
     .AddFastEndpoints()
     .AddMemoryCache()
     .AddCachingServices()
+    .AddQueueServices(builder.Configuration)
     .AddSingleton<IResourceContentRequestTrackingService, ResourceContentRequestTrackingService>()
     .AddAzureClient(builder.Environment.IsDevelopment())
     .AddSwaggerDocumentSettings()

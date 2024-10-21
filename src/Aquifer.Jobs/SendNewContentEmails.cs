@@ -1,4 +1,4 @@
-using Aquifer.Common.Clients;
+using Aquifer.Common.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Jobs.Configuration;
@@ -8,14 +8,12 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SendGrid;
-using SendGrid.Helpers.Mail;
-using ISendGridClient = Aquifer.Common.Clients.ISendGridClient;
 
 namespace Aquifer.Jobs;
 
 public class SendNewContentEmails(
     AquiferDbContext dbContext,
-    ISendGridClient client,
+    IEmailService emailService,
     IOptions<ConfigurationOptions> options,
     TelemetryClient telemetryClient)
 {
@@ -57,13 +55,7 @@ public class SendNewContentEmails(
             }
 
             var emailContent = BuildEmailContent(newItems, emailTemplate, subscriber);
-            var response = await SendEmailAsync(emailTemplate, subscriber, emailContent, ct);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                await LogSendFailureAsync(response, subscriber, emailContent, ct);
-                return;
-            }
+            await SendEmailAsync(emailTemplate, subscriber, emailContent, ct);
 
             TrackSendEvent(subscriber, emailContent);
         }
@@ -95,22 +87,17 @@ public class SendNewContentEmails(
             });
     }
 
-    private async Task<Response> SendEmailAsync(EmailTemplateEntity emailTemplate,
+    private async Task SendEmailAsync(EmailTemplateEntity emailTemplate,
         SubscriberInfo subscriber,
         string emailContent,
         CancellationToken ct)
     {
-        return await client.SendEmailAsync(new SendGridEmailConfiguration
-            {
-                FromEmail = options.Value.MarketingEmail.Address,
-                FromName = options.Value.MarketingEmail.Name,
-                Subject = emailTemplate.Subject,
-                ToAddresses =
-                [
-                    new EmailAddress(subscriber.Email, subscriber.Name)
-                ],
-                HtmlContent = emailContent
-            },
+        await emailService.SendEmailAsync(
+            new Email(
+                From: new EmailAddress(options.Value.MarketingEmail.Address, options.Value.MarketingEmail.Name),
+                Subject: emailTemplate.Subject,
+                HtmlContent: emailContent,
+                Tos: [new EmailAddress(subscriber.Email, subscriber.Name)]),
             ct);
     }
 
