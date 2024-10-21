@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Aquifer.Common.Jobs;
 using Aquifer.Common.Jobs.Messages;
 using Azure.Storage.Queues;
 using Microsoft.AspNetCore.Http;
@@ -8,32 +9,19 @@ namespace Aquifer.Common.Services;
 
 public interface IResourceContentRequestTrackingService
 {
-    Task TrackAsync(HttpContext httpContext, int resourceContentId, string endpointId, string? source = null);
-    Task TrackAsync(HttpContext httpContext, List<int> resourceContentIds, string endpointId, string? source = null);
+    Task TrackAsync(HttpContext httpContext, int resourceContentId, string endpointId, string? source = null, CancellationToken cancellationToken = default);
+    Task TrackAsync(HttpContext httpContext, List<int> resourceContentIds, string endpointId, string? source = null, CancellationToken cancellationToken = default);
 }
 
-public class ResourceContentRequestTrackingService : IResourceContentRequestTrackingService
+public class ResourceContentRequestTrackingService(IQueueClientFactory _queueClientFactory)
+    : IResourceContentRequestTrackingService
 {
-    private readonly QueueClient _client;
-
-    public ResourceContentRequestTrackingService(IConfiguration configuration, IAzureClientService azureClientService)
+    public async Task TrackAsync(HttpContext httpContext, int resourceContentId, string endpointId, string? source = null, CancellationToken cancellationToken = default)
     {
-        var clientOptions = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
-        var (connectionString, queue) = GetClientConfigurations(configuration);
-
-        _client = connectionString.StartsWith("http")
-            ? new QueueClient(new Uri($"{connectionString}/{queue}"), azureClientService.GetCredential(), clientOptions)
-            : new QueueClient(connectionString, queue, clientOptions);
-
-        _client.CreateIfNotExists();
+        await TrackAsync(httpContext, [resourceContentId], endpointId, source, cancellationToken);
     }
 
-    public async Task TrackAsync(HttpContext httpContext, int resourceContentId, string endpointId, string? source = null)
-    {
-        await TrackAsync(httpContext, [resourceContentId], endpointId, source);
-    }
-
-    public async Task TrackAsync(HttpContext httpContext, List<int> resourceContentIds, string endpointId, string? source = null)
+    public async Task TrackAsync(HttpContext httpContext, List<int> resourceContentIds, string endpointId, string? source = null, CancellationToken cancellationToken = default)
     {
         if (httpContext.Response.StatusCode >= 400)
         {
@@ -51,19 +39,8 @@ public class ResourceContentRequestTrackingService : IResourceContentRequestTrac
             ResourceContentIds = resourceContentIds
         };
 
-        var serializedMessage = JsonSerializer.Serialize(message);
-        await _client.SendMessageAsync(serializedMessage);
-    }
-
-    private static (string connectionString, string queue) GetClientConfigurations(IConfiguration configuration)
-    {
-        var connectionString = configuration.GetConnectionString("AzureStorageAccount");
-        var queue = configuration.GetSection("JobQueues").GetValue<string>("TrackResourceContentRequestQueue");
-
-        ArgumentException.ThrowIfNullOrEmpty(connectionString);
-        ArgumentException.ThrowIfNullOrEmpty(queue);
-
-        return (connectionString, queue);
+        var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.TrackResourceContentRequest, cancellationToken);
+        await queueClient.SendMessageAsync(message, cancellationToken: cancellationToken);
     }
 
     private static string GetClientIp(HttpContext httpContext)
