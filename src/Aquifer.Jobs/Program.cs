@@ -12,20 +12,25 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-var host = new HostBuilder().ConfigureFunctionsWorkerDefaults()
+var host = new HostBuilder()
+    .ConfigureFunctionsWorkerDefaults()
     .ConfigureServices((context, services) =>
     {
         services.AddOptions<ConfigurationOptions>().Bind(context.Configuration);
 
-        var connectionString = context.Configuration.GetConnectionString("BiblioNexusDb");
+        var configuration = context.Configuration.Get<ConfigurationOptions>()
+            ?? throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
+
+        services.AddDbContext<AquiferDbContext>(options => options
+            .UseSqlServer(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
+            .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: configuration.IsDevelopment)
+            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
         services.AddAzureClient(context.Configuration.Get<ConfigurationOptions>()!.IsDevelopment);
-        services.AddQueueServices(context.Configuration);
 
-        services.AddDbContext<AquiferDbContext>(options =>
-            options.UseSqlServer(connectionString, providerOptions => providerOptions.EnableRetryOnFailure(3)));
+        services.AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount);
 
         services.AddSingleton<IAquiferAppInsightsClient, AquiferAppInsightsClient>();
         services.AddSingleton<IAquiferApiManagementClient, AquiferApiManagementClient>();

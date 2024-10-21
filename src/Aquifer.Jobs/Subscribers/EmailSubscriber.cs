@@ -23,21 +23,16 @@ public sealed class EmailSubscriber(
     {
         var email = message.Deserialize<Email, EmailSubscriber>(_logger);
 
-        if (!_configurationOptions.Value.IsDevelopment)
+        try
         {
-            try
-            {
-                await _emailService.SendEmailAsync(email, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unable to send email: \"{Subject}\"", email.Subject);
-                throw;
-            }
+            await _emailService.SendEmailAsync(
+                email with { Subject = $"{_configurationOptions.Value.Email.SubjectPrefix}{email.Subject}" },
+                ct);
         }
-        else
+        catch (Exception ex)
         {
-            _logger.LogInformation("Email not sent in non-production environment: {Email}", message.MessageText);
+            _logger.LogError(ex, "Unable to send email: \"{Subject}\"", email.Subject);
+            throw;
         }
     }
 
@@ -49,21 +44,16 @@ public sealed class EmailSubscriber(
     {
         var email = message.Deserialize<TemplatedEmail, EmailSubscriber>(_logger);
 
-        if (!_configurationOptions.Value.IsDevelopment)
+        try
         {
-            try
-            {
-                await _emailService.SendEmailAsync(email, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unable to send templated email: \"{Subject}\"", email.Subject);
-                throw;
-            }
+            await _emailService.SendEmailAsync(
+                email with { Subject = $"{_configurationOptions.Value.Email.SubjectPrefix}{email.Subject}" },
+                ct);
         }
-        else
+        catch (Exception ex)
         {
-            _logger.LogInformation("Templated email not sent in non-production environment: {Email}", message.MessageText);
+            _logger.LogError(ex, "Unable to send templated email: \"{Subject}\"", email.Subject);
+            throw;
         }
     }
 }

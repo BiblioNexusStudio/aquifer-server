@@ -16,6 +16,7 @@ public class UserEntity : IHasUpdatedTimestamp
     public bool EmailVerified { get; set; }
     public UserRole Role { get; set; }
     public bool Enabled { get; set; }
+    public bool AquiferNotificationsEnabled { get; set; } = true;
 
     public int CompanyId { get; set; }
     public CompanyEntity Company { get; set; } = null!;
