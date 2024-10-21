@@ -17,15 +17,16 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-var configuration = builder.Configuration.Get<ConfigurationOptions>();
+var configuration = builder.Configuration.Get<ConfigurationOptions>()
+    ?? throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
-builder.Services.AddAuth(configuration?.JwtSettings)
+builder.Services.AddAuth(configuration.JwtSettings)
     .AddCors()
     .AddOutputCache()
     .AddApplicationInsightsTelemetry()
     .AddSingleton<ITelemetryInitializer, RequestTelemetryInitializer>()
     .AddDbContext<AquiferDbContext>(options => options
-        .UseSqlServer(configuration?.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
+        .UseSqlServer(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
         .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: builder.Environment.IsDevelopment())
         .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
     .RegisterModules()
@@ -37,7 +38,7 @@ builder.Services.AddAuth(configuration?.JwtSettings)
         logging.ResponseBodyLogLimit = 4096;
     })
     .AddAquiferHttpServices()
-    .AddQueueServices(builder.Configuration)
+    .AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount)
     .AddScoped<IUserService, UserService>()
     .AddScoped<IResourceHistoryService, ResourceHistoryService>()
     .AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>()

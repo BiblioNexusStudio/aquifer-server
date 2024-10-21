@@ -2,9 +2,14 @@
 
 public static class Queues
 {
-    public const string SendEmail = "aquifer-jobs-send-email";
-    public const string SendTemplatedEmail = "aquifer-jobs-send-templated-email";
-    public const string TrackResourceContentRequest = "aquifer-jobs-track-resource-content-request";
-    public const string SendProjectStartedNotification = "aquifer-jobs-send-project-started-notification";
-    public const string SendResourceCommentCreatedNotification = "aquifer-jobs-send-resource-comment-created-notification";
+    // email
+    public const string SendEmail = "send-email";
+    public const string SendTemplatedEmail = "send-templated-email";
+
+    // notifications
+    public const string SendProjectStartedNotification = "send-project-started-notification";
+    public const string SendResourceCommentCreatedNotification = "send-resource-comment-created-notification";
+
+    // resource tracking
+    public const string TrackResourceContentRequest = "track-resource-content-request";
 }
