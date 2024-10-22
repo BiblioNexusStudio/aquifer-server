@@ -47,4 +47,5 @@ public enum UserRole
     Admin = 4,
     ReportViewer = 5,
     CommunityReviewer = 6,
+    Reviewer = 7,
 }
