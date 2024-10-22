@@ -84,7 +84,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         var companyReviewer = user.Company.CompanyReviewers.SingleOrDefault(x => x.LanguageId == draftVersion.ResourceContent.LanguageId);
 
-        if (companyReviewer is not null)
+        if (draftVersion.AssignedReviewerUserId is not null)
+        {
+            draftVersion.AssignedUserId = draftVersion.AssignedReviewerUserId;
+        }
+        else if (companyReviewer is not null)
         {
             draftVersion.AssignedUserId = companyReviewer.UserId;
         }
