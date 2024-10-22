@@ -37,8 +37,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
 
         if (request.AssignedReviewerUserId is not null) {
-            var reviewer = await dbContext.Users 
-                .AsTracking()
+            var reviewer = await dbContext.Users
                 .Where(u => u.Id == request.AssignedReviewerUserId 
                     && u.CompanyId == userToAssign.CompanyId
                     && (u.Role == UserRole.Reviewer || u.Role == UserRole.Manager))
