@@ -24,6 +24,8 @@ public class ResourceContentVersionEntity : IHasUpdatedTimestamp
     public int? AssignedUserId { get; set; }
     public ResourceContentVersionReviewLevel ReviewLevel { get; set; }
     public UserEntity? AssignedUser { get; set; }
+    public int? AssignedReviewerUserId { get; set; }
+    public UserEntity? AssignedReviewerUser { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
