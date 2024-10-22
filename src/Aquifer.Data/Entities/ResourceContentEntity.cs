@@ -97,5 +97,11 @@ public enum ResourceContentStatus
     AquiferizeManagerReview = 11,
 
     [Display(Name = "Translation - Manager Review")]
-    TranslationManagerReview = 12
+    TranslationManagerReview = 12,
+
+    [Display(Name = "Translation - Not Applicable Review")]
+    TranslationNotApplicable = 13,
+
+    [Display(Name = "Complete - Not Applicable")]
+    CompleteNotApplicable = 14
 }
