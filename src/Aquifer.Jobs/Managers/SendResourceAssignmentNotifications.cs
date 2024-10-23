@@ -1,6 +1,5 @@
 using Aquifer.Common.Services;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
 using Aquifer.Jobs.Configuration;
 using Microsoft.Azure.Functions.Worker;
@@ -19,12 +18,11 @@ public class SendResourceAssignmentNotifications(
     private const string _everyTenMinutesCronSchedule = "0 */10 * * * *";
 
     [Function(nameof(SendResourceAssignmentNotifications))]
-    public async Task RunAsync([TimerTrigger(_everyTenMinutesCronSchedule)] TimerInfo myTimer, CancellationToken ct)
+    public async Task RunAsync([TimerTrigger(_everyTenMinutesCronSchedule)] TimerInfo _, CancellationToken ct)
     {
-        var jobHistory = (await _dbContext.JobHistory
-                .AsTracking()
-                .SingleOrDefaultAsync(jh => jh.JobId == JobId.SendResourceAssignmentNotifications, ct))
-            ?? new JobHistoryEntity { JobId = JobId.SendResourceAssignmentNotifications };
+        var jobHistory = await _dbContext.JobHistory
+            .AsTracking()
+            .SingleAsync(jh => jh.JobId == JobId.SendResourceAssignmentNotifications, ct);
 
         // Possible Improvement: Only send notifications when a user is assigned to the *most recent* ResourceContentVersion.
         var userHistories = await _dbContext.ResourceContentVersionAssignedUserHistory
@@ -32,7 +30,7 @@ public class SendResourceAssignmentNotifications(
                     rcvauh.AssignedUser != null &&
                     rcvauh.AssignedUser.AquiferNotificationsEnabled &&
                     rcvauh.AssignedUserId == rcvauh.ResourceContentVersion.AssignedUserId &&
-                    (jobHistory == null || rcvauh.Created > jobHistory.LastProcessed))
+                    (rcvauh.Created > jobHistory.LastProcessed))
                 .Select(rcvauh => new
                 {
                     AssignedUser = rcvauh.AssignedUser!,
@@ -56,7 +54,7 @@ public class SendResourceAssignmentNotifications(
                 TemplateId: "d-d85f76c6b4d344f5bc8b90b27cc40cc3",
                 DynamicTemplateData: new
                 {
-                    AquiferAdminBaseUri = _configurationOptions.Value.AquiferAdminBaseUri,
+                    _configurationOptions.Value.AquiferAdminBaseUri,
                     ResourceCount = userGrouping.Count(),
                     ParentResources = userGrouping
                         .GroupBy(uh => uh.ParentResourceName)

@@ -1,6 +1,5 @@
 using Aquifer.Common.Clients;
 using Aquifer.Common.Services;
-using Microsoft.Extensions.Logging;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using EmailAddress = Aquifer.Common.Services.EmailAddress;
@@ -19,7 +18,7 @@ public class SendGridEmailService : IEmailService
     private readonly SendGridClient _sendGridClient;
 
     // TODO move this to DI and don't make a network call in a constructor
-    public SendGridEmailService(ILogger<SendGridEmailService> logger, IAzureKeyVaultClient keyVaultClient)
+    public SendGridEmailService(IAzureKeyVaultClient keyVaultClient)
     {
         const string apiKeySecretName = "SendGridMarketingApiKey";
         var apiToken = keyVaultClient.GetSecretAsync(apiKeySecretName).GetAwaiter().GetResult();

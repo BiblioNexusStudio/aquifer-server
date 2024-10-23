@@ -40,7 +40,7 @@ public sealed class NotificationSubscriber(
                 TemplateId: "d-7760ec3b5ce34b179384d4783cc1bd81",
                 DynamicTemplateData: new
                 {
-                    AquiferAdminBaseUri = _configurationOptions.Value.AquiferAdminBaseUri,
+                    _configurationOptions.Value.AquiferAdminBaseUri,
                     ProjectId = project.Id,
                     ProjectName = project.Name,
                 },
@@ -73,11 +73,11 @@ public sealed class NotificationSubscriber(
             TemplateId: "d-ea84b461ed0f439589098053f8810189",
             DynamicTemplateData: new
             {
-                AquiferAdminBaseUri = _configurationOptions.Value.AquiferAdminBaseUri,
+                _configurationOptions.Value.AquiferAdminBaseUri,
                 CommenterUserName = NotificationsHelper.GetUserFullName(companyUsers.Single(u => u.Id == resourceCommentData.UserId)),
                 CommentHtml = HttpUtility.HtmlEncode(resourceCommentData.Comment).Replace("\n", "<br>"),
                 ParentResourceName = resourceCommentData.ParentResourceDisplayName,
-                ResourceContentId = resourceCommentData.ResourceContentId,
+                resourceCommentData.ResourceContentId,
                 ResourceName = resourceCommentData.ResourceEnglishLabel,
             },
             Tos: [NotificationsHelper.NotificationToEmailAddress],
