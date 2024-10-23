@@ -1,9 +1,6 @@
-﻿using System.Text.Json;
-using Aquifer.Common.Jobs;
+﻿using Aquifer.Common.Jobs;
 using Aquifer.Common.Jobs.Messages;
-using Azure.Storage.Queues;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 
 namespace Aquifer.Common.Services;
 

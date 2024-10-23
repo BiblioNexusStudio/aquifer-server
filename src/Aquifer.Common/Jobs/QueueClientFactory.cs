@@ -22,10 +22,7 @@ public sealed class QueueClientFactory(QueueConfigurationOptions _queueConfigura
         // and create the queue in Azure Storage (if it doesn't exist yet) only happens once.
         var queueClient = _queueClientByQueueNameMap.GetOrAdd(
             queueName,
-            (qn) =>
-            {
-                return new Lazy<Task<QueueClient>>(() => GetQueueClientCoreAsync(qn, ct), LazyThreadSafetyMode.ExecutionAndPublication);
-            });
+            qn => new Lazy<Task<QueueClient>>(() => GetQueueClientCoreAsync(qn, ct), LazyThreadSafetyMode.ExecutionAndPublication));
 
         try
         {
