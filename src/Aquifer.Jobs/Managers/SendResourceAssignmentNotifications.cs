@@ -4,7 +4,6 @@ using Aquifer.Data.Enums;
 using Aquifer.Jobs.Configuration;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Aquifer.Jobs.Managers;
@@ -12,13 +11,16 @@ namespace Aquifer.Jobs.Managers;
 public class SendResourceAssignmentNotifications(
     IOptions<ConfigurationOptions> _configurationOptions,
     AquiferDbContext _dbContext,
-    IEmailService _emailService,
-    ILogger<SendResourceAssignmentNotifications> _logger)
+    IEmailService _emailService)
 {
     private const string _everyTenMinutesCronSchedule = "0 */10 * * * *";
+    private const string _tenSecondDelayInterval = "00:00:10";
 
     [Function(nameof(SendResourceAssignmentNotifications))]
-    public async Task RunAsync([TimerTrigger(_everyTenMinutesCronSchedule)] TimerInfo _, CancellationToken ct)
+    [FixedDelayRetry(maxRetryCount: 1, delayInterval: _tenSecondDelayInterval)]
+#pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings
+    public async Task RunAsync([TimerTrigger(_everyTenMinutesCronSchedule)] TimerInfo timerInfo, CancellationToken ct)
+#pragma warning restore IDE0060 // Remove unused parameter
     {
         var jobHistory = await _dbContext.JobHistory
             .AsTracking()
