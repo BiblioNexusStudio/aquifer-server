@@ -16,7 +16,7 @@ public class SyncPageViewsToStorageTable(
     IOptions<ConfigurationOptions> _options)
 {
     [Function(nameof(SyncPageViewsToStorageTable))]
-    public async Task Run([TimerTrigger("%Analytics:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
+    public async Task Run([TimerTrigger("%Analytics:CronSchedule%")] TimerInfo _, CancellationToken ct)
     {
         await SyncSourceToPartitionKey("content-manager-web", "AquiferAdminPageViews", ct);
         await SyncSourceToPartitionKey("well-web", "BibleWellPageViews", ct);

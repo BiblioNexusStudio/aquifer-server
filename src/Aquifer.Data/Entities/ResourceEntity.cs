@@ -19,17 +19,13 @@ public class ResourceEntity : IHasUpdatedTimestamp
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    public ICollection<VerseResourceEntity> VerseResources { get; set; } =
-        new List<VerseResourceEntity>();
+    public ICollection<VerseResourceEntity> VerseResources { get; set; } = [];
 
-    public ICollection<PassageResourceEntity> PassageResources { get; set; } =
-        new List<PassageResourceEntity>();
+    public ICollection<PassageResourceEntity> PassageResources { get; set; } = [];
 
-    public ICollection<ResourceContentEntity> ResourceContents { get; set; } =
-        new List<ResourceContentEntity>();
+    public ICollection<ResourceContentEntity> ResourceContents { get; set; } = [];
 
-    public ICollection<AssociatedResourceEntity> AssociatedResources { get; set; } =
-        new List<AssociatedResourceEntity>();
+    public ICollection<AssociatedResourceEntity> AssociatedResources { get; set; } = [];
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;

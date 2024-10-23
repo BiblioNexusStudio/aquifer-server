@@ -7,7 +7,7 @@ public class GreekNewTestamentWordGroupEntity
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    public ICollection<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; } = new List<NewTestamentAlignmentEntity>();
-    public ICollection<GreekNewTestamentWordGroupWordEntity> GreekNewTestamentWordGroupWords { get; set; } = new List<GreekNewTestamentWordGroupWordEntity>();
+    public ICollection<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; } = [];
+    public ICollection<GreekNewTestamentWordGroupWordEntity> GreekNewTestamentWordGroupWords { get; set; } = [];
 
 }

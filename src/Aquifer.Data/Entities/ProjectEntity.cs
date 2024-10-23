@@ -30,7 +30,7 @@ public class ProjectEntity : IHasUpdatedTimestamp
     public DateOnly? ProjectedPublishDate { get; set; }
     public DateOnly? ActualPublishDate { get; set; }
 
-    public ICollection<ProjectResourceContentEntity> ProjectResourceContents { get; set; } = new List<ProjectResourceContentEntity>();
+    public ICollection<ProjectResourceContentEntity> ProjectResourceContents { get; set; } = [];
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
