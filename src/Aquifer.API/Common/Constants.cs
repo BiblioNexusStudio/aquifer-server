@@ -20,7 +20,7 @@ public static class Constants
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> AquiferizationStatuses =
         new([
-            ResourceContentStatus.AquiferizeInProgress,
+            ResourceContentStatus.AquiferizeEditorReview,
             ResourceContentStatus.AquiferizeReviewPending,
             ResourceContentStatus.AquiferizePublisherReview,
             ResourceContentStatus.AquiferizeCompanyReview
@@ -29,7 +29,7 @@ public static class Constants
     public static readonly ReadOnlyCollection<ResourceContentStatus> TranslationStatuses =
         new([
             ResourceContentStatus.TranslationNotStarted,
-            ResourceContentStatus.TranslationInProgress,
+            ResourceContentStatus.TranslationEditorReview,
             ResourceContentStatus.TranslationReviewPending,
             ResourceContentStatus.TranslationPublisherReview,
             ResourceContentStatus.TranslationCompanyReview

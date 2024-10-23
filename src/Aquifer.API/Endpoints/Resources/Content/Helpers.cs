@@ -74,13 +74,13 @@ public static class Helpers
 
         var resourceContent = await dbContext.ResourceContents.FindAsync([contentId], ct) ?? throw new ArgumentNullException();
 
-        resourceContent.Status = ResourceContentStatus.AquiferizeInProgress;
+        resourceContent.Status = ResourceContentStatus.AquiferizeEditorReview;
         if (resourceContentIsUpdating)
         {
             resourceContent.Updated = DateTime.UtcNow;
         }
 
-        await historyService.AddStatusHistoryAsync(newResourceContentVersion, ResourceContentStatus.AquiferizeInProgress, user.Id, ct);
+        await historyService.AddStatusHistoryAsync(newResourceContentVersion, ResourceContentStatus.AquiferizeEditorReview, user.Id, ct);
     }
 
     public static void SanitizeTiptapContent(ResourceContentVersionEntity version)

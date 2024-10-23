@@ -50,7 +50,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 Counts = new ProjectResourceStatusCounts
                 {
                     NotStarted = p.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.NotStartedStatuses.Contains(prc.ResourceContent.Status)),
-                    InProgress = p.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.InProgressStatuses.Contains(prc.ResourceContent.Status)),
+                    EditorReview = p.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.EditorReviewStatuses.Contains(prc.ResourceContent.Status)),
                     InCompanyReview =
                         p.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.InCompanyReviewStatuses.Contains(prc.ResourceContent.Status)),
                     InPublisherReview =

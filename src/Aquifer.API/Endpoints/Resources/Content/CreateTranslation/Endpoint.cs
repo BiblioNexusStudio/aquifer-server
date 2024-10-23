@@ -90,7 +90,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ResourceId = baseContent.ResourceId,
             MediaType = baseContent.MediaType,
             Status = isCommunityUser 
-                ? ResourceContentStatus.TranslationInProgress 
+                ? ResourceContentStatus.TranslationEditorReview 
                 : ResourceContentStatus.TranslationNotStarted,
             Trusted = true,
             Versions = [newResourceContentVersion]
@@ -108,7 +108,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             await historyService.AddSnapshotHistoryAsync(
                 newResourceContentVersion, 
                 user.Id, 
-                ResourceContentStatus.TranslationInProgress, 
+                ResourceContentStatus.TranslationEditorReview, 
                 ct);
             await historyService.AddAssignedUserHistoryAsync(newResourceContentVersion, user.Id, user.Id, ct);
         }

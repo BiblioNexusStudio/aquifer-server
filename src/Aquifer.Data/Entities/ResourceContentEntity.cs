@@ -67,7 +67,7 @@ public enum ResourceContentStatus
     New = 1,
 
     [Display(Name = "Aquiferize - In Progress")]
-    AquiferizeInProgress = 2,
+    AquiferizeEditorReview = 2,
 
     [Display(Name = "Complete")]
     Complete = 3,
@@ -82,7 +82,7 @@ public enum ResourceContentStatus
     TranslationNotStarted = 6,
 
     [Display(Name = "Translation - In Progress")]
-    TranslationInProgress = 7,
+    TranslationEditorReview = 7,
 
     [Display(Name = "Translation - Review Pending")]
     TranslationReviewPending = 8,

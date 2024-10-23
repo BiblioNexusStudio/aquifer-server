@@ -26,7 +26,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var contentIds = request.ContentId is not null ? [request.ContentId.Value] : request.ContentIds!;
         List<ResourceContentStatus> allowedStatuses =
         [
-            ResourceContentStatus.AquiferizeInProgress, ResourceContentStatus.TranslationInProgress
+            ResourceContentStatus.AquiferizeEditorReview, ResourceContentStatus.TranslationEditorReview
         ];
 
         var draftVersions = await dbContext.ResourceContentVersions
@@ -56,7 +56,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 draftVersion.ResourceContent.Status,
                 ct);
 
-            var reviewPendingStatus = draftVersion.ResourceContent.Status == ResourceContentStatus.TranslationInProgress
+            var reviewPendingStatus = draftVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview
                 ? ResourceContentStatus.TranslationCompanyReview
                 : ResourceContentStatus.AquiferizeCompanyReview;
 

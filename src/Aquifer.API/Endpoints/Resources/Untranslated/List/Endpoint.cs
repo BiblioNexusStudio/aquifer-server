@@ -69,7 +69,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                          r.EnglishLabel AS Title,
                          r.SortOrder,
                          CAST(CASE WHEN rc.Status IN
-                                 ({(int)ResourceContentStatus.AquiferizeInProgress},
+                                 ({(int)ResourceContentStatus.AquiferizeEditorReview},
                                   {(int)ResourceContentStatus.AquiferizePublisherReview},
                                   {(int)ResourceContentStatus.AquiferizeReviewPending}) THEN 1 ELSE 0 END AS BIT) AS IsBeingAquiferized
                      FROM

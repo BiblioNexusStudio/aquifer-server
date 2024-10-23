@@ -23,9 +23,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         List<ResourceContentStatus> statuses =
         [
             ResourceContentStatus.New,
-            ResourceContentStatus.AquiferizeInProgress,
+            ResourceContentStatus.AquiferizeEditorReview,
             ResourceContentStatus.TranslationNotStarted,
-            ResourceContentStatus.TranslationInProgress,
+            ResourceContentStatus.TranslationEditorReview,
             ResourceContentStatus.AquiferizeCompanyReview,
             ResourceContentStatus.TranslationCompanyReview
         ];

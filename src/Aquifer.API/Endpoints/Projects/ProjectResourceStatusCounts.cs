@@ -10,10 +10,10 @@ public class ProjectResourceStatusCounts
         ResourceContentStatus.TranslationCompanyReview
     ];
 
-    internal static readonly List<ResourceContentStatus> InProgressStatuses =
+    internal static readonly List<ResourceContentStatus> EditorReviewStatuses =
     [
-        ResourceContentStatus.AquiferizeInProgress,
-        ResourceContentStatus.TranslationInProgress
+        ResourceContentStatus.AquiferizeEditorReview,
+        ResourceContentStatus.TranslationEditorReview
     ];
 
     internal static readonly List<ResourceContentStatus> InPublisherReviewStatuses =
@@ -31,7 +31,7 @@ public class ProjectResourceStatusCounts
     ];
 
     public int NotStarted { get; init; }
-    public int InProgress { get; init; }
+    public int EditorReview { get; init; }
     public int InCompanyReview { get; init; }
     public int InPublisherReview { get; init; }
     public int Completed { get; init; }

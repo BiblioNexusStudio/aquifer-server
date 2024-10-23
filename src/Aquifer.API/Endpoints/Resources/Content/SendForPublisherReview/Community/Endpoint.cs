@@ -31,7 +31,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             return;
         }
 
-        if (contentVersion.ResourceContent.Status != ResourceContentStatus.TranslationInProgress)
+        if (contentVersion.ResourceContent.Status != ResourceContentStatus.TranslationEditorReview)
         {
             ThrowError("Content not in correct status");
         }
