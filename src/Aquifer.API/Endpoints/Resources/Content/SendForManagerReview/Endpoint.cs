@@ -52,8 +52,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 ct);
 
             var reviewPendingStatus = draftVersion.ResourceContent.Status == ResourceContentStatus.TranslationInProgress
-                ? ResourceContentStatus.TranslationManagerReview
-                : ResourceContentStatus.AquiferizeManagerReview;
+                ? ResourceContentStatus.TranslationCompanyReview
+                : ResourceContentStatus.AquiferizeCompanyReview;
 
             draftVersion.ResourceContent.Status = reviewPendingStatus;
             await SetAssignedUserId(user,

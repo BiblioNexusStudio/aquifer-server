@@ -26,8 +26,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ResourceContentStatus.AquiferizeInProgress,
             ResourceContentStatus.TranslationNotStarted,
             ResourceContentStatus.TranslationInProgress,
-            ResourceContentStatus.AquiferizeManagerReview,
-            ResourceContentStatus.TranslationManagerReview
+            ResourceContentStatus.AquiferizeCompanyReview,
+            ResourceContentStatus.TranslationCompanyReview
         ];
 
         var query = $"""

@@ -93,9 +93,9 @@ public enum ResourceContentStatus
     [Display(Name = "On Hold")]
     OnHold = 10,
 
-    [Display(Name = "Aquiferize - Manager Review")]
-    AquiferizeManagerReview = 11,
+    [Display(Name = "Aquiferize - Company Review")]
+    AquiferizeCompanyReview = 11,
 
-    [Display(Name = "Translation - Manager Review")]
-    TranslationManagerReview = 12
+    [Display(Name = "Translation - Company Review")]
+    TranslationCompanyReview = 12
 }

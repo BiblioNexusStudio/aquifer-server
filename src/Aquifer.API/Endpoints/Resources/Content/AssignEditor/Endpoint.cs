@@ -88,13 +88,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
             var newStatus = isTakingBackFromReviewPending
                 ? Constants.TranslationStatuses.Contains(originalStatus)
-                    ? ResourceContentStatus.TranslationManagerReview
-                    : ResourceContentStatus.AquiferizeManagerReview
+                    ? ResourceContentStatus.TranslationCompanyReview
+                    : ResourceContentStatus.AquiferizeCompanyReview
                 : Constants.TranslationStatuses.Contains(originalStatus)
                     ? ResourceContentStatus.TranslationInProgress
                     : ResourceContentStatus.AquiferizeInProgress;
 
-            var keepCurrentStatus = userToAssign.Role is UserRole.Manager && Constants.ManagerReviewStatuses.Contains(originalStatus);
+            var keepCurrentStatus = userToAssign.Role is UserRole.Manager && Constants.CompanyReviewStatuses.Contains(originalStatus);
 
             if (!keepCurrentStatus)
             {

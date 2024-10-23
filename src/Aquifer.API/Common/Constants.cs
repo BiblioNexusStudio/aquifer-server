@@ -23,7 +23,7 @@ public static class Constants
             ResourceContentStatus.AquiferizeInProgress,
             ResourceContentStatus.AquiferizeReviewPending,
             ResourceContentStatus.AquiferizePublisherReview,
-            ResourceContentStatus.AquiferizeManagerReview
+            ResourceContentStatus.AquiferizeCompanyReview
         ]);
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> TranslationStatuses =
@@ -32,7 +32,7 @@ public static class Constants
             ResourceContentStatus.TranslationInProgress,
             ResourceContentStatus.TranslationReviewPending,
             ResourceContentStatus.TranslationPublisherReview,
-            ResourceContentStatus.TranslationManagerReview
+            ResourceContentStatus.TranslationCompanyReview
         ]);
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> ReviewPendingStatuses =
@@ -47,10 +47,10 @@ public static class Constants
             ResourceContentStatus.AquiferizePublisherReview
         ]);
 
-    public static readonly ReadOnlyCollection<ResourceContentStatus> ManagerReviewStatuses =
+    public static readonly ReadOnlyCollection<ResourceContentStatus> CompanyReviewStatuses =
         new([
-            ResourceContentStatus.TranslationManagerReview,
-            ResourceContentStatus.AquiferizeManagerReview
+            ResourceContentStatus.TranslationCompanyReview,
+            ResourceContentStatus.AquiferizeCompanyReview
         ]);
 }
 
