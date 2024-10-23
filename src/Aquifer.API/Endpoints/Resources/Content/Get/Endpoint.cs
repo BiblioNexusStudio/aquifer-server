@@ -109,20 +109,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ThrowError("Data integrity issue, no resource content version found.");
         }
 
-        if (relevantContentVersion.IsDraft &&
-            relevantContentVersion.AssignedUserId != self.Id &&
-            userService.HasPermission(PermissionName.SendReviewContent) &&
-            Constants.ReviewPendingStatuses.Contains(resourceContent.Status))
-        {
-            resourceContent.CanPullBackToCompanyReview = resourceContent.ProjectEntity?.CompanyLeadUserId == self.Id ||
-                                                         await dbContext.ResourceContentVersionAssignedUserHistory
-                                                             .Where(h => h.ResourceContentVersionId == relevantContentVersion.Id &&
-                                                                         h.AssignedUserId != null)
-                                                             .OrderByDescending(h => h.Created)
-                                                             .Select(h => h.AssignedUserId == self.Id)
-                                                             .FirstOrDefaultAsync(ct);
-        }
-
         var snapshots = await dbContext.ResourceContentVersionSnapshots
             .Where(rcvs => rcvs.ResourceContentVersionId == relevantContentVersion.Id)
             .OrderByDescending(rcvs => rcvs.Created)
