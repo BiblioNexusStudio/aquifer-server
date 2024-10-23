@@ -31,7 +31,7 @@ public sealed class QueueClientFactory(QueueConfigurationOptions _queueConfigura
         {
             return await queueClient.Value;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             // ensure the dictionary doesn't get stuck with a faulted task
             _queueClientByQueueNameMap.TryRemove(queueName, out _);
