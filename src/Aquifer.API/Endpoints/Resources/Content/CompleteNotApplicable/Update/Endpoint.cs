@@ -5,7 +5,7 @@ using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.Content.CompleteNotApplicable;
+namespace Aquifer.API.Endpoints.Resources.Content.CompleteNotApplicable.Update;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService) : Endpoint<Request>
 {
@@ -17,20 +17,22 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var user = await userService.GetUserFromJwtAsync(ct);
-        var content = await dbContext.ResourceContentVersions
-            .AsTracking()
-            .Include(x => x.ResourceContent)
-            .SingleOrDefaultAsync(x => x.ResourceContentId == request.ContentId, ct);
+        var content = await dbContext.ResourceContentVersions.AsTracking().Include(x => x.ResourceContent)
+            .SingleOrDefaultAsync(x => x.ResourceContentId == request.ContentId && x.IsDraft, ct);
 
         if (content is null)
         {
-            ThrowError(Helpers.NoResourceFoundForContentIdResponse);
+            await SendNotFoundAsync(ct);
+            return;
         }
 
+        var user = await userService.GetUserFromJwtAsync(ct);
+
+        content.IsDraft = false;
         content.ResourceContent.Status = ResourceContentStatus.CompleteNotApplicable;
         await historyService.AddStatusHistoryAsync(content, ResourceContentStatus.TranslationNotApplicable, user.Id, ct);
         await dbContext.SaveChangesAsync(ct);
-        await SendOkAsync(ct);
+
+        await SendNoContentAsync(ct);
     }
 }

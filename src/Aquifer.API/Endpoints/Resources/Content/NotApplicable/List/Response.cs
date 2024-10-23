@@ -1,4 +1,4 @@
-namespace Aquifer.API.Endpoints.Resources.Content.NotApplicable.Get;
+namespace Aquifer.API.Endpoints.Resources.Content.NotApplicable.List;
 
 public class Response
 {

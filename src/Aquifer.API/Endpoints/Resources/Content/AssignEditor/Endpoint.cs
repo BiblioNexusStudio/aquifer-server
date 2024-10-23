@@ -88,6 +88,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 draftVersion.ResourceContent.Status = newStatus;
             }
 
+            if (userToAssign.Role is UserRole.Manager && originalStatus == ResourceContentStatus.TranslationNotApplicable)
+            {
+                draftVersion.ResourceContent.Status = ResourceContentStatus.TranslationManagerReview;
+            }
+
             if (draftVersion.AssignedUserId != request.AssignedUserId || draftVersion.ResourceContentVersionSnapshots.Count == 0)
             {
                 await historyService.AddSnapshotHistoryAsync(draftVersion, draftVersion.AssignedUserId, originalStatus, ct);
