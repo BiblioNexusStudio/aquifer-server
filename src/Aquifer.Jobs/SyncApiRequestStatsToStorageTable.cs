@@ -15,7 +15,7 @@ public class SyncApiRequestStatsToStorageTable(
     IOptions<ConfigurationOptions> _options)
 {
     [Function(nameof(SyncApiRequestStatsToStorageTable))]
-    public async Task Run([TimerTrigger("%Analytics:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
+    public async Task Run([TimerTrigger("%Analytics:CronSchedule%")] TimerInfo _, CancellationToken ct)
     {
         const string partitionKey = "ApiRequestStats";
         var tableClient = new AquiferTableClient(_options.Value.Analytics.ApiRequestStatsTableName, partitionKey, _azureClientService,

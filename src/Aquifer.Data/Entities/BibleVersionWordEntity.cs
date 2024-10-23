@@ -22,5 +22,5 @@ public class BibleVersionWordEntity : IHasUpdatedTimestamp
 
     public BibleEntity Bible { get; set; } = null!;
 
-    public ICollection<BibleVersionWordGroupWordEntity> BibleVersionWordGroupWords { get; set; } = new List<BibleVersionWordGroupWordEntity>();
+    public ICollection<BibleVersionWordGroupWordEntity> BibleVersionWordGroupWords { get; set; } = [];
 }

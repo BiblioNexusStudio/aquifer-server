@@ -94,7 +94,9 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
         // Must iterate twice with current setup (i.e. don't call ToList)
         var parentResourcesByGroup = resourcesByParentResource.GroupBy(x => x.ParentResourceName);
 
+#pragma warning disable CA1851 // Possible multiple enumerations of IEnumerable collection
         foreach (var resourceGroup in parentResourcesByGroup)
+#pragma warning restore CA1851
         {
             foreach (var date in lastFiveMonths)
             {
@@ -114,7 +116,9 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
         // exits the foreach. So moving this into the one above does not work.
         // I'm sure there's some way to get it done in one loop, but not
         // worrying about it right now.
+#pragma warning disable CA1851 // Possible multiple enumerations of IEnumerable collection
         foreach (var resourceGroup in parentResourcesByGroup)
+#pragma warning restore CA1851
         {
             var orderedGroup = resourceGroup.OrderBy(x => x.Date).ToList();
             for (var i = 1; i < orderedGroup.Count; i++)
@@ -159,7 +163,9 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
             }
         }
 
+#pragma warning disable CA1851 // Possible multiple enumerations of IEnumerable collection
         foreach (var resourceGroup in resourceLanguagesByGroup)
+#pragma warning restore CA1851
         {
             foreach (var date in lastFiveMonths)
             {
@@ -176,7 +182,9 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
             }
         }
 
+#pragma warning disable CA1851 // Possible multiple enumerations of IEnumerable collection
         foreach (var resourceGroup in resourceLanguagesByGroup)
+#pragma warning restore CA1851
         {
             var orderedGroup = resourceGroup.OrderBy(x => x.Date).ToList();
             for (var i = 1; i < orderedGroup.Count; i++)

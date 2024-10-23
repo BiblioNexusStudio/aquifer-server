@@ -22,6 +22,7 @@ public static class ResourceStatusChangeHandler
             .ToList()
             .ForEach(x =>
             {
+#pragma warning disable IDE0010 // Add missing cases to switch statement
                 switch (x?.Status)
                 {
                     case ResourceContentStatus.Complete:
@@ -35,6 +36,7 @@ public static class ResourceStatusChangeHandler
                         inProgressIds.Add(x.Id);
                         break;
                 }
+#pragma warning restore IDE0010
             });
 
         if (completedContentIds.Count + inReviewContentIds.Count + inProgressIds.Count == 0)

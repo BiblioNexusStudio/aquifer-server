@@ -21,8 +21,7 @@ public class GreekSenseEntity : IHasUpdatedTimestamp
     public StrongNumberEntity StrongNumber { get; set; } = null!;
     public ICollection<GreekSenseGlossEntity> GreekSenseGlosses { get; set; } = [];
 
-    public ICollection<GreekNewTestamentWordSenseEntity> GreekNewTestamentWordSenses { get; set; } =
-        new List<GreekNewTestamentWordSenseEntity>();
+    public ICollection<GreekNewTestamentWordSenseEntity> GreekNewTestamentWordSenses { get; set; } = [];
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;

@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{795E7203-D40F-4962-837D-DD39BAF2C930}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{51DD9DE3-DA20-4C0B-82D6-029445F6BD42}"
+	ProjectSection(SolutionItems) = preProject
+		tests\Directory.Build.props = tests\Directory.Build.props
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.API", "src\Aquifer.API\Aquifer.API.csproj", "{831A381B-68CF-4ED8-A5FC-FD2A4D94F18B}"
 EndProject
@@ -19,9 +22,22 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Common", "src\Aquif
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Jobs", "src\Aquifer.Jobs\Aquifer.Jobs.csproj", "{CDDA72AF-C879-4CFC-9015-B0CB4979837F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Public.API.UnitTests", "tests\Aquifer.Public.API.UnitTests\Aquifer.Public.API.UnitTests.csproj", "{54472F2B-2D3F-4985-BE86-550B4C584CB3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Public.API.UnitTests", "tests\Aquifer.Public.API.UnitTests\Aquifer.Public.API.UnitTests.csproj", "{54472F2B-2D3F-4985-BE86-550B4C584CB3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aquifer.Common.UnitTests", "tests\Aquifer.Common.UnitTests\Aquifer.Common.UnitTests.csproj", "{8ECBEB0B-4575-486E-9B9F-4CAC0A1EE2D5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{180F25DB-77E1-47DA-B532-B40736EBFD15}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitignore = .gitignore
+		Directory.Build.props = Directory.Build.props
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{A58E5204-2BD0-4AE8-936B-70F707A66F21}"
+	ProjectSection(SolutionItems) = preProject
+		docs\infrastructure.md = docs\infrastructure.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -74,6 +90,7 @@ Global
 		{CDDA72AF-C879-4CFC-9015-B0CB4979837F} = {795E7203-D40F-4962-837D-DD39BAF2C930}
 		{54472F2B-2D3F-4985-BE86-550B4C584CB3} = {51DD9DE3-DA20-4C0B-82D6-029445F6BD42}
 		{8ECBEB0B-4575-486E-9B9F-4CAC0A1EE2D5} = {51DD9DE3-DA20-4C0B-82D6-029445F6BD42}
+		{A58E5204-2BD0-4AE8-936B-70F707A66F21} = {180F25DB-77E1-47DA-B532-B40736EBFD15}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8E32492B-EA66-40E4-A7A8-67E4ABA14A53}

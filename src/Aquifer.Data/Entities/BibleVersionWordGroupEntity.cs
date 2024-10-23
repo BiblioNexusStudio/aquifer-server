@@ -7,6 +7,6 @@ public class BibleVersionWordGroupEntity
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    public ICollection<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; } = new List<NewTestamentAlignmentEntity>();
-    public ICollection<BibleVersionWordGroupWordEntity> BibleVersionWordGroupWords { get; set; } = new List<BibleVersionWordGroupWordEntity>();
+    public ICollection<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; } = [];
+    public ICollection<BibleVersionWordGroupWordEntity> BibleVersionWordGroupWords { get; set; } = [];
 }

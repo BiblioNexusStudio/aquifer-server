@@ -20,7 +20,7 @@ public class SendNewContentEmails(
     TelemetryClient telemetryClient)
 {
     [Function(nameof(SendNewContentEmails))]
-    public async Task Run([TimerTrigger("%MarketingEmail:CronSchedule:NewContent%")] TimerInfo timerInfo, CancellationToken ct)
+    public async Task Run([TimerTrigger("%MarketingEmail:CronSchedule:NewContent%")] TimerInfo _, CancellationToken ct)
     {
         var subscribers = await GetSubscribersAsync(ct);
         var allNewItems = await GetAllNewItemsAsync(subscribers, ct);

@@ -16,7 +16,7 @@ public class SyncCustomEventsToStorageTable(
     IOptions<ConfigurationOptions> _options)
 {
     [Function(nameof(SyncCustomEventsToStorageTable))]
-    public async Task Run([TimerTrigger("%Analytics:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
+    public async Task Run([TimerTrigger("%Analytics:CronSchedule%")] TimerInfo _, CancellationToken ct)
     {
         await SyncSourceToPartitionKey("content-manager-web", "AquiferAdminCustomEvents", ct);
         await SyncSourceToPartitionKey("well-web", "BibleWellCustomEvents", ct);
