@@ -24,7 +24,7 @@ public static class ResourceStatusChangeHandler
             {
                 switch (x?.Status)
                 {
-                    case ResourceContentStatus.Complete:
+                    case ResourceContentStatus.Complete or ResourceContentStatus.CompleteNotApplicable:
                         completedContentIds.Add(x.Id);
                         break;
                     case ResourceContentStatus.AquiferizePublisherReview or ResourceContentStatus.TranslationPublisherReview:

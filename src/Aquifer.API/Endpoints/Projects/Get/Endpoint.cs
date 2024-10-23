@@ -2,7 +2,6 @@
 using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,39 +38,43 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     private async Task<Response?> GetProjectAsync(Request req, CancellationToken ct)
     {
-        return await dbContext.Projects.Where(x => x.Id == req.ProjectId)
-            .Include(x => x.CompanyLeadUser)
-            .Select(x => new Response
+        return await dbContext.Projects.Where(x => x.Id == req.ProjectId).Include(x => x.CompanyLeadUser).Select(x => new Response
+        {
+            Id = x.Id,
+            Name = x.Name,
+            Company = x.Company.Name,
+            Language = x.Language.EnglishDisplay,
+            CompanyLead = x.CompanyLeadUser != null ? $"{x.CompanyLeadUser.FirstName} {x.CompanyLeadUser.LastName}" : null,
+            CompanyLeadUser = UserDto.FromUserEntity(x.CompanyLeadUser),
+            ProjectPlatform = x.ProjectPlatform.Name,
+            ProjectManager = $"{x.ProjectManagerUser.FirstName} {x.ProjectManagerUser.LastName}",
+            ProjectManagerUser = UserDto.FromUserEntity(x.ProjectManagerUser)!,
+            SourceWordCount = x.SourceWordCount,
+            EffectiveWordCount = x.EffectiveWordCount,
+            QuotedCost = x.QuotedCost,
+            Started = x.Started,
+            ActualDeliveryDate = x.ActualDeliveryDate,
+            ActualPublishDate = x.ActualPublishDate,
+            ProjectedDeliveryDate = x.ProjectedDeliveryDate,
+            ProjectedPublishDate = x.ProjectedPublishDate,
+            Counts = new ProjectResourceStatusCounts
             {
-                Id = x.Id,
-                Name = x.Name,
-                Company = x.Company.Name,
-                Language = x.Language.EnglishDisplay,
-                CompanyLead = x.CompanyLeadUser != null ? $"{x.CompanyLeadUser.FirstName} {x.CompanyLeadUser.LastName}" : null,
-                CompanyLeadUser = UserDto.FromUserEntity(x.CompanyLeadUser),
-                ProjectPlatform = x.ProjectPlatform.Name,
-                ProjectManager = $"{x.ProjectManagerUser.FirstName} {x.ProjectManagerUser.LastName}",
-                ProjectManagerUser = UserDto.FromUserEntity(x.ProjectManagerUser)!,
-                SourceWordCount = x.SourceWordCount,
-                EffectiveWordCount = x.EffectiveWordCount,
-                QuotedCost = x.QuotedCost,
-                Started = x.Started,
-                ActualDeliveryDate = x.ActualDeliveryDate,
-                ActualPublishDate = x.ActualPublishDate,
-                ProjectedDeliveryDate = x.ProjectedDeliveryDate,
-                ProjectedPublishDate = x.ProjectedPublishDate,
-                Counts = new ProjectResourceStatusCounts
-                {
-                    NotStarted = x.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.NotStartedStatuses.Contains(prc.ResourceContent.Status)),
-                    InProgress = x.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.InProgressStatuses.Contains(prc.ResourceContent.Status)),
-                    InManagerReview =
-                        x.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.InManagerReviewStatuses.Contains(prc.ResourceContent.Status)),
-                    InPublisherReview =
-                        x.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(prc.ResourceContent.Status)),
-                    Completed = x.ProjectResourceContents.Count(prc => prc.ResourceContent.Status == ResourceContentStatus.Complete)
-                }
-            })
-            .SingleOrDefaultAsync(ct);
+                NotStarted =
+                    x.ProjectResourceContents.Count(prc =>
+                        ProjectResourceStatusCounts.NotStartedStatuses.Contains(prc.ResourceContent.Status)),
+                InProgress =
+                    x.ProjectResourceContents.Count(prc =>
+                        ProjectResourceStatusCounts.InProgressStatuses.Contains(prc.ResourceContent.Status)),
+                InManagerReview =
+                    x.ProjectResourceContents.Count(prc =>
+                        ProjectResourceStatusCounts.InManagerReviewStatuses.Contains(prc.ResourceContent.Status)),
+                InPublisherReview =
+                    x.ProjectResourceContents.Count(prc =>
+                        ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(prc.ResourceContent.Status)),
+                Completed = x.ProjectResourceContents.Count(prc =>
+                    ProjectResourceStatusCounts.CompletedStatuses.Contains(prc.ResourceContent.Status))
+            }
+        }).SingleOrDefaultAsync(ct);
     }
 
     private async Task<bool> HasSameCompanyAsProject(int projectId, CancellationToken ct)

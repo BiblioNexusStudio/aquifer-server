@@ -2,10 +2,11 @@ using Aquifer.API.Common;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.NotApplicable.List;
 
-public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<IEnumerable<Response>>
+public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<Response>>
 {
     public override void Configure()
     {
@@ -15,7 +16,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<IEnum
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        Response = dbContext.ResourceContents
+        Response = await dbContext.ResourceContents
             .Where(x => x.Status == ResourceContentStatus.TranslationNotApplicable && x.ProjectResourceContents.Count != 0).Select(x =>
                 new Response
                 {
@@ -24,6 +25,6 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<IEnum
                     ParentResourceName = x.Resource.ParentResource.DisplayName,
                     Language = x.Language.DisplayName,
                     ProjectName = x.ProjectResourceContents.Single().Project.Name
-                });
+                }).ToListAsync(ct);
     }
 }
