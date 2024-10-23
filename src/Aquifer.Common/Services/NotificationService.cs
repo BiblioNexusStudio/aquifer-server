@@ -5,13 +5,13 @@ namespace Aquifer.Common.Services;
 
 public interface INotificationService
 {
-    public Task SendProjectStartedNotification(int projectId, CancellationToken cancellationToken);
-    public Task SendResourceCommentCreatedNotification(int commentId, CancellationToken cancellationToken);
+    public Task SendProjectStartedNotificationAsync(int projectId, CancellationToken cancellationToken);
+    public Task SendResourceCommentCreatedNotificationAsync(int commentId, CancellationToken cancellationToken);
 }
 
 public sealed class NotificationService(IQueueClientFactory _queueClientFactory) : INotificationService
 {
-    public async Task SendProjectStartedNotification(int projectId, CancellationToken cancellationToken)
+    public async Task SendProjectStartedNotificationAsync(int projectId, CancellationToken cancellationToken)
     {
         var message = new SendProjectStartedNotificationMessage(projectId);
 
@@ -19,7 +19,7 @@ public sealed class NotificationService(IQueueClientFactory _queueClientFactory)
         await queueClient.SendMessageAsync(message, cancellationToken: cancellationToken);
     }
 
-    public async Task SendResourceCommentCreatedNotification(int commentId, CancellationToken cancellationToken)
+    public async Task SendResourceCommentCreatedNotificationAsync(int commentId, CancellationToken cancellationToken)
     {
         var message = new SendResourceCommentCreatedNotificationMessage(commentId);
 
