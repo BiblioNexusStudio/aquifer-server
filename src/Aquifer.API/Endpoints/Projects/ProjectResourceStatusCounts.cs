@@ -24,13 +24,13 @@ public class ProjectResourceStatusCounts
         ResourceContentStatus.TranslationReviewPending
     ];
 
-    internal static readonly List<ResourceContentStatus> NotStartedStatuses =
+    internal static readonly List<ResourceContentStatus> AwaitingAiDraftStatuses =
     [
         ResourceContentStatus.New,
-        ResourceContentStatus.TranslationNotStarted
+        ResourceContentStatus.TranslationAwaitingAiDraft
     ];
 
-    public int NotStarted { get; init; }
+    public int AwaitingAiDraft { get; init; }
     public int EditorReview { get; init; }
     public int InCompanyReview { get; init; }
     public int InPublisherReview { get; init; }

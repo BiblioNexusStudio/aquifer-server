@@ -30,7 +30,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                               INNER JOIN ProjectResourceContents PRC ON PRC.ResourceContentId = RC.Id
                               INNER JOIN Projects P ON P.Id = PRC.ProjectId
                      WHERE RCV.IsDraft = 1 AND RCV.AssignedUserId = {user.Id}
-                       AND RC.Status IN ({(int)ResourceContentStatus.New}, {(int)ResourceContentStatus.TranslationNotStarted})
+                       AND RC.Status IN ({(int)ResourceContentStatus.New}, {(int)ResourceContentStatus.TranslationAwaitingAiDraft})
                      """;
 
         var resources = await dbContext.Database.SqlQueryRaw<Response>(query).ToListAsync(ct);

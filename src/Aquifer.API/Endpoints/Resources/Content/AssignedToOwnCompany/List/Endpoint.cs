@@ -24,7 +24,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         [
             ResourceContentStatus.New,
             ResourceContentStatus.AquiferizeEditorReview,
-            ResourceContentStatus.TranslationNotStarted,
+            ResourceContentStatus.TranslationAwaitingAiDraft,
             ResourceContentStatus.TranslationEditorReview,
             ResourceContentStatus.AquiferizeCompanyReview,
             ResourceContentStatus.TranslationCompanyReview

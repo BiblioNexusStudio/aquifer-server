@@ -91,7 +91,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             MediaType = baseContent.MediaType,
             Status = isCommunityUser 
                 ? ResourceContentStatus.TranslationEditorReview 
-                : ResourceContentStatus.TranslationNotStarted,
+                : ResourceContentStatus.TranslationAwaitingAiDraft,
             Trusted = true,
             Versions = [newResourceContentVersion]
         };

@@ -43,7 +43,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                              WHERE rc2.ResourceId = rc.ResourceId
                              AND rc2.MediaType = {(int)ResourceContentMediaType.Text}
                              AND rc2.LanguageId = @LanguageId
-                             AND (rc2.Status != {(int)ResourceContentStatus.TranslationNotStarted}
+                             AND (rc2.Status != {(int)ResourceContentStatus.TranslationAwaitingAiDraft}
                                  OR EXISTS (SELECT 1 FROM ProjectResourceContents prc WHERE prc.ResourceContentId = rc2.Id))
                          )
                          AND (@SearchQuery = '' OR r.EnglishLabel LIKE '%' + @SearchQuery + '%')
