@@ -17,8 +17,7 @@ public class ResourceContentEntity : IHasUpdatedTimestamp
     public bool Trusted { get; set; }
     public ResourceContentMediaType MediaType { get; set; }
 
-    public ICollection<ResourceContentVersionEntity> Versions { get; set; } =
-        new List<ResourceContentVersionEntity>();
+    public ICollection<ResourceContentVersionEntity> Versions { get; set; } = [];
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
@@ -26,7 +25,7 @@ public class ResourceContentEntity : IHasUpdatedTimestamp
     public LanguageEntity Language { get; set; } = null!;
     public ResourceEntity Resource { get; set; } = null!;
 
-    public ICollection<ProjectResourceContentEntity> ProjectResourceContents { get; set; } = new List<ProjectResourceContentEntity>();
+    public ICollection<ProjectResourceContentEntity> ProjectResourceContents { get; set; } = [];
     public int Id { get; set; }
     public ResourceContentStatus Status { get; set; }
 

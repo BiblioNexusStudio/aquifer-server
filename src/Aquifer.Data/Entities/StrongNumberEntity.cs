@@ -12,5 +12,5 @@ public class StrongNumberEntity : IHasUpdatedTimestamp
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 
-    public ICollection<GreekLemmaEntity> GreekLemmas { get; set; } = new List<GreekLemmaEntity>();
+    public ICollection<GreekLemmaEntity> GreekLemmas { get; set; } = [];
 }

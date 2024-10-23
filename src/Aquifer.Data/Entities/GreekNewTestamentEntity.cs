@@ -13,5 +13,5 @@ public class GreekNewTestamentEntity : IHasUpdatedTimestamp
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 
-    public ICollection<GreekNewTestamentWordEntity> GreekNewTestamentWords { get; set; } = new List<GreekNewTestamentWordEntity>();
+    public ICollection<GreekNewTestamentWordEntity> GreekNewTestamentWords { get; set; } = [];
 }

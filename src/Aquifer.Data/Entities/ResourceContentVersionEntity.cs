@@ -24,20 +24,19 @@ public class ResourceContentVersionEntity : IHasUpdatedTimestamp
     public int? AssignedUserId { get; set; }
     public ResourceContentVersionReviewLevel ReviewLevel { get; set; }
     public UserEntity? AssignedUser { get; set; }
+    public int? AssignedReviewerUserId { get; set; }
+    public UserEntity? AssignedReviewerUser { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
     public ICollection<ResourceContentVersionMachineTranslationEntity> MachineTranslations { get; set; } = [];
 
-    public IEnumerable<ResourceContentVersionStatusHistoryEntity> ResourceContentVersionStatusHistories { get; set; } =
-        new List<ResourceContentVersionStatusHistoryEntity>();
+    public IEnumerable<ResourceContentVersionStatusHistoryEntity> ResourceContentVersionStatusHistories { get; set; } = [];
 
-    public IEnumerable<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistories { get; set; } =
-        new List<ResourceContentVersionAssignedUserHistoryEntity>();
+    public IEnumerable<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistories { get; set; } = [];
 
-    public ICollection<ResourceContentVersionSnapshotEntity> ResourceContentVersionSnapshots { get; set; } =
-        new List<ResourceContentVersionSnapshotEntity>();
+    public ICollection<ResourceContentVersionSnapshotEntity> ResourceContentVersionSnapshots { get; set; } = [];
 
     public ICollection<ResourceContentVersionCommentThreadEntity> CommentThreads { get; set; } = [];
 

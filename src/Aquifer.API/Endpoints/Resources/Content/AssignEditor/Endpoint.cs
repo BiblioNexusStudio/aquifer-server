@@ -36,6 +36,19 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ThrowError("Unable to assign to a user outside your company");
         }
 
+        if (request.AssignedReviewerUserId is not null) {
+            var reviewer = await dbContext.Users
+                .Where(u => u.Id == request.AssignedReviewerUserId
+                    && u.Enabled 
+                    && u.CompanyId == userToAssign.CompanyId
+                    && (u.Role == UserRole.Reviewer || u.Role == UserRole.Manager))
+                .SingleOrDefaultAsync(ct);
+
+            if (reviewer is null) {
+                ThrowError("Unable to assign that reviewer");
+            }
+        }
+
         var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
 
         var draftVersions = await dbContext.ResourceContentVersions
@@ -74,6 +87,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             }
 
             SetDraftVersionStatus(isTakingBackFromReviewPending, originalStatus, userToAssign, draftVersion);
+
+            if (request.AssignedReviewerUserId is not null) {
+                draftVersion.AssignedReviewerUserId = request.AssignedReviewerUserId;
+            }
 
             if (draftVersion.AssignedUserId != request.AssignedUserId || draftVersion.ResourceContentVersionSnapshots.Count == 0)
             {
