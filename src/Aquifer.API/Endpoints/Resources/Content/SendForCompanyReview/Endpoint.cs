@@ -5,15 +5,20 @@ using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.Content.SendForManagerReview;
+namespace Aquifer.API.Endpoints.Resources.Content.SendForCompanyReview;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService)
     : Endpoint<Request, Response>
 {
     public override void Configure()
     {
-        Post("/resources/content/{ContentId}/send-for-manager-review", "/resources/content/send-for-manager-review");
-        Permissions(PermissionName.AssignContent);
+        // TODO: remove *-manager-review paths when confident they are depricated fully. - Kasey
+        Post(
+            "/resources/content/{ContentId}/send-for-manager-review",
+            "/resources/content/send-for-manager-review",
+            "/resources/content/{ContentId}/send-for-company-review",
+            "/resources/content/send-for-company-review"
+        );
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
