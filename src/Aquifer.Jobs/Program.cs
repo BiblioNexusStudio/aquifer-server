@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
@@ -40,5 +41,7 @@ var host = new HostBuilder()
         services.AddKeyedSingleton<IEmailService, SendGridEmailService>(nameof(SendGridEmailService));
     })
     .Build();
+
+StaticLoggerFactory.LoggerFactory = host.Services.GetRequiredService<ILoggerFactory>();
 
 host.Run();

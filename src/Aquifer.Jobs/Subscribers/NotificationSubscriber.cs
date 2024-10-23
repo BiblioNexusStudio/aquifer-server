@@ -114,7 +114,7 @@ public sealed class NotificationSubscriber(
                 JOIN ResourceContentVersions rcv ON rcv.Id = rcvct.ResourceContentVersionId
                 JOIN ResourceContents rc ON rc.Id = rcv.ResourceContentId
                 JOIN Resources r ON r.Id = rc.ResourceId
-                JOIN ParentResource pr ON pr.Id = r.ParentResourceId
+                JOIN ParentResources pr ON pr.Id = r.ParentResourceId
             WHERE
                 c.Id = @commentId;
             """;
