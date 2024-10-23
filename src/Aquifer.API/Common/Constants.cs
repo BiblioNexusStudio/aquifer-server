@@ -29,6 +29,7 @@ public static class Constants
     public static readonly ReadOnlyCollection<ResourceContentStatus> TranslationStatuses =
         new([
             ResourceContentStatus.TranslationAwaitingAiDraft,
+            ResourceContentStatus.TranslationAiDraftComplete,
             ResourceContentStatus.TranslationEditorReview,
             ResourceContentStatus.TranslationReviewPending,
             ResourceContentStatus.TranslationPublisherReview,

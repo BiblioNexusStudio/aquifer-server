@@ -97,5 +97,8 @@ public enum ResourceContentStatus
     AquiferizeCompanyReview = 11,
 
     [Display(Name = "Translation - Company Review")]
-    TranslationCompanyReview = 12
+    TranslationCompanyReview = 12,
+
+    [Display(Name = "Translation - AI Draft Complete")]
+    TranslationAiDraftComplete = 13
 }
