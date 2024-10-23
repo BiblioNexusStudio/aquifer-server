@@ -258,9 +258,6 @@ resharper_csharp_continuous_indent_multiplier = 1
 resharper_csharp_max_invocation_arguments_on_line = 6
 resharper_csharp_wrap_list_pattern = chop_if_long
 
-[src/Aquifer.Data/Migrations/*.cs]
-generated_code = true
-
 [*.{cs,vb}]
 dotnet_style_coalesce_expression = true:error
 dotnet_style_null_propagation = true:error
@@ -272,4 +269,3 @@ dotnet_style_operator_placement_when_wrapping = beginning_of_line
 dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
 tab_width = 4
 indent_size = 4
-end_of_line = crlf
