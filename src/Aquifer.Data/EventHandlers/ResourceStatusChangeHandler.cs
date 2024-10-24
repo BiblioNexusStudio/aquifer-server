@@ -28,7 +28,8 @@ public static class ResourceStatusChangeHandler
                     case ResourceContentStatus.Complete or ResourceContentStatus.CompleteNotApplicable:
                         completedContentIds.Add(x.Id);
                         break;
-                    case ResourceContentStatus.AquiferizePublisherReview or ResourceContentStatus.TranslationPublisherReview:
+                    case ResourceContentStatus.AquiferizePublisherReview or ResourceContentStatus.TranslationPublisherReview
+                        or ResourceContentStatus.TranslationNotApplicable:
                         inReviewContentIds.Add(x.Id);
                         break;
                     case ResourceContentStatus.TranslationInProgress:
