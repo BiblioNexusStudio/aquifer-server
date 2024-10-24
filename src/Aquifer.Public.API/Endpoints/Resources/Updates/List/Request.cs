@@ -1,4 +1,6 @@
-﻿namespace Aquifer.Public.API.Endpoints.Resources.Updates.List;
+﻿using System.ComponentModel;
+
+namespace Aquifer.Public.API.Endpoints.Resources.Updates.List;
 
 public class Request
 {
@@ -11,4 +13,24 @@ public class Request
     ///     Optional LanguageId to search on. If none is provided, updates for all languages will be returned.
     /// </summary>
     public int? LanguageId { get; set; }
+    /// <summary>
+    ///     Optional ISO 639-3 code that is 3 characters in length (e.g. "eng").
+    /// </summary>
+    public string? LanguageCode { get; init; }
+    /// <summary>
+    ///     The number of results to return. Max is 100.
+    /// </summary>
+    [DefaultValue(10)]
+    public int Limit { get; init; } = 10;
+
+    /// <summary>
+    ///     Records to skip if paging through results.
+    /// </summary>
+    [DefaultValue(0)]
+    public int Offset { get; init; }
+    /// <summary>
+    ///     Optional resource collection code to search for. Search by code retrieved from /resources/types endpoint such as
+    ///     "TyndaleBibleDictionary".
+    /// </summary>
+    public string? ResourceCollectionCode { get; init; }
 }
