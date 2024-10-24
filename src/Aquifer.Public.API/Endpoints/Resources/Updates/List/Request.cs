@@ -29,7 +29,7 @@ public class Request
     [DefaultValue(0)]
     public int Offset { get; init; }
     /// <summary>
-    ///     Optional resource collection code to search for. Search by code retrieved from /resources/types endpoint such as
+    ///     Optional resource collection code to search for. Search by code retrieved from /resources/collections endpoint such as
     ///     "TyndaleBibleDictionary".
     /// </summary>
     public string? ResourceCollectionCode { get; init; }
