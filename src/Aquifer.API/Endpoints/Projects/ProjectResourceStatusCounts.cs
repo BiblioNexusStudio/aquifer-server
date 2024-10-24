@@ -21,13 +21,19 @@ public class ProjectResourceStatusCounts
         ResourceContentStatus.AquiferizePublisherReview,
         ResourceContentStatus.AquiferizeReviewPending,
         ResourceContentStatus.TranslationPublisherReview,
-        ResourceContentStatus.TranslationReviewPending
+        ResourceContentStatus.TranslationReviewPending,
+        ResourceContentStatus.TranslationNotApplicable
     ];
 
     internal static readonly List<ResourceContentStatus> NotStartedStatuses =
     [
         ResourceContentStatus.New,
         ResourceContentStatus.TranslationNotStarted
+    ];
+
+    internal static readonly List<ResourceContentStatus> CompletedStatuses =
+    [
+        ResourceContentStatus.Complete, ResourceContentStatus.CompleteNotApplicable
     ];
 
     public int NotStarted { get; init; }

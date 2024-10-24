@@ -86,20 +86,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                     $"Must be assigned the in-review content in order to assign to another user for id {draftVersion.ResourceContentId}");
             }
 
-            var newStatus = isTakingBackFromReviewPending
-                ? Constants.TranslationStatuses.Contains(originalStatus)
-                    ? ResourceContentStatus.TranslationManagerReview
-                    : ResourceContentStatus.AquiferizeManagerReview
-                : Constants.TranslationStatuses.Contains(originalStatus)
-                    ? ResourceContentStatus.TranslationInProgress
-                    : ResourceContentStatus.AquiferizeInProgress;
-
-            var keepCurrentStatus = userToAssign.Role is UserRole.Manager && Constants.ManagerReviewStatuses.Contains(originalStatus);
-
-            if (!keepCurrentStatus)
-            {
-                draftVersion.ResourceContent.Status = newStatus;
-            }
+            SetDraftVersionStatus(isTakingBackFromReviewPending, originalStatus, userToAssign, draftVersion);
 
             if (request.AssignedReviewerUserId is not null) {
                 draftVersion.AssignedReviewerUserId = request.AssignedReviewerUserId;
@@ -148,5 +135,29 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             .FirstOrDefaultAsync(ct);
 
         return isCompanyLead;
+    }
+
+    private static void SetDraftVersionStatus(bool isTakingBackFromReviewPending,
+        ResourceContentStatus originalStatus,
+        UserEntity userToAssign,
+        ResourceContentVersionEntity draftVersion)
+    {
+        if (userToAssign.Role is not UserRole.Manager || !Constants.ManagerReviewStatuses.Contains(originalStatus))
+        {
+            var newStatus = isTakingBackFromReviewPending
+                ?
+                Constants.TranslationStatuses.Contains(originalStatus)
+                    ? ResourceContentStatus.TranslationManagerReview
+                    : ResourceContentStatus.AquiferizeManagerReview
+                : Constants.TranslationStatuses.Contains(originalStatus)
+                    ? ResourceContentStatus.TranslationInProgress
+                    : ResourceContentStatus.AquiferizeInProgress;
+
+            draftVersion.ResourceContent.Status = newStatus;
+        }
+        else if (userToAssign.Role is UserRole.Manager && originalStatus == ResourceContentStatus.TranslationNotApplicable)
+        {
+            draftVersion.ResourceContent.Status = ResourceContentStatus.TranslationManagerReview;
+        }
     }
 }
