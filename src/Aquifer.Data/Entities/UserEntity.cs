@@ -16,6 +16,7 @@ public class UserEntity : IHasUpdatedTimestamp
     public bool EmailVerified { get; set; }
     public UserRole Role { get; set; }
     public bool Enabled { get; set; }
+    public bool AquiferNotificationsEnabled { get; set; }
 
     public int CompanyId { get; set; }
     public CompanyEntity Company { get; set; } = null!;
@@ -35,6 +36,7 @@ public class UserEntityConfiguration : IEntityTypeConfiguration<UserEntity>
     public void Configure(EntityTypeBuilder<UserEntity> builder)
     {
         builder.Property(u => u.Enabled).HasDefaultValue(true);
+        builder.Property(u => u.AquiferNotificationsEnabled).HasDefaultValue(true);
     }
 }
 

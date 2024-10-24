@@ -155,7 +155,8 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
             ProviderId = providerUserId,
             CompanyId = req.CompanyId,
             Role = req.Role,
-            Enabled = true
+            Enabled = true,
+            AquiferNotificationsEnabled = true,
         };
 
         await dbContext.Users.AddAsync(user, ct);
