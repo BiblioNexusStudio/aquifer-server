@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Aquifer.Common.Utilities;
 using Azure;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
@@ -14,7 +15,7 @@ public static class QueueClientExtensions
         TimeSpan? timeToLive = null,
         CancellationToken cancellationToken = default)
     {
-        var serializedMessage = JsonSerializer.Serialize(message);
+        var serializedMessage = JsonSerializer.Serialize(message, JsonUtilities.QueueMessageOptions);
         return await queueClient.SendMessageAsync(serializedMessage, visibilityTimeout, timeToLive, cancellationToken);
     }
 }

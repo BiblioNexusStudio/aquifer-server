@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Aquifer.Common.Utilities;
 using Azure.Storage.Queues.Models;
 using Microsoft.Extensions.Logging;
 
@@ -11,7 +12,7 @@ internal static class MessageUtility
         TDto? dto;
         try
         {
-            dto = JsonSerializer.Deserialize<TDto>(message.MessageText);
+            dto = JsonSerializer.Deserialize<TDto>(message.MessageText, JsonUtilities.QueueMessageOptions);
         }
         catch (JsonException ex)
         {
