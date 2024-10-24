@@ -61,9 +61,15 @@ public sealed class NotificationSubscriber(
         var dbConnection = _dbContext.Database.GetDbConnection();
         var resourceCommentData = await GetResourceCommentDataAsync(dbConnection, message.CommentId, ct);
 
-        var companyUsers = await _dbContext.Users
-            .Where(u => u.Id == resourceCommentData.UserId && u.AquiferNotificationsEnabled)
-            .SelectMany(u => u.Company.Users)
+        var usersInCompanyWithPreviousResourceAssignment = await _dbContext.ResourceContentVersionAssignedUserHistory
+            .Where(rcvauh => rcvauh.ResourceContentVersion.ResourceContentId == resourceCommentData.ResourceContentId)
+            .Join(
+                _dbContext.Users
+                    .Where(u => u.Id == resourceCommentData.UserId && u.AquiferNotificationsEnabled)
+                    .SelectMany(u => u.Company.Users),
+                rcvauh => rcvauh.AssignedUserId,
+                u => u.Id,
+                (_, u) => u)
             .ToListAsync(ct);
 
         var templatedEmail = new TemplatedEmail(
@@ -74,14 +80,15 @@ public sealed class NotificationSubscriber(
             DynamicTemplateData: new
             {
                 _configurationOptions.Value.AquiferAdminBaseUri,
-                CommenterUserName = NotificationsHelper.GetUserFullName(companyUsers.Single(u => u.Id == resourceCommentData.UserId)),
+                CommenterUserName = NotificationsHelper.GetUserFullName(
+                    usersInCompanyWithPreviousResourceAssignment.Single(u => u.Id == resourceCommentData.UserId)),
                 CommentHtml = HttpUtility.HtmlEncode(resourceCommentData.Comment).Replace("\n", "<br>"),
                 ParentResourceName = resourceCommentData.ParentResourceDisplayName,
                 resourceCommentData.ResourceContentId,
                 ResourceName = resourceCommentData.ResourceEnglishLabel,
             },
             Tos: [NotificationsHelper.NotificationToEmailAddress],
-            Bccs: companyUsers.Select(NotificationsHelper.GetEmailAddress).ToList());
+            Bccs: usersInCompanyWithPreviousResourceAssignment.Select(NotificationsHelper.GetEmailAddress).ToList());
 
         await _emailService.SendEmailAsync(templatedEmail, ct);
     }

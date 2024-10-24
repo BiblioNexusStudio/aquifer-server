@@ -18,7 +18,7 @@ public class SendResourceAssignmentNotifications(
 
     [Function(nameof(SendResourceAssignmentNotifications))]
     [FixedDelayRetry(maxRetryCount: 1, delayInterval: _tenSecondDelayInterval)]
-#pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings
+#pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings.
     public async Task RunAsync([TimerTrigger(_everyTenMinutesCronSchedule)] TimerInfo timerInfo, CancellationToken ct)
 #pragma warning restore IDE0060 // Remove unused parameter
     {
