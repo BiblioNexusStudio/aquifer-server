@@ -32,9 +32,9 @@ public class ResourceContentVersionEntity : IHasUpdatedTimestamp
 
     public ICollection<ResourceContentVersionMachineTranslationEntity> MachineTranslations { get; set; } = [];
 
-    public IEnumerable<ResourceContentVersionStatusHistoryEntity> ResourceContentVersionStatusHistories { get; set; } = [];
+    public ICollection<ResourceContentVersionStatusHistoryEntity> ResourceContentVersionStatusHistories { get; set; } = [];
 
-    public IEnumerable<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistories { get; set; } = [];
+    public ICollection<ResourceContentVersionAssignedUserHistoryEntity> ResourceContentVersionAssignedUserHistories { get; set; } = [];
 
     public ICollection<ResourceContentVersionSnapshotEntity> ResourceContentVersionSnapshots { get; set; } = [];
 
