@@ -18,7 +18,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService _cachi
         {
             s.Summary = "Get resource ids that are new or updated since the given UTC timestamp.";
             s.Description =
-                "For a given UTC timestamp and optional language id, optional ISO language code, or optional collection code get a list of resource ids that are new or have been updated since the provided timestamp. This is intended for users who are storing Aquifer data locally and want to fetch new content.";
+                "For a given UTC timestamp, get a list of resource ids that are new or have been updated since the provided timestamp. This is intended for users who are storing Aquifer data locally and want to fetch new content.";
         });
     }
 
