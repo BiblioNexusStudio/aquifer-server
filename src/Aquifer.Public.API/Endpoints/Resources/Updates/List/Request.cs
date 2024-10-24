@@ -13,10 +13,12 @@ public class Request
     ///     Optional LanguageId to search on. If none is provided, updates for all languages will be returned.
     /// </summary>
     public int? LanguageId { get; set; }
+
     /// <summary>
     ///     Optional ISO 639-3 code that is 3 characters in length (e.g. "eng").
     /// </summary>
     public string? LanguageCode { get; init; }
+
     /// <summary>
     ///     The number of results to return. Max is 100.
     /// </summary>
@@ -28,9 +30,10 @@ public class Request
     /// </summary>
     [DefaultValue(0)]
     public int Offset { get; init; }
+
     /// <summary>
-    ///     Optional resource collection code to search for. Search by code retrieved from /resources/collections endpoint such as
-    ///     "TyndaleBibleDictionary".
+    ///     Optional resource collection code to search for. Search by code retrieved from /resources/collections endpoint such
+    ///     as "TyndaleBibleDictionary".
     /// </summary>
     public string? ResourceCollectionCode { get; init; }
 }
