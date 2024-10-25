@@ -13,7 +13,7 @@ public class ResponseContent
     public required ResponseContentUpdateType UpdateType { get; set; }
 
     public required int LanguageId { get; set; }
-    public string LanguageCode { get; set; } = null!;
+    public required string LanguageCode { get; set; }
     public required int ResourceId { get; set; }
     public required DateTime Timestamp { get; set; }
 }
