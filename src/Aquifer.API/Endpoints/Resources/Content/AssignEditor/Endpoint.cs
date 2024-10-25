@@ -94,7 +94,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                     ? ResourceContentStatus.TranslationEditorReview
                     : ResourceContentStatus.AquiferizeEditorReview;
 
-            var keepCurrentStatus = userToAssign.Role is UserRole.Manager && Constants.CompanyReviewStatuses.Contains(originalStatus);
+            var keepCurrentStatus = Constants.CompanyReviewStatuses.Contains(originalStatus);
 
             if (!keepCurrentStatus)
             {
