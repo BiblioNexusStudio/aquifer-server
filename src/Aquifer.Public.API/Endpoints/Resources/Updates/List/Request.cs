@@ -22,7 +22,7 @@ public class Request
     /// <summary>
     ///     The number of results to return. Max is 100.
     /// </summary>
-    [DefaultValue(10)]
+    [DefaultValue(1000)]
     public int Limit { get; init; } = 1000;
 
     /// <summary>
