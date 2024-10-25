@@ -25,7 +25,7 @@ public class ProjectResourceStatusCounts
         ResourceContentStatus.TranslationNotApplicable
     ];
 
-    internal static readonly List<ResourceContentStatus> AwaitingAiDraftStatuses =
+    internal static readonly List<ResourceContentStatus> NotStartedStatuses =
     [
         ResourceContentStatus.New,
         ResourceContentStatus.TranslationAwaitingAiDraft,

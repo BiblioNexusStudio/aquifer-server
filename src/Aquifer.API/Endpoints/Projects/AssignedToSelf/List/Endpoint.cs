@@ -40,13 +40,21 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                         : null,
                 Counts = new ProjectResourceStatusCounts
                 {
-                    AwaitingAiDraft = x.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.AwaitingAiDraftStatuses.Contains(prc.ResourceContent.Status)),
-                    EditorReview = x.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.EditorReviewStatuses.Contains(prc.ResourceContent.Status)),
+                    AwaitingAiDraft = 
+                        x.ProjectResourceContents.Count(prc => 
+                            ProjectResourceStatusCounts.NotStartedStatuses.Contains(prc.ResourceContent.Status)),
+                    EditorReview = 
+                        x.ProjectResourceContents.Count(prc => 
+                            ProjectResourceStatusCounts.EditorReviewStatuses.Contains(prc.ResourceContent.Status)),
                     InCompanyReview =
-                        x.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.InCompanyReviewStatuses.Contains(prc.ResourceContent.Status)),
+                        x.ProjectResourceContents.Count(prc => 
+                            ProjectResourceStatusCounts.InCompanyReviewStatuses.Contains(prc.ResourceContent.Status)),
                     InPublisherReview =
-                        x.ProjectResourceContents.Count(prc => ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(prc.ResourceContent.Status)),
-                    Completed = x.ProjectResourceContents.Count(prc => prc.ResourceContent.Status == ResourceContentStatus.Complete)
+                        x.ProjectResourceContents.Count(prc => 
+                            ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(prc.ResourceContent.Status)),
+                    Completed = 
+                        x.ProjectResourceContents.Count(prc => 
+                            prc.ResourceContent.Status == ResourceContentStatus.Complete)
                 }
             })
             .ToListAsync(ct);

@@ -54,7 +54,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 {
                     AwaitingAiDraft =
                         p.ProjectResourceContents.Count(prc =>
-                            ProjectResourceStatusCounts.AwaitingAiDraftStatuses.Contains(prc.ResourceContent.Status)),
+                            ProjectResourceStatusCounts.NotStartedStatuses.Contains(prc.ResourceContent.Status)),
                     EditorReview =
                         p.ProjectResourceContents.Count(prc =>
                             ProjectResourceStatusCounts.EditorReviewStatuses.Contains(prc.ResourceContent.Status)),
