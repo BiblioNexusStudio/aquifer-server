@@ -20,7 +20,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var user = await userService.GetUserFromJwtAsync(ct);
         List<ResourceContentStatus> allowedStatuses =
         [
-            ResourceContentStatus.TranslationAwaitingAiDraft,
+            ResourceContentStatus.TranslationAiDraftComplete,
             ResourceContentStatus.TranslationEditorReview,
             ResourceContentStatus.TranslationCompanyReview
         ];
