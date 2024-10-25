@@ -142,21 +142,25 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         UserEntity userToAssign,
         ResourceContentVersionEntity draftVersion)
     {
-        if (userToAssign.Role is not UserRole.Manager && !Constants.CompanyReviewStatuses.Contains(originalStatus))
-        {
-            var newStatus = isTakingBackFromReviewPending
-                ? Constants.TranslationStatuses.Contains(originalStatus)
-                    ? ResourceContentStatus.TranslationCompanyReview
-                    : ResourceContentStatus.AquiferizeCompanyReview
-                : Constants.TranslationStatuses.Contains(originalStatus)
-                    ? ResourceContentStatus.TranslationEditorReview
-                    : ResourceContentStatus.AquiferizeEditorReview;
-
-            draftVersion.ResourceContent.Status = newStatus;
-        }
-        else if (userToAssign.Role is UserRole.Manager && originalStatus == ResourceContentStatus.TranslationNotApplicable)
+        if (userToAssign.Role is UserRole.Manager && originalStatus == ResourceContentStatus.TranslationNotApplicable)
         {
             draftVersion.ResourceContent.Status = ResourceContentStatus.TranslationCompanyReview;
         }
+        else if (isTakingBackFromReviewPending)
+        {
+            draftVersion.ResourceContent.Status = Constants.ReviewPendingStatuses.Contains(originalStatus)
+                ? ResourceContentStatus.TranslationCompanyReview
+                : ResourceContentStatus.AquiferizeCompanyReview;
+        }
+        else if (originalStatus != ResourceContentStatus.TranslationAiDraftComplete)
+        {
+            draftVersion.ResourceContent.Status = Constants.TranslationStatuses.Contains(originalStatus) 
+                    ? ResourceContentStatus.TranslationEditorReview
+                    : ResourceContentStatus.AquiferizeEditorReview;
+        }
+        else if (originalStatus == ResourceContentStatus.New)
+        {
+            draftVersion.ResourceContent.Status = ResourceContentStatus.TranslationEditorReview;
+        } 
     }
 }
