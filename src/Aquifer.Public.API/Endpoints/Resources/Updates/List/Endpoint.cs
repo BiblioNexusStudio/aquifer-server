@@ -74,11 +74,10 @@ public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService _cachi
 
     private async Task<IQueryable<ResourceContentVersionEntity>> GetQuery(Request req, CancellationToken ct)
     {
-        var languageId = req.LanguageCode is not null
-            ? await _cachingLanguageService.GetLanguageIdAsync(req.LanguageCode, ct) ?? 0
-            : req.LanguageId;
+        var (_, _, validLanguageId) = await _cachingLanguageService.ValidateLanguageIdOrCodeAsync(req.LanguageId, req.LanguageCode, shouldRequireInput: false, ct);
+
         return dbContext.ResourceContentVersions
-            .Where(x => (!languageId.HasValue || x.ResourceContent.LanguageId == languageId) &&
+            .Where(x => (!validLanguageId.HasValue || x.ResourceContent.LanguageId == validLanguageId) &&
                         x.IsPublished &&
                         x.Updated >= req.Timestamp &&
                         (req.ResourceCollectionCode == null ||
