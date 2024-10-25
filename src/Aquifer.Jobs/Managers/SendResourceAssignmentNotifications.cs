@@ -45,6 +45,7 @@ public class SendResourceAssignmentNotifications(
 
         var usersByIdMap = userHistories
             .Select(uh => uh.AssignedUser)
+            .DistinctBy(u => u.Id)
             .ToDictionary(au => au.Id);
 
         var templatedEmails = userHistories
