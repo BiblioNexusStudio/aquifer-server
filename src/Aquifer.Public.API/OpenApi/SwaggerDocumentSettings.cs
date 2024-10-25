@@ -20,7 +20,7 @@ public static class SwaggerDocumentSettings
             {
                 ds.Title = "Aquifer API";
                 ds.Description = """
-                                 All endpoints require an API key in the 'api-key' header.<br><br>
+                                 All endpoints require an API key in the `api-key` header.<br><br>
 
                                  The following videos are available for anyone new to working with APIs:
 
