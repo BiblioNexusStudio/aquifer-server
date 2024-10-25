@@ -16,5 +16,6 @@ public class Validator : Validator<Request>
                        || (x is { LanguageId: not null, LanguageCode: null })
                        || (x.LanguageId == null && x.LanguageCode is null))
             .WithMessage("Cannot use both languageId and languageCode");
+        RuleFor(x => x.LanguageCode).Length(3);
     }
 }
