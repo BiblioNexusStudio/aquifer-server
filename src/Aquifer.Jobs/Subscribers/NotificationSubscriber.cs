@@ -30,8 +30,8 @@ public sealed class NotificationSubscriber(
             .Include(projectEntity => projectEntity.CompanyLeadUser)
             .FirstAsync(p => p.Id == message.ProjectId, ct);
 
-        var companyLead = project.CompanyLeadUser;
-        if (companyLead is not null && companyLead.AquiferNotificationsEnabled)
+        var companyLeadUser = project.CompanyLeadUser;
+        if (companyLeadUser is not null && companyLeadUser.AquiferNotificationsEnabled)
         {
             var templatedEmail = new TemplatedEmail(
                 From: NotificationsHelper.NotificationSenderEmailAddress,
@@ -45,9 +45,20 @@ public sealed class NotificationSubscriber(
                     ProjectName = project.Name,
                 },
                 Tos: [NotificationsHelper.NotificationToEmailAddress],
-                Bccs: [NotificationsHelper.GetEmailAddress(companyLead)]);
+                Bccs: [NotificationsHelper.GetEmailAddress(companyLeadUser)]);
 
             await _emailService.SendEmailAsync(templatedEmail, ct);
+
+            _logger.LogInformation(
+                "Project started notification sent for Project ID {ProjectId} to User ID {UserId}.",
+                project.Id,
+                companyLeadUser.Id);
+        }
+        else
+        {
+            _logger.LogWarning(
+                "Unable to send project started notification for Project ID {ProjectId} because there is no assigned Company or Company Lead.",
+                project.Id);
         }
     }
 
@@ -62,14 +73,14 @@ public sealed class NotificationSubscriber(
         var resourceCommentData = await GetResourceCommentDataAsync(dbConnection, message.CommentId, ct);
 
         // Get users who are assigned or have previously been assigned to this resource
-        // and who are in the same company as the user who made the comment.
-        // Also get the user who made the comment (who may not be in the assignment history).
-        var users = await _dbContext.ResourceContentVersionAssignedUserHistory
+        // and who are in the same company as the user who made the comment,
+        // excluding the user who made the comment (who should not get a notification).
+        var previouslyAssignedUsers = await _dbContext.ResourceContentVersionAssignedUserHistory
             .Where(rcvauh =>
                 rcvauh.ResourceContentVersion.ResourceContentId == resourceCommentData.ResourceContentId &&
-                rcvauh.AssignedUserId != null)
+                rcvauh.AssignedUserId != null &&
+                rcvauh.AssignedUserId.Value != resourceCommentData.UserId)
             .Select(rcvauh => rcvauh.AssignedUserId)
-            .Union([resourceCommentData.UserId])
             .Distinct()
             .Join(
                 _dbContext.Users
@@ -80,6 +91,19 @@ public sealed class NotificationSubscriber(
                 (_, u) => u)
             .ToListAsync(ct);
 
+        if (previouslyAssignedUsers.Count == 0)
+        {
+            _logger.LogInformation(
+                "Comment ID {CommentId} was added to Resource Content ID {ResourceContentId} by User ID {CommenterUserId} but no email was sent because only the commenter has previous resource assignment.",
+                resourceCommentData.CommentId,
+                resourceCommentData.ResourceContentId,
+                resourceCommentData.UserId);
+            return;
+        }
+
+        var commenterUser = await _dbContext.Users
+            .SingleAsync(u => u.Id == resourceCommentData.UserId, ct);
+
         var templatedEmail = new TemplatedEmail(
             From: NotificationsHelper.NotificationSenderEmailAddress,
             Subject: "Aquifer Notifications: New Resource Comment",
@@ -88,20 +112,25 @@ public sealed class NotificationSubscriber(
             DynamicTemplateData: new
             {
                 _configurationOptions.Value.AquiferAdminBaseUri,
-                CommenterUserName = NotificationsHelper.GetUserFullName(
-                    users.Single(u => u.Id == resourceCommentData.UserId)),
+                CommenterUserName = NotificationsHelper.GetUserFullName(commenterUser),
                 CommentHtml = HttpUtility.HtmlEncode(resourceCommentData.Comment).Replace("\n", "<br>"),
                 ParentResourceName = resourceCommentData.ParentResourceDisplayName,
                 resourceCommentData.ResourceContentId,
                 ResourceName = resourceCommentData.ResourceEnglishLabel,
             },
             Tos: [NotificationsHelper.NotificationToEmailAddress],
-            Bccs: users
+            Bccs: previouslyAssignedUsers
                 .Where(u => u.Id != resourceCommentData.UserId)
                 .Select(NotificationsHelper.GetEmailAddress)
                 .ToList());
 
         await _emailService.SendEmailAsync(templatedEmail, ct);
+
+        _logger.LogInformation(
+            "Comment created notification was sent for Comment ID {CommentId} on Resource Content ID {ResourceContentId} by User ID {CommenterUserId}.",
+            resourceCommentData.CommentId,
+            resourceCommentData.ResourceContentId,
+            resourceCommentData.UserId);
     }
 
     private sealed record ResourceCommentData(

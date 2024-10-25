@@ -31,9 +31,11 @@ public sealed class EmailSubscriber(
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unable to send email: \"{Subject}\"", email.Subject);
+            _logger.LogError(ex, "Unable to send email: \"{Email}\"", message.MessageText);
             throw;
         }
+
+        _logger.LogInformation("Email sent: {Email}", message.MessageText);
     }
 
     [Function(nameof(SendTemplatedEmail))]
@@ -52,8 +54,10 @@ public sealed class EmailSubscriber(
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unable to send templated email: \"{Subject}\"", email.Subject);
+            _logger.LogError(ex, "Unable to send templated email: \"{TemplatedEmail}\"", message.MessageText);
             throw;
         }
+
+        _logger.LogInformation("Templated email sent: {TemplatedEmail}", message.MessageText);
     }
 }
