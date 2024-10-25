@@ -20,7 +20,7 @@ public class Request
     public string? LanguageCode { get; init; }
 
     /// <summary>
-    ///     The number of results to return. Max is 100.
+    ///     The number of results to return. Max is 1000.
     /// </summary>
     [DefaultValue(1000)]
     public int Limit { get; init; } = 1000;
