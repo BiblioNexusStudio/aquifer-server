@@ -61,13 +61,21 @@ public sealed class NotificationSubscriber(
         var dbConnection = _dbContext.Database.GetDbConnection();
         var resourceCommentData = await GetResourceCommentDataAsync(dbConnection, message.CommentId, ct);
 
-        var usersInCompanyWithPreviousResourceAssignment = await _dbContext.ResourceContentVersionAssignedUserHistory
-            .Where(rcvauh => rcvauh.ResourceContentVersion.ResourceContentId == resourceCommentData.ResourceContentId)
+        // Get users who are assigned or have previously been assigned to this resource
+        // and who are in the same company as the user who made the comment.
+        // Also get the user who made the comment (who may not be in the assignment history).
+        var users = await _dbContext.ResourceContentVersionAssignedUserHistory
+            .Where(rcvauh =>
+                rcvauh.ResourceContentVersion.ResourceContentId == resourceCommentData.ResourceContentId &&
+                rcvauh.AssignedUserId != null)
+            .Select(rcvauh => rcvauh.AssignedUserId)
+            .Union([resourceCommentData.UserId])
+            .Distinct()
             .Join(
                 _dbContext.Users
                     .Where(u => u.Id == resourceCommentData.UserId && u.AquiferNotificationsEnabled)
                     .SelectMany(u => u.Company.Users),
-                rcvauh => rcvauh.AssignedUserId,
+                userId => userId,
                 u => u.Id,
                 (_, u) => u)
             .ToListAsync(ct);
@@ -81,14 +89,17 @@ public sealed class NotificationSubscriber(
             {
                 _configurationOptions.Value.AquiferAdminBaseUri,
                 CommenterUserName = NotificationsHelper.GetUserFullName(
-                    usersInCompanyWithPreviousResourceAssignment.Single(u => u.Id == resourceCommentData.UserId)),
+                    users.Single(u => u.Id == resourceCommentData.UserId)),
                 CommentHtml = HttpUtility.HtmlEncode(resourceCommentData.Comment).Replace("\n", "<br>"),
                 ParentResourceName = resourceCommentData.ParentResourceDisplayName,
                 resourceCommentData.ResourceContentId,
                 ResourceName = resourceCommentData.ResourceEnglishLabel,
             },
             Tos: [NotificationsHelper.NotificationToEmailAddress],
-            Bccs: usersInCompanyWithPreviousResourceAssignment.Select(NotificationsHelper.GetEmailAddress).ToList());
+            Bccs: users
+                .Where(u => u.Id != resourceCommentData.UserId)
+                .Select(NotificationsHelper.GetEmailAddress)
+                .ToList());
 
         await _emailService.SendEmailAsync(templatedEmail, ct);
     }
