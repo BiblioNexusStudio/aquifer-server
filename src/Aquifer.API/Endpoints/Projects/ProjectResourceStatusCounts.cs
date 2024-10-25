@@ -37,7 +37,7 @@ public class ProjectResourceStatusCounts
         ResourceContentStatus.Complete, ResourceContentStatus.CompleteNotApplicable
     ];
 
-    public int AwaitingAiDraft { get; init; }
+    public int NotStarted { get; init; }
     public int EditorReview { get; init; }
     public int InCompanyReview { get; init; }
     public int InPublisherReview { get; init; }
