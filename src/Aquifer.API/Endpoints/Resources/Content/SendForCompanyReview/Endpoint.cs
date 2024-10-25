@@ -47,7 +47,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         {
             if (user.Id != draftVersion.AssignedUserId)
             {
-                ThrowError("User must be assigned to content to send for manager review.");
+                ThrowError("User must be assigned to content to send for company review.");
             }
 
             await historyService.AddSnapshotHistoryAsync(draftVersion,
