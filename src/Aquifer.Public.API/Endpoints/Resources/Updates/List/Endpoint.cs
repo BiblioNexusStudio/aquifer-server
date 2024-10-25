@@ -82,12 +82,12 @@ public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService cachin
 
         if (!isValidLanguageCode)
         {
-            ThrowError($"Invalid LanguageCode:  '{req.LanguageCode}'");
+            ThrowError(x => x.LanguageCode, $"Invalid LanguageCode:  {req.LanguageCode}");
         }
 
         if (!isValidLanguageId)
         {
-            ThrowError($"Invalid LanguageId: '{req.LanguageId}'");
+            ThrowError(x => x.LanguageId, $"Invalid LanguageId: {req.LanguageId}");
         }
 
         return dbContext.ResourceContentVersions
