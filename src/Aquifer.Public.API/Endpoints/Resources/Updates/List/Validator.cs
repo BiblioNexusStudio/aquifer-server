@@ -1,8 +1,6 @@
 ﻿using FastEndpoints;
 using FluentValidation;
 
-// ReSharper disable ArrangeRedundantParentheses
-
 namespace Aquifer.Public.API.Endpoints.Resources.Updates.List;
 
 public class Validator : Validator<Request>
