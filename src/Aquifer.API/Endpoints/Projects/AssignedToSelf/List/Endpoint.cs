@@ -40,7 +40,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                         : null,
                 Counts = new ProjectResourceStatusCounts
                 {
-                    AwaitingAiDraft = 
+                    NotStarted = 
                         x.ProjectResourceContents.Count(prc => 
                             ProjectResourceStatusCounts.NotStartedStatuses.Contains(prc.ResourceContent.Status)),
                     EditorReview = 

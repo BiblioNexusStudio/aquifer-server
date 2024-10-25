@@ -64,7 +64,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ProjectedPublishDate = x.ProjectedPublishDate,
             Counts = new ProjectResourceStatusCounts
             {
-                AwaitingAiDraft =
+                NotStarted =
                     x.ProjectResourceContents.Count(prc =>
                         ProjectResourceStatusCounts.NotStartedStatuses.Contains(prc.ResourceContent.Status)),
                 EditorReview =
