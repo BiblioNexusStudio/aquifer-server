@@ -13,6 +13,6 @@ public class GreekLemmaEntity : IHasUpdatedTimestamp
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 
-    public ICollection<GreekWordEntity> GreekWords { get; set; } = new List<GreekWordEntity>();
+    public ICollection<GreekWordEntity> GreekWords { get; set; } = [];
     public StrongNumberEntity StrongNumber { get; set; } = null!;
 }

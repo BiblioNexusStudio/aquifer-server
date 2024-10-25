@@ -17,8 +17,7 @@ public class ResourceContentEntity : IHasUpdatedTimestamp
     public bool Trusted { get; set; }
     public ResourceContentMediaType MediaType { get; set; }
 
-    public ICollection<ResourceContentVersionEntity> Versions { get; set; } =
-        new List<ResourceContentVersionEntity>();
+    public ICollection<ResourceContentVersionEntity> Versions { get; set; } = [];
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
@@ -26,7 +25,7 @@ public class ResourceContentEntity : IHasUpdatedTimestamp
     public LanguageEntity Language { get; set; } = null!;
     public ResourceEntity Resource { get; set; } = null!;
 
-    public ICollection<ProjectResourceContentEntity> ProjectResourceContents { get; set; } = new List<ProjectResourceContentEntity>();
+    public ICollection<ProjectResourceContentEntity> ProjectResourceContents { get; set; } = [];
     public int Id { get; set; }
     public ResourceContentStatus Status { get; set; }
 
@@ -99,6 +98,12 @@ public enum ResourceContentStatus
     [Display(Name = "Translation - Company Review")]
     TranslationCompanyReview = 12,
 
+    [Display(Name = "Translation - Not Applicable Review")]
+    TranslationNotApplicable = 13,
+
+    [Display(Name = "Complete - Not Applicable")]
+    CompleteNotApplicable = 14,
+
     [Display(Name = "Translation - AI Draft Complete")]
-    TranslationAiDraftComplete = 13
+    TranslationAiDraftComplete = 15
 }

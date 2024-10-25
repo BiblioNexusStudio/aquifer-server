@@ -12,15 +12,8 @@ public static class ResponseCachingVaryByAllQueryKeysExtensions
     }
 }
 
-public class ResponseCachingVaryByAllQueryKeysMiddleware
+public class ResponseCachingVaryByAllQueryKeysMiddleware(RequestDelegate _next)
 {
-    private readonly RequestDelegate _next;
-
-    public ResponseCachingVaryByAllQueryKeysMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
-
     public async Task InvokeAsync(HttpContext context)
     {
         context.Features.Set<IResponseCachingFeature>(new ResponseCachingFeature

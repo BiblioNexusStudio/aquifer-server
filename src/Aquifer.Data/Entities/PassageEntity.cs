@@ -16,7 +16,7 @@ public class PassageEntity : IHasUpdatedTimestamp
 
     public VerseEntity StartVerse { get; set; } = null!;
     public VerseEntity EndVerse { get; set; } = null!;
-    public ICollection<PassageResourceEntity> PassageResources { get; set; } = new List<PassageResourceEntity>();
+    public ICollection<PassageResourceEntity> PassageResources { get; set; } = [];
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; }

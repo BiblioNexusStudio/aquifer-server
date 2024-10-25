@@ -20,7 +20,9 @@ public class SendNewContentEmails(
     TelemetryClient telemetryClient)
 {
     [Function(nameof(SendNewContentEmails))]
+#pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings
     public async Task Run([TimerTrigger("%MarketingEmail:CronSchedule:NewContent%")] TimerInfo timerInfo, CancellationToken ct)
+#pragma warning restore IDE0060 // Remove unused parameter
     {
         var subscribers = await GetSubscribersAsync(ct);
         var allNewItems = await GetAllNewItemsAsync(subscribers, ct);

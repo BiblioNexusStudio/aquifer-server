@@ -84,7 +84,9 @@ public static class PermissionName
         ReadUsers = "read:users",
         ReviewContent = "review:content",
         SendReviewContent = "send-review:content",
-        SendReviewCommunityContent = "send-review:community-content";
+        SendReviewCommunityContent = "send-review:community-content",
+        SetStatusTranslationNotApplicable = "set-status:translation-not-applicable",
+        SetStatusCompleteNotApplicable = "set-status:complete-not-applicable";
 }
 
 public static class KeyVaultSecretName

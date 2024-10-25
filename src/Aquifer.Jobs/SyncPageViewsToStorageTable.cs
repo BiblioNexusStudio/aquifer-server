@@ -16,7 +16,9 @@ public class SyncPageViewsToStorageTable(
     IOptions<ConfigurationOptions> _options)
 {
     [Function(nameof(SyncPageViewsToStorageTable))]
+#pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings
     public async Task Run([TimerTrigger("%Analytics:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
+#pragma warning restore IDE0060 // Remove unused parameter
     {
         await SyncSourceToPartitionKey("content-manager-web", "AquiferAdminPageViews", ct);
         await SyncSourceToPartitionKey("well-web", "BibleWellPageViews", ct);

@@ -1,0 +1,6 @@
+# This folder is all generated code so ignore analyzer warnings
+root = true
+
+[*.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none

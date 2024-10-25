@@ -42,7 +42,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 Status = rc.Status,
                 MediaType = rc.MediaType,
                 ContentTranslations = rc.Resource.ResourceContents
-                    .Where(orc => orc.MediaType == rc.MediaType)
+                    .Where(orc => orc.MediaType == rc.MediaType &&
+                                  orc.Status != ResourceContentStatus.TranslationNotApplicable &&
+                                  orc.Status != ResourceContentStatus.CompleteNotApplicable)
                     .Select(orc => new TranslationResponse
                     {
                         ContentId = orc.Id,
