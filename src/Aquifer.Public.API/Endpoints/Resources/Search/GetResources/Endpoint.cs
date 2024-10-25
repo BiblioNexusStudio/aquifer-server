@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Search.GetResources;
 
-public class Endpoint(AquiferDbContext _dbContext, ICachingLanguageService _cachingLanguageService) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService cachingLanguageService) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -50,7 +50,13 @@ public class Endpoint(AquiferDbContext _dbContext, ICachingLanguageService _cach
         }
 
         var items = await GetResourcesAsync(req, query, ct);
-        var response = new Response { TotalItemCount = totalCount, ReturnedItemCount = items.Count, Offset = req.Offset, Items = items };
+        var response = new Response
+        {
+            TotalItemCount = totalCount,
+            ReturnedItemCount = items.Count,
+            Offset = req.Offset,
+            Items = items
+        };
 
         await SendOkAsync(response, ct);
     }
@@ -58,14 +64,14 @@ public class Endpoint(AquiferDbContext _dbContext, ICachingLanguageService _cach
     private async Task<IQueryable<ResourceContentVersionEntity>> GetQueryAsync(Request req, CancellationToken ct)
     {
         var languageId = req.LanguageCode is not null
-            ? await _cachingLanguageService.GetLanguageIdAsync(req.LanguageCode, ct) ?? 0
+            ? await cachingLanguageService.GetLanguageIdAsync(req.LanguageCode, ct) ?? 0
             : req.LanguageId;
 
         var (startVerseId, endVerseId) = req.BookCode is null
             ? ((int?)null, (int?)null)
             : BibleUtilities.GetVerseIds(req.BookCode, req.StartChapter, req.EndChapter, req.StartVerse, req.EndVerse);
 
-        return _dbContext.ResourceContentVersions
+        return dbContext.ResourceContentVersions
             .Where(x =>
                 x.IsPublished &&
                 x.ResourceContent.Resource.ParentResource.Enabled &&
@@ -79,7 +85,7 @@ public class Endpoint(AquiferDbContext _dbContext, ICachingLanguageService _cach
                      (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
                 (req.ResourceType == default || x.ResourceContent.Resource.ParentResource.ResourceType == req.ResourceType) &&
                 (req.ResourceCollectionCode == null ||
-                    x.ResourceContent.Resource.ParentResource.Code.ToLower() == req.ResourceCollectionCode.ToLower()) &&
+                 x.ResourceContent.Resource.ParentResource.Code.ToLower() == req.ResourceCollectionCode.ToLower()) &&
                 x.ResourceContent.LanguageId == languageId);
     }
 
@@ -99,7 +105,7 @@ public class Endpoint(AquiferDbContext _dbContext, ICachingLanguageService _cach
         IQueryable<ResourceContentVersionEntity> query,
         CancellationToken ct)
     {
-        var languageCodeByIdMap = await _cachingLanguageService.GetLanguageCodeByIdMapAsync(ct);
+        var languageCodeByIdMap = await cachingLanguageService.GetLanguageCodeByIdMapAsync(ct);
 
         var resources = await query
             .OrderBy(x => x.ResourceContent.Resource.Id)

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Updates.List;
 
-public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService _cachingLanguageService) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService cachingLanguageService) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -29,7 +29,10 @@ public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService _cachi
 
         if (totalCount == 0)
         {
-            await SendOkAsync(new Response{Offset = req.Offset}, ct);
+            await SendOkAsync(new Response
+            {
+                Offset = req.Offset
+            }, ct);
             return;
         }
 
@@ -45,7 +48,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService _cachi
     private async Task<List<ResponseContent>> GetResourceUpdatesAsync(Request req, IQueryable<ResourceContentVersionEntity> query,
         CancellationToken ct)
     {
-        var languageCodeByIdMap = await _cachingLanguageService.GetLanguageCodeByIdMapAsync(ct);
+        var languageCodeByIdMap = await cachingLanguageService.GetLanguageCodeByIdMapAsync(ct);
         return await query
             .OrderByDescending(r => r.Updated)
             .Skip(req.Offset)
@@ -74,7 +77,8 @@ public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService _cachi
 
     private async Task<IQueryable<ResourceContentVersionEntity>> GetQuery(Request req, CancellationToken ct)
     {
-        var (_, _, validLanguageId) = await _cachingLanguageService.ValidateLanguageIdOrCodeAsync(req.LanguageId, req.LanguageCode, shouldRequireInput: false, ct);
+        var (_, _, validLanguageId) =
+            await cachingLanguageService.ValidateLanguageIdOrCodeAsync(req.LanguageId, req.LanguageCode, false, ct);
 
         return dbContext.ResourceContentVersions
             .Where(x => (!validLanguageId.HasValue || x.ResourceContent.LanguageId == validLanguageId) &&
