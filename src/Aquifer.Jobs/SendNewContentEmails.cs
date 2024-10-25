@@ -3,11 +3,9 @@ using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Jobs.Configuration;
 using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using SendGrid;
 
 namespace Aquifer.Jobs;
 
@@ -66,21 +64,6 @@ public class SendNewContentEmails(
         telemetryClient.TrackEvent("marketing-new-content-email-sent",
             new Dictionary<string, string>
             {
-                { "email", subscriber.Email },
-                { "name", subscriber.Name },
-                { "content", emailContent }
-            });
-    }
-
-    private async Task LogSendFailureAsync(Response response, SubscriberInfo subscriber, string emailContent, CancellationToken ct)
-    {
-        var responseContent = await response.Body.ReadAsStringAsync(ct);
-        telemetryClient.TrackTrace("Failed to Send Content Update Email",
-            SeverityLevel.Error,
-            new Dictionary<string, string>
-            {
-                { "statusCode", response.StatusCode.ToString() },
-                { "response", responseContent },
                 { "email", subscriber.Email },
                 { "name", subscriber.Name },
                 { "content", emailContent }
