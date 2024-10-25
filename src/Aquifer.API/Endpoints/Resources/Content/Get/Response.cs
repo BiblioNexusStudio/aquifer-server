@@ -22,6 +22,7 @@ public class Response
     public int ResourceContentVersionId { get; set; }
     public bool IsDraft { get; set; }
     public ResourceContentVersionReviewLevel ReviewLevel { get; set; }
+    public bool CanPullBackToCompanyReview { get; set; }
     public object Content => JsonUtilities.DefaultDeserialize(ContentValue);
     public int ContentSize { get; set; }
     public string DisplayName { get; set; } = null!;
