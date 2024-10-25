@@ -14,9 +14,9 @@ public class Validator : Validator<Request>
         RuleFor(x => x.Offset).GreaterThanOrEqualTo(0);
         RuleFor(x => x.Limit).InclusiveBetween(0, 1000);
         RuleFor(x => x)
-            .Must(x => (x.LanguageCode is not null && x.LanguageId == default)
+            .Must(x => (x.LanguageCode is not null && x.LanguageId == null)
                        || (x is { LanguageId: not null, LanguageCode: null })
-                       || (x.LanguageId == default && x.LanguageCode is null))
-            .WithMessage("Either languageId or languageCode is optional. Cannot use both.");
+                       || (x.LanguageId == null && x.LanguageCode is null))
+            .WithMessage("Cannot use both languageId and languageCode");
     }
 }
