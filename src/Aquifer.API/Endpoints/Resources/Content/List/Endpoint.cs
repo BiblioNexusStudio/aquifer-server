@@ -61,7 +61,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                     INNER JOIN ParentResources PR ON PR.id =R.ParentResourceId
                     INNER JOIN Languages L ON L.Id = RC.LanguageId
                     INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
-                WHERE RC.MediaType != {(int)ResourceContentMediaType.Audio}
+                WHERE RC.MediaType != {(int)ResourceContentMediaType.Audio} 
+                AND RC.Status != {(int)ResourceContentStatus.CompleteNotApplicable} 
+                AND RC.Status != {(int)ResourceContentStatus.TranslationNotApplicable}
                 {ApplyLanguageIdFilter(req.LanguageId)}
                 {ApplyParentResourceIdFilter(req.ParentResourceId)}
                 {ApplyIsPublishedFilter(req.IsPublished)}
