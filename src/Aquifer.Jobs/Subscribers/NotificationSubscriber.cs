@@ -35,14 +35,14 @@ public sealed class NotificationSubscriber(
         {
             var templatedEmail = new TemplatedEmail(
                 From: NotificationsHelper.NotificationSenderEmailAddress,
-                Subject: "Aquifer Notifications: Project Started",
                 // Template Designer: https://mc.sendgrid.com/dynamic-templates/d-7760ec3b5ce34b179384d4783cc1bd81/version/e83075a3-ba61-4d42-922f-9fd5df4ee45c/editor
                 TemplateId: "d-7760ec3b5ce34b179384d4783cc1bd81",
-                DynamicTemplateData: new
+                DynamicTemplateData: new Dictionary<string, object>
                 {
-                    _configurationOptions.Value.AquiferAdminBaseUri,
-                    ProjectId = project.Id,
-                    ProjectName = project.Name,
+                    [EmailService.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notifications: Project Started",
+                    ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
+                    ["projectId"] = project.Id,
+                    ["projectName"] = project.Name,
                 },
                 Tos: [NotificationsHelper.NotificationToEmailAddress],
                 Bccs: [NotificationsHelper.GetEmailAddress(companyLeadUser)]);
@@ -106,17 +106,17 @@ public sealed class NotificationSubscriber(
 
         var templatedEmail = new TemplatedEmail(
             From: NotificationsHelper.NotificationSenderEmailAddress,
-            Subject: "Aquifer Notifications: New Resource Comment",
             // Template Designer: https://mc.sendgrid.com/dynamic-templates/d-ea84b461ed0f439589098053f8810189/version/26393e82-7d17-4b8f-a37c-cb20f62d8802/editor
             TemplateId: "d-ea84b461ed0f439589098053f8810189",
-            DynamicTemplateData: new
+            DynamicTemplateData: new Dictionary<string, object>
             {
-                _configurationOptions.Value.AquiferAdminBaseUri,
-                CommenterUserName = NotificationsHelper.GetUserFullName(commenterUser),
-                CommentHtml = HttpUtility.HtmlEncode(resourceCommentData.Comment).Replace("\n", "<br>"),
-                ParentResourceName = resourceCommentData.ParentResourceDisplayName,
-                resourceCommentData.ResourceContentId,
-                ResourceName = resourceCommentData.ResourceEnglishLabel,
+                [EmailService.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notifications: New Resource Comment",
+                ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
+                ["commenterUserName"] = NotificationsHelper.GetUserFullName(commenterUser),
+                ["commentHtml"] = HttpUtility.HtmlEncode(resourceCommentData.Comment).Replace("\n", "<br>"),
+                ["parentResourceName"] = resourceCommentData.ParentResourceDisplayName,
+                ["resourceContentId"] = resourceCommentData.ResourceContentId,
+                ["resourceName"] = resourceCommentData.ResourceEnglishLabel,
             },
             Tos: [NotificationsHelper.NotificationToEmailAddress],
             Bccs: previouslyAssignedUsers

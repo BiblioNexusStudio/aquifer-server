@@ -54,14 +54,14 @@ public class SendResourceAssignmentNotifications(
             .GroupBy(uh => uh.AssignedUser.Id)
             .Select(userGrouping => new TemplatedEmail(
                 From: NotificationsHelper.NotificationSenderEmailAddress,
-                Subject: "Aquifer Notification: Resources Assigned",
                 // Template Designer: https://mc.sendgrid.com/dynamic-templates/d-d85f76c6b4d344f5bc8b90b27cc40cc3/version/b6955fec-6f2e-41f7-a9f5-fb695a5b8ed7/editor
                 TemplateId: "d-d85f76c6b4d344f5bc8b90b27cc40cc3",
-                DynamicTemplateData: new
+                DynamicTemplateData: new Dictionary<string, object>
                 {
-                    _configurationOptions.Value.AquiferAdminBaseUri,
-                    ResourceCount = userGrouping.Count(),
-                    ParentResources = userGrouping
+                    [EmailService.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notification: Resources Assigned",
+                    ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
+                    ["resourceCount"] = userGrouping.Count(),
+                    ["parentResources"] = userGrouping
                         .GroupBy(uh => uh.ParentResourceName)
                         .OrderBy(parentResourceGrouping => parentResourceGrouping.Key)
                         .Select(parentResourceGrouping => new

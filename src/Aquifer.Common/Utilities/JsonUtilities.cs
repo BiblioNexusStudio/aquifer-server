@@ -12,12 +12,6 @@ public static class JsonUtilities
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public static readonly JsonSerializerOptions QueueMessageOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    };
-
     public static T DefaultDeserialize<T>(string json)
     {
         return JsonSerializer.Deserialize<T>(json, DefaultOptions)!;

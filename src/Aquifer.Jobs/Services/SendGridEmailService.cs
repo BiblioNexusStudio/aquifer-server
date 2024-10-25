@@ -1,7 +1,5 @@
-using System.Text.Json;
 using Aquifer.Common.Clients;
 using Aquifer.Common.Services;
-using Newtonsoft.Json.Linq;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using EmailAddress = Aquifer.Common.Services.EmailAddress;
@@ -79,24 +77,10 @@ public class SendGridEmailService : IEmailService
                     Bccs = email.Bccs?.Select(MapToSendGridEmailAddress).ToList(),
                 },
             ],
-            Subject = email.Subject,
             TemplateId = email.TemplateId,
         };
 
-        if (email.DynamicTemplateData is JsonElement jsonElement)
-        {
-            // HACK: If our dynamic template data object was deserialized using System.Text.Json then it will be a JsonElement,
-            // not the original object (see https://github.com/dotnet/runtime/issues/29960).
-            // This would be fine if SendGridClient used System.Text.Json for serialization but it uses Newtonsoft.Json, instead.
-            // Therefore, we need to help it out to serialize correctly by manually creating a JObject from Newtonsoft.Json
-            // or else Newtonsoft.Json will serialize the JsonElement type instead of using the JSON inside of it.
-            var jObject = JObject.Parse(jsonElement.GetRawText());
-            sendGridMessage.SetTemplateData(jObject);
-        }
-        else
-        {
-            sendGridMessage.SetTemplateData(email.DynamicTemplateData);
-        }
+        sendGridMessage.SetTemplateData(email.DynamicTemplateData);
 
         return sendGridMessage;
     }

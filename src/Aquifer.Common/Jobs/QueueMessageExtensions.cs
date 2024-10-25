@@ -4,14 +4,14 @@ using Microsoft.Extensions.Logging;
 
 namespace Aquifer.Common.Jobs;
 
-internal static class QueueMessageExtensions
+public static class QueueMessageExtensions
 {
     public static TDto Deserialize<TDto, TLogger>(this QueueMessage message, ILogger<TLogger> logger)
     {
         TDto? dto;
         try
         {
-            dto = JsonSerializer.Deserialize<TDto>(message.MessageText);
+            dto = MessagesJsonSerializer.Deserialize<TDto>(message.MessageText);
         }
         catch (JsonException ex)
         {
