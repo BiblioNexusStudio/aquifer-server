@@ -29,7 +29,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService _cachi
 
         if (totalCount == 0)
         {
-            await SendOkAsync(new Response(), ct);
+            await SendOkAsync(new Response{Offset = req.Offset}, ct);
             return;
         }
 
