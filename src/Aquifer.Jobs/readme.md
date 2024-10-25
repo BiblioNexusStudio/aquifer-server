@@ -1,11 +1,35 @@
-# TimerTrigger - C<span>#</span>
+# Aquifer.Jobs
 
-The `TimerTrigger` makes it incredibly easy to have your functions executed on a schedule. This sample demonstrates a simple use case of calling your function every 5 minutes.
+We have two kinds of Azure Function jobs, Subscriber and Managers.  Both kinds are triggered and run asynchronously.
 
-## How it works
+## Managers
 
-For a `TimerTrigger` to work, you provide a schedule in the form of a [cron expression](https://en.wikipedia.org/wiki/Cron#CRON_expression)(See the link for full details). A cron expression is a string with 6 separate expressions which represent a given schedule via patterns. The pattern we use to represent every 5 minutes is `0 */5 * * * *`. This, in plain text, means: "When seconds is equal to 0, minutes is divisible by 5, for any hour, day of the month, month, day of the week, or year".
+Managers run on a schedule with an Azure `TimerTrigger`.  Timer triggers do not retry by default but you can add a `FixedDelayRetryAttribute`
+or an `ExponentialBackoffRetryAttribute` if desired.  Timer data is stored in Azure blob storage (you should never access it programatically).
 
-## Learn more
+Azure has built in logging on error and built in logging on retry (if a retry attribute is provided).  You should add logging on success.
 
-<TODO> Documentation
+## Subscribers
+
+Subscribers listen to an Azure Storage Queue via a `QueueTrigger` and run when a new queue message is found.
+By default these kinds of Azure Functions will retry up to five times and will log on error on retry
+(these settings are configurable in the `host.json` file). You should add logging on success.
+
+Note that queue names should be specified as `kebab-case`, should begin with a verb, and have max length limitations.
+
+Queue processing code should assume failure.  Thus, each queue should ideally only take a single action and should successfully handle retries
+if a failure occurs at any stage of execution.  If necessary, prefer to risk performing an operation twice on failure,
+such as sending an email to a user, rather than not doing the operation at all.
+
+If the queue processing fails after all retries then the queue message will be moved from the
+queue (e.g. `queue-name`) to the poison queue (e.g. `queue-name-poison`) to await dev intervention.
+Using [Azure Storage Explorer](https://azure.microsoft.com/en-us/products/storage/storage-explorer) you can view these messages
+and move them back to the original queue for manual replay.
+
+### Publishing Example
+
+TODO Add example publish code links
+
+### Subscribing Example
+
+TODO Add example subscribe code links
