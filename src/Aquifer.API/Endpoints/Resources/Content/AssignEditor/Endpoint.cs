@@ -152,7 +152,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 ? ResourceContentStatus.TranslationCompanyReview
                 : ResourceContentStatus.AquiferizeCompanyReview;
         }
-        else if (originalStatus != ResourceContentStatus.TranslationAiDraftComplete)
+        else if (Constants.PublisherReviewStatuses.Contains(originalStatus))
+        {
+            draftVersion.ResourceContent.Status = (originalStatus == ResourceContentStatus.TranslationPublisherReview)
+                ? ResourceContentStatus.TranslationCompanyReview
+                : ResourceContentStatus.AquiferizeCompanyReview;
+        }
+        else if (originalStatus == ResourceContentStatus.TranslationAiDraftComplete)
         {
             draftVersion.ResourceContent.Status = Constants.TranslationStatuses.Contains(originalStatus) 
                     ? ResourceContentStatus.TranslationEditorReview
