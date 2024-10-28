@@ -142,10 +142,14 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         UserEntity userToAssign,
         ResourceContentVersionEntity draftVersion)
     {
-        if (userToAssign.Role is UserRole.Manager && originalStatus == ResourceContentStatus.TranslationNotApplicable)
+        if (originalStatus == ResourceContentStatus.TranslationAiDraftComplete)
         {
-            draftVersion.ResourceContent.Status = ResourceContentStatus.TranslationCompanyReview;
+            draftVersion.ResourceContent.Status = ResourceContentStatus.TranslationEditorReview;
         }
+        else if (originalStatus == ResourceContentStatus.New)
+        {
+            draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeEditorReview;
+        } 
         else if (isTakingBackFromReviewPending)
         {
             draftVersion.ResourceContent.Status = Constants.ReviewPendingStatuses.Contains(originalStatus)
@@ -158,15 +162,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 ? ResourceContentStatus.TranslationCompanyReview
                 : ResourceContentStatus.AquiferizeCompanyReview;
         }
-        else if (originalStatus == ResourceContentStatus.TranslationAiDraftComplete)
+        else if (userToAssign.Role is UserRole.Manager && originalStatus == ResourceContentStatus.TranslationNotApplicable)
         {
-            draftVersion.ResourceContent.Status = Constants.TranslationStatuses.Contains(originalStatus) 
-                    ? ResourceContentStatus.TranslationEditorReview
-                    : ResourceContentStatus.AquiferizeEditorReview;
+            draftVersion.ResourceContent.Status = ResourceContentStatus.TranslationCompanyReview;
         }
-        else if (originalStatus == ResourceContentStatus.New)
-        {
-            draftVersion.ResourceContent.Status = ResourceContentStatus.TranslationEditorReview;
-        } 
     }
 }
