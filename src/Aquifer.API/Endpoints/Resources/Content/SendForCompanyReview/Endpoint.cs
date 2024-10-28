@@ -1,19 +1,23 @@
-using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.Content.SendForManagerReview;
+namespace Aquifer.API.Endpoints.Resources.Content.SendForCompanyReview;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService)
     : Endpoint<Request, Response>
 {
     public override void Configure()
     {
-        Post("/resources/content/{ContentId}/send-for-manager-review", "/resources/content/send-for-manager-review");
-        Permissions(PermissionName.AssignContent);
+        // TODO: remove *-manager-review paths when confident they are depricated fully. - Kasey
+        Post(
+            "/resources/content/{ContentId}/send-for-manager-review",
+            "/resources/content/send-for-manager-review",
+            "/resources/content/{ContentId}/send-for-company-review",
+            "/resources/content/send-for-company-review"
+        );
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
@@ -21,7 +25,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var contentIds = request.ContentId is not null ? [request.ContentId.Value] : request.ContentIds!;
         List<ResourceContentStatus> allowedStatuses =
         [
-            ResourceContentStatus.AquiferizeInProgress, ResourceContentStatus.TranslationInProgress
+            ResourceContentStatus.AquiferizeEditorReview, ResourceContentStatus.TranslationEditorReview
         ];
 
         var draftVersions = await dbContext.ResourceContentVersions
@@ -43,7 +47,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         {
             if (user.Id != draftVersion.AssignedUserId)
             {
-                ThrowError("User must be assigned to content to send for manager review.");
+                ThrowError("User must be assigned to content to send for company review.");
             }
 
             await historyService.AddSnapshotHistoryAsync(draftVersion,
@@ -51,9 +55,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 draftVersion.ResourceContent.Status,
                 ct);
 
-            var reviewPendingStatus = draftVersion.ResourceContent.Status == ResourceContentStatus.TranslationInProgress
-                ? ResourceContentStatus.TranslationManagerReview
-                : ResourceContentStatus.AquiferizeManagerReview;
+            var reviewPendingStatus = draftVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview
+                ? ResourceContentStatus.TranslationCompanyReview
+                : ResourceContentStatus.AquiferizeCompanyReview;
 
             draftVersion.ResourceContent.Status = reviewPendingStatus;
             await SetAssignedUserId(user,

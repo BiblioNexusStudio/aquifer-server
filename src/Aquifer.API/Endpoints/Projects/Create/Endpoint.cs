@@ -225,7 +225,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     [
                         new ResourceContentVersionStatusHistoryEntity
                         {
-                            Status = ResourceContentStatus.TranslationNotStarted,
+                            Status = ResourceContentStatus.TranslationAwaitingAiDraft,
                             ChangedByUserId = user.Id,
                             Created = DateTime.UtcNow
                         }
@@ -237,7 +237,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     LanguageId = languageId,
                     ResourceId = resourceContent.ResourceId,
                     MediaType = resourceContent.MediaType,
-                    Status = ResourceContentStatus.TranslationNotStarted,
+                    Status = ResourceContentStatus.TranslationAwaitingAiDraft,
                     Trusted = true,
                     Versions = [newResourceContentVersion]
                 };
@@ -251,9 +251,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     ThrowError(r => r.ResourceIds, "One or more resources are already in a project.");
                 }
 
-                if (resourceContent.Status != ResourceContentStatus.TranslationNotStarted)
+                if (resourceContent.Status != ResourceContentStatus.TranslationAwaitingAiDraft)
                 {
-                    ThrowError(r => r.ResourceIds, "One or more resources exist but are not in TranslationNotStarted status.");
+                    ThrowError(r => r.ResourceIds, "One or more resources exist but are not in TranslationAwaitingAiDraft status.");
                 }
 
                 var existingVersion = resourceContent.Versions.FirstOrDefault(v => v.IsDraft);

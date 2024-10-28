@@ -23,11 +23,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         List<ResourceContentStatus> statuses =
         [
             ResourceContentStatus.New,
-            ResourceContentStatus.AquiferizeInProgress,
-            ResourceContentStatus.TranslationNotStarted,
-            ResourceContentStatus.TranslationInProgress,
-            ResourceContentStatus.AquiferizeManagerReview,
-            ResourceContentStatus.TranslationManagerReview
+            ResourceContentStatus.AquiferizeEditorReview,
+            ResourceContentStatus.TranslationAiDraftComplete,
+            ResourceContentStatus.TranslationEditorReview,
+            ResourceContentStatus.AquiferizeCompanyReview,
+            ResourceContentStatus.TranslationCompanyReview
         ];
 
         var query = $"""

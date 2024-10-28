@@ -38,13 +38,18 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     private async Task<Response?> GetProjectAsync(Request req, CancellationToken ct)
     {
-        return await dbContext.Projects.Where(x => x.Id == req.ProjectId).Include(x => x.CompanyLeadUser).Select(x => new Response
+        return await dbContext.Projects
+        .Where(x => x.Id == req.ProjectId)
+        .Include(x => x.CompanyLeadUser)
+        .Select(x => new Response
         {
             Id = x.Id,
             Name = x.Name,
             Company = x.Company.Name,
             Language = x.Language.EnglishDisplay,
-            CompanyLead = x.CompanyLeadUser != null ? $"{x.CompanyLeadUser.FirstName} {x.CompanyLeadUser.LastName}" : null,
+            CompanyLead = x.CompanyLeadUser != null 
+                ? $"{x.CompanyLeadUser.FirstName} {x.CompanyLeadUser.LastName}" 
+                : null,
             CompanyLeadUser = UserDto.FromUserEntity(x.CompanyLeadUser),
             ProjectPlatform = x.ProjectPlatform.Name,
             ProjectManager = $"{x.ProjectManagerUser.FirstName} {x.ProjectManagerUser.LastName}",
@@ -62,17 +67,18 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 NotStarted =
                     x.ProjectResourceContents.Count(prc =>
                         ProjectResourceStatusCounts.NotStartedStatuses.Contains(prc.ResourceContent.Status)),
-                InProgress =
+                EditorReview =
                     x.ProjectResourceContents.Count(prc =>
-                        ProjectResourceStatusCounts.InProgressStatuses.Contains(prc.ResourceContent.Status)),
-                InManagerReview =
+                        ProjectResourceStatusCounts.EditorReviewStatuses.Contains(prc.ResourceContent.Status)),
+                InCompanyReview =
                     x.ProjectResourceContents.Count(prc =>
-                        ProjectResourceStatusCounts.InManagerReviewStatuses.Contains(prc.ResourceContent.Status)),
+                        ProjectResourceStatusCounts.InCompanyReviewStatuses.Contains(prc.ResourceContent.Status)),
                 InPublisherReview =
                     x.ProjectResourceContents.Count(prc =>
                         ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(prc.ResourceContent.Status)),
-                Completed = x.ProjectResourceContents.Count(prc =>
-                    ProjectResourceStatusCounts.CompletedStatuses.Contains(prc.ResourceContent.Status))
+                Completed = 
+                    x.ProjectResourceContents.Count(prc =>
+                        ProjectResourceStatusCounts.CompletedStatuses.Contains(prc.ResourceContent.Status))
             }
         }).SingleOrDefaultAsync(ct);
     }

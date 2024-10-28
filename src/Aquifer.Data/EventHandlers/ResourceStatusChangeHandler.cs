@@ -15,7 +15,7 @@ public static class ResourceStatusChangeHandler
     {
         List<int> completedContentIds = [];
         List<int> inReviewContentIds = [];
-        List<int> inProgressIds = [];
+        List<int> editorReviewIds = [];
 
         entityEntries.Where(entry => entry is { State: EntityState.Unchanged, Entity: ResourceContentEntity })
             .Select(x => x.Entity as ResourceContentEntity)
@@ -32,15 +32,15 @@ public static class ResourceStatusChangeHandler
                         or ResourceContentStatus.TranslationNotApplicable:
                         inReviewContentIds.Add(x.Id);
                         break;
-                    case ResourceContentStatus.TranslationInProgress:
-                    case ResourceContentStatus.AquiferizeInProgress:
-                        inProgressIds.Add(x.Id);
+                    case ResourceContentStatus.TranslationEditorReview:
+                    case ResourceContentStatus.AquiferizeEditorReview:
+                        editorReviewIds.Add(x.Id);
                         break;
                 }
 #pragma warning restore IDE0010
             });
 
-        if (completedContentIds.Count + inReviewContentIds.Count + inProgressIds.Count == 0)
+        if (completedContentIds.Count + inReviewContentIds.Count + editorReviewIds.Count == 0)
         {
             return;
         }
@@ -69,13 +69,13 @@ public static class ResourceStatusChangeHandler
                     .SetProperty(p => p.Updated, DateTime.UtcNow));
         }
 
-        if (inProgressIds.Count > 0)
+        if (editorReviewIds.Count > 0)
         {
             await dbContext.Projects.Where(x =>
                     x.ActualDeliveryDate != null &&
                     x.ActualPublishDate == null &&
-                    x.ProjectResourceContents.Any(prc => inProgressIds.Contains(prc.ResourceContent.Id)) &&
-                    x.ProjectResourceContents.Where(prc => !inProgressIds.Contains(prc.ResourceContent.Id)).All(prc => InReviewOrGreaterStatuses.Contains(prc.ResourceContent.Status)))
+                    x.ProjectResourceContents.Any(prc => editorReviewIds.Contains(prc.ResourceContent.Id)) &&
+                    x.ProjectResourceContents.Where(prc => !editorReviewIds.Contains(prc.ResourceContent.Id)).All(prc => InReviewOrGreaterStatuses.Contains(prc.ResourceContent.Status)))
                 .ExecuteUpdateAsync(x => x
                     .SetProperty(p => p.ActualDeliveryDate, null as DateOnly?)
                     .SetProperty(p => p.Updated, DateTime.UtcNow));
