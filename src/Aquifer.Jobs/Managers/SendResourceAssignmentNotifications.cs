@@ -1,5 +1,6 @@
 using Aquifer.Common.Services;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
 using Aquifer.Jobs.Configuration;
 using Microsoft.Azure.Functions.Worker;
@@ -34,6 +35,7 @@ public class SendResourceAssignmentNotifications(
                     rcvauh.AssignedUser != null &&
                     rcvauh.AssignedUser.Enabled &&
                     rcvauh.AssignedUser.AquiferNotificationsEnabled &&
+                    (rcvauh.AssignedUser.Role == UserRole.Editor || rcvauh.AssignedUser.Role == UserRole.Reviewer) &&
                     rcvauh.AssignedUserId == rcvauh.ResourceContentVersion.AssignedUserId &&
                     (rcvauh.Created > jobHistory.LastProcessed))
                 .Select(rcvauh => new
