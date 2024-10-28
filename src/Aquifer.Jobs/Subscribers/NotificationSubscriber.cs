@@ -56,9 +56,8 @@ public sealed class NotificationSubscriber(
         }
         else
         {
-            _logger.LogWarning(
-                "Unable to send project started notification for Project ID {ProjectId} because there is no assigned Company or Company Lead.",
-                project.Id);
+            throw new InvalidOperationException(
+                $"Unable to send project started notification for Project ID {project.Id} because there is no assigned Company or Company Lead.");
         }
     }
 
