@@ -4,16 +4,16 @@ namespace Aquifer.API.Endpoints.Projects;
 
 public class ProjectResourceStatusCounts
 {
-    internal static readonly List<ResourceContentStatus> InManagerReviewStatuses =
+    internal static readonly List<ResourceContentStatus> InCompanyReviewStatuses =
     [
-        ResourceContentStatus.AquiferizeManagerReview,
-        ResourceContentStatus.TranslationManagerReview
+        ResourceContentStatus.AquiferizeCompanyReview,
+        ResourceContentStatus.TranslationCompanyReview
     ];
 
-    internal static readonly List<ResourceContentStatus> InProgressStatuses =
+    internal static readonly List<ResourceContentStatus> EditorReviewStatuses =
     [
-        ResourceContentStatus.AquiferizeInProgress,
-        ResourceContentStatus.TranslationInProgress
+        ResourceContentStatus.AquiferizeEditorReview,
+        ResourceContentStatus.TranslationEditorReview
     ];
 
     internal static readonly List<ResourceContentStatus> InPublisherReviewStatuses =
@@ -28,7 +28,8 @@ public class ProjectResourceStatusCounts
     internal static readonly List<ResourceContentStatus> NotStartedStatuses =
     [
         ResourceContentStatus.New,
-        ResourceContentStatus.TranslationNotStarted
+        ResourceContentStatus.TranslationAwaitingAiDraft,
+        ResourceContentStatus.TranslationAiDraftComplete
     ];
 
     internal static readonly List<ResourceContentStatus> CompletedStatuses =
@@ -37,8 +38,8 @@ public class ProjectResourceStatusCounts
     ];
 
     public int NotStarted { get; init; }
-    public int InProgress { get; init; }
-    public int InManagerReview { get; init; }
+    public int EditorReview { get; init; }
+    public int InCompanyReview { get; init; }
     public int InPublisherReview { get; init; }
     public int Completed { get; init; }
 }

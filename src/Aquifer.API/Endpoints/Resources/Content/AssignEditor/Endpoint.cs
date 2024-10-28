@@ -142,22 +142,29 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         UserEntity userToAssign,
         ResourceContentVersionEntity draftVersion)
     {
-        if (userToAssign.Role is not UserRole.Manager || !Constants.ManagerReviewStatuses.Contains(originalStatus))
+        if (originalStatus == ResourceContentStatus.TranslationAiDraftComplete)
         {
-            var newStatus = isTakingBackFromReviewPending
-                ?
-                Constants.TranslationStatuses.Contains(originalStatus)
-                    ? ResourceContentStatus.TranslationManagerReview
-                    : ResourceContentStatus.AquiferizeManagerReview
-                : Constants.TranslationStatuses.Contains(originalStatus)
-                    ? ResourceContentStatus.TranslationInProgress
-                    : ResourceContentStatus.AquiferizeInProgress;
-
-            draftVersion.ResourceContent.Status = newStatus;
+            draftVersion.ResourceContent.Status = ResourceContentStatus.TranslationEditorReview;
+        }
+        else if (originalStatus == ResourceContentStatus.New)
+        {
+            draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeEditorReview;
+        } 
+        else if (isTakingBackFromReviewPending)
+        {
+            draftVersion.ResourceContent.Status = Constants.ReviewPendingStatuses.Contains(originalStatus)
+                ? ResourceContentStatus.TranslationCompanyReview
+                : ResourceContentStatus.AquiferizeCompanyReview;
+        }
+        else if (Constants.PublisherReviewStatuses.Contains(originalStatus))
+        {
+            draftVersion.ResourceContent.Status = (originalStatus == ResourceContentStatus.TranslationPublisherReview)
+                ? ResourceContentStatus.TranslationCompanyReview
+                : ResourceContentStatus.AquiferizeCompanyReview;
         }
         else if (userToAssign.Role is UserRole.Manager && originalStatus == ResourceContentStatus.TranslationNotApplicable)
         {
-            draftVersion.ResourceContent.Status = ResourceContentStatus.TranslationManagerReview;
+            draftVersion.ResourceContent.Status = ResourceContentStatus.TranslationCompanyReview;
         }
     }
 }

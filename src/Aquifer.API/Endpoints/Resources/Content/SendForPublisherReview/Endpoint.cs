@@ -21,7 +21,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var contentIds = request.ContentId is not null ? [request.ContentId.Value] : request.ContentIds!;
         List<ResourceContentStatus> allowedStatuses =
         [
-            ResourceContentStatus.AquiferizeManagerReview, ResourceContentStatus.TranslationManagerReview
+            ResourceContentStatus.AquiferizeCompanyReview, ResourceContentStatus.TranslationCompanyReview
         ];
 
         var draftVersions = await dbContext.ResourceContentVersions

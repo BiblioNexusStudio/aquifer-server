@@ -43,8 +43,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                              WHERE rc2.ResourceId = rc.ResourceId
                              AND rc2.MediaType = {(int)ResourceContentMediaType.Text}
                              AND rc2.LanguageId = @LanguageId
-                             AND (rc2.Status != {(int)ResourceContentStatus.TranslationNotStarted}
-                                 OR EXISTS (SELECT 1 FROM ProjectResourceContents prc WHERE prc.ResourceContentId = rc2.Id))
+                             AND ((rc2.Status != {(int)ResourceContentStatus.TranslationAwaitingAiDraft} 
+                                    AND rc2.Status != {(int)ResourceContentStatus.TranslationAiDraftComplete}) 
+                                OR EXISTS (SELECT 1 FROM ProjectResourceContents prc WHERE prc.ResourceContentId = rc2.Id))
                          )
                          AND (@SearchQuery = '' OR r.EnglishLabel LIKE '%' + @SearchQuery + '%')
                      ),
@@ -69,7 +70,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                          r.EnglishLabel AS Title,
                          r.SortOrder,
                          CAST(CASE WHEN rc.Status IN
-                                 ({(int)ResourceContentStatus.AquiferizeInProgress},
+                                 ({(int)ResourceContentStatus.AquiferizeEditorReview},
                                   {(int)ResourceContentStatus.AquiferizePublisherReview},
                                   {(int)ResourceContentStatus.AquiferizeReviewPending}) THEN 1 ELSE 0 END AS BIT) AS IsBeingAquiferized
                      FROM
