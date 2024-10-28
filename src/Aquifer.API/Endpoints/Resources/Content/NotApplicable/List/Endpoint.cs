@@ -17,14 +17,15 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     public override async Task HandleAsync(CancellationToken ct)
     {
         Response = await dbContext.ResourceContents
-            .Where(x => x.Status == ResourceContentStatus.TranslationNotApplicable && x.ProjectResourceContents.Count != 0).Select(x =>
-                new Response
-                {
-                    Id = x.Id,
-                    Title = x.Resource.EnglishLabel,
-                    ParentResourceName = x.Resource.ParentResource.DisplayName,
-                    Language = x.Language.DisplayName,
-                    ProjectName = x.ProjectResourceContents.Single().Project.Name
-                }).ToListAsync(ct);
+            .Where(x => x.Status == ResourceContentStatus.TranslationNotApplicable && x.ProjectResourceContents.Count != 0)
+            .Select(x => new Response
+            {
+                Id = x.Id,
+                Title = x.Resource.EnglishLabel,
+                ParentResourceName = x.Resource.ParentResource.DisplayName,
+                Language = x.Language.EnglishDisplay,
+                ProjectName = x.ProjectResourceContents.Single().Project.Name
+            })
+            .ToListAsync(ct);
     }
 }
