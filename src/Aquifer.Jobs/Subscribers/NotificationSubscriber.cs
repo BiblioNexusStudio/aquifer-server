@@ -100,9 +100,6 @@ public sealed class NotificationSubscriber(
             return;
         }
 
-        var commenterUser = await _dbContext.Users
-            .SingleAsync(u => u.Id == resourceCommentData.UserId, ct);
-
         var templatedEmail = new TemplatedEmail(
             From: NotificationsHelper.NotificationSenderEmailAddress,
             // Template Designer: https://mc.sendgrid.com/dynamic-templates/d-ea84b461ed0f439589098053f8810189/version/26393e82-7d17-4b8f-a37c-cb20f62d8802/editor
@@ -111,7 +108,7 @@ public sealed class NotificationSubscriber(
             {
                 [EmailService.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notifications: New Resource Comment",
                 ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
-                ["commenterUserName"] = NotificationsHelper.GetUserFullName(commenterUser),
+                ["commenterUserName"] = NotificationsHelper.GetUserFullName(resourceCommentData.UserFirstName, resourceCommentData.UserLastName),
                 ["commentHtml"] = HttpUtility.HtmlEncode(resourceCommentData.Comment).Replace("\n", "<br>"),
                 ["parentResourceName"] = resourceCommentData.ParentResourceDisplayName,
                 ["resourceContentId"] = resourceCommentData.ResourceContentId,
@@ -136,6 +133,8 @@ public sealed class NotificationSubscriber(
         int CommentId,
         string Comment,
         int UserId,
+        string UserFirstName,
+        string UserLastName,
         int ResourceContentId,
         string ResourceEnglishLabel,
         string ParentResourceDisplayName);
@@ -150,11 +149,14 @@ public sealed class NotificationSubscriber(
                 c.Id AS CommentId,
                 c.Comment,
                 c.UserId,
+                u.FirstName AS UserFirstName,
+                u.LastName AS UserLastName,
                 rc.Id AS ResourceContentId,
                 r.EnglishLabel AS ResourceEnglishLabel,
                 pr.DisplayName AS ParentResourceDisplayName
             FROM
                 Comments c
+                JOIN Users u ON u.Id = c.UserId
                 JOIN CommentThreads ct ON ct.Id = c.ThreadId
                 JOIN ResourceContentVersionCommentThreads rcvct ON rcvct.CommentThreadId = ct.Id
                 JOIN ResourceContentVersions rcv ON rcv.Id = rcvct.ResourceContentVersionId

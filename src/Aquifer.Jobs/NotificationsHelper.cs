@@ -15,6 +15,11 @@ public static class NotificationsHelper
 
     public static string GetUserFullName(UserEntity userEntity)
     {
-        return $"{userEntity.FirstName} {userEntity.LastName}";
+        return GetUserFullName(userEntity.FirstName, userEntity.LastName);
+    }
+
+    public static string GetUserFullName(string firstName, string lastName)
+    {
+        return $"{firstName} {lastName}";
     }
 }
