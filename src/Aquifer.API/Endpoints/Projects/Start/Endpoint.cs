@@ -1,5 +1,6 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
+using Aquifer.Common.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -7,7 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Projects.Start;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService resourceHistoryService)
+public class Endpoint(
+    AquiferDbContext dbContext,
+    IUserService userService,
+    IResourceHistoryService resourceHistoryService,
+    INotificationService notificationService)
     : Endpoint<Request>
 {
     public override void Configure()
@@ -52,6 +57,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         project.Started = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(ct);
+
+        await notificationService.SendProjectStartedNotificationAsync(project.Id, ct);
 
         await SendNoContentAsync(ct);
     }

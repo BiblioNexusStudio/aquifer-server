@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Aquifer.Common.Clients.Http.IpAddressLookup;
+using Aquifer.Common.Jobs;
 using Aquifer.Common.Jobs.Messages;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -17,7 +18,7 @@ public class TrackResourceContentRequestJob(
 {
     [Function(nameof(TrackResourceContentRequestJob))]
     public async Task Run(
-        [QueueTrigger("%JobQueues:TrackResourceContentRequestQueue%", Connection = "AzureWebJobsStorage")] QueueMessage message,
+        [QueueTrigger(Queues.TrackResourceContentRequest)] QueueMessage message,
         CancellationToken ct)
     {
         try
