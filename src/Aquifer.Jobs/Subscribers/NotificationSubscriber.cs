@@ -31,7 +31,7 @@ public sealed class NotificationSubscriber(
             .FirstAsync(p => p.Id == message.ProjectId, ct);
 
         var companyLeadUser = project.CompanyLeadUser;
-        if (companyLeadUser is not null && companyLeadUser.AquiferNotificationsEnabled)
+        if (companyLeadUser is { Enabled: true, AquiferNotificationsEnabled: true })
         {
             var templatedEmail = new TemplatedEmail(
                 From: NotificationsHelper.NotificationSenderEmailAddress,
@@ -84,7 +84,7 @@ public sealed class NotificationSubscriber(
             .Distinct()
             .Join(
                 _dbContext.Users
-                    .Where(u => u.Id == resourceCommentData.UserId && u.AquiferNotificationsEnabled)
+                    .Where(u => u.Id == resourceCommentData.UserId && u.Enabled && u.AquiferNotificationsEnabled)
                     .SelectMany(u => u.Company.Users),
                 userId => userId,
                 u => u.Id,

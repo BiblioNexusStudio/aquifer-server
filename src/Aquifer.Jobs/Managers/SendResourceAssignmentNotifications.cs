@@ -32,6 +32,7 @@ public class SendResourceAssignmentNotifications(
         var userHistories = await _dbContext.ResourceContentVersionAssignedUserHistory
                 .Where(rcvauh =>
                     rcvauh.AssignedUser != null &&
+                    rcvauh.AssignedUser.Enabled &&
                     rcvauh.AssignedUser.AquiferNotificationsEnabled &&
                     rcvauh.AssignedUserId == rcvauh.ResourceContentVersion.AssignedUserId &&
                     (rcvauh.Created > jobHistory.LastProcessed))
