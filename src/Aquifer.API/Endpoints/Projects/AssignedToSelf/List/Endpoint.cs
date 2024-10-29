@@ -1,7 +1,6 @@
 ﻿using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,21 +39,20 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                         : null,
                 Counts = new ProjectResourceStatusCounts
                 {
-                    NotStarted = 
-                        x.ProjectResourceContents.Count(prc => 
+                    NotStarted =
+                        x.ProjectResourceContents.Count(prc =>
                             ProjectResourceStatusCounts.NotStartedStatuses.Contains(prc.ResourceContent.Status)),
-                    EditorReview = 
-                        x.ProjectResourceContents.Count(prc => 
+                    EditorReview =
+                        x.ProjectResourceContents.Count(prc =>
                             ProjectResourceStatusCounts.EditorReviewStatuses.Contains(prc.ResourceContent.Status)),
                     InCompanyReview =
-                        x.ProjectResourceContents.Count(prc => 
+                        x.ProjectResourceContents.Count(prc =>
                             ProjectResourceStatusCounts.InCompanyReviewStatuses.Contains(prc.ResourceContent.Status)),
                     InPublisherReview =
-                        x.ProjectResourceContents.Count(prc => 
+                        x.ProjectResourceContents.Count(prc =>
                             ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(prc.ResourceContent.Status)),
-                    Completed = 
-                        x.ProjectResourceContents.Count(prc => 
-                            prc.ResourceContent.Status == ResourceContentStatus.Complete)
+                    Completed = x.ProjectResourceContents.Count(prc =>
+                        ProjectResourceStatusCounts.CompletedStatuses.Contains(prc.ResourceContent.Status))
                 }
             })
             .ToListAsync(ct);
