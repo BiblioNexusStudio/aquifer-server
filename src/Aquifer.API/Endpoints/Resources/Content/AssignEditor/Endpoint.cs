@@ -39,7 +39,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         if (request.AssignedReviewerUserId is not null) {
             var reviewer = await dbContext.Users
                 .Where(u => u.Id == request.AssignedReviewerUserId
-                    && u.Enabled 
+                    && u.Enabled
                     && u.CompanyId == userToAssign.CompanyId
                     && (u.Role == UserRole.Reviewer || u.Role == UserRole.Manager))
                 .SingleOrDefaultAsync(ct);
@@ -149,10 +149,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         else if (originalStatus == ResourceContentStatus.New)
         {
             draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeEditorReview;
-        } 
+        }
         else if (isTakingBackFromReviewPending)
         {
-            draftVersion.ResourceContent.Status = Constants.ReviewPendingStatuses.Contains(originalStatus)
+            draftVersion.ResourceContent.Status = originalStatus == ResourceContentStatus.TranslationReviewPending
                 ? ResourceContentStatus.TranslationCompanyReview
                 : ResourceContentStatus.AquiferizeCompanyReview;
         }
