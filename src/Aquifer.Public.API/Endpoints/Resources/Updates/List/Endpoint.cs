@@ -101,6 +101,11 @@ public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService cachin
 
     private void ValidateCollectionCode(Request req)
     {
+        if (req.ResourceCollectionCode is null)
+        {
+            return;
+        }
+
         var exists = dbContext.ParentResources.Any(x => x.Code == req.ResourceCollectionCode);
         if (!exists)
         {
