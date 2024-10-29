@@ -876,6 +876,30 @@ namespace Aquifer.Data.Migrations
                     b.ToTable("IpAddressData");
                 });
 
+            modelBuilder.Entity("Aquifer.Data.Entities.JobHistoryEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("JobId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("LastProcessed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobId")
+                        .IsUnique();
+
+                    b.ToTable("JobHistory");
+                });
+
             modelBuilder.Entity("Aquifer.Data.Entities.LanguageEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -1708,6 +1732,11 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AquiferNotificationsEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");

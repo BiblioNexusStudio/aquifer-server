@@ -50,7 +50,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
           FROM Resources RES
                    INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
           WHERE RC.Status IN (
-              {(int)ResourceContentStatus.AquiferizeInProgress},
+              {(int)ResourceContentStatus.AquiferizeEditorReview},
               {(int)ResourceContentStatus.AquiferizeReviewPending},
               {(int)ResourceContentStatus.AquiferizePublisherReview})) AS AquiferizedResources,
 
@@ -60,13 +60,13 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
                    INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
                    INNER JOIN ResourceContentVersionStatusHistory RCVSH ON RCVSH.ResourceContentVersionId = RCV.Id
           WHERE RCVSH.Created > DATEADD(MM, DATEDIFF(MM, 0, GETUTCDATE()), 0)
-            AND RCVSH.Status = {(int)ResourceContentStatus.AquiferizeInProgress}) AS AquiferizedResourcesThisMonth,
+            AND RCVSH.Status = {(int)ResourceContentStatus.AquiferizeEditorReview}) AS AquiferizedResourcesThisMonth,
 
          (SELECT COUNT(DISTINCT RES.Id)
           FROM Resources RES
                    INNER JOIN ResourceContents RC ON RC.ResourceId = RES.Id
           WHERE RC.Status IN (
-              {(int)ResourceContentStatus.TranslationInProgress},
+              {(int)ResourceContentStatus.TranslationEditorReview},
               {(int)ResourceContentStatus.TranslationReviewPending},
               {(int)ResourceContentStatus.TranslationPublisherReview}
               )) AS TotalResourceBeingTranslated,
@@ -77,7 +77,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
                    INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
                    INNER JOIN ResourceContentVersionStatusHistory RCVSH ON RCVSH.ResourceContentVersionId = RCV.Id
           WHERE RCVSH.Created > DATEADD(MM, DATEDIFF(MM, 0, GETUTCDATE()), 0)
-            AND RCVSH.Status = {(int)ResourceContentStatus.TranslationInProgress}) AS TotalResourceBeingTranslatedThisMonth;
+            AND RCVSH.Status = {(int)ResourceContentStatus.TranslationEditorReview}) AS TotalResourceBeingTranslatedThisMonth;
          """;
 
     public override void Configure()

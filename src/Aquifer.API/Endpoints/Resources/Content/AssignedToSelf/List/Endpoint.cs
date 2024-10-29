@@ -40,7 +40,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         var user = await userService.GetUserFromJwtAsync(ct);
         var queryResults = await dbContext.Database
-            .SqlQueryRaw<SqlQueryResult>(Query, user.Id, (int)ResourceContentStatus.TranslationNotStarted).ToListAsync(ct);
+            .SqlQueryRaw<SqlQueryResult>(Query, user.Id, (int)ResourceContentStatus.TranslationAiDraftComplete).ToListAsync(ct);
         var resourceContentVersionIds = queryResults.Select(x => x.ResourceContentVersionId);
         var lastAssignments =
             await Helpers.GetLastAssignmentsAsync(resourceContentVersionIds, dbContext, ct);

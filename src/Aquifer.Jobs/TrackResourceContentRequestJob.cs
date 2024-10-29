@@ -1,5 +1,5 @@
-using System.Text.Json;
 using Aquifer.Common.Clients.Http.IpAddressLookup;
+using Aquifer.Common.Jobs;
 using Aquifer.Common.Jobs.Messages;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -17,40 +17,32 @@ public class TrackResourceContentRequestJob(
 {
     [Function(nameof(TrackResourceContentRequestJob))]
     public async Task Run(
-        [QueueTrigger("%JobQueues:TrackResourceContentRequestQueue%", Connection = "AzureWebJobsStorage")] QueueMessage message,
+        [QueueTrigger(Queues.TrackResourceContentRequest)] QueueMessage queueMessage,
         CancellationToken ct)
     {
-        try
-        {
-            var trackingMetadata = JsonSerializer.Deserialize<TrackResourceContentRequestMessage>(message.MessageText);
-            if (trackingMetadata == null)
-            {
-                logger.LogError("Failed to deserialize the message: {MessageText}", message.MessageText);
-                return;
-            }
+        var trackingMetadata = queueMessage.Deserialize<TrackResourceContentRequestMessage, TrackResourceContentRequestJob>(logger);
 
-            await LookupIpAddressAsync(trackingMetadata, ct);
-            await dbContext.ResourceContentRequests
-                .AddRangeAsync(trackingMetadata.ResourceContentIds.Select(x =>
-                    new ResourceContentRequestEntity
-                    {
-                        ResourceContentId = x,
-                        IpAddress = trackingMetadata.IpAddress,
-                        SubscriptionName = trackingMetadata.SubscriptionName,
-                        EndpointId = trackingMetadata.EndpointId,
-                        Source = trackingMetadata.Source,
-                        UserId = trackingMetadata.UserId,
-                        Created = message.InsertedOn?.UtcDateTime ?? DateTime.UtcNow
-                    }),
-                ct);
+        await LookupIpAddressAsync(trackingMetadata, ct);
+        await dbContext.ResourceContentRequests
+            .AddRangeAsync(trackingMetadata.ResourceContentIds.Select(x =>
+                new ResourceContentRequestEntity
+                {
+                    ResourceContentId = x,
+                    IpAddress = trackingMetadata.IpAddress,
+                    SubscriptionName = trackingMetadata.SubscriptionName,
+                    EndpointId = trackingMetadata.EndpointId,
+                    Source = trackingMetadata.Source,
+                    UserId = trackingMetadata.UserId,
+                    Created = queueMessage.InsertedOn?.UtcDateTime ?? DateTime.UtcNow
+                }),
+            ct);
 
-            await dbContext.SaveChangesAsync(ct);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "An error occurred while processing the message: {MessageText}", message.MessageText);
-            throw;
-        }
+        await dbContext.SaveChangesAsync(ct);
+
+        logger.LogInformation(
+            "Resource tracking successful for Endpoint ID {EndpointId} for IP Address {IpAddress}.",
+            trackingMetadata.EndpointId,
+            trackingMetadata.IpAddress);
     }
 
     private async Task LookupIpAddressAsync(TrackResourceContentRequestMessage trackingMetadata, CancellationToken ct)

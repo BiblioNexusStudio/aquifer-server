@@ -20,19 +20,20 @@ public static class Constants
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> AquiferizationStatuses =
         new([
-            ResourceContentStatus.AquiferizeInProgress,
+            ResourceContentStatus.AquiferizeEditorReview,
             ResourceContentStatus.AquiferizeReviewPending,
             ResourceContentStatus.AquiferizePublisherReview,
-            ResourceContentStatus.AquiferizeManagerReview
+            ResourceContentStatus.AquiferizeCompanyReview
         ]);
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> TranslationStatuses =
         new([
-            ResourceContentStatus.TranslationNotStarted,
-            ResourceContentStatus.TranslationInProgress,
+            ResourceContentStatus.TranslationAwaitingAiDraft,
+            ResourceContentStatus.TranslationAiDraftComplete,
+            ResourceContentStatus.TranslationEditorReview,
             ResourceContentStatus.TranslationReviewPending,
             ResourceContentStatus.TranslationPublisherReview,
-            ResourceContentStatus.TranslationManagerReview
+            ResourceContentStatus.TranslationCompanyReview
         ]);
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> ReviewPendingStatuses =
@@ -47,10 +48,10 @@ public static class Constants
             ResourceContentStatus.AquiferizePublisherReview
         ]);
 
-    public static readonly ReadOnlyCollection<ResourceContentStatus> ManagerReviewStatuses =
+    public static readonly ReadOnlyCollection<ResourceContentStatus> CompanyReviewStatuses =
         new([
-            ResourceContentStatus.TranslationManagerReview,
-            ResourceContentStatus.AquiferizeManagerReview
+            ResourceContentStatus.TranslationCompanyReview,
+            ResourceContentStatus.AquiferizeCompanyReview
         ]);
 }
 

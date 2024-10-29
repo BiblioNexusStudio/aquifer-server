@@ -116,7 +116,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             userService.HasPermission(PermissionName.SendReviewContent) &&
             Constants.ReviewPendingStatuses.Contains(resourceContent.Status))
         {
-            resourceContent.CanPullBackToManagerReview = resourceContent.ProjectEntity?.CompanyLeadUserId == self.Id ||
+            resourceContent.CanPullBackToCompanyReview = resourceContent.ProjectEntity?.CompanyLeadUserId == self.Id ||
                                                          await dbContext.ResourceContentVersionAssignedUserHistory
                                                              .Where(h => h.ResourceContentVersionId == relevantContentVersion.Id &&
                                                                          h.AssignedUserId != null)

@@ -65,8 +65,8 @@ public enum ResourceContentStatus
     [Display(Name = "New")]
     New = 1,
 
-    [Display(Name = "Aquiferize - In Progress")]
-    AquiferizeInProgress = 2,
+    [Display(Name = "Aquiferize - Editor Review")]
+    AquiferizeEditorReview = 2,
 
     [Display(Name = "Complete")]
     Complete = 3,
@@ -77,11 +77,11 @@ public enum ResourceContentStatus
     [Display(Name = "Aquiferize - Publisher Review")]
     AquiferizePublisherReview = 5,
 
-    [Display(Name = "Translation - Not Started")]
-    TranslationNotStarted = 6,
+    [Display(Name = "Translation - Awaiting AI Draft")]
+    TranslationAwaitingAiDraft = 6,
 
-    [Display(Name = "Translation - In Progress")]
-    TranslationInProgress = 7,
+    [Display(Name = "Translation - Editor Review")]
+    TranslationEditorReview = 7,
 
     [Display(Name = "Translation - Review Pending")]
     TranslationReviewPending = 8,
@@ -92,15 +92,18 @@ public enum ResourceContentStatus
     [Display(Name = "On Hold")]
     OnHold = 10,
 
-    [Display(Name = "Aquiferize - Manager Review")]
-    AquiferizeManagerReview = 11,
+    [Display(Name = "Aquiferize - Company Review")]
+    AquiferizeCompanyReview = 11,
 
-    [Display(Name = "Translation - Manager Review")]
-    TranslationManagerReview = 12,
+    [Display(Name = "Translation - Company Review")]
+    TranslationCompanyReview = 12,
 
     [Display(Name = "Translation - Not Applicable Review")]
     TranslationNotApplicable = 13,
 
     [Display(Name = "Complete - Not Applicable")]
-    CompleteNotApplicable = 14
+    CompleteNotApplicable = 14,
+
+    [Display(Name = "Translation - AI Draft Complete")]
+    TranslationAiDraftComplete = 15
 }
