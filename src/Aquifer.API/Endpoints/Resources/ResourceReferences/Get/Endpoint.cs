@@ -10,7 +10,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
     public override void Configure()
     {
         Get("/resources/resource-references");
-        Permissions(PermissionName.EditContentResourceReferences);
+        Permissions(PermissionName.ReadResources);
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
