@@ -1,6 +1,7 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
-using Aquifer.Common.Services;
+using Aquifer.Common.Jobs.Messages;
+using Aquifer.Common.Jobs.Publishers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -11,8 +12,7 @@ namespace Aquifer.API.Endpoints.Projects.Start;
 public class Endpoint(
     AquiferDbContext dbContext,
     IUserService userService,
-    IResourceHistoryService resourceHistoryService,
-    INotificationService notificationService)
+    ITranslationPublisher translationPublisher)
     : Endpoint<Request>
 {
     public override void Configure()
@@ -38,27 +38,13 @@ public class Endpoint(
 
         ValidateProject(project);
 
-        var resourceContentVersions = await dbContext.ResourceContentVersions
-            .AsTracking()
-            .Where(rcv => rcv.ResourceContent.ProjectResourceContents.Any(prc => prc.Project.Id == project.Id) && rcv.IsDraft)
-            .Include(rcv => rcv.ResourceContent)
-            .ThenInclude(rc => rc.Language).ToListAsync(ct);
-
-        foreach (var resourceContentVersion in resourceContentVersions)
-        {
-            if (project.CompanyLeadUserId is not null)
-            {
-                resourceContentVersion.AssignedUserId = project.CompanyLeadUserId;
-                await resourceHistoryService.AddAssignedUserHistoryAsync(resourceContentVersion, project.CompanyLeadUserId, user.Id, ct);
-                await resourceHistoryService.AddSnapshotHistoryAsync(resourceContentVersion, user.Id, ResourceContentStatus.New, ct);
-            }
-        }
-
         project.Started = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(ct);
 
-        await notificationService.SendProjectStartedNotificationAsync(project.Id, ct);
+        await translationPublisher.PublishTranslateProjectResourcesMessageAsync(
+            new TranslateProjectResourcesMessage(project.Id, user.Id),
+            ct);
 
         await SendNoContentAsync(ct);
     }

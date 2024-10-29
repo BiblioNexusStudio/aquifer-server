@@ -2,6 +2,7 @@ using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Aquifer.Data.Services;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 using static Aquifer.API.Helpers.EndpointHelpers;

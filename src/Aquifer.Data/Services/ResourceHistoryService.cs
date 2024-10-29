@@ -1,8 +1,7 @@
-﻿using Aquifer.Data;
-using Aquifer.Data.Entities;
+﻿using Aquifer.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Services;
+namespace Aquifer.Data.Services;
 
 public interface IResourceHistoryService
 {

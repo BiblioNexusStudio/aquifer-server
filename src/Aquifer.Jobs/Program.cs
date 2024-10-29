@@ -3,6 +3,7 @@ using Aquifer.Common.Clients.Http.IpAddressLookup;
 using Aquifer.Common.Jobs;
 using Aquifer.Common.Services;
 using Aquifer.Data;
+using Aquifer.Data.Services;
 using Aquifer.Jobs.Clients;
 using Aquifer.Jobs.Configuration;
 using Aquifer.Jobs.Services;
@@ -48,7 +49,10 @@ var host = new HostBuilder()
         services.AddSingleton<IAquiferApiManagementClient, AquiferApiManagementClient>();
         services.AddHttpClient<IIpAddressLookupHttpClient, IpAddressLookupHttpClient>();
         services.AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>();
+        services.AddScoped<IResourceHistoryService, ResourceHistoryService>();
         services.AddSingleton<IEmailService, EmailService>();
+        services.AddSingleton<INotificationService, NotificationService>();
+        services.AddSingleton<ITranslationService, OpenAiTranslationService>();
         services.AddKeyedSingleton<IEmailService, SendGridEmailService>(nameof(SendGridEmailService));
     })
     .Build();
