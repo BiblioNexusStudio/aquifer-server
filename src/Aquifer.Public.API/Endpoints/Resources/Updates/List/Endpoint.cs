@@ -24,6 +24,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService cachin
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
+        ValidateCollectionCode(req);
         var query = await GetQuery(req, ct);
         var totalCount = await GetTotalResourceCountAsync(req, query, ct);
 
@@ -96,5 +97,19 @@ public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService cachin
                         x.Updated >= req.Timestamp &&
                         (req.ResourceCollectionCode == null ||
                          x.ResourceContent.Resource.ParentResource.Code.ToLower() == req.ResourceCollectionCode.ToLower()));
+    }
+
+    private void ValidateCollectionCode(Request req)
+    {
+        if (req.ResourceCollectionCode is null)
+        {
+            return;
+        }
+
+        var exists = dbContext.ParentResources.Any(x => x.Code == req.ResourceCollectionCode);
+        if (!exists)
+        {
+            ThrowError(x => x.ResourceCollectionCode, $"Invalid ResourceCollectionCode: {req.ResourceCollectionCode}");
+        }
     }
 }
