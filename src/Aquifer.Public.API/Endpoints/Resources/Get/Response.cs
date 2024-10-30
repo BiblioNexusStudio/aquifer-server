@@ -7,6 +7,7 @@ namespace Aquifer.Public.API.Endpoints.Resources.Get;
 public class Response
 {
     public int Id { get; set; }
+    public int ReferenceId { get; set; }
     public string Name { get; set; } = null!;
     public string LocalizedName { get; set; } = null!;
 
