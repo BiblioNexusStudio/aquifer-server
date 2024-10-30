@@ -1,0 +1,22 @@
+{
+    "name": "aquifer.typescript",
+    "version": "1.0.0",
+    "main": "app.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "tsc --build",
+        "clean": "tsc --build --clean"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "dependencies": {
+        "aquifer-tiptap": "https://github.com/BiblioNexusStudio/aquifer-tiptap#1.0.8"
+    },
+    "devDependencies": {
+        "@types/node": "^22.8.4",
+        "eslint": "^9.13.0",
+        "typescript": "^5.6.3"
+    }
+}
