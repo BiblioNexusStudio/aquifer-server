@@ -15,13 +15,14 @@ public static class ResourceHelper
     {
         var response = await dbContext.ResourceContentVersions
             .Where(x => ((req.LanguageCode == null && x.ResourceContentId == req.ContentId) ||
-                    (x.ResourceContent.Resource.ResourceContents.Any(rc => rc.Id == req.ContentId) &&
-                        x.ResourceContent.Language.ISO6393Code == req.LanguageCode)) &&
-                x.IsPublished &&
-                x.ResourceContent.Resource.ParentResource.Enabled)
+                         (x.ResourceContent.Resource.ResourceContents.Any(rc => rc.Id == req.ContentId) &&
+                         x.ResourceContent.Language.ISO6393Code == req.LanguageCode)) &&
+                        x.IsPublished &&
+                        x.ResourceContent.Resource.ParentResource.Enabled)
             .Select(x => new Response
             {
                 Id = x.ResourceContentId,
+                ReferenceId = x.ResourceContent.ResourceId,
                 Name = x.ResourceContent.Resource.EnglishLabel,
                 LocalizedName = x.DisplayName,
                 ContentValue = x.Content,

@@ -38,4 +38,5 @@ public class ResourceAssociation
 {
     public required int ContentId { get; init; }
     public required string DisplayName { get; init; }
+    public required int ReferenceId { get; init; }
 }
