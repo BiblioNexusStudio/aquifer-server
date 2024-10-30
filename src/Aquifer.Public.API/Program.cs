@@ -48,7 +48,13 @@ app.UseHealthChecks("/_health")
         config.Endpoints.Configurator = ep => ep.AllowAnonymous();
     })
     .UseOpenApi()
-    .UseReDoc(options => options.Path = "/docs");
+    .UseReDoc(options =>
+    {
+        options.Path = "/docs";
+        // hide the version number
+        options.CustomInlineStyles = "h1 > span { display: none; }";
+        options.DocumentTitle = "Aquifer API Documentation";
+    });
 
 app.UseResponseCachingVaryByAllQueryKeys();
 
