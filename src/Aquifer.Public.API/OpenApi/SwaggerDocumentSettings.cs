@@ -18,7 +18,7 @@ public static class SwaggerDocumentSettings
             sd.EndpointFilter = ep => ep.EndpointTags?.Contains(EndpointHelpers.EndpointTags.ExcludeFromSwaggerDocument) != true;
             sd.DocumentSettings = ds =>
             {
-                ds.Title = "Aquifer API";
+                ds.Title = "Aquifer API Documentation";
                 ds.Description = """
                                  All endpoints require an API key in the `api-key` header.<br><br>
 
