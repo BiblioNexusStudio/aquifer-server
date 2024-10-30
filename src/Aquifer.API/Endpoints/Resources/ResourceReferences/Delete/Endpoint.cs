@@ -30,15 +30,12 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
         var associatedResource = resourceContent.Resource.AssociatedResources
             .FirstOrDefault(ar => ar.AssociatedResourceId == request.ReferenceResourceId);
 
-        if (associatedResource == null)
+        if (associatedResource != null)
         {
-            await SendNotFoundAsync(ct);
-            return;
+            dbContext.AssociatedResources.Remove(associatedResource);
+            await dbContext.SaveChangesAsync(ct);
         }
 
-        dbContext.AssociatedResources.Remove(associatedResource);
-
-        await dbContext.SaveChangesAsync(ct);
         await SendNoContentAsync(ct);
     }
 }
