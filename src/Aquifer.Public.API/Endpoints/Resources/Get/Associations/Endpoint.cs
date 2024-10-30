@@ -31,7 +31,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             ResourceAssociations = associatedResources.Select(ar => new ResourceAssociation
                 {
                     ContentId = ar.ContentId,
-                    DisplayName = ar.DisplayName
+                    DisplayName = ar.DisplayName,
+                    ReferenceId = ar.ReferenceId
                 })
                 .ToList(),
             PassageAssociations = verses.Select(vr => new PassageAssociation
@@ -61,7 +62,10 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                              INNER JOIN ResourceContents RC ON R.Id = RC.ResourceId AND RC.Id = @ContentId
                              """;
 
-        return (await dbConnection.QueryWithRetriesAsync<VerseReference>(query, new { req.ContentId }, cancellationToken: ct)).ToList();
+        return (await dbConnection.QueryWithRetriesAsync<VerseReference>(query, new
+        {
+            req.ContentId
+        }, cancellationToken: ct)).ToList();
     }
 
     private static async Task<IReadOnlyList<PassageReference>> GetAssociatedPassageReferencesAsync(DbConnection dbConnection,
@@ -76,7 +80,10 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                                       INNER JOIN ResourceContents RC ON R.Id = RC.ResourceId AND RC.Id = @ContentId
                              """;
 
-        return (await dbConnection.QueryWithRetriesAsync<PassageReference>(query, new { req.ContentId }, cancellationToken: ct)).ToList();
+        return (await dbConnection.QueryWithRetriesAsync<PassageReference>(query, new
+        {
+            req.ContentId
+        }, cancellationToken: ct)).ToList();
     }
 
     private static async Task<IReadOnlyList<ResourceReference>> GetResourceReferencesAsync(DbConnection dbConnection,
@@ -84,7 +91,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         CancellationToken ct)
     {
         const string query = """
-                             SELECT RC2.Id AS ContentId, RCV.DisplayName
+                             SELECT RC2.Id AS ContentId, RCV.DisplayName, RC2.ResourceId AS ReferenceId
                              FROM ResourceContents RC
                                  INNER JOIN AssociatedResources AR ON AR.ResourceId = RC.ResourceId
                                  INNER JOIN ResourceContents RC2 ON AR.AssociatedResourceId = RC2.ResourceId AND RC2.LanguageId = RC.LanguageId
@@ -93,10 +100,13 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                               RC.Id = @ContentId
                              """;
 
-        return (await dbConnection.QueryWithRetriesAsync<ResourceReference>(query, new { req.ContentId }, cancellationToken: ct)).ToList();
+        return (await dbConnection.QueryWithRetriesAsync<ResourceReference>(query, new
+        {
+            req.ContentId
+        }, cancellationToken: ct)).ToList();
     }
 
-    private record ResourceReference(int ContentId, string DisplayName);
+    private record ResourceReference(int ContentId, string DisplayName, int ReferenceId);
 
     private record VerseReference(int VerseId);
 
