@@ -28,6 +28,13 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
             return;
         }
 
+        List<ResourceContentStatus> notAllowedStatuses =
+            [ResourceContentStatus.TranslationAiDraftComplete, ResourceContentStatus.TranslationAwaitingAiDraft];
+        if (notAllowedStatuses.Contains(resourceContent.Status))
+        {
+            ThrowError(x => x.ResourceContentId, "Resource is not in the correct status");
+        }
+
         if (!resourceContent.Resource.AssociatedResources.Any(r => r.AssociatedResourceId == request.ReferenceResourceId))
         {
             var referenceResource = await dbContext.Resources.FindAsync([request.ReferenceResourceId], ct);

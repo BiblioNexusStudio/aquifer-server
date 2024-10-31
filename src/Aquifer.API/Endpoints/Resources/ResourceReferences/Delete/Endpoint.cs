@@ -1,5 +1,6 @@
 using Aquifer.API.Common;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,6 +26,13 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
         {
             await SendNotFoundAsync(ct);
             return;
+        }
+
+        List<ResourceContentStatus> notAllowedStatuses =
+            [ResourceContentStatus.TranslationAiDraftComplete, ResourceContentStatus.TranslationAwaitingAiDraft];
+        if (notAllowedStatuses.Contains(resourceContent.Status))
+        {
+            ThrowError(x => x.ResourceContentId, "Resource is not in the correct status");
         }
 
         var associatedResource = resourceContent.Resource.AssociatedResources

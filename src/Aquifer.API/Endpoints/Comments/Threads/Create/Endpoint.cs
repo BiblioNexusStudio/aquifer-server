@@ -34,9 +34,18 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, INot
         var resourceContentVersion = await dbContext.ResourceContentVersions
             .AsTracking()
             .Include(x => x.CommentThreads)
+            .Include(x => x.ResourceContent)
             .SingleOrDefaultAsync(x => x.Id == req.TypeId, ct);
 
         EndpointHelpers.ThrowErrorIfNull<Request>(resourceContentVersion, x => x.TypeId, "No type found for given id.", 404);
+
+        List<ResourceContentStatus> notAllowedStatuses =
+            [ResourceContentStatus.TranslationAiDraftComplete, ResourceContentStatus.TranslationAwaitingAiDraft];
+
+        if (notAllowedStatuses.Contains(resourceContentVersion!.ResourceContent.Status))
+        {
+            ThrowError(x => x.TypeId, $"Resource for type {req.TypeId} is not in correct status");
+        }
 
         var user = await userService.GetUserFromJwtAsync(ct);
 
@@ -46,9 +55,15 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, INot
             UserId = user.Id
         };
 
-        CommentThreadEntity newThread = new() { Comments = [newComment] };
+        CommentThreadEntity newThread = new()
+        {
+            Comments = [newComment]
+        };
 
-        resourceContentVersion!.CommentThreads.Add(new ResourceContentVersionCommentThreadEntity { CommentThread = newThread });
+        resourceContentVersion!.CommentThreads.Add(new ResourceContentVersionCommentThreadEntity
+        {
+            CommentThread = newThread
+        });
         await dbContext.SaveChangesAsync(ct);
 
         await notificationService.SendResourceCommentCreatedNotificationAsync(newComment.Id, ct);
