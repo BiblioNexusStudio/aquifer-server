@@ -25,7 +25,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var hasSendReviewContentPermission = userService.HasPermission(PermissionName.SendReviewContent);
         var hasAssignOverridePermission = userService.HasPermission(PermissionName.AssignOverride);
         var hasAssignOutsideCompanyPermission = userService.HasPermission(PermissionName.AssignOutsideCompany);
-        var notAllowedStatus = ResourceContentStatus.TranslationAwaitingAiDraft;
 
         if (userToAssign is null)
         {
@@ -37,17 +36,15 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ThrowError("Unable to assign to a user outside your company");
         }
 
-        if (request.AssignedReviewerUserId is not null)
-        {
+        if (request.AssignedReviewerUserId is not null) {
             var reviewer = await dbContext.Users
                 .Where(u => u.Id == request.AssignedReviewerUserId
-                            && u.Enabled
-                            && u.CompanyId == userToAssign.CompanyId
-                            && (u.Role == UserRole.Reviewer || u.Role == UserRole.Manager))
+                    && u.Enabled
+                    && u.CompanyId == userToAssign.CompanyId
+                    && (u.Role == UserRole.Reviewer || u.Role == UserRole.Manager))
                 .SingleOrDefaultAsync(ct);
 
-            if (reviewer is null)
-            {
+            if (reviewer is null) {
                 ThrowError("Unable to assign that reviewer");
             }
         }
@@ -89,15 +86,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                     $"Must be assigned the in-review content in order to assign to another user for id {draftVersion.ResourceContentId}");
             }
 
-            if (notAllowedStatus == draftVersion.ResourceContent.Status)
-            {
-                ThrowError(x => x.ContentId, "Resource is not in the correct status");
-            }
-
             SetDraftVersionStatus(isTakingBackFromReviewPending, originalStatus, userToAssign, draftVersion);
 
-            if (request.AssignedReviewerUserId is not null)
-            {
+            if (request.AssignedReviewerUserId is not null) {
                 draftVersion.AssignedReviewerUserId = request.AssignedReviewerUserId;
             }
 
@@ -167,7 +158,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
         else if (Constants.PublisherReviewStatuses.Contains(originalStatus))
         {
-            draftVersion.ResourceContent.Status = originalStatus == ResourceContentStatus.TranslationPublisherReview
+            draftVersion.ResourceContent.Status = (originalStatus == ResourceContentStatus.TranslationPublisherReview)
                 ? ResourceContentStatus.TranslationCompanyReview
                 : ResourceContentStatus.AquiferizeCompanyReview;
         }

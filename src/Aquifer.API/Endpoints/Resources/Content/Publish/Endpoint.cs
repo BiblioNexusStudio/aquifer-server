@@ -1,6 +1,5 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
-using Aquifer.Common.Extensions;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -18,8 +17,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        List<ResourceContentStatus> notAllowedStatuses =
-            [ResourceContentStatus.TranslationAiDraftComplete, ResourceContentStatus.TranslationAwaitingAiDraft];
         if (!await userService.ValidateNonNullUserIdAsync(request.AssignedUserId, ct))
         {
             ThrowError(Helpers.InvalidUserIdResponse);
@@ -40,11 +37,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             if (request.CreateDraft && currentDraftVersion is not null)
             {
                 ThrowError(Helpers.DraftAlreadyExistsResponse);
-            }
-
-            if (notAllowedStatuses.Contains(mostRecentContentVersion.ResourceContent.Status))
-            {
-                ThrowError($"Publish not allowed in current status: {mostRecentContentVersion.ResourceContent.Status.GetDisplayName()}");
             }
 
             // If there is currently a published version, then unpublish so this new one can become published

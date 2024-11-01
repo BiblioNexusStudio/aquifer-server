@@ -42,11 +42,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
             if (!resourceContent.Resource.VerseResources.Any(vr => vr.VerseId == request.StartVerseId))
             {
                 await dbContext.VerseResources.AddAsync(
-                    new VerseResourceEntity
-                    {
-                        ResourceId = resourceContent.ResourceId,
-                        VerseId = request.StartVerseId
-                    }, ct);
+                    new VerseResourceEntity { ResourceId = resourceContent.ResourceId, VerseId = request.StartVerseId }, ct);
             }
         }
         else
@@ -55,22 +51,13 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
                     pr.Passage.StartVerseId == request.StartVerseId && pr.Passage.EndVerseId == request.EndVerseId))
             {
                 var passage = await dbContext.Passages
-                                  .AsTracking()
-                                  .SingleOrDefaultAsync(p => p.StartVerseId == request.StartVerseId && p.EndVerseId == request.EndVerseId,
-                                      ct)
-                              ?? new PassageEntity
-                              {
-                                  StartVerseId = request.StartVerseId,
-                                  EndVerseId = request.EndVerseId
-                              };
+                    .AsTracking()
+                    .SingleOrDefaultAsync(p => p.StartVerseId == request.StartVerseId && p.EndVerseId == request.EndVerseId, ct)
+                    ?? new PassageEntity { StartVerseId = request.StartVerseId, EndVerseId = request.EndVerseId };
                 ;
 
                 await dbContext.PassageResources.AddAsync(
-                    new PassageResourceEntity
-                    {
-                        ResourceId = resourceContent.ResourceId,
-                        Passage = passage
-                    }, ct);
+                    new PassageResourceEntity { ResourceId = resourceContent.ResourceId, Passage = passage }, ct);
             }
         }
 
