@@ -11,6 +11,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 {
     public override void Configure()
     {
+        //TODO: Delete after next deploy
         Post("/resources/content/machine-translation");
         Permissions(PermissionName.AiTranslate);
     }

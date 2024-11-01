@@ -7,7 +7,7 @@ public class Validator : Validator<Request>
 {
     public Validator()
     {
-        RuleFor(x => x.AssignedUserId).NotNull().GreaterThan(0);
+        RuleFor(x => x.AssignedUserId).GreaterThan(0);
         RuleFor(x => x.ContentIds).NotNull().When(x => x.ContentId is null);
     }
 }
