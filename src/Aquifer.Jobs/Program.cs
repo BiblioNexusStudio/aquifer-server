@@ -15,15 +15,14 @@ using Microsoft.Extensions.Logging;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
-    .ConfigureAppConfiguration((context, config) => 
-    {
-        var envName = context.HostingEnvironment.EnvironmentName;
-        var appSettingsPath = Path.GetFullPath("../../appsettings.json");
-        config.AddJsonFile(appSettingsPath, optional: false, reloadOnChange: true);
-
-        var appEnvSettingsPath = Path.GetFullPath($"../../appsettings.{envName}.json");
-        config.AddJsonFile(appEnvSettingsPath, optional: false, reloadOnChange: true);
-    })
+    .ConfigureAppConfiguration((context, builder) => builder
+        .SetBasePath(context.HostingEnvironment.ContentRootPath)
+        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+        .AddJsonFile(
+            $"appsettings.{context.HostingEnvironment.EnvironmentName}.json", 
+            optional: true, 
+            reloadOnChange: false)
+    )
     .ConfigureServices((context, services) =>
     {
         services.AddOptions<ConfigurationOptions>().Bind(context.Configuration);
