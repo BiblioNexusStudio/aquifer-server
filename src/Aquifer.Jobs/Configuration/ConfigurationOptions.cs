@@ -45,16 +45,22 @@ public class MarketingEmailOptions
 
 public class TransactionalEmailOptions
 {
-    public required SendResourceAssignmentNoticeOptions SendResourceAssignmentNotice { get; init; }
-    public required SubscriberNoticeOptions SubscriberNotice { get; init; }
+    public required SendResourceAssignmentNotificationOptions SendResourceAssignmentNotification { get; init; }
+    public required SendProjectStartedNotificationOptions SendProjectStartedNotification { get; init; }
+    public required SendResourceCommentCreatedNotificationOptions SendResourceCommentCreatedNotification { get; init; }
 }
 
-public class SendResourceAssignmentNoticeOptions
+public class SendResourceAssignmentNotificationOptions
 {
     public required string TemplateId { get; init; }
 }
 
-public class SubscriberNoticeOptions
+public class SendProjectStartedNotificationOptions
+{
+    public required string TemplateId { get; init; }
+}
+
+public class SendResourceCommentCreatedNotificationOptions
 {
     public required string TemplateId { get; init; }
 }
