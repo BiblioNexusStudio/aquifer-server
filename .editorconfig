@@ -1,6 +1,13 @@
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
 
+# All files
+[*]
+
+# draws guidelines in Visual Studio using https://marketplace.visualstudio.com/items?itemName=PaulHarrington.EditorGuidelines
+guidelines = 140
+guidelines_style = 1px solid gray
+
 # C# files
 [*.cs]
 
