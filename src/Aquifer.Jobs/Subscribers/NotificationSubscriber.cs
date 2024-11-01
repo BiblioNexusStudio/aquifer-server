@@ -36,7 +36,7 @@ public sealed class NotificationSubscriber(
             var templatedEmail = new TemplatedEmail(
                 From: NotificationsHelper.NotificationSenderEmailAddress,
                 // Template Designer: https://mc.sendgrid.com/dynamic-templates/d-7760ec3b5ce34b179384d4783cc1bd81/version/e83075a3-ba61-4d42-922f-9fd5df4ee45c/editor
-                TemplateId: "d-7760ec3b5ce34b179384d4783cc1bd81",
+                TemplateId: _configurationOptions.Value.Email.Transactional.SubscriberNotice.TemplateId,
                 DynamicTemplateData: new Dictionary<string, object>
                 {
                     [EmailService.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notifications: Project Started",
