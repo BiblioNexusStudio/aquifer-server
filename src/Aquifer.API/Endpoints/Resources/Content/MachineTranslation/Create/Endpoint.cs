@@ -1,5 +1,4 @@
 ﻿using Aquifer.API.Common;
-using Aquifer.API.Helpers;
 using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -12,14 +11,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 {
     public override void Configure()
     {
+        //TODO: Delete after next deploy
         Post("/resources/content/machine-translation");
         Permissions(PermissionName.AiTranslate);
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        await ValidateResourceContent(req, ct);
-
         var existingMts = await dbContext.ResourceContentVersionMachineTranslations
             .AsTracking()
             .Where(x => x.ResourceContentVersionId == req.ResourceContentVersionId && x.ContentIndex == req.ContentIndex)
@@ -64,22 +62,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             {
                 ThrowError(x => x.RetranslationReason, "Retranslation time period of 1 hour has expired");
             }
-        }
-    }
-
-    private async Task ValidateResourceContent(Request req, CancellationToken ct)
-    {
-        var resourceContentVersion = await dbContext.ResourceContentVersions.Include(x => x.ResourceContent)
-            .Where(x => x.Id == req.ResourceContentVersionId).FirstOrDefaultAsync(ct);
-
-        EndpointHelpers.ThrowErrorIfNull<Request>(resourceContentVersion, x => x.ResourceContentVersionId,
-            $"Resource Content Version Id {req.ResourceContentVersionId} not found", 404);
-
-        List<ResourceContentStatus> notAllowedStatuses =
-            [ResourceContentStatus.TranslationAiDraftComplete, ResourceContentStatus.TranslationAwaitingAiDraft];
-        if (notAllowedStatuses.Contains(resourceContentVersion!.ResourceContent.Status))
-        {
-            ThrowError(x => x.ResourceContentVersionId, "Associated resource is not in the correct status");
         }
     }
 }
