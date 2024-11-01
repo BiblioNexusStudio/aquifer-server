@@ -33,6 +33,7 @@ public class AnalyticsOptions
 public class EmailOptions
 {
     public required string SubjectPrefix { get; init; }
+    public required TransactionalEmailOptions Transactional { get; init; }
 }
 
 public class MarketingEmailOptions
@@ -40,4 +41,20 @@ public class MarketingEmailOptions
     public required string Address { get; init; }
     public required string Name { get; init; }
     public required string ResourceLink { get; init; }
+}
+
+public class TransactionalEmailOptions
+{
+    public required SendResourceAssignmentNoticeOptions SendResourceAssignmentNotice { get; init; }
+    public required SubscriberNoticeOptions SubscriberNotice { get; init; }
+}
+
+public class SendResourceAssignmentNoticeOptions
+{
+    public required string TemplateId { get; init; }
+}
+
+public class SubscriberNoticeOptions
+{
+    public required string TemplateId { get; init; }
 }
