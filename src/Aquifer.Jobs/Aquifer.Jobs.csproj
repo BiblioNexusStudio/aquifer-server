@@ -22,8 +22,10 @@
 
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj"/>
+        <ProjectReference Include="..\Aquifer.AI\Aquifer.AI.csproj"/>
         <ProjectReference Include="..\Aquifer.Common\Aquifer.Common.csproj"/>
+        <ProjectReference Include="..\Aquifer.Data\Aquifer.Data.csproj"/>
+        <ProjectReference Include="..\Aquifer.JsEngine\Aquifer.JsEngine.csproj"/>
     </ItemGroup>
     <ItemGroup>
         <None Update="host.json">

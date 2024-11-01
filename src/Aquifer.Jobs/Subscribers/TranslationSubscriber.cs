@@ -1,11 +1,13 @@
-﻿using Aquifer.Common.Jobs;
+﻿using System.Text;
+using Aquifer.AI;
+using Aquifer.Common.Jobs;
 using Aquifer.Common.Jobs.Messages;
 using Aquifer.Common.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
 using Aquifer.Data.Services;
-using Aquifer.Jobs.Services;
+using Aquifer.JsEngine.Tiptap;
 using Azure.Storage.Queues.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
@@ -18,10 +20,17 @@ namespace Aquifer.Jobs.Subscribers;
 public sealed class TranslationSubscriber(
     AquiferDbContext _dbContext,
     ILogger<TranslationSubscriber> _logger,
+    ITiptapConverter _tiptapConverter,
     ITranslationService _translationService,
     IResourceHistoryService _resourceHistoryService,
-    INotificationService _notificationService)
+    INotificationService _notificationService,
+    IQueueClientFactory _queueClientFactory)
 {
+    private static readonly TaskOptions s_durableFunctionTaskOptions = TaskOptions.FromRetryPolicy(
+        new RetryPolicy(
+            maxNumberOfAttempts: 5,
+            firstRetryInterval: TimeSpan.FromSeconds(1)));
+
     [Function(nameof(TranslateResource))]
     public async Task TranslateResource(
         [QueueTrigger(Queues.TranslateResource)] QueueMessage queueMessage,
@@ -29,7 +38,30 @@ public sealed class TranslationSubscriber(
     {
         var message = queueMessage.Deserialize<TranslateResourceMessage, TranslationSubscriber>(_logger);
 
-        await TranslateResourceCoreAsync(message.ResourceContentId, message.StartedByUserId, message.TranslationOrigin, ct);
+        var updatedResourceContentVersion = await TranslateResourceCoreAsync(
+            message.ResourceContentId,
+            message.StartedByUserId,
+            message.TranslationOrigin,
+            ct);
+
+        // if a Community Reviewer requested the translation then assign to that user now that translation has completed
+        if (message.TranslationOrigin == TranslationOrigin.CommunityReviewer)
+        {
+            updatedResourceContentVersion.AssignedUserId = message.StartedByUserId;
+
+            await _resourceHistoryService.AddSnapshotHistoryAsync(
+                updatedResourceContentVersion,
+                oldUserId: message.StartedByUserId,
+                ResourceContentStatus.TranslationEditorReview,
+                ct);
+            await _resourceHistoryService.AddAssignedUserHistoryAsync(
+                updatedResourceContentVersion,
+                assignedUserId: message.StartedByUserId,
+                changedByUserId: message.StartedByUserId,
+                ct);
+
+            //await _dbContext.SaveChangesAsync(ct);
+        }
     }
 
     /// <summary>
@@ -57,10 +89,15 @@ public sealed class TranslationSubscriber(
             throw new InvalidOperationException($"Project ID {message.ProjectId} does not have any resource contents.");
         }
 
-        // kick off the durable function orchestration
+        // Kick off the durable function orchestration.
+        // If it fails it will put a message on the poison queue.
         await durableTaskClient.ScheduleNewOrchestrationInstanceAsync(
             nameof(OrchestrateProjectResourcesTranslation),
-            new OrchestrateProjectResourcesTranslationDto(message.ProjectId, message.StartedByUserId, projectResourceContentIds),
+            new OrchestrateProjectResourcesTranslationDto(
+                message.ProjectId,
+                message.StartedByUserId,
+                projectResourceContentIds.Take(1).ToList(), // TODO stop taking one
+                queueMessage.MessageText),
             ct);
 
         _logger.LogInformation(
@@ -79,25 +116,72 @@ public sealed class TranslationSubscriber(
         [OrchestrationTrigger] TaskOrchestrationContext context,
         OrchestrateProjectResourcesTranslationDto dto)
     {
-        var translateResourceTasks = dto.ProjectResourceContentIds
-            .Select(resourceContentId => context.CallActivityAsync(
-                nameof(TranslateProjectResourceActivity),
-                new TranslateProjectResourceActivityDto(resourceContentId, dto.StartedByUserId)))
-            .ToList();
+        try
+        {
+            var translateResourceTasks = dto.ProjectResourceContentIds
+                .Select(resourceContentId => context.CallActivityAsync<int>(
+                    nameof(TranslateProjectResourceActivity),
+                    new TranslateProjectResourceActivityDto(resourceContentId, dto.StartedByUserId),
+                    s_durableFunctionTaskOptions))
+                .ToList();
 
-        await Task.WhenAll(translateResourceTasks);
+            await Task.WhenAll(translateResourceTasks);
 
-        await context.CallActivityAsync(
-            nameof(UpdateProjectPostTranslationActivity),
-            new UpdateProjectPostTranslationActivityDto(dto.ProjectId, dto.StartedByUserId));
+            var translatedResourceContentIds = translateResourceTasks
+                .Select(trt => trt.Result)
+                .ToList();
+
+            await context.CallActivityAsync(
+                nameof(UpdateProjectPostTranslationActivity),
+                new UpdateProjectPostTranslationActivityDto(dto.ProjectId, dto.StartedByUserId, translatedResourceContentIds),
+                s_durableFunctionTaskOptions);
+        }
+        catch (Exception orchestrationException)
+        {
+            // All the Activities orchestrated here have a retry policy.  If things are still failing after multiple retries
+            // then something is very wrong. If this happens then swallow errors here to allow successful orchestration function
+            // completion but publish a poison queue item for manual retry later.
+            var ct = CancellationToken.None;
+            var poisonQueueName = Queues.GetPoisonQueueName(Queues.TranslateProjectResources);
+
+            try
+            {
+                _logger.LogError(
+                    orchestrationException,
+                    "Error translating resource content for Project ID {ProjectId}. A poison message will be published to \"{PoisonQueueName}\" to enable manual retry. Manual dev intervention is required.",
+                    dto.ProjectId,
+                    poisonQueueName);
+
+                var translateProjectResourcesPoisonQueueClient = await _queueClientFactory.GetQueueClientAsync(
+                    poisonQueueName,
+                    ct);
+                await translateProjectResourcesPoisonQueueClient.SendMessageAsync(dto.OriginalQueueMessageText, ct);
+            }
+            catch (Exception queuePublishingException)
+            {
+                // don't allow errors during poison queue publishing to fail the durable function
+                _logger.LogError(
+                    queuePublishingException,
+                    "After an error translating resource content for Project ID {ProjectId} another error occurred when attempting to publish a poison message to \"{PoisonQueueName}\". Manual dev intervention is required to replay the message. Message text: {MessageText}",
+                    dto.ProjectId,
+                    poisonQueueName,
+                    dto.OriginalQueueMessageText);
+            }
+        }
     }
 
     [Function(nameof(TranslateProjectResourceActivity))]
-    public async Task TranslateProjectResourceActivity(
+    public async Task<int> TranslateProjectResourceActivity(
         [ActivityTrigger] TranslateProjectResourceActivityDto dto,
         FunctionContext activityContext)
     {
-        await TranslateResourceCoreAsync(dto.ResourceContentId, dto.StartedByUserId, TranslationOrigin.Project, activityContext.CancellationToken);
+        var translatedResourceContentVersion = await TranslateResourceCoreAsync(
+            dto.ResourceContentId,
+            dto.StartedByUserId,
+            TranslationOrigin.Project,
+            activityContext.CancellationToken);
+
+        return translatedResourceContentVersion.ResourceContentId;
     }
 
     [Function(nameof(UpdateProjectPostTranslationActivity))]
@@ -112,36 +196,54 @@ public sealed class TranslationSubscriber(
         var project = await _dbContext.Projects
             .SingleAsync(p => p.Id == dto.ProjectId);
 
+        // now that ALL translations are complete for the project, assign all resources in the project to the company lead
         if (project.CompanyLeadUserId is not null)
         {
+            // Edge case handling: It's possible that something else acted on the resource content version status
+            // and moved it out of the TranslationAiDraftComplete status between the resource finishing translation
+            // and this project post-processing. If so, ignore those resources when performing assignments
+            // because there might already have been a user assignment.
             var resourceContentVersions = await _dbContext.ResourceContentVersions
                 .AsTracking()
-                .Where(rcv => rcv.ResourceContent.ProjectResourceContents.Any(prc => prc.Project.Id == project.Id) && rcv.IsDraft)
                 .Include(rcv => rcv.ResourceContent)
+                .Where(rcv => rcv.ResourceContent.ProjectResourceContents.Any(prc => prc.Project.Id == project.Id) &&
+                    rcv.IsDraft &&
+                    rcv.ResourceContent.Status == ResourceContentStatus.TranslationAiDraftComplete)
                 .ToListAsync(activityContext.CancellationToken);
 
-            foreach (var resourceContentVersion in resourceContentVersions)
+            // Edge case handling: Only update resource content versions that were queued for translation (even if gracefully skipped).
+            // Due to an unknown amount of time passing between translation and this post-processing it's unlikely
+            // but still possible that the list is different.
+            foreach (var resourceContentVersion in resourceContentVersions
+                .Where(rcv => dto.TranslatedProjectResourceContentIds.Contains(rcv.ResourceContentId)))
             {
                 resourceContentVersion.AssignedUserId = project.CompanyLeadUserId;
+
                 await _resourceHistoryService.AddAssignedUserHistoryAsync(
                     resourceContentVersion,
-                    project.CompanyLeadUserId,
-                    dto.StartedByUserId,
+                    assignedUserId: project.CompanyLeadUserId,
+                    changedByUserId: dto.StartedByUserId,
                     activityContext.CancellationToken);
+
                 await _resourceHistoryService.AddSnapshotHistoryAsync(
                     resourceContentVersion,
-                    dto.StartedByUserId,
-                    ResourceContentStatus.New,
+                    oldUserId: dto.StartedByUserId,
+                    oldStatus: ResourceContentStatus.New,
                     activityContext.CancellationToken);
             }
 
-            await _dbContext.SaveChangesAsync(activityContext.CancellationToken);
+            //await _dbContext.SaveChangesAsync(activityContext.CancellationToken);
         }
 
         await _notificationService.SendProjectStartedNotificationAsync(dto.ProjectId, activityContext.CancellationToken);
     }
 
-    private async Task TranslateResourceCoreAsync(
+    /// <summary>
+    /// Note: Callers are responsible for performing resource assignments and creating resource snapshots.
+    /// This method will perform the actual translation, create machine translations,
+    /// update the existing resource version with translated content, and change the resource content status.
+    /// </summary>
+    private async Task<ResourceContentVersionEntity> TranslateResourceCoreAsync(
         int resourceContentId,
         int startedByUserId,
         TranslationOrigin translationOrigin,
@@ -156,29 +258,59 @@ public sealed class TranslationSubscriber(
         var resourceContentVersion = await _dbContext.ResourceContentVersions
             .AsTracking()
             .Include(rcv => rcv.ResourceContent)
-            .SingleOrDefaultAsync(rcv => rcv.IsDraft && rcv.ResourceContent.Id == resourceContentId, ct);
-
-        if (resourceContentVersion == null)
-        {
-            _logger.LogInformation(
-                "Skipping translation for Resource Content ID {ResourceContentId} because it has no ResourceContentVersion in the Draft status.",
-                resourceContentId);
-            return;
-        }
+            .Include(rcv => rcv.ResourceContent.Language)
+            .SingleOrDefaultAsync(rcv => rcv.IsDraft && rcv.ResourceContent.Id == resourceContentId, ct)
+            ?? throw new InvalidOperationException(
+                $"Aborting translation for Resource Content ID {resourceContentId} because it has no Resource Content Version in the Draft status.");
 
         if (resourceContentVersion.ResourceContent.Status != ResourceContentStatus.TranslationAwaitingAiDraft)
         {
             _logger.LogInformation(
-                "Skipping translation for Resource Content ID {ResourceContentId} because the content is not in the {ExpectedStatus} status.",
+                "Gracefully skipping translation for Resource Content ID {ResourceContentId} because it is not in the {ExpectedStatus} status.",
                 resourceContentId,
                 ResourceContentStatus.TranslationAwaitingAiDraft.ToString());
-            return;
+            return resourceContentVersion;
         }
 
-        string translatedContent;
+        var resourceContentLanguage = resourceContentVersion.ResourceContent.Language;
+        var destinationLanguage =
+            (Iso6393Code: resourceContentLanguage.ISO6393Code, EnglishName: resourceContentLanguage.EnglishDisplay);
+
+        // translate the display name
+        string translatedDisplayName;
         try
         {
-            translatedContent = await _translationService.TranslateAsync(resourceContentVersion.Content, ct);
+            translatedDisplayName =
+                await _translationService.TranslateTextAsync(resourceContentVersion.DisplayName, destinationLanguage, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "An error occurred during translation of the display name. Resource Content ID: {ResourceContentId}; Resource Content Version ID: {ResourceContentVersionId}.",
+                resourceContentId,
+                resourceContentVersion.Id);
+            throw;
+        }
+
+        // Translate the resource content.
+        // Note: Resource content is saved as Tiptap JSON in the DB.
+        // It must be converted to HTML in order to be translated and then converted back to JSON after translation.
+
+        string translatedContentJson;
+        int wordCount;
+        try
+        {
+            var contentHtml = _tiptapConverter.FormatJsonAsHtml(resourceContentVersion.Content);
+
+            var translatedContentHtml = await _translationService.TranslateHtmlAsync(contentHtml, destinationLanguage, ct);
+
+            // TODO uncomment this after it is added back in aquifer-tiptap fixed
+            wordCount = 1;
+            //wordCount = _tiptapConverter.GetHtmlWordCount(translatedContentHtml);
+
+            translatedContentJson = TiptapConverter.WrapJsonWithTiptapModelArray(
+                _tiptapConverter.FormatHtmlAsJson(translatedContentHtml));
         }
         catch (Exception ex)
         {
@@ -190,26 +322,50 @@ public sealed class TranslationSubscriber(
             throw;
         }
 
+        // create machine translation
         _dbContext.ResourceContentVersionMachineTranslations
             .Add(new ResourceContentVersionMachineTranslationEntity
             {
                 ResourceContentVersionId = resourceContentVersion.Id,
-                DisplayName = resourceContentVersion.DisplayName, // TODO is this correct?
-                Content = translatedContent,
-                ContentIndex = 0, // TODO is this correct?
-                UserId = startedByUserId, // TODO is this correct for projects to use the user who started the project?
+                DisplayName = translatedDisplayName,
+                Content = translatedContentJson,
+                ContentIndex = 0, // TODO How to translate all the different FIA steps?
+                UserId = null,
                 SourceId = MachineTranslationSourceId.OpenAi,
                 RetranslationReason = null,
             });
 
-        // TODO convert to TipTap
-        resourceContentVersion.Content = translatedContent;
-        resourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationAiDraftComplete;
+        resourceContentVersion.Content = translatedContentJson;
+        resourceContentVersion.ContentSize = Encoding.UTF8.GetByteCount(translatedContentJson);
 
+        resourceContentVersion.WordCount = wordCount;
+
+        resourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationAiDraftComplete;
+        await _resourceHistoryService.AddStatusHistoryAsync(
+            resourceContentVersion,
+            resourceContentVersion.ResourceContent.Status,
+            changedByUserId: startedByUserId,
+            ct
+        );
+
+        // TODO uncomment this
         //await _dbContext.SaveChangesAsync(ct);
+
+        return resourceContentVersion;
     }
 
-    public sealed record OrchestrateProjectResourcesTranslationDto(int ProjectId, int StartedByUserId, IReadOnlyList<int> ProjectResourceContentIds);
-    public sealed record TranslateProjectResourceActivityDto(int ResourceContentId, int StartedByUserId);
-    public sealed record UpdateProjectPostTranslationActivityDto(int ProjectId, int StartedByUserId);
+    public sealed record OrchestrateProjectResourcesTranslationDto(
+        int ProjectId,
+        int StartedByUserId,
+        IReadOnlyList<int> ProjectResourceContentIds,
+        string OriginalQueueMessageText);
+
+    public sealed record TranslateProjectResourceActivityDto(
+        int ResourceContentId,
+        int StartedByUserId);
+
+    public sealed record UpdateProjectPostTranslationActivityDto(
+        int ProjectId,
+        int StartedByUserId,
+        IReadOnlyList<int> TranslatedProjectResourceContentIds);
 }

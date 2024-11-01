@@ -1,5 +1,7 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
+using Aquifer.Common.Jobs.Messages;
+using Aquifer.Common.Jobs.Publishers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Services;
@@ -8,7 +10,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.CreateTranslation;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService)
+public class Endpoint(
+    AquiferDbContext dbContext,
+    IUserService userService,
+    IResourceHistoryService historyService,
+    ITranslationPublisher translationPublisher)
     : Endpoint<Request, Response>
 {
     public override void Configure()
@@ -81,10 +87,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             Version = 1
         };
 
-        if (isCommunityUser) {
-            newResourceContentVersion.AssignedUserId = user.Id;
-        }
-
         var newResourceContent = new ResourceContentEntity
         {
             LanguageId = language.Id,
@@ -96,23 +98,24 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         };
 
         await dbContext.ResourceContents.AddAsync(newResourceContent, ct);
+
         await historyService.AddStatusHistoryAsync(
-            newResourceContentVersion, 
+            newResourceContentVersion,
             newResourceContent.Status,
-            user.Id, 
+            user.Id,
             ct
         );
 
-        if (isCommunityUser) {
-            await historyService.AddSnapshotHistoryAsync(
-                newResourceContentVersion, 
-                user.Id, 
-                ResourceContentStatus.TranslationEditorReview, 
-                ct);
-            await historyService.AddAssignedUserHistoryAsync(newResourceContentVersion, user.Id, user.Id, ct);
-        }
-
         await dbContext.SaveChangesAsync(ct);
+
+        await translationPublisher.PublishTranslateResourceMessageAsync(
+            new TranslateResourceMessage(
+                newResourceContent.Id,
+                user.Id,
+                isCommunityUser
+                    ? TranslationOrigin.CommunityReviewer
+                    : TranslationOrigin.CreateTranslation),
+            ct);
 
         await SendOkAsync(new Response(newResourceContent.Id), ct);
     }

@@ -16,4 +16,9 @@ public static class Queues
     // translations
     public const string TranslateProjectResources = "translate-project-resources";
     public const string TranslateResource = "translate-resource";
+
+    public static string GetPoisonQueueName(string queueName)
+    {
+        return $"{queueName}-poison";
+    }
 }

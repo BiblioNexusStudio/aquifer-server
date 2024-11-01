@@ -1,3 +1,4 @@
+using Aquifer.AI;
 using Aquifer.Common.Clients;
 using Aquifer.Common.Clients.Http.IpAddressLookup;
 using Aquifer.Common.Jobs;
@@ -7,12 +8,14 @@ using Aquifer.Data.Services;
 using Aquifer.Jobs.Clients;
 using Aquifer.Jobs.Configuration;
 using Aquifer.Jobs.Services;
+using Aquifer.JsEngine.Tiptap;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 var host = new HostBuilder()
     .ConfigureAppConfiguration((context, builder) => builder
@@ -30,6 +33,8 @@ var host = new HostBuilder()
         var isDevelopment = context.HostingEnvironment.EnvironmentName == "Development";
 
         services.AddOptions<ConfigurationOptions>().Bind(context.Configuration);
+        services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.OpenAi);
+        services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.OpenAiTranslation);
 
         var configuration = context.Configuration.Get<ConfigurationOptions>()
             ?? throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
@@ -53,6 +58,7 @@ var host = new HostBuilder()
         services.AddSingleton<IEmailService, EmailService>();
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<ITranslationService, OpenAiTranslationService>();
+        services.AddSingleton<ITiptapConverter, TiptapConverter>();
         services.AddKeyedSingleton<IEmailService, SendGridEmailService>(nameof(SendGridEmailService));
     })
     .Build();
