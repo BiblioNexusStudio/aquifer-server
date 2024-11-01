@@ -3,6 +3,7 @@
 namespace Aquifer.Data.Entities;
 
 [Index(nameof(ChangedByUserId), nameof(Created))]
+[Index(nameof(Status), nameof(ResourceContentVersionId), nameof(Created))]
 public class ResourceContentVersionStatusHistoryEntity
 {
     public int Id { get; set; }
