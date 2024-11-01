@@ -4,6 +4,7 @@ using Aquifer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    partial class AquiferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241101195532_Make_ResourceContentVersionMachineTranslation_UserId_Nullable")]
+    partial class Make_ResourceContentVersionMachineTranslation_UserId_Nullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -218,42 +221,6 @@ namespace Aquifer.Data.Migrations
                     b.ToTable("Bibles");
                 });
 
-            modelBuilder.Entity("Aquifer.Data.Entities.BibleTextEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BibleId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ChapterNumber")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Created")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("VerseNumber")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BibleId", "BookId", "ChapterNumber", "VerseNumber");
-
-                    b.ToTable("BibleTexts");
-                });
-
             modelBuilder.Entity("Aquifer.Data.Entities.BibleVersionWordEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -324,73 +291,6 @@ namespace Aquifer.Data.Migrations
                     b.HasIndex("BibleVersionWordId");
 
                     b.ToTable("BibleVersionWordGroupWords");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.BookChapterEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Number")
-                        .HasColumnType("int");
-
-                    b.Property<int>("VerseCount")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("BookChapters");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.BookChapterResourceEntity", b =>
-                {
-                    b.Property<int>("BookChapterId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ResourceId")
-                        .HasColumnType("int");
-
-                    b.HasKey("BookChapterId", "ResourceId");
-
-                    b.HasIndex("ResourceId");
-
-                    b.ToTable("BookChapterResources");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.BookEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(5)
-                        .HasColumnType("nvarchar(5)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Books");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.BookResourceEntity", b =>
-                {
-                    b.Property<int>("BookId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ResourceId")
-                        .HasColumnType("int");
-
-                    b.HasKey("BookId", "ResourceId");
-
-                    b.HasIndex("ResourceId");
-
-                    b.ToTable("BookResources");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.CommentEntity", b =>
@@ -1971,15 +1871,7 @@ namespace Aquifer.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Aquifer.Data.Entities.BookEntity", "Book")
-                        .WithMany()
-                        .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Bible");
-
-                    b.Navigation("Book");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.BibleBookEntity", b =>
@@ -2002,17 +1894,6 @@ namespace Aquifer.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Language");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.BibleTextEntity", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.BookEntity", "Book")
-                        .WithMany()
-                        .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Book");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.BibleVersionWordEntity", b =>
@@ -2043,55 +1924,6 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("BibleVersionWord");
 
                     b.Navigation("BibleVersionWordGroup");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.BookChapterEntity", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.BookEntity", "Book")
-                        .WithMany("Chapters")
-                        .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Book");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.BookChapterResourceEntity", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.BookChapterEntity", "BookChapter")
-                        .WithMany()
-                        .HasForeignKey("BookChapterId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Aquifer.Data.Entities.ResourceEntity", "Resource")
-                        .WithMany()
-                        .HasForeignKey("ResourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("BookChapter");
-
-                    b.Navigation("Resource");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.BookResourceEntity", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.BookEntity", "Book")
-                        .WithMany()
-                        .HasForeignKey("BookId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Aquifer.Data.Entities.ResourceEntity", "Resource")
-                        .WithMany()
-                        .HasForeignKey("ResourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Book");
-
-                    b.Navigation("Resource");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.CommentEntity", b =>
@@ -2685,11 +2517,6 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("BibleVersionWordGroupWords");
 
                     b.Navigation("NewTestamentAlignments");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.BookEntity", b =>
-                {
-                    b.Navigation("Chapters");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.CommentThreadEntity", b =>
