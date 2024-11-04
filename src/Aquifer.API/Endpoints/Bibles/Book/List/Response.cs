@@ -2,7 +2,6 @@
 
 public class Response
 {
-    public required int Id { get; set; }
     public required int Number { get; set; }
     public required string Code { get; set; }
     public required string LocalizedName { get; set; }

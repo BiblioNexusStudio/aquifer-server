@@ -182,19 +182,19 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
     private async Task<BookData?> GetBookDataAsync(int bibleId, BookId bookId, CancellationToken ct)
     {
-        return await dbContext.BibleBooks
-            .Where(bb =>
-                bb.Bible.Enabled &&
-                !bb.Bible.RestrictedLicense &&
-                bb.Bible.GreekAlignment &&
-                bb.Bible.Id == bibleId &&
-                bb.Code == BibleBookCodeUtilities.CodeFromId(bookId))
-            .Select(bb => new BookData(
-                bb.Bible.Id,
-                bb.Bible.Name,
-                bb.Bible.Abbreviation,
-                bb.Code,
-                bb.LocalizedName))
+        return await dbContext.BibleBookContents
+            .Where(bbc =>
+                bbc.Bible.Enabled &&
+                !bbc.Bible.RestrictedLicense &&
+                bbc.Bible.GreekAlignment &&
+                bbc.Bible.Id == bibleId &&
+                bbc.BookId == bookId)
+            .Select(bbc => new BookData(
+                bbc.Bible.Id,
+                bbc.Bible.Name,
+                bbc.Bible.Abbreviation,
+                bbc.Book.Code,
+                bbc.DisplayName))
             .FirstOrDefaultAsync(ct);
     }
 

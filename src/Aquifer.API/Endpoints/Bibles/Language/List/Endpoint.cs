@@ -34,7 +34,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                         DisplayName = book.DisplayName,
                         TextSize = book.TextSize,
                         AudioSize = book.AudioSize,
-                        ChapterCount = book.ChapterCount
+                        ChapterCount = book.Book.Chapters.Count
                     })
             }).ToListAsync(ct);
 
