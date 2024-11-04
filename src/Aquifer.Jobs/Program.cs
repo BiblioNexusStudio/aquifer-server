@@ -8,7 +8,6 @@ using Aquifer.Data.Services;
 using Aquifer.Jobs.Clients;
 using Aquifer.Jobs.Configuration;
 using Aquifer.Jobs.Services;
-using Aquifer.JsEngine.Tiptap;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -58,7 +57,6 @@ var host = new HostBuilder()
         services.AddSingleton<IEmailService, EmailService>();
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<ITranslationService, OpenAiTranslationService>();
-        services.AddSingleton<ITiptapConverter, TiptapConverter>();
         services.AddKeyedSingleton<IEmailService, SendGridEmailService>(nameof(SendGridEmailService));
     })
     .Build();

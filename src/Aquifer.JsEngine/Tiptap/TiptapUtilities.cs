@@ -2,17 +2,15 @@
 
 namespace Aquifer.JsEngine.Tiptap;
 
-public interface ITiptapConverter
-{
-    string FormatHtmlAsJson(string sourceHtml);
-    string FormatJsonAsHtml(string sourceJson);
-}
-
-public sealed class TiptapConverter : ITiptapConverter, IDisposable
+/// <summary>
+/// This class is purely a C# wrapper around TiptapUtilities.js.
+/// See also Aquifer.Tiptap where that file is generated.
+/// </summary>
+public sealed class TiptapUtilities : IDisposable
 {
     private readonly V8JsEngine _jsEngine;
 
-    public TiptapConverter()
+    public TiptapUtilities()
     {
         _jsEngine = new V8JsEngine();
         _jsEngine.ExecuteResource($"{GetType().Namespace}.TiptapUtilities.js", GetType().Assembly);
@@ -26,24 +24,18 @@ public sealed class TiptapConverter : ITiptapConverter, IDisposable
     /// <summary>
     /// Note: Resulting JSON will not be inside a Tiptap model array.
     /// This means that round-tripping JSON -> HTML -> JSON will not match the original JSON.
-    /// Use <see cref="WrapJsonWithTiptapModelArray"/> to wrap the return value of this method if a Tiptap model array is needed.
     /// </summary>
-    public string FormatHtmlAsJson(string sourceHtml)
+    public string ParseHtmlAsJson(string sourceHtml)
     {
         _jsEngine.SetVariableValue("html", sourceHtml);
         _jsEngine.Execute("json = parseHtmlAsJson(html)");
         return _jsEngine.Evaluate<string>("json");
     }
 
-    public string FormatJsonAsHtml(string sourceJson)
+    public string ParseJsonAsHtml(string sourceJson)
     {
         _jsEngine.SetVariableValue("json", sourceJson);
         _jsEngine.Execute("html = parseJsonAsHtml(json)");
         return _jsEngine.Evaluate<string>("html");
-    }
-
-    public static string WrapJsonWithTiptapModelArray(string json)
-    {
-        return $"[{{\"tiptap\":{json}}}]";
     }
 }

@@ -3,12 +3,12 @@ using Aquifer.AI;
 using Aquifer.Common.Jobs;
 using Aquifer.Common.Jobs.Messages;
 using Aquifer.Common.Services;
+using Aquifer.Common.Tiptap;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
 using Aquifer.Data.Services;
-using Aquifer.JsEngine.Tiptap;
 using Azure.Storage.Queues.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
@@ -21,7 +21,6 @@ namespace Aquifer.Jobs.Subscribers;
 public sealed class TranslationSubscriber(
     AquiferDbContext _dbContext,
     ILogger<TranslationSubscriber> _logger,
-    ITiptapConverter _tiptapConverter,
     ITranslationService _translationService,
     IResourceHistoryService _resourceHistoryService,
     INotificationService _notificationService,
@@ -61,7 +60,7 @@ public sealed class TranslationSubscriber(
                 changedByUserId: message.StartedByUserId,
                 ct);
 
-            //await _dbContext.SaveChangesAsync(ct);
+            await _dbContext.SaveChangesAsync(ct);
         }
     }
 
@@ -233,7 +232,7 @@ public sealed class TranslationSubscriber(
                     activityContext.CancellationToken);
             }
 
-            //await _dbContext.SaveChangesAsync(activityContext.CancellationToken);
+            await _dbContext.SaveChangesAsync(activityContext.CancellationToken);
         }
 
         await _notificationService.SendProjectStartedNotificationAsync(dto.ProjectId, activityContext.CancellationToken);
@@ -260,9 +259,14 @@ public sealed class TranslationSubscriber(
             .AsTracking()
             .Include(rcv => rcv.ResourceContent)
             .Include(rcv => rcv.ResourceContent.Language)
-            .SingleOrDefaultAsync(rcv => rcv.IsDraft && rcv.ResourceContent.Id == resourceContentId, ct)
+            .SingleOrDefaultAsync(
+                rcv =>
+                    rcv.IsDraft &&
+                    rcv.ResourceContent.MediaType == ResourceContentMediaType.Text &&
+                    rcv.ResourceContent.Id == resourceContentId,
+                ct)
             ?? throw new InvalidOperationException(
-                $"Aborting translation for Resource Content ID {resourceContentId} because it has no Resource Content Version in the Draft status.");
+                $"Aborting translation for Resource Content ID {resourceContentId} because it has no Resource Content Version with Text Media Type in the Draft status.");
 
         if (resourceContentVersion.ResourceContent.Status != ResourceContentStatus.TranslationAwaitingAiDraft)
         {
@@ -297,19 +301,22 @@ public sealed class TranslationSubscriber(
         // Translate the resource content.
         // Note: Resource content is saved as Tiptap JSON in the DB.
         // It must be converted to HTML in order to be translated and then converted back to JSON after translation.
-
         string translatedContentJson;
-        int wordCount;
+        var wordCount = 0;
         try
         {
-            var contentHtml = _tiptapConverter.FormatJsonAsHtml(resourceContentVersion.Content);
+            var contentHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(resourceContentVersion.Content);
 
-            var translatedContentHtml = await _translationService.TranslateHtmlAsync(contentHtml, destinationLanguage, ct);
+            // translate each Tiptap step independently
+            var translatedContentHtmlItems = new List<string>();
+            foreach (var contentHtmlItem in  contentHtmlItems)
+            {
+                var translatedContentHtmlItem = await _translationService.TranslateHtmlAsync(contentHtmlItem, destinationLanguage, ct);
+                translatedContentHtmlItems.Add(translatedContentHtmlItem);
+                wordCount += HtmlUtilities.GetWordCount(translatedContentHtmlItem);
+            }
 
-            wordCount = HtmlUtilities.GetWordCount(translatedContentHtml);
-
-            translatedContentJson = TiptapConverter.WrapJsonWithTiptapModelArray(
-                _tiptapConverter.FormatHtmlAsJson(translatedContentHtml));
+            translatedContentJson = TiptapConverter.ConvertHtmlItemsToJson(translatedContentHtmlItems);
         }
         catch (Exception ex)
         {
@@ -347,8 +354,7 @@ public sealed class TranslationSubscriber(
             ct
         );
 
-        // TODO uncomment this
-        //await _dbContext.SaveChangesAsync(ct);
+        await _dbContext.SaveChangesAsync(ct);
 
         return resourceContentVersion;
     }
