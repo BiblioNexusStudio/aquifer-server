@@ -10,6 +10,7 @@
         <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.6.0"/>
         <PackageReference Include="Azure.Storage.Queues" Version="12.19.1"/>
         <PackageReference Include="FastEndpoints" Version="5.28.0"/>
+        <PackageReference Include="HtmlAgilityPack" Version="1.11.70"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2"/>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1"/>
         <PackageReference Include="ReverseMarkdown" Version="4.6.0"/>

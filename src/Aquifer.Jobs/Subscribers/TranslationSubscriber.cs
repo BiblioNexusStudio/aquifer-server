@@ -3,6 +3,7 @@ using Aquifer.AI;
 using Aquifer.Common.Jobs;
 using Aquifer.Common.Jobs.Messages;
 using Aquifer.Common.Services;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
@@ -96,7 +97,7 @@ public sealed class TranslationSubscriber(
             new OrchestrateProjectResourcesTranslationDto(
                 message.ProjectId,
                 message.StartedByUserId,
-                projectResourceContentIds.Take(1).ToList(), // TODO stop taking one
+                projectResourceContentIds,
                 queueMessage.MessageText),
             ct);
 
@@ -305,9 +306,7 @@ public sealed class TranslationSubscriber(
 
             var translatedContentHtml = await _translationService.TranslateHtmlAsync(contentHtml, destinationLanguage, ct);
 
-            // TODO uncomment this after it is added back in aquifer-tiptap fixed
-            wordCount = 1;
-            //wordCount = _tiptapConverter.GetHtmlWordCount(translatedContentHtml);
+            wordCount = HtmlUtilities.GetWordCount(translatedContentHtml);
 
             translatedContentJson = TiptapConverter.WrapJsonWithTiptapModelArray(
                 _tiptapConverter.FormatHtmlAsJson(translatedContentHtml));

@@ -5,7 +5,6 @@ namespace Aquifer.JsEngine.Tiptap;
 public interface ITiptapConverter
 {
     string FormatHtmlAsJson(string sourceHtml);
-    int GetHtmlWordCount(string sourceHtml);
     string FormatJsonAsHtml(string sourceJson);
 }
 
@@ -34,13 +33,6 @@ public sealed class TiptapConverter : ITiptapConverter, IDisposable
         _jsEngine.SetVariableValue("html", sourceHtml);
         _jsEngine.Execute("json = parseHtmlAsJson(html)");
         return _jsEngine.Evaluate<string>("json");
-    }
-
-    public int GetHtmlWordCount(string sourceHtml)
-    {
-        _jsEngine.SetVariableValue("input", sourceHtml);
-        _jsEngine.Execute("wordCount = getHtmlWordCount(input)");
-        return _jsEngine.Evaluate<int>("wordCount");
     }
 
     public string FormatJsonAsHtml(string sourceJson)
