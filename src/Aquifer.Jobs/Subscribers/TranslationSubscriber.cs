@@ -297,6 +297,7 @@ public sealed class TranslationSubscriber(
         // Translate the resource content.
         // Note: Resource content is saved as Tiptap JSON in the DB.
         // It must be converted to HTML in order to be translated and then converted back to JSON after translation.
+        // Some Resource Content, such as FIA, also has multiple steps.
         string translatedContentJson;
         var wordCount = 0;
         try
@@ -305,20 +306,21 @@ public sealed class TranslationSubscriber(
 
             // translate each Tiptap step independently
             var translatedContentHtmlItems = new List<string>();
-            for (var index = 0; index < contentHtmlItems.Count; index++)
+            for (var contentIndex = 0; contentIndex < contentHtmlItems.Count; contentIndex++)
             {
-                var translatedContentHtmlItem = await _translationService.TranslateHtmlAsync(contentHtmlItems[index], destinationLanguage, ct);
+                var translatedContentHtmlItem = await _translationService.TranslateHtmlAsync(contentHtmlItems[contentIndex], destinationLanguage, ct);
                 translatedContentHtmlItems.Add(translatedContentHtmlItem);
+
                 wordCount += HtmlUtilities.GetWordCount(translatedContentHtmlItem);
 
-                // create machine translation
+                // each step gets its own machine translation record
                 _dbContext.ResourceContentVersionMachineTranslations
                     .Add(new ResourceContentVersionMachineTranslationEntity
                     {
                         ResourceContentVersionId = resourceContentVersion.Id,
                         DisplayName = translatedDisplayName,
                         Content = translatedContentHtmlItem,
-                        ContentIndex = index,
+                        ContentIndex = contentIndex,
                         UserId = null,
                         SourceId = MachineTranslationSourceId.OpenAi,
                         RetranslationReason = null,
@@ -337,6 +339,7 @@ public sealed class TranslationSubscriber(
             throw;
         }
 
+        resourceContentVersion.DisplayName = translatedDisplayName;
         resourceContentVersion.Content = translatedContentJson;
         resourceContentVersion.ContentSize = Encoding.UTF8.GetByteCount(translatedContentJson);
         resourceContentVersion.WordCount = wordCount;
@@ -348,7 +351,7 @@ public sealed class TranslationSubscriber(
             oldStatus: ResourceContentStatus.TranslationAwaitingAiDraft,
             ct);
 
-        // move to correct completed status
+        // move to completed status
         resourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationAiDraftComplete;
         await _resourceHistoryService.AddStatusHistoryAsync(
             resourceContentVersion,
