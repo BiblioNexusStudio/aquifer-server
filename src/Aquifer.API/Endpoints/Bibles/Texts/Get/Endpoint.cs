@@ -16,31 +16,42 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var response = await dbContext.BibleBooks
-            .Where(x => x.Bible.Enabled && x.Bible.Id == req.BibleId && ((int)x.Number == req.BookNumber || x.Code == req.BookCode))
-            .Select(x => new Response
+        var response = await dbContext.BibleBookContents
+            .Where(bbc => bbc.Bible.Enabled && bbc.Bible.Id == req.BibleId &&
+                          ((int)bbc.BookId == req.BookNumber || bbc.Book.Code == req.BookCode))
+            .Select(bbc => new Response
             {
-                BibleId = x.Bible.Id,
-                BibleName = x.Bible.Name,
-                BibleAbbreviation = x.Bible.Abbreviation,
-                BookCode = x.Code,
-                BookName = x.LocalizedName,
-                BookNumber = (int)x.Number,
-                Chapters = x.Chapters.Where(ch => ch.Number >= req.StartChapter && ch.Number <= req.EndChapter)
-                    .Select(ch => new ResponseChapters
-                    {
-                        Number = ch.Number,
-                        Verses = ch.Verses
-                            .Where(v => v.Number >= (ch.Number == req.StartChapter ? req.StartVerse : 1) &&
-                                v.Number <= (ch.Number == req.EndChapter ? req.EndVerse : 999))
-                            .Select(v => new ResponseChapterVerses
-                            {
-                                Number = v.Number,
-                                Text = v.Text
-                            })
-                    })
+                BibleId = bbc.Bible.Id,
+                BibleName = bbc.Bible.Name,
+                BibleAbbreviation = bbc.Bible.Abbreviation,
+                BookCode = bbc.Book.Code,
+                BookName = bbc.DisplayName,
+                BookNumber = (int)bbc.BookId
             })
             .FirstOrDefaultAsync(ct);
+
+        if (response is not null)
+        {
+            response.Chapters = await dbContext.BibleTexts
+                .Where(bt => bt.BibleId == response.BibleId && (int)bt.BookId == response.BookNumber &&
+                             bt.ChapterNumber >= req.StartChapter && bt.ChapterNumber <= req.EndChapter &&
+                             (bt.ChapterNumber != req.StartChapter || bt.VerseNumber >= req.StartVerse) &&
+                             (bt.ChapterNumber != req.EndChapter || bt.VerseNumber <= req.EndVerse))
+                .OrderBy(bt => bt.ChapterNumber)
+                .GroupBy(bt => bt.ChapterNumber)
+                .Select(bt => new ResponseChapters
+                {
+                    Number = bt.Key,
+                    Verses = bt
+                        .OrderBy(bti => bti.VerseNumber)
+                        .Select(bti => new ResponseChapterVerses
+                        {
+                            Number = bti.VerseNumber,
+                            Text = bti.Text
+                        }).ToList()
+                })
+                .ToListAsync(ct);
+        }
 
         await (response is null ? SendNotFoundAsync(ct) : SendOkAsync(response, ct));
     }

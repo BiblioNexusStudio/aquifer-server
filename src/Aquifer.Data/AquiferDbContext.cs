@@ -22,14 +22,19 @@ public class AquiferDbContext : DbContext
     }
 
     public DbSet<AssociatedResourceEntity> AssociatedResources { get; set; }
-    public DbSet<BibleBookChapterEntity> BibleBookChapters { get; set; }
-    public DbSet<BibleBookChapterVerseEntity> BibleBookChapterVerses { get; set; }
+    public DbSet<BibleBookChapterEntity> BibleBookChapters { get; set; } // TODO: delete after deploy
+    public DbSet<BibleBookChapterVerseEntity> BibleBookChapterVerses { get; set; } // TODO: delete after deploy
     public DbSet<BibleBookContentEntity> BibleBookContents { get; set; }
-    public DbSet<BibleBookEntity> BibleBooks { get; set; }
+    public DbSet<BibleBookEntity> BibleBooks { get; set; } // TODO: delete after deploy
     public DbSet<BibleEntity> Bibles { get; set; }
+    public DbSet<BibleTextEntity> BibleTexts { get; set; }
     public DbSet<BibleVersionWordEntity> BibleVersionWords { get; set; }
     public DbSet<BibleVersionWordGroupEntity> BibleVersionWordGroups { get; set; }
     public DbSet<BibleVersionWordGroupWordEntity> BibleVersionWordGroupWords { get; set; }
+    public DbSet<BookChapterEntity> BookChapters { get; set; }
+    public DbSet<BookChapterResourceEntity> BookChapterResources { get; set; }
+    public DbSet<BookEntity> Books { get; set; }
+    public DbSet<BookResourceEntity> BookResources { get; set; }
     public DbSet<CommentEntity> Comments { get; set; }
     public DbSet<CommentThreadEntity> CommentThreads { get; set; }
     public DbSet<CompanyEntity> Companies { get; set; }

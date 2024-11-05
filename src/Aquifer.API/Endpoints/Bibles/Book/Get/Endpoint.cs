@@ -17,24 +17,24 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
     {
         var bookCodeEnum = BibleBookCodeUtilities.IdFromCode(request.BookCode);
 
-        var book = await dbContext.BibleBookContents
-            .SingleOrDefaultAsync(b => b.Bible.Enabled && b.BibleId == request.BibleId && b.BookId == bookCodeEnum, ct);
+        var response = await dbContext.BibleBookContents
+            .Where(bbc => bbc.Bible.Enabled && bbc.BibleId == request.BibleId && bbc.BookId == bookCodeEnum)
+            .Select(bbc => new Response
+            {
+                AudioSize = bbc.AudioSize,
+                AudioUrls = bbc.AudioUrls != null ? JsonUtilities.DefaultDeserialize(bbc.AudioUrls) : null,
+                BookCode = BibleBookCodeUtilities.CodeFromId(bbc.BookId),
+                ChapterCount = bbc.Book.Chapters.Count,
+                DisplayName = bbc.DisplayName,
+                TextSize = bbc.TextSize
+            })
+            .SingleOrDefaultAsync(ct);
 
-        if (book == null)
+        if (response == null)
         {
             await SendNotFoundAsync(ct);
             return;
         }
-
-        var response = new Response
-        {
-            AudioSize = book.AudioSize,
-            AudioUrls = book.AudioUrls is not null ? JsonUtilities.DefaultDeserialize(book.AudioUrls) : null,
-            BookCode = BibleBookCodeUtilities.CodeFromId(book.BookId),
-            ChapterCount = book.ChapterCount,
-            DisplayName = book.DisplayName,
-            TextSize = book.TextSize
-        };
 
         await SendOkAsync(response, ct);
     }

@@ -73,17 +73,17 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                                                            SELECT COUNT(DISTINCT RC.id) AS TotalResources,
                                                                SUBSTRING(CAST(StartVerseId AS VARCHAR(10)), 2, 3) AS BibleBookId,
                                                                MAX(RCV.Updated) AS LastPublished,
-                                                               BB.LocalizedName AS BookName
+                                                               BBC.DisplayName AS BookName
                                                            FROM ResourceContents RC
                                                                INNER JOIN Resources R ON R.Id = RC.ResourceId
                                                                INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id AND RCV.IsPublished = 1
                                                                INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId AND PR.ForMarketing = 1
                                                                INNER JOIN PassageResources PAR ON PAR.ResourceId = R.Id
                                                                INNER JOIN Passages PAS ON PAS.Id = PAR.PassageId
-                                                               INNER JOIN BibleBooks BB ON BB.BibleId = 1 AND BB.Number = CAST(SUBSTRING(CAST(StartVerseId AS VARCHAR(10)), 2, 3) AS int)
+                                                               INNER JOIN BibleBookContents BBC ON BBC.BibleId = 1 AND BBC.BookId = CAST(SUBSTRING(CAST(StartVerseId AS VARCHAR(10)), 2, 3) AS int)
                                                            WHERE RC.LanguageId = {languageId}
                                                                AND PR.Id = {resourceId}
-                                                           GROUP BY PR.Id, PR.DisplayName, SUBSTRING(CAST(StartVerseId AS VARCHAR(10)), 2, 3), BB.LocalizedName
+                                                           GROUP BY PR.Id, PR.DisplayName, SUBSTRING(CAST(StartVerseId AS VARCHAR(10)), 2, 3), BBC.DisplayName
                                                            ORDER BY SUBSTRING(CAST(StartVerseId AS VARCHAR(10)), 2, 3)
                                                            """)
             .ToListAsync(ct);
@@ -93,18 +93,18 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     {
         return await dbContext.Database.SqlQuery<BookRow>($"""
                                                            SELECT COUNT(DISTINCT RC.id) AS TotalResources,
-                                                           SUBSTRING(CAST(VerseId AS VARCHAR(10)), 2, 3) AS BibleBookId,
+                                                               SUBSTRING(CAST(VerseId AS VARCHAR(10)), 2, 3) AS BibleBookId,
                                                                MAX(RCV.Updated) AS LastPublished,
-                                                           BB.LocalizedName AS BookName
+                                                               BBC.DisplayName AS BookName
                                                                FROM ResourceContents RC
                                                            INNER JOIN Resources R ON R.Id = RC.ResourceId
                                                            INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id AND RCV.IsPublished = 1
                                                            INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId AND PR.ForMarketing = 1
                                                            INNER JOIN VerseResources VR ON VR.ResourceId = R.Id
-                                                           INNER JOIN BibleBooks BB ON BB.BibleId = 1 AND BB.Number = CAST(SUBSTRING(CAST(VerseId AS VARCHAR(10)), 2, 3) AS int)
+                                                           INNER JOIN BibleBookContents BBC ON BBC.BibleId = 1 AND BBC.BookId = CAST(SUBSTRING(CAST(VerseId AS VARCHAR(10)), 2, 3) AS int)
                                                            WHERE RC.LanguageId = {languageId}
                                                            AND PR.Id = {resourceId}
-                                                           GROUP BY PR.Id, PR.DisplayName, SUBSTRING(CAST(VerseId AS VARCHAR(10)), 2, 3), BB.LocalizedName
+                                                           GROUP BY PR.Id, PR.DisplayName, SUBSTRING(CAST(VerseId AS VARCHAR(10)), 2, 3), BBC.DisplayName
                                                                ORDER BY SUBSTRING(CAST(VerseId AS VARCHAR(10)), 2, 3)
                                                            """)
             .ToListAsync(ct);
@@ -114,7 +114,11 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
     {
         return BibleBookCodeUtilities.GetAll()
             .Where(x => x.BookId <= BookId.BookREV)
-            .Select(x => new BookRow { BookName = x.BookFullName, BibleBookId = ((int)x.BookId).ToString("D3") })
+            .Select(x => new BookRow
+            {
+                BookName = x.BookFullName,
+                BibleBookId = ((int)x.BookId).ToString("D3")
+            })
             .ToList();
     }
 }
