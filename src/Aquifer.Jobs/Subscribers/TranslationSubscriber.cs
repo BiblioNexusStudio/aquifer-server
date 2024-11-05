@@ -38,27 +38,22 @@ public sealed class TranslationSubscriber(
     {
         var message = queueMessage.Deserialize<TranslateResourceMessage, TranslationSubscriber>(_logger);
 
-        var updatedResourceContentVersion = await TranslateResourceCoreAsync(
+        var translatedResourceContentVersion = await TranslateResourceCoreAsync(
             message.ResourceContentId,
             message.StartedByUserId,
             message.TranslationOrigin,
             ct);
 
-        // if a Community Reviewer requested the translation then assign to that user now that translation has completed
+        // if a Community Reviewer requested the translation then the status needs to be updated (again) now that translation has completed
         if (message.TranslationOrigin == TranslationOrigin.CommunityReviewer)
         {
-            updatedResourceContentVersion.AssignedUserId = message.StartedByUserId;
-
-            await _resourceHistoryService.AddSnapshotHistoryAsync(
-                updatedResourceContentVersion,
-                oldUserId: message.StartedByUserId,
+            translatedResourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationEditorReview;
+            await _resourceHistoryService.AddStatusHistoryAsync(
+                translatedResourceContentVersion,
                 ResourceContentStatus.TranslationEditorReview,
-                ct);
-            await _resourceHistoryService.AddAssignedUserHistoryAsync(
-                updatedResourceContentVersion,
-                assignedUserId: message.StartedByUserId,
                 changedByUserId: message.StartedByUserId,
-                ct);
+                ct
+            );
 
             await _dbContext.SaveChangesAsync(ct);
         }
@@ -196,52 +191,46 @@ public sealed class TranslationSubscriber(
         var project = await _dbContext.Projects
             .SingleAsync(p => p.Id == dto.ProjectId);
 
-        // now that ALL translations are complete for the project, assign all resources in the project to the company lead
-        if (project.CompanyLeadUserId is not null)
+        var companyLeadUserId = project.CompanyLeadUserId
+            ?? throw new InvalidOperationException($"Company Lead User ID is null for Project ID {project.Id}. This should never happen.");
+
+        // Edge case handling: It's possible that something else acted on the resource content version status
+        // and moved it out of the TranslationAiDraftComplete status between the resource finishing translation
+        // and this project post-processing. If so, ignore those resources when performing assignments
+        // because there might already have been a user assignment.
+        var resourceContentVersions = await _dbContext.ResourceContentVersions
+            .AsTracking()
+            .Include(rcv => rcv.ResourceContent)
+            .Where(rcv => rcv.ResourceContent.ProjectResourceContents.Any(prc => prc.Project.Id == project.Id) &&
+                rcv.IsDraft &&
+                rcv.ResourceContent.Status == ResourceContentStatus.TranslationAiDraftComplete)
+            .ToListAsync(activityContext.CancellationToken);
+
+        // Edge case handling: Only update resource content versions that were queued for translation (even if gracefully skipped).
+        // Due to an unknown amount of time passing between translation and this post-processing it's unlikely
+        // but still possible that the list is different.
+        foreach (var resourceContentVersion in resourceContentVersions
+            .Where(rcv => dto.TranslatedProjectResourceContentIds.Contains(rcv.ResourceContentId)))
         {
-            // Edge case handling: It's possible that something else acted on the resource content version status
-            // and moved it out of the TranslationAiDraftComplete status between the resource finishing translation
-            // and this project post-processing. If so, ignore those resources when performing assignments
-            // because there might already have been a user assignment.
-            var resourceContentVersions = await _dbContext.ResourceContentVersions
-                .AsTracking()
-                .Include(rcv => rcv.ResourceContent)
-                .Where(rcv => rcv.ResourceContent.ProjectResourceContents.Any(prc => prc.Project.Id == project.Id) &&
-                    rcv.IsDraft &&
-                    rcv.ResourceContent.Status == ResourceContentStatus.TranslationAiDraftComplete)
-                .ToListAsync(activityContext.CancellationToken);
-
-            // Edge case handling: Only update resource content versions that were queued for translation (even if gracefully skipped).
-            // Due to an unknown amount of time passing between translation and this post-processing it's unlikely
-            // but still possible that the list is different.
-            foreach (var resourceContentVersion in resourceContentVersions
-                .Where(rcv => dto.TranslatedProjectResourceContentIds.Contains(rcv.ResourceContentId)))
-            {
-                resourceContentVersion.AssignedUserId = project.CompanyLeadUserId;
-
-                await _resourceHistoryService.AddAssignedUserHistoryAsync(
-                    resourceContentVersion,
-                    assignedUserId: project.CompanyLeadUserId,
-                    changedByUserId: dto.StartedByUserId,
-                    activityContext.CancellationToken);
-
-                await _resourceHistoryService.AddSnapshotHistoryAsync(
-                    resourceContentVersion,
-                    oldUserId: dto.StartedByUserId,
-                    oldStatus: ResourceContentStatus.New,
-                    activityContext.CancellationToken);
-            }
-
-            await _dbContext.SaveChangesAsync(activityContext.CancellationToken);
+            // now that ALL translations are complete for the project, assign all resources in the project to the company lead
+            resourceContentVersion.AssignedUserId = project.CompanyLeadUserId;
+            await _resourceHistoryService.AddAssignedUserHistoryAsync(
+                resourceContentVersion,
+                assignedUserId: project.CompanyLeadUserId,
+                changedByUserId: dto.StartedByUserId,
+                activityContext.CancellationToken);
         }
+
+        await _dbContext.SaveChangesAsync(activityContext.CancellationToken);
 
         await _notificationService.SendProjectStartedNotificationAsync(dto.ProjectId, activityContext.CancellationToken);
     }
 
     /// <summary>
-    /// Note: Callers are responsible for performing resource assignments and creating resource snapshots.
+    /// Note: Callers are responsible for performing resource assignments and creating original resource content snapshots.
     /// This method will perform the actual translation, create machine translations,
-    /// update the existing resource version with translated content, and change the resource content status.
+    /// update the existing draft resource version with translated content, create a new snapshot for the translation,
+    /// and change the resource content status.
     /// </summary>
     private async Task<ResourceContentVersionEntity> TranslateResourceCoreAsync(
         int resourceContentId,
@@ -259,6 +248,7 @@ public sealed class TranslationSubscriber(
             .AsTracking()
             .Include(rcv => rcv.ResourceContent)
             .Include(rcv => rcv.ResourceContent.Language)
+            .Include(rcv => rcv.ResourceContentVersionSnapshots)
             .SingleOrDefaultAsync(
                 rcv =>
                     rcv.IsDraft &&
@@ -267,6 +257,12 @@ public sealed class TranslationSubscriber(
                 ct)
             ?? throw new InvalidOperationException(
                 $"Aborting translation for Resource Content ID {resourceContentId} because it has no Resource Content Version with Text Media Type in the Draft status.");
+
+        if (resourceContentVersion.ResourceContentVersionSnapshots.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"Aborting translation for Resource Content ID {resourceContentId} because there are no pre-existing Snapshots for Resource Content Version ID {resourceContentVersion.Id}.");
+        }
 
         if (resourceContentVersion.ResourceContent.Status != ResourceContentStatus.TranslationAwaitingAiDraft)
         {
@@ -309,11 +305,24 @@ public sealed class TranslationSubscriber(
 
             // translate each Tiptap step independently
             var translatedContentHtmlItems = new List<string>();
-            foreach (var contentHtmlItem in  contentHtmlItems)
+            for (var index = 0; index < contentHtmlItems.Count; index++)
             {
-                var translatedContentHtmlItem = await _translationService.TranslateHtmlAsync(contentHtmlItem, destinationLanguage, ct);
+                var translatedContentHtmlItem = await _translationService.TranslateHtmlAsync(contentHtmlItems[index], destinationLanguage, ct);
                 translatedContentHtmlItems.Add(translatedContentHtmlItem);
                 wordCount += HtmlUtilities.GetWordCount(translatedContentHtmlItem);
+
+                // create machine translation
+                _dbContext.ResourceContentVersionMachineTranslations
+                    .Add(new ResourceContentVersionMachineTranslationEntity
+                    {
+                        ResourceContentVersionId = resourceContentVersion.Id,
+                        DisplayName = translatedDisplayName,
+                        Content = translatedContentHtmlItem,
+                        ContentIndex = index,
+                        UserId = null,
+                        SourceId = MachineTranslationSourceId.OpenAi,
+                        RetranslationReason = null,
+                    });
             }
 
             translatedContentJson = TiptapConverter.ConvertHtmlItemsToJson(translatedContentHtmlItems);
@@ -328,28 +337,22 @@ public sealed class TranslationSubscriber(
             throw;
         }
 
-        // create machine translation
-        _dbContext.ResourceContentVersionMachineTranslations
-            .Add(new ResourceContentVersionMachineTranslationEntity
-            {
-                ResourceContentVersionId = resourceContentVersion.Id,
-                DisplayName = translatedDisplayName,
-                Content = translatedContentJson,
-                ContentIndex = 0, // TODO How to translate all the different FIA steps?
-                UserId = null,
-                SourceId = MachineTranslationSourceId.OpenAi,
-                RetranslationReason = null,
-            });
-
         resourceContentVersion.Content = translatedContentJson;
         resourceContentVersion.ContentSize = Encoding.UTF8.GetByteCount(translatedContentJson);
-
         resourceContentVersion.WordCount = wordCount;
 
+        // save a snapshot of the translation
+        await _resourceHistoryService.AddSnapshotHistoryAsync(
+            resourceContentVersion,
+            oldUserId: startedByUserId,
+            oldStatus: ResourceContentStatus.TranslationAwaitingAiDraft,
+            ct);
+
+        // move to correct completed status
         resourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationAiDraftComplete;
         await _resourceHistoryService.AddStatusHistoryAsync(
             resourceContentVersion,
-            resourceContentVersion.ResourceContent.Status,
+            ResourceContentStatus.TranslationAiDraftComplete,
             changedByUserId: startedByUserId,
             ct
         );
