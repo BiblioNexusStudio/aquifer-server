@@ -68,7 +68,8 @@ public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHist
             snapshotEntity = await _dbContext.ResourceContentVersionSnapshots
                 .AsTracking()
                 .Where(rcvn => rcvn.ResourceContentVersionId == contentVersionEntity.Id)
-                .OrderByDescending(x => x.Created).FirstOrDefaultAsync(ct);
+                .OrderByDescending(x => x.Created)
+                .FirstOrDefaultAsync(ct);
         }
 
         if (snapshotEntity?.Content != contentVersionEntity.Content)

@@ -4,6 +4,7 @@ using Aquifer.Common.Jobs.Messages;
 using Aquifer.Common.Jobs.Publishers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Aquifer.Data.Services;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +13,7 @@ namespace Aquifer.API.Endpoints.Projects.Start;
 public class Endpoint(
     AquiferDbContext dbContext,
     IUserService userService,
+    IResourceHistoryService resourceHistoryService,
     ITranslationPublisher translationPublisher)
     : Endpoint<Request>
 {
@@ -37,6 +39,17 @@ public class Endpoint(
         }
 
         ValidateProject(project);
+
+        var resourceContentVersions = await dbContext.ResourceContentVersions
+            .AsTracking()
+            .Where(rcv => rcv.ResourceContent.ProjectResourceContents.Any(prc => prc.Project.Id == project.Id) && rcv.IsDraft)
+            .ToListAsync(ct);
+
+        // create original language snapshots before queuing for translation
+        foreach (var resourceContentVersion in resourceContentVersions)
+        {
+            await resourceHistoryService.AddSnapshotHistoryAsync(resourceContentVersion, user.Id, ResourceContentStatus.New, ct);
+        }
 
         project.Started = DateTime.UtcNow;
 

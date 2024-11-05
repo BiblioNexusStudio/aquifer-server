@@ -68,6 +68,7 @@ public class Endpoint(
         }
 
         var baseVersion = request.UseDraft ? baseContent.Versions.Single(x => x.IsDraft) : baseContent.Versions.Single(x => x.IsPublished);
+        var originalStatus = baseVersion.ResourceContent.Status;
 
         var hasFullCreateContentPermission = userService.HasPermission(PermissionName.CreateContent);
 
@@ -84,7 +85,12 @@ public class Endpoint(
             ContentSize = baseVersion.ContentSize,
             WordCount = baseVersion.WordCount,
             SourceWordCount = baseVersion.WordCount,
-            Version = 1
+            Version = 1,
+
+            // Assign the resource immediately even though translation has not yet started
+            // to ensure that Community Reviewers only have a single assigned resource.
+            // This will also apply to other callers of this endpoint (Publishers) for consistency/simplicity.
+            AssignedUserId = user.Id
         };
 
         var newResourceContent = new ResourceContentEntity
@@ -94,7 +100,7 @@ public class Endpoint(
             MediaType = baseContent.MediaType,
             Status = ResourceContentStatus.TranslationAwaitingAiDraft,
             Trusted = true,
-            Versions = [newResourceContentVersion]
+            Versions = [newResourceContentVersion],
         };
 
         await dbContext.ResourceContents.AddAsync(newResourceContent, ct);
@@ -105,6 +111,18 @@ public class Endpoint(
             user.Id,
             ct
         );
+
+        await historyService.AddSnapshotHistoryAsync(
+            newResourceContentVersion,
+            user.Id,
+            originalStatus,
+            ct);
+
+        await historyService.AddAssignedUserHistoryAsync(
+            newResourceContentVersion,
+            user.Id,
+            user.Id,
+            ct);
 
         await dbContext.SaveChangesAsync(ct);
 
