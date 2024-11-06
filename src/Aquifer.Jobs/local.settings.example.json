@@ -1,5 +1,4 @@
 {
-    "IsDevelopment": true,
     "IsEncrypted": false,
     "Values": {
         "AzureWebJobsDashboard": "UseDevelopmentStorage=true",
@@ -14,6 +13,7 @@
         "AzureWebJobs.SyncApiRequestStatsToStorageTable.Disabled": true,
         "AzureWebJobs.SyncCustomEventsToStorageTable.Disabled": true,
         "AzureWebJobs.SyncPageViewsToStorageTable.Disabled": true,
-        "AzureWebJobs.TrackResourceContentRequestJob.Disabled": true
+        "AzureWebJobs.TrackResourceContentRequestJob.Disabled": true,
+        "IsDevelopment": true
     }
 }
