@@ -2,13 +2,13 @@
 
 public class ConfigurationOptions
 {
-    public bool IsDevelopment { get; init; }
     public required string AquiferAdminBaseUri { get; init; }
     public required string AquiferApiBaseUri { get; init; }
     public required string KeyVaultUri { get; init; }
     public required ConnectionStringOptions ConnectionStrings { get; init; }
     public required AnalyticsOptions Analytics { get; init; }
     public required EmailOptions Email { get; init; }
+    public required NotificationsOptions Notifications { get; init; }
     public required MarketingEmailOptions MarketingEmail { get; init; }
 }
 
@@ -40,4 +40,11 @@ public class MarketingEmailOptions
     public required string Address { get; init; }
     public required string Name { get; init; }
     public required string ResourceLink { get; init; }
+}
+
+public class NotificationsOptions
+{
+    public required string SendResourceAssignmentNotificationTemplateId { get; init; }
+    public required string SendProjectStartedNotificationTemplateId { get; init; }
+    public required string SendResourceCommentCreatedNotificationTemplateId { get; init; }
 }

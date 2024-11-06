@@ -1,5 +1,6 @@
 using Aquifer.Common.Services;
 using Aquifer.Jobs.Clients;
+using Aquifer.Jobs.Common;
 using Aquifer.Jobs.Configuration;
 using Azure;
 using Azure.Data.Tables;
@@ -17,7 +18,7 @@ public class SyncCustomEventsToStorageTable(
 {
     [Function(nameof(SyncCustomEventsToStorageTable))]
 #pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings
-    public async Task Run([TimerTrigger("%Analytics:CronSchedule%")] TimerInfo timerInfo, CancellationToken ct)
+    public async Task Run([TimerTrigger(CronSchedules.EveryHourAtFiveAfter)] TimerInfo timerInfo, CancellationToken ct)
 #pragma warning restore IDE0060 // Remove unused parameter
     {
         await SyncSourceToPartitionKey("content-manager-web", "AquiferAdminCustomEvents", ct);
