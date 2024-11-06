@@ -1,4 +1,4 @@
-namespace Aquifer.API.Endpoints.Resources.Content.AssignEditor;
+namespace Aquifer.API.Endpoints.Resources.Content.PullFromReviewPending;
 
 public record Request
 {
