@@ -4,7 +4,6 @@ using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
-using static Aquifer.API.Helpers.EndpointHelpers;
 
 namespace Aquifer.API.Endpoints.Resources.Content.SendForPublisherReview;
 
@@ -109,12 +108,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             var assignedUser = await dbContext.Users
                 .AsTracking()
                 .SingleOrDefaultAsync(u => u.Id == assignedUserId && u.Enabled, ct);
-            if (assignedUser is null)
-            {
-                ThrowEntityNotFoundError<Request>(r => r.AssignedUserId);
-            }
 
-            if (assignedUser.Role != UserRole.Publisher)
+            if (assignedUser?.Role != UserRole.Publisher)
             {
                 ThrowError("Assigned user must be a publisher.");
             }
