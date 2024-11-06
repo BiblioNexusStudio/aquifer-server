@@ -39,8 +39,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
             SetDraftVersionStatus(originalStatus, draftVersion);
 
-            ResourceStatusHelpers.SetAssignedReviewerUserId(request.AssignedReviewerUserId, draftVersion);
-
             await ResourceStatusHelpers.SaveHistory(request.AssignedUserId, historyService, draftVersion, originalStatus, user, ct);
         }
 
