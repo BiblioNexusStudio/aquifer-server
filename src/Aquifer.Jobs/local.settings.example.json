@@ -1,17 +1,35 @@
 {
     "IsEncrypted": false,
     "Values": {
-        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
         "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-        "AzureWebJobs.SendEmail.Disabled": true,
-        "AzureWebJobs.SendTemplatedEmail.Disabled": true,
-        "AzureWebJobs.SendProjectStartedNotification.Disabled": true,
-        "AzureWebJobs.SendResourceCommentCreatedNotification.Disabled": true,
-        "AzureWebJobs.SendResourceAssignmentNotifications.Disabled": true,
-        "AzureWebJobs.SendNewContentEmails.Disabled": true,
-        "AzureWebJobs.SyncApiRequestStatsToStorageTable.Disabled": true,
-        "AzureWebJobs.SyncCustomEventsToStorageTable.Disabled": true,
-        "AzureWebJobs.SyncPageViewsToStorageTable.Disabled": true,
-        "AzureWebJobs.TrackResourceContentRequestJob.Disabled": true
+
+        // required here because Azure Functions directly accesses this via magic and can't fetch it from appsettings.json
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+
+        // The below settings are optional and only for local development (disabling jobs can help reduce noise).
+
+        // analytics jobs
+        "AzureWebJobs.SyncApiRequestStatsToStorageTable.Disabled": false,
+        "AzureWebJobs.SyncCustomEventsToStorageTable.Disabled": false,
+        "AzureWebJobs.SyncPageViewsToStorageTable.Disabled": false,
+
+        // email jobs
+        "AzureWebJobs.SendEmail.Disabled": false,
+        "AzureWebJobs.SendTemplatedEmail.Disabled": false,
+
+        // marketing email jobs
+        "AzureWebJobs.SendNewContentEmails.Disabled": false,
+
+        // notification jobs
+        "AzureWebJobs.SendProjectStartedNotification.Disabled": false,
+        "AzureWebJobs.SendResourceCommentCreatedNotification.Disabled": false,
+        "AzureWebJobs.SendResourceAssignmentNotifications.Disabled": false,
+
+        // resource tracking jobs
+        "AzureWebJobs.TrackResourceContentRequestJob.Disabled": false,
+
+        // translation jobs
+        "AzureWebJobs.TranslateProjectResources.Disabled": false,
+        "AzureWebJobs.TranslateResource.Disabled": false
     }
 }

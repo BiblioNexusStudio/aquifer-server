@@ -10,8 +10,8 @@ public class ConfigurationOptions
     public required ConnectionStringOptions ConnectionStrings { get; init; }
     public required AnalyticsOptions Analytics { get; init; }
     public required EmailOptions Email { get; init; }
-    public required NotificationsOptions Notifications { get; init; }
     public required MarketingEmailOptions MarketingEmail { get; init; }
+    public required NotificationsOptions Notifications { get; init; }
     public required OpenAiOptions OpenAi { get; init; }
     public required OpenAiTranslationOptions OpenAiTranslation { get; init; }
 }

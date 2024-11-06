@@ -34,9 +34,10 @@ public class OpenAiOptions
 
 public sealed class OpenAiTranslationOptions
 {
-    public string? TextTranslationPromptOverride { get; init; }
-    public string? HtmlTranslationBasePromptOverride { get; init; }
-    public IReadOnlyDictionary<string, string>? LanguageSpecificPromptAppendixByLanguageIso6393CodeMap { get; init; }
+    public required string DefaultLanguageSpecificPromptAppendixFormatString { get; init; }
+    public required string HtmlTranslationBasePrompt { get; init; }
+    public required Dictionary<string, string> LanguageSpecificPromptAppendixByLanguageIso6393CodeMap { get; init; }
+    public required string TextTranslationPromptFormatString { get; init; }
 }
 
 public sealed class OpenAiChatCompletionException(string message, string prompt, string text)
@@ -158,35 +159,17 @@ public sealed partial class OpenAiTranslationService : ITranslationService
 
     private string GetHtmlTranslationPrompt((string Iso6393Code, string EnglishName) destinationLanguage)
     {
-        const string defaultHtmlTranslationBasePrompt = """
-            You receive HTML and then return the HTML with an altered version of the text therein.
-            Never change the formatting of the HTML elements or attributes.
-            For example, if text has an <em> tag around it or a <span> tag with attributes, that tag and its attributes should stay with the text even if it is simplified or moved within the text.
-            Keep the HTML tags and attributes no matter what.
-            Never add a missing html element (i.e. if something starts with <p> but the end is missing </p>, don't add it).
-            Never remove '&nbsp;'.
-            Never echo the original content, only respond with the translation.
-            """;
-
-        var basePrompt = _options.HtmlTranslationBasePromptOverride
-            ?? defaultHtmlTranslationBasePrompt;
-
         var languageSpecificPromptAppendix =
             _options.LanguageSpecificPromptAppendixByLanguageIso6393CodeMap
-                ?.GetValueOrDefault(destinationLanguage.Iso6393Code.ToUpper())
-            ?? $"Then translate to {destinationLanguage.EnglishName}.";
+                .GetValueOrDefault(destinationLanguage.Iso6393Code.ToUpper())
+            ?? string.Format(_options.DefaultLanguageSpecificPromptAppendixFormatString, destinationLanguage.EnglishName);
 
-        return $"{basePrompt} {languageSpecificPromptAppendix}";
+        return $"{_options.HtmlTranslationBasePrompt} {languageSpecificPromptAppendix}";
     }
 
     private string GetTextTranslationPrompt((string Iso6393Code, string EnglishName) destinationLanguage)
     {
-        return _options.TextTranslationPromptOverride
-            ?? $"""
-                You receive a string and then return that string in the ${destinationLanguage.EnglishName} language.
-                Translate the exact string that you receive.
-                Do not interpret it as anything other than the exact string that it is.
-                """;
+        return string.Format(_options.TextTranslationPromptFormatString, destinationLanguage.EnglishName);
     }
 
     [GeneratedRegex("(?=<([hH][1-6]|[pP])\\b[^>]*>)")]
