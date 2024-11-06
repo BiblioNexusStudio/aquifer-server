@@ -92,6 +92,7 @@ public sealed class TranslationSubscriber(
                 message.ProjectId,
                 message.StartedByUserId,
                 projectResourceContentIds,
+                Queues.GetPoisonQueueName(Queues.TranslateProjectResources),
                 queueMessage.MessageText),
             ct);
 
@@ -137,7 +138,6 @@ public sealed class TranslationSubscriber(
             // then something is very wrong. If this happens then swallow errors here to allow successful orchestration function
             // completion but publish a poison queue item for manual retry later.
             var ct = CancellationToken.None;
-            var poisonQueueName = Queues.GetPoisonQueueName(Queues.TranslateProjectResources);
 
             try
             {
@@ -145,10 +145,10 @@ public sealed class TranslationSubscriber(
                     orchestrationException,
                     "Error translating resource content for Project ID {ProjectId}. A poison message will be published to \"{PoisonQueueName}\" to enable manual retry. Manual dev intervention is required.",
                     dto.ProjectId,
-                    poisonQueueName);
+                    dto.PoisonQueueName);
 
                 var translateProjectResourcesPoisonQueueClient = await _queueClientFactory.GetQueueClientAsync(
-                    poisonQueueName,
+                    dto.PoisonQueueName,
                     ct);
                 await translateProjectResourcesPoisonQueueClient.SendMessageAsync(dto.OriginalQueueMessageText, ct);
             }
@@ -159,7 +159,7 @@ public sealed class TranslationSubscriber(
                     queuePublishingException,
                     "After an error translating resource content for Project ID {ProjectId} another error occurred when attempting to publish a poison message to \"{PoisonQueueName}\". Manual dev intervention is required to replay the message. Message text: {MessageText}",
                     dto.ProjectId,
-                    poisonQueueName,
+                    dto.PoisonQueueName,
                     dto.OriginalQueueMessageText);
             }
         }
@@ -369,6 +369,7 @@ public sealed class TranslationSubscriber(
         int ProjectId,
         int StartedByUserId,
         IReadOnlyList<int> ProjectResourceContentIds,
+        string PoisonQueueName,
         string OriginalQueueMessageText);
 
     public sealed record TranslateProjectResourceActivityDto(
