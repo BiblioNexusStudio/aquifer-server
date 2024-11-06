@@ -61,7 +61,7 @@ public enum BookId
     [Display(Name = "Job")]
     BookJOB = 18,
 
-    [Display(Name = "Psalm")]
+    [Display(Name = "Psalms")]
     BookPSA = 19,
 
     [Display(Name = "Proverbs")]
