@@ -8,7 +8,7 @@
 
     <ItemGroup>
         <PackageReference Include="JavaScriptEngineSwitcher.V8" Version="3.24.2" />
-        <PackageReference Include="Microsoft.ClearScript.V8.Native.win-x64" Version="7.4.5" />
+        <PackageReference Include="Microsoft.ClearScript.Complete" Version="7.4.5" />
     </ItemGroup>
 
     <ItemGroup>
