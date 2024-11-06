@@ -75,17 +75,18 @@ public static class ResourceStatusHelpers
 
     public static async Task ValidateReviewerAndAssignedUser<TRequest>(int assignedUserId, int? assignedReviewerUserId,
         AquiferDbContext dbContext, UserEntity user, AssignmentPermissions permissions,
-        CancellationToken ct)
+        CancellationToken ct,
+        UserEntity? userToAssign = null)
     {
-        var userToAssign = await dbContext.Users
+        var assignedUser = userToAssign ?? await dbContext.Users
             .AsTracking()
             .SingleOrDefaultAsync(u => u.Id == assignedUserId && u.Enabled, ct);
-        if (userToAssign is null)
+        if (assignedUser is null)
         {
             ValidationContext<TRequest>.Instance.ThrowError(Helpers.InvalidUserIdResponse);
         }
 
-        if (userToAssign.CompanyId != user.CompanyId && !permissions.HasAssignOutsideCompanyPermission)
+        if (assignedUser.CompanyId != user.CompanyId && !permissions.HasAssignOutsideCompanyPermission)
         {
             ValidationContext<TRequest>.Instance.ThrowError("Unable to assign to a user outside your company");
         }
@@ -95,7 +96,7 @@ public static class ResourceStatusHelpers
             var reviewer = await dbContext.Users
                 .Where(u => u.Id == assignedReviewerUserId
                             && u.Enabled
-                            && u.CompanyId == userToAssign.CompanyId
+                            && u.CompanyId == assignedUser.CompanyId
                             && (u.Role == UserRole.Reviewer || u.Role == UserRole.Manager))
                 .SingleOrDefaultAsync(ct);
 

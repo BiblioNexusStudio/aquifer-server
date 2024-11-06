@@ -26,7 +26,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var permissions = ResourceStatusHelpers.GetAssignmentPermissions(userService);
 
         await ResourceStatusHelpers.ValidateReviewerAndAssignedUser<Request>(request.AssignedUserId, request.AssignedReviewerUserId,
-            dbContext, user, permissions, ct);
+            dbContext, user, permissions, ct, userToAssign);
 
         var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
 
