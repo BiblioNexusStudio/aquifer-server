@@ -1,6 +1,7 @@
 ﻿using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Aquifer.Data.Enums;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,41 +26,46 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var bookData = await dbContext.BibleBooks
-            .Where(bb =>
-                bb.Bible.Enabled &&
-                !bb.Bible.RestrictedLicense &&
-                bb.Bible.Id == request.BibleId &&
-                bb.Code == request.BookCode.ToUpper())
-            .Select(bb => new
+        var bookData = await dbContext.BibleBookContents
+            .Where(bbc =>
+                bbc.Bible.Enabled &&
+                !bbc.Bible.RestrictedLicense &&
+                bbc.Bible.Id == request.BibleId &&
+                bbc.Book.Code == request.BookCode.ToUpper())
+            .Select(bbc => new IntermediateBookData
             {
-                BibleId = bb.Bible.Id,
-                BibleName = bb.Bible.Name,
-                BibleAbbreviation = bb.Bible.Abbreviation,
-                BookCode = bb.Code,
-                BookId = bb.Number,
-                BookName = bb.LocalizedName,
-                Chapters = bb.Chapters
-                    .Where(ch => ch.Number >= request.StartChapter && ch.Number <= request.EndChapter)
-                    .Select(ch => new
-                    {
-                        ch.Number,
-                        Verses = ch.Verses
-                            .Where(v => (ch.Number != request.StartChapter || v.Number >= request.StartVerse) &&
-                                (ch.Number != request.EndChapter || v.Number <= request.EndVerse))
-                            .ToList(),
-                    })
-                    .ToList(),
+                BibleId = bbc.Bible.Id,
+                BibleName = bbc.Bible.Name,
+                BibleAbbreviation = bbc.Bible.Abbreviation,
+                BookCode = bbc.Book.Code,
+                BookId = bbc.BookId,
+                BookName = bbc.DisplayName,
+                AudioUrls = bbc.AudioUrls
             })
             .FirstOrDefaultAsync(ct);
 
-        var parsedAudioUrls = bookData is null || !request.ShouldReturnAudioData
-            ? null
-            : DeserializeAudioUrls(
-                await dbContext.BibleBookContents
-                    .Where(bbc => bbc.BibleId == request.BibleId && bbc.BookId == bookData.BookId)
-                    .Select(bbc => bbc.AudioUrls)
-                    .FirstOrDefaultAsync(ct));
+        if (bookData is not null)
+        {
+            bookData.Chapters = await dbContext.BibleTexts
+                .Where(bt => bt.BibleId == bookData.BibleId && bt.BookId == bookData.BookId &&
+                             bt.ChapterNumber >= request.StartChapter && bt.ChapterNumber <= request.EndChapter &&
+                             (bt.ChapterNumber != request.StartChapter || bt.VerseNumber >= request.StartVerse) &&
+                             (bt.ChapterNumber != request.EndChapter || bt.VerseNumber <= request.EndVerse))
+                .OrderBy(bt => bt.ChapterNumber)
+                .GroupBy(bt => bt.ChapterNumber)
+                .Select(bt => new IntermediateChapter
+                {
+                    Number = bt.Key,
+                    Verses = bt
+                        .OrderBy(bti => bti.VerseNumber)
+                        .Select(bti => new IntermediateChapterVerse
+                        {
+                            Number = bti.VerseNumber,
+                            Text = bti.Text
+                        }).ToList()
+                })
+                .ToListAsync(ct);
+        }
 
         var response = bookData is null
             ? null
@@ -70,10 +76,12 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 BibleAbbreviation = bookData.BibleAbbreviation,
                 BookCode = bookData.BookCode,
                 BookName = bookData.BookName,
-                Chapters = bookData.Chapters
+                Chapters = bookData.Chapters!
                     .Select(ch =>
                     {
-                        var chapterAudio = parsedAudioUrls?.Chapters?.FirstOrDefault(c => c.Number == ch.Number.ToString());
+                        var chapterAudio = !request.ShouldReturnAudioData
+                            ? null
+                            : DeserializeAudioUrls(bookData.AudioUrls)?.Chapters?.FirstOrDefault(c => c.Number == ch.Number.ToString());
 
                         return new ResponseChapter
                         {
@@ -83,13 +91,15 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                                 .Select(v => new ResponseChapterVerse
                                 {
                                     Number = v.Number,
-                                    AudioTimestamp = MapToResponseAudioTimestamp(chapterAudio?.AudioTimestamps?.FirstOrDefault(at => at.VerseNumber == v.Number.ToString())),
-                                    Text = v.Text,
+                                    AudioTimestamp =
+                                        MapToResponseAudioTimestamp(
+                                            chapterAudio?.AudioTimestamps?.FirstOrDefault(at => at.VerseNumber == v.Number.ToString())),
+                                    Text = v.Text
                                 })
-                                .ToList(),
+                                .ToList()
                         };
                     })
-                    .ToList(),
+                    .ToList()
             };
 
         await (response is null ? SendNotFoundAsync(ct) : SendOkAsync(response, ct));
@@ -107,7 +117,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             : new ResponseChapterAudio
             {
                 Webm = MapToResponseAudioFile(audioChapter.Webm),
-                Mp3 = MapToResponseAudioFile(audioChapter.Mp3),
+                Mp3 = MapToResponseAudioFile(audioChapter.Mp3)
             };
     }
 
@@ -118,17 +128,43 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             : new ResponseAudioFile
             {
                 Url = audioUrl.Url,
-                Size = audioUrl.Size,
+                Size = audioUrl.Size
             };
     }
-    private static ResponseChapterVerseAudioTimestamp? MapToResponseAudioTimestamp(BibleBookContentEntity.AudioUrlsData.Chapter.AudioTimestamp? audioTimestamp)
+
+    private static ResponseChapterVerseAudioTimestamp? MapToResponseAudioTimestamp(
+        BibleBookContentEntity.AudioUrlsData.Chapter.AudioTimestamp? audioTimestamp)
     {
         return audioTimestamp == null
             ? null
             : new ResponseChapterVerseAudioTimestamp
             {
                 Start = audioTimestamp.Start,
-                End = audioTimestamp.End,
+                End = audioTimestamp.End
             };
+    }
+
+    private class IntermediateBookData
+    {
+        public required int BibleId { get; set; }
+        public required BookId BookId { get; set; }
+        public required string BibleName { get; set; }
+        public required string BibleAbbreviation { get; set; }
+        public required string BookCode { get; set; }
+        public required string BookName { get; set; }
+        public required string? AudioUrls { get; set; }
+        public List<IntermediateChapter>? Chapters { get; set; }
+    }
+
+    private class IntermediateChapter
+    {
+        public required int Number { get; set; }
+        public required List<IntermediateChapterVerse> Verses { get; set; }
+    }
+
+    private class IntermediateChapterVerse
+    {
+        public required int Number { get; set; }
+        public required string Text { get; set; }
     }
 }
