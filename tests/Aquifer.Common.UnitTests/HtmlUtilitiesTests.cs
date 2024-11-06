@@ -4,7 +4,7 @@ namespace Aquifer.Common.UnitTests;
 
 public sealed class HtmlUtilitiesTests
 {
-    public static IEnumerable<object[]> GetConversionData =>
+    public static IEnumerable<object[]> GetHtmlToPlainTextConversionTestData =>
     [
         [
             (
@@ -37,7 +37,7 @@ public sealed class HtmlUtilitiesTests
     ];
 
     [Theory]
-    [MemberData(nameof(GetConversionData))]
+    [MemberData(nameof(GetHtmlToPlainTextConversionTestData))]
     public void GetPlainText_Success((string Html, string PlainText, int _) data)
     {
         var convertedPlainText = HtmlUtilities.GetPlainText(data.Html);
@@ -45,10 +45,27 @@ public sealed class HtmlUtilitiesTests
     }
 
     [Theory]
-    [MemberData(nameof(GetConversionData))]
+    [MemberData(nameof(GetHtmlToPlainTextConversionTestData))]
     public void GetWordCount_Success((string Html, string _, int WordCount) data)
     {
         var wordCount = HtmlUtilities.GetWordCount(data.Html);
         Assert.Equal(data.WordCount, wordCount);
+    }
+
+    [Theory]
+    [InlineData(
+        /* lang=html */"""<h1>AARON’S <b>ROD</b></h1><p>Staff <br /> ... Abiram (<span data-bnType="bibleReference" data-verses="[[1004016001,1004016040]]">Nm 16:1-40</span>).</p><p>مرحبا بالعالم</p><p><em>See also</em> <span data-bnType="resourceReference" data-resourceId="1242" data-resourceType="TyndaleBibleDictionary">Aaron</span>.</p>""",
+        /* lang=html */"""<h1>AARON’S <b>ROD</b></h1><p>Staff <br /> ... Abiram (<span a="0">Nm 16:1-40</span>).</p><p>مرحبا بالعالم</p><p><em>See also</em> <span a="1">Aaron</span>.</p>""")]
+    public async Task ProcessHtmlContentAsync_Success(string html, string expectedMinifiedHtml)
+    {
+        var roundTrippedHtml = await HtmlUtilities.ProcessHtmlContentAsync(
+            html,
+            minifiedHtml =>
+            {
+                Assert.Equal(expectedMinifiedHtml, minifiedHtml);
+                return Task.FromResult(minifiedHtml);
+            });
+
+        Assert.Equal(html, roundTrippedHtml);
     }
 }

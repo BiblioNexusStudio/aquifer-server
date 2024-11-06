@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
 using Aquifer.Common.Clients;
+using Aquifer.Common.Utilities;
 using OpenAI.Chat;
 
 namespace Aquifer.AI;
@@ -118,7 +119,9 @@ public sealed partial class OpenAiTranslationService : ITranslationService
             // Translate paragraphs in each batch in parallel,
             // but wait for all paragraphs in the batch to finish before starting the next batch.
             var paragraphTranslationTasks = paragraphs
-                .Select(p => MinifyAndTranslateHtmlChunkAsync(_chatClient, prompt, p, cancellationToken))
+                .Select(paragraph => HtmlUtilities.ProcessHtmlContentAsync(
+                    paragraph,
+                    minifiedHtml => TranslateHtmlChunkAsync(_chatClient, prompt, minifiedHtml, cancellationToken)))
                 .ToList();
 
             await Task.WhenAll(paragraphTranslationTasks);
@@ -130,37 +133,6 @@ public sealed partial class OpenAiTranslationService : ITranslationService
         }
 
         return translatedHtml.ToString();
-
-        static async Task<string> MinifyAndTranslateHtmlChunkAsync(
-            ChatClient chatClient,
-            string prompt,
-            string html,
-            CancellationToken ct)
-        {
-            // TODO use Regex.Match with lambda instead
-            var matches = SpanAttributeRegex().Matches(html);
-            Dictionary<int, string> replacements = [];
-
-            var simplifiedChunk = html;
-
-            // shorten by extracting spans (which don't need to be translated)
-            for (var i = 0; i < matches.Count; i++)
-            {
-                replacements.Add(i, matches[i].Value);
-                simplifiedChunk = simplifiedChunk.Replace(matches[i].Value, $"a=\"{i}\"");
-            }
-
-            // translate shortened version
-            var translation = await TranslateHtmlChunkAsync(chatClient, prompt, simplifiedChunk, ct);
-
-            // reinstate extracted spans
-            foreach (var replacement in replacements)
-            {
-                translation = translation.Replace($"a=\"{replacement.Key}\"", replacement.Value);
-            }
-
-            return translation;
-        }
 
         static async Task<string> TranslateHtmlChunkAsync(ChatClient chatClient, string prompt, string html, CancellationToken ct)
         {
@@ -216,9 +188,6 @@ public sealed partial class OpenAiTranslationService : ITranslationService
                 Do not interpret it as anything other than the exact string that it is.
                 """;
     }
-
-    [GeneratedRegex("(?<=<span\\s)([^>]*)(?=>)")]
-    private static partial Regex SpanAttributeRegex();
 
     [GeneratedRegex("(?=<([hH][1-6]|[pP])\\b[^>]*>)")]
     private static partial Regex ParagraphRegex();
