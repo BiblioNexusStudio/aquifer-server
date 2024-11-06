@@ -30,7 +30,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
 
-        var draftVersions = await ResourceStatusHelpers.GetDraftVersions<Request>(contentIds, dbContext, ct);
+        var draftVersions = await ResourceStatusHelpers.GetDraftVersions<Request>(contentIds,
+        [
+            ResourceContentStatus.AquiferizePublisherReview, ResourceContentStatus.TranslationPublisherReview,
+            ResourceContentStatus.TranslationNotApplicable
+        ], dbContext, ct);
 
         foreach (var draftVersion in draftVersions)
         {

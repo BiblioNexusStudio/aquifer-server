@@ -56,12 +56,14 @@ public static class ResourceStatusHelpers
         }
     }
 
-    public static async Task<List<ResourceContentVersionEntity>> GetDraftVersions<TRequest>(int[] contentIds, AquiferDbContext dbContext,
+    public static async Task<List<ResourceContentVersionEntity>> GetDraftVersions<TRequest>(int[] contentIds,
+        List<ResourceContentStatus> allowedStatuses, AquiferDbContext dbContext,
         CancellationToken ct)
     {
         var draftVersions = await dbContext.ResourceContentVersions
             .AsTracking()
-            .Where(rcv => contentIds.Contains(rcv.ResourceContentId) && rcv.IsDraft).Include(rcv => rcv.ResourceContent)
+            .Where(rcv => contentIds.Contains(rcv.ResourceContentId) && allowedStatuses.Contains(rcv.ResourceContent.Status) && rcv.IsDraft)
+            .Include(rcv => rcv.ResourceContent)
             .Include(rcv => rcv.AssignedUser).Include(rcv => rcv.ResourceContentVersionSnapshots)
             .ToListAsync(ct);
 
