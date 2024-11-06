@@ -25,6 +25,7 @@ var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
     .ConfigureServices((context, services) =>
     {
+        // This requires setting env var name AZURE_FUNCTIONS_ENVIRONMENT in Dev/QA and Prod
         var isDevelopment = context.HostingEnvironment.EnvironmentName == "Development";
 
         services.AddOptions<ConfigurationOptions>().Bind(context.Configuration);
