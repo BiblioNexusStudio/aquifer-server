@@ -8,7 +8,7 @@ public class Response
     public required string BookName { get; set; }
     public required string BookCode { get; set; }
     public required int BookNumber { get; set; }
-    public required IEnumerable<ResponseChapters> Chapters { get; set; }
+    public IEnumerable<ResponseChapters> Chapters { get; set; } = null!;
 }
 
 public class ResponseChapters

@@ -12,9 +12,7 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
 {
     public override void Configure()
     {
-        Post("/resources/content/{ContentId}/assign-review",
-            "/resources/content/assign-review",
-            "/resources/content/{ContentId}/assign-publisher-review",
+        Post("/resources/content/{ContentId}/assign-publisher-review",
             "/resources/content/assign-publisher-review");
         Permissions(PermissionName.ReviewContent);
     }
@@ -39,7 +37,7 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
 
         if (draftVersions.Count != contentIds.Length)
         {
-            ThrowError("One or more resources not found or not in draft status");
+            ThrowError("One or more resources not found or not in correct draft status");
         }
 
         foreach (var draftVersion in draftVersions)

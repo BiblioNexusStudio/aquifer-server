@@ -109,15 +109,15 @@ public static class LanguageResourcesEndpoints
             })
             .Select(grc =>
                 (Passage: (grc.Key.StartBook, grc.Key.StartChapter, grc.Key.EndBook, grc.Key.EndChapter),
-                ResourceItem: grc.OrderBy(rc => rc.LanguageId == languageId ? 0 : 1).First()))
+                    ResourceItem: grc.OrderBy(rc => rc.LanguageId == languageId ? 0 : 1).First()))
             .ToList();
 
         int? lastChapterInBook = null;
         if (filteredDownToOneLanguage.Any(x => x.Passage.EndBook > bookId))
         {
-            lastChapterInBook = await dbContext.BibleBookChapters
-                .Where(bbc => bbc.BibleBook.BibleId == 1 && bbc.BibleBook.Number == bookId)
-                .MaxAsync(bbc => bbc.Number, cancellationToken);
+            lastChapterInBook = await dbContext.BookChapters
+                .Where(bc => bc.BookId == bookId)
+                .MaxAsync(bc => bc.Number, cancellationToken);
         }
 
         var groupedContent = filteredDownToOneLanguage
@@ -150,7 +150,8 @@ public static class LanguageResourcesEndpoints
         return TypedResults.Ok(new ResourceItemsByChapterResponse { Chapters = groupedContent });
     }
 
-    private static IEnumerable<int> GetPassageChapterOverlapWithBook((BookId StartBook, int StartChapter, BookId EndBook, int EndChapter) passage, BookId bookId, int? lastChapterInBook)
+    private static IEnumerable<int> GetPassageChapterOverlapWithBook(
+        (BookId StartBook, int StartChapter, BookId EndBook, int EndChapter) passage, BookId bookId, int? lastChapterInBook)
     {
         var startChapter = passage.StartBook == bookId
             ? passage.StartChapter

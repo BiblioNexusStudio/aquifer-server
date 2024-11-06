@@ -79,5 +79,6 @@ public enum ResourceContentVersionReviewLevel
 {
     None = 0,
     Community = 1,
-    Professional = 2
+    Professional = 2,
+    Ai = 3
 }

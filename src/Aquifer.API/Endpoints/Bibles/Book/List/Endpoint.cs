@@ -16,19 +16,20 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var response = await dbContext.BibleBooks.Where(x => x.Bible.Enabled && x.BibleId == req.BibleId).Select(x => new Response
-        {
-            Id = x.Id,
-            Code = x.Code,
-            Number = (int)x.Number,
-            LocalizedName = x.LocalizedName,
-            TotalChapters = x.Chapters.Count,
-            Chapters = x.Chapters.OrderBy(c => c.Number).Select(c => new ResponseChapter
+        var response = await dbContext.BibleBookContents
+            .Where(bbc => bbc.Bible.Enabled && bbc.BibleId == req.BibleId)
+            .Select(bbc => new Response
             {
-                Number = c.Number,
-                TotalVerses = c.Verses.Max(v => v.Number)
-            })
-        }).ToListAsync(ct);
+                Code = bbc.Book.Code,
+                Number = (int)bbc.BookId,
+                LocalizedName = bbc.DisplayName,
+                TotalChapters = bbc.Book.Chapters.Count,
+                Chapters = bbc.Book.Chapters.OrderBy(c => c.Number).Select(c => new ResponseChapter
+                {
+                    Number = c.Number,
+                    TotalVerses = c.VerseCount
+                })
+            }).ToListAsync(ct);
 
         await SendOkAsync(response, ct);
     }

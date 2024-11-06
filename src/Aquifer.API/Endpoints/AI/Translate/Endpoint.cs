@@ -15,6 +15,7 @@ public partial class Endpoint(
 {
     public override void Configure()
     {
+        //TODO: Delete after next deploy
         Post("ai/translate");
         Permissions(PermissionName.AiTranslate);
     }
