@@ -1,6 +1,7 @@
 using Aquifer.Common.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Aquifer.Jobs.Common;
 using Aquifer.Jobs.Configuration;
 using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
@@ -17,7 +18,7 @@ public class SendNewContentEmails(
 {
     [Function(nameof(SendNewContentEmails))]
 #pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings
-    public async Task Run([TimerTrigger("%MarketingEmail:CronSchedule:NewContent%")] TimerInfo timerInfo, CancellationToken ct)
+    public async Task Run([TimerTrigger(CronSchedules.FirstOfMonthAtNoon)] TimerInfo timerInfo, CancellationToken ct)
 #pragma warning restore IDE0060 // Remove unused parameter
     {
         var subscribers = await GetSubscribersAsync(ct);
@@ -77,7 +78,7 @@ public class SendNewContentEmails(
     {
         await emailService.SendEmailAsync(
             new Email(
-                From: new EmailAddress(options.Value.MarketingEmail.Address, options.Value.MarketingEmail.Name),
+                From: new EmailAddress(options.Value.Email.Marketing.Address, options.Value.Email.Marketing.Name),
                 Subject: emailTemplate.Subject,
                 HtmlContent: emailContent,
                 Tos: [new EmailAddress(subscriber.Email, subscriber.Name)]),
@@ -91,7 +92,7 @@ public class SendNewContentEmails(
 
         return emailTemplate.Template.Replace("[NAME]", subscriber.Name)
             .Replace("[RESOURCES]", resourcesLanguages)
-            .Replace("[RESOURCE_LINK]", options.Value.MarketingEmail.ResourceLink)
+            .Replace("[RESOURCE_LINK]", options.Value.Email.Marketing.ResourceLink)
             .Replace("[UNSUBSCRIBE]", $"{options.Value.AquiferApiBaseUri}/marketing/unsubscribe/{subscriber.UnsubscribeId}?api-key=none");
     }
 
