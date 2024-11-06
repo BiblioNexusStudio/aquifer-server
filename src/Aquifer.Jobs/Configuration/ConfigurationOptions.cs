@@ -9,7 +9,6 @@ public class ConfigurationOptions
     public required ConnectionStringOptions ConnectionStrings { get; init; }
     public required AnalyticsOptions Analytics { get; init; }
     public required EmailOptions Email { get; init; }
-    public required MarketingEmailOptions MarketingEmail { get; init; }
 }
 
 public class ConnectionStringOptions
@@ -33,6 +32,7 @@ public class AnalyticsOptions
 public class EmailOptions
 {
     public required string SubjectPrefix { get; init; }
+    public required MarketingEmailOptions Marketing { get; init; }
     public required TransactionalEmailOptions Transactional { get; init; }
 }
 
