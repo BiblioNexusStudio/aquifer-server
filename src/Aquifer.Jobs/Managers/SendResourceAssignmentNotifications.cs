@@ -2,6 +2,7 @@ using Aquifer.Common.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
+using Aquifer.Jobs.Common;
 using Aquifer.Jobs.Configuration;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
@@ -16,13 +17,12 @@ public class SendResourceAssignmentNotifications(
     IEmailService _emailService,
     ILogger<SendResourceAssignmentNotifications> _logger)
 {
-    private const string _everyTenMinutesCronSchedule = "0 */10 * * * *";
     private const string _tenSecondDelayInterval = "00:00:10";
 
     [Function(nameof(SendResourceAssignmentNotifications))]
     [FixedDelayRetry(maxRetryCount: 1, delayInterval: _tenSecondDelayInterval)]
 #pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings.
-    public async Task RunAsync([TimerTrigger(_everyTenMinutesCronSchedule)] TimerInfo timerInfo, CancellationToken ct)
+    public async Task RunAsync([TimerTrigger(CronSchedules.EveryTenMinutes)] TimerInfo timerInfo, CancellationToken ct)
 #pragma warning restore IDE0060 // Remove unused parameter
     {
         var jobHistory = await _dbContext.JobHistory
@@ -58,7 +58,7 @@ public class SendResourceAssignmentNotifications(
             .Select(userGrouping => new TemplatedEmail(
                 From: NotificationsHelper.NotificationSenderEmailAddress,
                 // Template Designer: https://mc.sendgrid.com/dynamic-templates/d-d85f76c6b4d344f5bc8b90b27cc40cc3/version/b6955fec-6f2e-41f7-a9f5-fb695a5b8ed7/editor
-                TemplateId: "d-d85f76c6b4d344f5bc8b90b27cc40cc3",
+                TemplateId: _configurationOptions.Value.Notifications.SendResourceAssignmentNotificationTemplateId,
                 DynamicTemplateData: new Dictionary<string, object>
                 {
                     [EmailService.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notification: Resources Assigned",
