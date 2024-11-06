@@ -15,7 +15,7 @@ public class ResourceContentVersionMachineTranslationEntity : IHasUpdatedTimesta
     public string Content { get; set; } = null!; // HTML
     public int ContentIndex { get; set; }
 
-    // TODO: drop column (BIB-778)
+    // TODO: Drop column after deploy (BIB-778)
     public int? UserId { get; set; }
 
     public byte UserRating { get; set; }
