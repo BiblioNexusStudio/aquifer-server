@@ -1,7 +1,6 @@
 {
     "IsEncrypted": false,
     "Values": {
-        "AzureWebJobsDashboard": "UseDevelopmentStorage=true",
         "AzureWebJobsStorage": "UseDevelopmentStorage=true",
         "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
         "AzureWebJobs.SendEmail.Disabled": true,
@@ -13,7 +12,6 @@
         "AzureWebJobs.SyncApiRequestStatsToStorageTable.Disabled": true,
         "AzureWebJobs.SyncCustomEventsToStorageTable.Disabled": true,
         "AzureWebJobs.SyncPageViewsToStorageTable.Disabled": true,
-        "AzureWebJobs.TrackResourceContentRequestJob.Disabled": true,
-        "IsDevelopment": true
+        "AzureWebJobs.TrackResourceContentRequestJob.Disabled": true
     }
 }

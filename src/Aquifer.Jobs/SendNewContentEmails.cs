@@ -78,7 +78,7 @@ public class SendNewContentEmails(
     {
         await emailService.SendEmailAsync(
             new Email(
-                From: new EmailAddress(options.Value.Email.Marketing.Address, options.Value.Email.Marketing.Name),
+                From: new EmailAddress(options.Value.MarketingEmail.Address, options.Value.MarketingEmail.Name),
                 Subject: emailTemplate.Subject,
                 HtmlContent: emailContent,
                 Tos: [new EmailAddress(subscriber.Email, subscriber.Name)]),
@@ -92,7 +92,7 @@ public class SendNewContentEmails(
 
         return emailTemplate.Template.Replace("[NAME]", subscriber.Name)
             .Replace("[RESOURCES]", resourcesLanguages)
-            .Replace("[RESOURCE_LINK]", options.Value.Email.Marketing.ResourceLink)
+            .Replace("[RESOURCE_LINK]", options.Value.MarketingEmail.ResourceLink)
             .Replace("[UNSUBSCRIBE]", $"{options.Value.AquiferApiBaseUri}/marketing/unsubscribe/{subscriber.UnsubscribeId}?api-key=none");
     }
 

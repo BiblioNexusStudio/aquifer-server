@@ -2,13 +2,14 @@
 
 public class ConfigurationOptions
 {
-    public bool IsDevelopment { get; init; }
     public required string AquiferAdminBaseUri { get; init; }
     public required string AquiferApiBaseUri { get; init; }
     public required string KeyVaultUri { get; init; }
     public required ConnectionStringOptions ConnectionStrings { get; init; }
     public required AnalyticsOptions Analytics { get; init; }
     public required EmailOptions Email { get; init; }
+    public required NotificationsOptions Notifications { get; init; }
+    public required MarketingEmailOptions MarketingEmail { get; init; }
 }
 
 public class ConnectionStringOptions
@@ -32,8 +33,6 @@ public class AnalyticsOptions
 public class EmailOptions
 {
     public required string SubjectPrefix { get; init; }
-    public required MarketingEmailOptions Marketing { get; init; }
-    public required TransactionalEmailOptions Transactional { get; init; }
 }
 
 public class MarketingEmailOptions
@@ -43,24 +42,9 @@ public class MarketingEmailOptions
     public required string ResourceLink { get; init; }
 }
 
-public class TransactionalEmailOptions
+public class NotificationsOptions
 {
-    public required SendResourceAssignmentNotificationOptions SendResourceAssignmentNotification { get; init; }
-    public required SendProjectStartedNotificationOptions SendProjectStartedNotification { get; init; }
-    public required SendResourceCommentCreatedNotificationOptions SendResourceCommentCreatedNotification { get; init; }
-}
-
-public class SendResourceAssignmentNotificationOptions
-{
-    public required string TemplateId { get; init; }
-}
-
-public class SendProjectStartedNotificationOptions
-{
-    public required string TemplateId { get; init; }
-}
-
-public class SendResourceCommentCreatedNotificationOptions
-{
-    public required string TemplateId { get; init; }
+    public required string SendResourceAssignmentNotificationTemplateId { get; init; }
+    public required string SendProjectStartedNotificationTemplateId { get; init; }
+    public required string SendResourceCommentCreatedNotificationTemplateId { get; init; }
 }

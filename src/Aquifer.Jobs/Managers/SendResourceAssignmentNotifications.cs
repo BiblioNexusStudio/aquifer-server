@@ -58,7 +58,7 @@ public class SendResourceAssignmentNotifications(
             .Select(userGrouping => new TemplatedEmail(
                 From: NotificationsHelper.NotificationSenderEmailAddress,
                 // Template Designer: https://mc.sendgrid.com/dynamic-templates/d-d85f76c6b4d344f5bc8b90b27cc40cc3/version/b6955fec-6f2e-41f7-a9f5-fb695a5b8ed7/editor
-                TemplateId: _configurationOptions.Value.Email.Transactional.SendResourceAssignmentNotification.TemplateId,
+                TemplateId: _configurationOptions.Value.Notifications.SendResourceAssignmentNotificationTemplateId,
                 DynamicTemplateData: new Dictionary<string, object>
                 {
                     [EmailService.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notification: Resources Assigned",

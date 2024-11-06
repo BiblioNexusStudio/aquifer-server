@@ -36,7 +36,7 @@ public sealed class NotificationSubscriber(
             var templatedEmail = new TemplatedEmail(
                 From: NotificationsHelper.NotificationSenderEmailAddress,
                 // Template Designer: https://mc.sendgrid.com/dynamic-templates/d-7760ec3b5ce34b179384d4783cc1bd81/version/e83075a3-ba61-4d42-922f-9fd5df4ee45c/editor
-                TemplateId: _configurationOptions.Value.Email.Transactional.SendProjectStartedNotification.TemplateId,
+                TemplateId: _configurationOptions.Value.Notifications.SendProjectStartedNotificationTemplateId,
                 DynamicTemplateData: new Dictionary<string, object>
                 {
                     [EmailService.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notifications: Project Started",
@@ -103,7 +103,7 @@ public sealed class NotificationSubscriber(
         var templatedEmail = new TemplatedEmail(
             From: NotificationsHelper.NotificationSenderEmailAddress,
             // Template Designer: https://mc.sendgrid.com/dynamic-templates/d-ea84b461ed0f439589098053f8810189/version/26393e82-7d17-4b8f-a37c-cb20f62d8802/editor
-            TemplateId: _configurationOptions.Value.Email.Transactional.SendResourceCommentCreatedNotification.TemplateId,
+            TemplateId: _configurationOptions.Value.Notifications.SendResourceCommentCreatedNotificationTemplateId,
             DynamicTemplateData: new Dictionary<string, object>
             {
                 [EmailService.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notifications: New Resource Comment",
