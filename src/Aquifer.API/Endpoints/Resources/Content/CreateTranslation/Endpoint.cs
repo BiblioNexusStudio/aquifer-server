@@ -1,13 +1,20 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
+using Aquifer.Common.Jobs.Messages;
+using Aquifer.Common.Jobs.Publishers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Aquifer.Data.Services;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.CreateTranslation;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService)
+public class Endpoint(
+    AquiferDbContext dbContext,
+    IUserService userService,
+    IResourceHistoryService historyService,
+    ITranslationPublisher translationPublisher)
     : Endpoint<Request, Response>
 {
     public override void Configure()
@@ -61,6 +68,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
 
         var baseVersion = request.UseDraft ? baseContent.Versions.Single(x => x.IsDraft) : baseContent.Versions.Single(x => x.IsPublished);
+        var originalStatus = baseVersion.ResourceContent.Status;
 
         var hasFullCreateContentPermission = userService.HasPermission(PermissionName.CreateContent);
 
@@ -77,12 +85,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ContentSize = baseVersion.ContentSize,
             WordCount = baseVersion.WordCount,
             SourceWordCount = baseVersion.WordCount,
-            Version = 1
-        };
+            Version = 1,
 
-        if (isCommunityUser) {
-            newResourceContentVersion.AssignedUserId = user.Id;
-        }
+            // Assign the resource immediately even though translation has not yet started
+            // to ensure that Community Reviewers only have a single assigned resource.
+            // This will also apply to other callers of this endpoint (Publishers) for consistency/simplicity.
+            AssignedUserId = user.Id
+        };
 
         var newResourceContent = new ResourceContentEntity
         {
@@ -91,27 +100,40 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             MediaType = baseContent.MediaType,
             Status = ResourceContentStatus.TranslationAwaitingAiDraft,
             Trusted = true,
-            Versions = [newResourceContentVersion]
+            Versions = [newResourceContentVersion],
         };
 
         await dbContext.ResourceContents.AddAsync(newResourceContent, ct);
+
         await historyService.AddStatusHistoryAsync(
-            newResourceContentVersion, 
+            newResourceContentVersion,
             newResourceContent.Status,
-            user.Id, 
+            user.Id,
             ct
         );
 
-        if (isCommunityUser) {
-            await historyService.AddSnapshotHistoryAsync(
-                newResourceContentVersion, 
-                user.Id, 
-                ResourceContentStatus.TranslationEditorReview, 
-                ct);
-            await historyService.AddAssignedUserHistoryAsync(newResourceContentVersion, user.Id, user.Id, ct);
-        }
+        await historyService.AddSnapshotHistoryAsync(
+            newResourceContentVersion,
+            user.Id,
+            originalStatus,
+            ct);
+
+        await historyService.AddAssignedUserHistoryAsync(
+            newResourceContentVersion,
+            user.Id,
+            user.Id,
+            ct);
 
         await dbContext.SaveChangesAsync(ct);
+
+        await translationPublisher.PublishTranslateResourceMessageAsync(
+            new TranslateResourceMessage(
+                newResourceContent.Id,
+                user.Id,
+                isCommunityUser
+                    ? TranslationOrigin.CommunityReviewer
+                    : TranslationOrigin.CreateTranslation),
+            ct);
 
         await SendOkAsync(new Response(newResourceContent.Id), ct);
     }

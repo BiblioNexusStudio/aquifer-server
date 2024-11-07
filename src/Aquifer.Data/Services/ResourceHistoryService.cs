@@ -1,8 +1,7 @@
-﻿using Aquifer.Data;
-using Aquifer.Data.Entities;
+﻿using Aquifer.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Services;
+namespace Aquifer.Data.Services;
 
 public interface IResourceHistoryService
 {
@@ -69,7 +68,8 @@ public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHist
             snapshotEntity = await _dbContext.ResourceContentVersionSnapshots
                 .AsTracking()
                 .Where(rcvn => rcvn.ResourceContentVersionId == contentVersionEntity.Id)
-                .OrderByDescending(x => x.Created).FirstOrDefaultAsync(ct);
+                .OrderByDescending(x => x.Created)
+                .FirstOrDefaultAsync(ct);
         }
 
         if (snapshotEntity?.Content != contentVersionEntity.Content)

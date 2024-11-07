@@ -4,6 +4,7 @@ using Aquifer.Common.Tiptap;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Aquifer.Data.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content;

@@ -288,6 +288,9 @@ FakesAssemblies/
 .ntvs_analysis.dat
 node_modules/
 
+# The Aquifer.Tiptap dist folder is generated code
+dist/
+
 # Visual Studio 6 build log
 *.plg
 

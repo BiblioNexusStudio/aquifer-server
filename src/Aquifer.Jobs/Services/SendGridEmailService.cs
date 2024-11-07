@@ -10,7 +10,6 @@ public class SendGridEmailService : IEmailService
 {
     private readonly SendGridClient _sendGridClient;
 
-    // TODO move this to DI and don't make a network call in a constructor
     public SendGridEmailService(IAzureKeyVaultClient keyVaultClient)
     {
         const string apiKeySecretName = "SendGridMarketingApiKey";

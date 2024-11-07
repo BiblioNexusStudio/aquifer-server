@@ -6,9 +6,11 @@ using Aquifer.API.Services;
 using Aquifer.API.Telemetry;
 using Aquifer.Common.Clients;
 using Aquifer.Common.Jobs;
+using Aquifer.Common.Jobs.Publishers;
 using Aquifer.Common.Middleware;
 using Aquifer.Common.Services;
 using Aquifer.Data;
+using Aquifer.Data.Services;
 using FastEndpoints;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http.Json;
@@ -44,6 +46,7 @@ builder.Services.AddAuth(configuration.JwtSettings)
     .AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>()
     .AddSingleton<IResourceContentRequestTrackingService, ResourceContentRequestTrackingService>()
     .AddSingleton<INotificationService, NotificationService>()
+    .AddSingleton<ITranslationPublisher, TranslationPublisher>()
     .AddAzureClient(builder.Environment.IsDevelopment())
     .AddFastEndpoints()
     .AddResponseCaching()
