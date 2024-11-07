@@ -38,25 +38,11 @@ public sealed class TranslationSubscriber(
     {
         var message = queueMessage.Deserialize<TranslateResourceMessage, TranslationSubscriber>(_logger);
 
-        var translatedResourceContentVersion = await TranslateResourceCoreAsync(
+        await TranslateResourceCoreAsync(
             message.ResourceContentId,
             message.StartedByUserId,
             message.TranslationOrigin,
             ct);
-
-        // if a Community Reviewer requested the translation then the status needs to be updated (again) now that translation has completed
-        if (message.TranslationOrigin == TranslationOrigin.CommunityReviewer)
-        {
-            translatedResourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationEditorReview;
-            await _resourceHistoryService.AddStatusHistoryAsync(
-                translatedResourceContentVersion,
-                ResourceContentStatus.TranslationEditorReview,
-                changedByUserId: message.StartedByUserId,
-                ct
-            );
-
-            await _dbContext.SaveChangesAsync(ct);
-        }
     }
 
     /// <summary>
@@ -170,13 +156,13 @@ public sealed class TranslationSubscriber(
         [ActivityTrigger] TranslateProjectResourceActivityDto dto,
         FunctionContext activityContext)
     {
-        var translatedResourceContentVersion = await TranslateResourceCoreAsync(
+        await TranslateResourceCoreAsync(
             dto.ResourceContentId,
             dto.StartedByUserId,
             TranslationOrigin.Project,
             activityContext.CancellationToken);
 
-        return translatedResourceContentVersion.ResourceContentId;
+        return dto.ResourceContentId;
     }
 
     [Function(nameof(UpdateProjectPostTranslationActivity))]
@@ -232,7 +218,7 @@ public sealed class TranslationSubscriber(
     /// update the existing draft resource version with translated content, create a new snapshot for the translation,
     /// and change the resource content status.
     /// </summary>
-    private async Task<ResourceContentVersionEntity> TranslateResourceCoreAsync(
+    private async Task TranslateResourceCoreAsync(
         int resourceContentId,
         int startedByUserId,
         TranslationOrigin translationOrigin,
@@ -270,7 +256,8 @@ public sealed class TranslationSubscriber(
                 "Gracefully skipping translation for Resource Content ID {ResourceContentId} because it is not in the {ExpectedStatus} status.",
                 resourceContentId,
                 ResourceContentStatus.TranslationAwaitingAiDraft.ToString());
-            return resourceContentVersion;
+
+            return;
         }
 
         var resourceContentLanguage = resourceContentVersion.ResourceContent.Language;
@@ -360,9 +347,18 @@ public sealed class TranslationSubscriber(
             ct
         );
 
-        await _dbContext.SaveChangesAsync(ct);
+        // if a Community Reviewer requested the translation then the status needs to be updated (again) now that translation has completed
+        if (translationOrigin == TranslationOrigin.CommunityReviewer)
+        {
+            resourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationEditorReview;
+            await _resourceHistoryService.AddStatusHistoryAsync(
+                resourceContentVersion,
+                ResourceContentStatus.TranslationEditorReview,
+                changedByUserId: startedByUserId,
+                ct);
+        }
 
-        return resourceContentVersion;
+        await _dbContext.SaveChangesAsync(ct);
     }
 
     public sealed record OrchestrateProjectResourcesTranslationDto(
