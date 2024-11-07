@@ -7,7 +7,17 @@
     },
     "extensions": {
         "durableTask": {
-            "hubName": "AquiferTaskHub"
+            "hubName": "AquiferTaskHub",
+
+            // Default is 10 for activity functions and 5 for orchestrator functions for consumption plan.
+            // (making this explicit to allow easier configuration).
+            // See https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-bindings?tabs=python-v2%2Cin-process%2C2x-durable-functions&pivots=programming-language-csharp#hostjson-settings.
+            "maxConcurrentActivityFunctions": 10,
+            "maxConcurrentOrchestratorFunctions": 5
         }
-    }
+    },
+
+    // Maximum is 10 minutes for Consumption plan (default is 5 minutes).
+    // See https://learn.microsoft.com/en-us/azure/azure-functions/functions-host-json#functiontimeout.
+    "functionTimeout": "00:10:00"
 }
