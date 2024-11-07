@@ -23,7 +23,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var user = await userService.GetUserFromJwtAsync(ct);
         var permissions = ResourceStatusHelpers.GetAssignmentPermissions(userService);
 
-        await ResourceStatusHelpers.ValidateReviewerAndAssignedUser<Request>(request.AssignedUserId, request.AssignedReviewerUserId,
+        await ResourceStatusHelpers.ValidateReviewerAndAssignedUser<Request>(request.AssignedUserId, null,
             dbContext, user, permissions, ct);
 
         var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
