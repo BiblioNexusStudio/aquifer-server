@@ -10,13 +10,13 @@ using Microsoft.Extensions.Options;
 
 namespace Aquifer.Jobs;
 
-public class SyncPageViewsToStorageTable(
+public class SyncPageViewsToStorageTableManager(
     IAquiferAppInsightsClient _appInsightsClient,
-    ILogger<SyncPageViewsToStorageTable> _logger,
+    ILogger<SyncPageViewsToStorageTableManager> _logger,
     IAzureClientService _azureClientService,
     IOptions<ConfigurationOptions> _options)
 {
-    [Function(nameof(SyncPageViewsToStorageTable))]
+    [Function(nameof(SyncPageViewsToStorageTableManager))]
 #pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings
     public async Task Run([TimerTrigger(CronSchedules.EveryHourAtFiveAfter)] TimerInfo timerInfo, CancellationToken ct)
 #pragma warning restore IDE0060 // Remove unused parameter

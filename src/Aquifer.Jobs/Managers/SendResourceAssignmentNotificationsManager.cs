@@ -12,15 +12,15 @@ using Microsoft.Extensions.Options;
 
 namespace Aquifer.Jobs.Managers;
 
-public class SendResourceAssignmentNotifications(
+public class SendResourceAssignmentNotificationsManager(
     IOptions<ConfigurationOptions> _configurationOptions,
     AquiferDbContext _dbContext,
     IEmailMessagePublisher _emailMessagePublisher,
-    ILogger<SendResourceAssignmentNotifications> _logger)
+    ILogger<SendResourceAssignmentNotificationsManager> _logger)
 {
     private const string _tenSecondDelayInterval = "00:00:10";
 
-    [Function(nameof(SendResourceAssignmentNotifications))]
+    [Function(nameof(SendResourceAssignmentNotificationsManager))]
     [FixedDelayRetry(maxRetryCount: 1, delayInterval: _tenSecondDelayInterval)]
 #pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings.
     public async Task RunAsync([TimerTrigger(CronSchedules.EveryTenMinutes)] TimerInfo timerInfo, CancellationToken ct)

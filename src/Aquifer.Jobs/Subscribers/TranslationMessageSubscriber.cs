@@ -18,9 +18,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Aquifer.Jobs.Subscribers;
 
-public sealed class TranslationSubscriber(
+public sealed class TranslationMessageSubscriber(
     AquiferDbContext _dbContext,
-    ILogger<TranslationSubscriber> _logger,
+    ILogger<TranslationMessageSubscriber> _logger,
     ITranslationService _translationService,
     IResourceHistoryService _resourceHistoryService,
     INotificationMessagePublisher _notificationMessagePublisher,
@@ -36,7 +36,7 @@ public sealed class TranslationSubscriber(
         [QueueTrigger(Queues.TranslateResource)] QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<TranslateResourceMessage, TranslationSubscriber>(_logger);
+        var message = queueMessage.Deserialize<TranslateResourceMessage, TranslationMessageSubscriber>(_logger);
 
         await TranslateResourceCoreAsync(
             message.ResourceContentId,
@@ -58,7 +58,7 @@ public sealed class TranslationSubscriber(
         [DurableClient] DurableTaskClient durableTaskClient,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<TranslateProjectResourcesMessage, TranslationSubscriber>(_logger);
+        var message = queueMessage.Deserialize<TranslateProjectResourcesMessage, TranslationMessageSubscriber>(_logger);
 
         var projectResourceContentIds = await _dbContext.ProjectResourceContents
             .Where(prc => prc.ProjectId == message.ProjectId)

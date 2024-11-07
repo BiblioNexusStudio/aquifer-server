@@ -13,18 +13,18 @@ using Microsoft.Extensions.Options;
 
 namespace Aquifer.Jobs.Subscribers;
 
-public sealed class NotificationSubscriber(
+public sealed class NotificationMessageSubscriber(
     IOptions<ConfigurationOptions> _configurationOptions,
     AquiferDbContext _dbContext,
     IEmailMessagePublisher _emailMessagePublisher,
-    ILogger<NotificationSubscriber> _logger)
+    ILogger<NotificationMessageSubscriber> _logger)
 {
     [Function(nameof(SendProjectStartedNotification))]
     public async Task SendProjectStartedNotification(
         [QueueTrigger(Queues.SendProjectStartedNotification)] QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<SendProjectStartedNotificationMessage, NotificationSubscriber>(_logger);
+        var message = queueMessage.Deserialize<SendProjectStartedNotificationMessage, NotificationMessageSubscriber>(_logger);
 
         var project = await _dbContext.Projects
             .Include(projectEntity => projectEntity.CompanyLeadUser)
@@ -66,7 +66,7 @@ public sealed class NotificationSubscriber(
         [QueueTrigger(Queues.SendResourceCommentCreatedNotification)] QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<SendResourceCommentCreatedNotificationMessage, NotificationSubscriber>(_logger);
+        var message = queueMessage.Deserialize<SendResourceCommentCreatedNotificationMessage, NotificationMessageSubscriber>(_logger);
 
         var dbConnection = _dbContext.Database.GetDbConnection();
         var resourceCommentData = await GetResourceCommentDataAsync(dbConnection, message.CommentId, ct);

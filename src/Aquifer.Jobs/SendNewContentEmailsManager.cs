@@ -11,13 +11,13 @@ using Microsoft.Extensions.Options;
 
 namespace Aquifer.Jobs;
 
-public class SendNewContentEmails(
+public class SendNewContentEmailsManager(
     AquiferDbContext dbContext,
     IEmailMessagePublisher emailMessagePublisher,
     IOptions<ConfigurationOptions> options,
     TelemetryClient telemetryClient)
 {
-    [Function(nameof(SendNewContentEmails))]
+    [Function(nameof(SendNewContentEmailsManager))]
 #pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings
     public async Task Run([TimerTrigger(CronSchedules.FirstOfMonthAtNoon)] TimerInfo timerInfo, CancellationToken ct)
 #pragma warning restore IDE0060 // Remove unused parameter

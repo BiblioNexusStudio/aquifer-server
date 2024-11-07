@@ -10,17 +10,17 @@ using Microsoft.Extensions.Logging;
 
 namespace Aquifer.Jobs;
 
-public class TrackResourceContentRequestJob(
-    ILogger<TrackResourceContentRequestJob> logger,
+public class TrackResourceContentRequestMessageSubscriber(
+    ILogger<TrackResourceContentRequestMessageSubscriber> logger,
     AquiferDbContext dbContext,
     IIpAddressLookupHttpClient ipAddressClient)
 {
-    [Function(nameof(TrackResourceContentRequestJob))]
+    [Function(nameof(TrackResourceContentRequestMessageSubscriber))]
     public async Task Run(
         [QueueTrigger(Queues.TrackResourceContentRequest)] QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var trackingMetadata = queueMessage.Deserialize<TrackResourceContentRequestMessage, TrackResourceContentRequestJob>(logger);
+        var trackingMetadata = queueMessage.Deserialize<TrackResourceContentRequestMessage, TrackResourceContentRequestMessageSubscriber>(logger);
 
         await LookupIpAddressAsync(trackingMetadata, ct);
         await dbContext.ResourceContentRequests

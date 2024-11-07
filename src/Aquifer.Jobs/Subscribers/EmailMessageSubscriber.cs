@@ -11,10 +11,10 @@ using EmailAddress = Aquifer.Jobs.Services.EmailAddress;
 
 namespace Aquifer.Jobs.Subscribers;
 
-public sealed class EmailSubscriber(
+public sealed class EmailMessageSubscriber(
     IEmailService _emailService,
     IOptions<ConfigurationOptions> _configurationOptions,
-    ILogger<EmailSubscriber> _logger)
+    ILogger<EmailMessageSubscriber> _logger)
 {
     [Function(nameof(SendEmail))]
     public async Task SendEmail(
@@ -22,7 +22,7 @@ public sealed class EmailSubscriber(
         QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<SendEmailMessage, EmailSubscriber>(_logger);
+        var message = queueMessage.Deserialize<SendEmailMessage, EmailMessageSubscriber>(_logger);
 
         try
         {
@@ -45,7 +45,7 @@ public sealed class EmailSubscriber(
         QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<SendTemplatedEmailMessage, EmailSubscriber>(_logger);
+        var message = queueMessage.Deserialize<SendTemplatedEmailMessage, EmailMessageSubscriber>(_logger);
 
         // if `Subject` is present in the dynamic template data then add an environment specific prefix to it
         if (message.DynamicTemplateData.TryGetValue(EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName, out var subject) &&
