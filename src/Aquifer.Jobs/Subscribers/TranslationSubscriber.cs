@@ -199,10 +199,10 @@ public sealed class TranslationSubscriber(
             .Where(rcv => dto.TranslatedProjectResourceContentIds.Contains(rcv.ResourceContentId)))
         {
             // now that ALL translations are complete for the project, assign all resources in the project to the company lead
-            resourceContentVersion.AssignedUserId = project.CompanyLeadUserId;
+            resourceContentVersion.AssignedUserId = companyLeadUserId;
             await _resourceHistoryService.AddAssignedUserHistoryAsync(
                 resourceContentVersion,
-                assignedUserId: project.CompanyLeadUserId,
+                assignedUserId: companyLeadUserId,
                 changedByUserId: dto.StartedByUserId,
                 activityContext.CancellationToken);
         }
