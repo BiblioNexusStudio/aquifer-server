@@ -37,6 +37,7 @@ public sealed class OpenAiTranslationOptions
     public required string DefaultLanguageSpecificPromptAppendixFormatString { get; init; }
     public required string HtmlTranslationBasePrompt { get; init; }
     public required Dictionary<string, string> LanguageSpecificPromptAppendixByLanguageIso6393CodeMap { get; init; }
+    public required float Temperature { get; init; }
     public required string TextTranslationPromptFormatString { get; init; }
 }
 
@@ -53,6 +54,8 @@ public sealed partial class OpenAiTranslationService : ITranslationService
     private const int _maxParallelizationForSingleTranslation = 5;
 
     private readonly ChatClient _chatClient;
+    private readonly ChatCompletionOptions _chatCompletionOptions;
+
     private readonly OpenAiTranslationOptions _options;
 
     public OpenAiTranslationService(
@@ -67,6 +70,10 @@ public sealed partial class OpenAiTranslationService : ITranslationService
         var openApiKey = keyVaultClient.GetSecretAsync(openAiApiKeySecretName).GetAwaiter().GetResult();
 
         _chatClient = new ChatClient(openAiOptions.Model, openApiKey);
+        _chatCompletionOptions = new ChatCompletionOptions
+        {
+            Temperature = _options.Temperature,
+        };
     }
 
     public async Task<string> TranslateTextAsync(
@@ -88,7 +95,7 @@ public sealed partial class OpenAiTranslationService : ITranslationService
                 ChatMessage.CreateSystemMessage(prompt),
                 ChatMessage.CreateUserMessage(text),
             ],
-            new ChatCompletionOptions(),
+            _chatCompletionOptions,
             cancellationToken);
 
         if (chatCompletion.Value.FinishReason != ChatFinishReason.Stop)
@@ -122,7 +129,7 @@ public sealed partial class OpenAiTranslationService : ITranslationService
             var paragraphTranslationTasks = paragraphs
                 .Select(paragraph => HtmlUtilities.ProcessHtmlContentAsync(
                     paragraph,
-                    minifiedHtml => TranslateHtmlChunkAsync(_chatClient, prompt, minifiedHtml, cancellationToken)))
+                    minifiedHtml => TranslateHtmlChunkAsync(prompt, minifiedHtml, cancellationToken)))
                 .ToList();
 
             await Task.WhenAll(paragraphTranslationTasks);
@@ -134,27 +141,27 @@ public sealed partial class OpenAiTranslationService : ITranslationService
         }
 
         return translatedHtml.ToString();
+    }
 
-        static async Task<string> TranslateHtmlChunkAsync(ChatClient chatClient, string prompt, string html, CancellationToken ct)
+    private async Task<string> TranslateHtmlChunkAsync(string prompt, string html, CancellationToken cancellationToken)
+    {
+        var chatCompletion = await _chatClient.CompleteChatAsync(
+            [
+                ChatMessage.CreateSystemMessage(prompt),
+                ChatMessage.CreateUserMessage(html),
+            ],
+            _chatCompletionOptions,
+            cancellationToken);
+
+        if (chatCompletion.Value.FinishReason != ChatFinishReason.Stop)
         {
-            var chatCompletion = await chatClient.CompleteChatAsync(
-                [
-                    ChatMessage.CreateSystemMessage(prompt),
-                    ChatMessage.CreateUserMessage(html),
-                ],
-                new ChatCompletionOptions(),
-                ct);
-
-            if (chatCompletion.Value.FinishReason != ChatFinishReason.Stop)
-            {
-                throw new OpenAiChatCompletionException(
-                    $"OpenAI chat completion returned an unhandled finish reason: {chatCompletion.Value.FinishReason}.",
-                    prompt,
-                    html);
-            }
-
-            return chatCompletion.Value.Content[0].Text.Replace(Environment.NewLine, "");
+            throw new OpenAiChatCompletionException(
+                $"OpenAI chat completion returned an unhandled finish reason: {chatCompletion.Value.FinishReason}.",
+                prompt,
+                html);
         }
+
+        return chatCompletion.Value.Content[0].Text.Replace(Environment.NewLine, "");
     }
 
     private string GetHtmlTranslationPrompt((string Iso6393Code, string EnglishName) destinationLanguage)
