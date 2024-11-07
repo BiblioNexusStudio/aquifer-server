@@ -125,7 +125,7 @@ public sealed class SendGridEmailException(string _message, SendGridMessage _ema
         return $"""
                 {Message}
 
-                SendEmailMessage:
+                Email:
                 {Email}
 
                 Response:
