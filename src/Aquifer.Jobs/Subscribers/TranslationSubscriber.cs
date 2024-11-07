@@ -60,9 +60,9 @@ public sealed class TranslationSubscriber(
     {
         var message = queueMessage.Deserialize<TranslateProjectResourcesMessage, TranslationSubscriber>(_logger);
 
-        var projectResourceContentIds = await _dbContext.Projects
-            .Where(p => p.Id == message.ProjectId)
-            .SelectMany(p => p.ProjectResourceContents.Select(prc => prc.ResourceContentId))
+        var projectResourceContentIds = await _dbContext.ProjectResourceContents
+            .Where(prc => prc.ProjectId == message.ProjectId)
+            .Select(prc => prc.ResourceContentId)
             .ToListAsync(ct);
 
         if (projectResourceContentIds.Count == 0)
