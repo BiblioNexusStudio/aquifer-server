@@ -1,4 +1,4 @@
-﻿namespace Aquifer.Common.Jobs;
+﻿namespace Aquifer.Common.Messages;
 
 public static class Queues
 {

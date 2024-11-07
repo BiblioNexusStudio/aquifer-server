@@ -2,7 +2,8 @@
 using Aquifer.API.Common;
 using Aquifer.API.Helpers;
 using Aquifer.API.Services;
-using Aquifer.Common.Services;
+using Aquifer.Common.Messages.Models;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -10,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Comments.Threads.Create;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService, INotificationService notificationService)
+public class Endpoint(AquiferDbContext dbContext, IUserService userService, INotificationMessagePublisher notificationMessagePublisher)
     : Endpoint<Request, Response>
 {
     public override void Configure()
@@ -51,7 +52,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, INot
         resourceContentVersion!.CommentThreads.Add(new ResourceContentVersionCommentThreadEntity { CommentThread = newThread });
         await dbContext.SaveChangesAsync(ct);
 
-        await notificationService.SendResourceCommentCreatedNotificationAsync(newComment.Id, ct);
+        await notificationMessagePublisher.PublishSendResourceCommentCreatedNotificationMessageAsync(
+            new SendResourceCommentCreatedNotificationMessage(newComment.Id),
+            ct);
 
         return new Response
         {

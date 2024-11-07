@@ -1,18 +1,19 @@
-﻿using Aquifer.Common.Jobs.Messages;
+﻿using Aquifer.Common.Messages.Models;
 
-namespace Aquifer.Common.Jobs.Publishers;
+namespace Aquifer.Common.Messages.Publishers;
 
-public interface ITranslationPublisher
+public interface ITranslationMessagePublisher
 {
     public Task PublishTranslateProjectResourcesMessageAsync(
         TranslateProjectResourcesMessage message,
         CancellationToken cancellationToken);
+
     public Task PublishTranslateResourceMessageAsync(
         TranslateResourceMessage message,
         CancellationToken cancellationToken);
 }
 
-public sealed class TranslationPublisher(IQueueClientFactory _queueClientFactory) : ITranslationPublisher
+public sealed class TranslationMessagePublisher(IQueueClientFactory _queueClientFactory) : ITranslationMessagePublisher
 {
     public async Task PublishTranslateProjectResourcesMessageAsync(
         TranslateProjectResourcesMessage message,

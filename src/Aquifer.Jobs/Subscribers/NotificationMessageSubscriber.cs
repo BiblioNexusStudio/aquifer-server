@@ -1,9 +1,10 @@
 ﻿using System.Data.Common;
 using System.Web;
-using Aquifer.Common.Jobs;
-using Aquifer.Common.Jobs.Messages;
-using Aquifer.Common.Services;
+using Aquifer.Common.Messages;
+using Aquifer.Common.Messages.Models;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Data;
+using Aquifer.Jobs.Common;
 using Aquifer.Jobs.Configuration;
 using Azure.Storage.Queues.Models;
 using Microsoft.Azure.Functions.Worker;
@@ -13,18 +14,18 @@ using Microsoft.Extensions.Options;
 
 namespace Aquifer.Jobs.Subscribers;
 
-public sealed class NotificationSubscriber(
+public sealed class NotificationMessageSubscriber(
     IOptions<ConfigurationOptions> _configurationOptions,
     AquiferDbContext _dbContext,
-    IEmailService _emailService,
-    ILogger<NotificationSubscriber> _logger)
+    IEmailMessagePublisher _emailMessagePublisher,
+    ILogger<NotificationMessageSubscriber> _logger)
 {
     [Function(nameof(SendProjectStartedNotification))]
     public async Task SendProjectStartedNotification(
         [QueueTrigger(Queues.SendProjectStartedNotification)] QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<SendProjectStartedNotificationMessage, NotificationSubscriber>(_logger);
+        var message = queueMessage.Deserialize<SendProjectStartedNotificationMessage, NotificationMessageSubscriber>(_logger);
 
         var project = await _dbContext.Projects
             .Include(projectEntity => projectEntity.CompanyLeadUser)
@@ -33,13 +34,13 @@ public sealed class NotificationSubscriber(
         var companyLeadUser = project.CompanyLeadUser;
         if (companyLeadUser is { Enabled: true, AquiferNotificationsEnabled: true })
         {
-            var templatedEmail = new TemplatedEmail(
+            var templatedEmail = new SendTemplatedEmailMessage(
                 From: NotificationsHelper.NotificationSenderEmailAddress,
                 // Template Designer: https://mc.sendgrid.com/dynamic-templates/d-7760ec3b5ce34b179384d4783cc1bd81/version/e83075a3-ba61-4d42-922f-9fd5df4ee45c/editor
                 TemplateId: _configurationOptions.Value.Notifications.SendProjectStartedNotificationTemplateId,
                 DynamicTemplateData: new Dictionary<string, object>
                 {
-                    [EmailService.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notifications: Project Started",
+                    [EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notifications: Project Started",
                     ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
                     ["projectId"] = project.Id,
                     ["projectName"] = project.Name,
@@ -47,7 +48,7 @@ public sealed class NotificationSubscriber(
                 Tos: [NotificationsHelper.NotificationToEmailAddress],
                 Bccs: [NotificationsHelper.GetEmailAddress(companyLeadUser)]);
 
-            await _emailService.SendEmailAsync(templatedEmail, ct);
+            await _emailMessagePublisher.PublishSendTemplatedEmailMessageAsync(templatedEmail, ct);
 
             _logger.LogInformation(
                 "Project started notification sent for Project ID {ProjectId} to User ID {UserId}.",
@@ -66,7 +67,7 @@ public sealed class NotificationSubscriber(
         [QueueTrigger(Queues.SendResourceCommentCreatedNotification)] QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<SendResourceCommentCreatedNotificationMessage, NotificationSubscriber>(_logger);
+        var message = queueMessage.Deserialize<SendResourceCommentCreatedNotificationMessage, NotificationMessageSubscriber>(_logger);
 
         var dbConnection = _dbContext.Database.GetDbConnection();
         var resourceCommentData = await GetResourceCommentDataAsync(dbConnection, message.CommentId, ct);
@@ -100,13 +101,13 @@ public sealed class NotificationSubscriber(
             return;
         }
 
-        var templatedEmail = new TemplatedEmail(
+        var templatedEmail = new SendTemplatedEmailMessage(
             From: NotificationsHelper.NotificationSenderEmailAddress,
             // Template Designer: https://mc.sendgrid.com/dynamic-templates/d-ea84b461ed0f439589098053f8810189/version/26393e82-7d17-4b8f-a37c-cb20f62d8802/editor
             TemplateId: _configurationOptions.Value.Notifications.SendResourceCommentCreatedNotificationTemplateId,
             DynamicTemplateData: new Dictionary<string, object>
             {
-                [EmailService.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notifications: New Resource Comment",
+                [EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notifications: New Resource Comment",
                 ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
                 ["commenterUserName"] = NotificationsHelper.GetUserFullName(resourceCommentData.UserFirstName, resourceCommentData.UserLastName),
                 ["commentHtml"] = HttpUtility.HtmlEncode(resourceCommentData.Comment).Replace("\n", "<br>"),
@@ -120,7 +121,7 @@ public sealed class NotificationSubscriber(
                 .Select(NotificationsHelper.GetEmailAddress)
                 .ToList());
 
-        await _emailService.SendEmailAsync(templatedEmail, ct);
+        await _emailMessagePublisher.PublishSendTemplatedEmailMessageAsync(templatedEmail, ct);
 
         _logger.LogInformation(
             "Comment created notification was sent for Comment ID {CommentId} on Resource Content ID {ResourceContentId} by User ID {CommenterUserId}.",

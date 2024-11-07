@@ -1,3 +1,3 @@
-﻿namespace Aquifer.Common.Jobs.Messages;
+﻿namespace Aquifer.Common.Messages.Models;
 
 public sealed record SendResourceCommentCreatedNotificationMessage(int CommentId);

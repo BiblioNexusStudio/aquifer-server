@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace Aquifer.Common.Jobs;
+namespace Aquifer.Common.Messages;
 
 public static class QueueServicesRegistry
 {

@@ -1,3 +1,3 @@
-﻿namespace Aquifer.Common.Jobs;
+﻿namespace Aquifer.Common.Messages;
 
 public sealed record QueueConfigurationOptions(string AzureQueueStorageConnectionString);

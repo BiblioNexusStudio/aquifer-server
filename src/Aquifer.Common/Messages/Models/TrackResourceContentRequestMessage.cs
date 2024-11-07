@@ -1,4 +1,4 @@
-namespace Aquifer.Common.Jobs.Messages;
+namespace Aquifer.Common.Messages.Models;
 
 public record TrackResourceContentRequestMessage
 {

@@ -7,15 +7,15 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Aquifer.Jobs;
+namespace Aquifer.Jobs.Managers;
 
-public class SyncApiRequestStatsToStorageTable(
+public class SyncApiRequestStatsToStorageTableManager(
     IAquiferApiManagementClient _apiManagementClient,
-    ILogger<SyncApiRequestStatsToStorageTable> _logger,
+    ILogger<SyncApiRequestStatsToStorageTableManager> _logger,
     IAzureClientService _azureClientService,
     IOptions<ConfigurationOptions> _options)
 {
-    [Function(nameof(SyncApiRequestStatsToStorageTable))]
+    [Function(nameof(SyncApiRequestStatsToStorageTableManager))]
 #pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings
     public async Task Run([TimerTrigger(CronSchedules.EveryHourAtFiveAfter)] TimerInfo timerInfo, CancellationToken ct)
 #pragma warning restore IDE0060 // Remove unused parameter
