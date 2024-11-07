@@ -1,7 +1,7 @@
 ﻿using Aquifer.Common.Messages.Models;
 using Aquifer.Data.Entities;
 
-namespace Aquifer.Jobs;
+namespace Aquifer.Jobs.Common;
 
 public static class NotificationsHelper
 {

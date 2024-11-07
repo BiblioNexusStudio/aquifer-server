@@ -8,7 +8,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Aquifer.Jobs;
+namespace Aquifer.Jobs.Subscribers;
 
 public class TrackResourceContentRequestMessageSubscriber(
     ILogger<TrackResourceContentRequestMessageSubscriber> logger,

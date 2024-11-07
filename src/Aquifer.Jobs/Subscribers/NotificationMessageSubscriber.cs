@@ -4,6 +4,7 @@ using Aquifer.Common.Messages;
 using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Messages.Publishers;
 using Aquifer.Data;
+using Aquifer.Jobs.Common;
 using Aquifer.Jobs.Configuration;
 using Azure.Storage.Queues.Models;
 using Microsoft.Azure.Functions.Worker;

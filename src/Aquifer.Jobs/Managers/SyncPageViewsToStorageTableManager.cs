@@ -8,7 +8,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Aquifer.Jobs;
+namespace Aquifer.Jobs.Managers;
 
 public class SyncPageViewsToStorageTableManager(
     IAquiferAppInsightsClient _appInsightsClient,

@@ -9,7 +9,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace Aquifer.Jobs;
+namespace Aquifer.Jobs.Managers;
 
 public class SendNewContentEmailsManager(
     AquiferDbContext dbContext,

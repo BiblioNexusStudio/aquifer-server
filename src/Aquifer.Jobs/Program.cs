@@ -22,7 +22,7 @@ var host = new HostBuilder()
         .SetBasePath(context.HostingEnvironment.ContentRootPath)
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
         .AddJsonFile(
-            $"appsettings.{context.HostingEnvironment.EnvironmentName}.json", 
+            $"appsettings.{context.HostingEnvironment.EnvironmentName}.json",
             optional: true, 
             reloadOnChange: true)
     )
