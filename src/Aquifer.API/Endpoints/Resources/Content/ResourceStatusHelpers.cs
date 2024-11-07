@@ -81,15 +81,15 @@ public static class ResourceStatusHelpers
         CancellationToken ct,
         UserEntity? userToAssign = null)
     {
-        var assignedUser = userToAssign ?? await dbContext.Users
+         userToAssign ??= await dbContext.Users
             .AsTracking()
             .SingleOrDefaultAsync(u => u.Id == assignedUserId && u.Enabled, ct);
-        if (assignedUser is null)
+        if (userToAssign is null)
         {
             ValidationContext<TRequest>.Instance.ThrowError(Helpers.InvalidUserIdResponse);
         }
 
-        if (assignedUser.CompanyId != user.CompanyId && !permissions.HasAssignOutsideCompanyPermission)
+        if (userToAssign.CompanyId != user.CompanyId && !permissions.HasAssignOutsideCompanyPermission)
         {
             ValidationContext<TRequest>.Instance.ThrowError("Unable to assign to a user outside your company");
         }
@@ -99,7 +99,7 @@ public static class ResourceStatusHelpers
             var reviewer = await dbContext.Users
                 .Where(u => u.Id == assignedReviewerUserId
                             && u.Enabled
-                            && u.CompanyId == assignedUser.CompanyId
+                            && u.CompanyId == userToAssign.CompanyId
                             && (u.Role == UserRole.Reviewer || u.Role == UserRole.Manager))
                 .SingleOrDefaultAsync(ct);
 
