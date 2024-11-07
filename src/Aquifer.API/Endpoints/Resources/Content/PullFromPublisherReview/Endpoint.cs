@@ -58,7 +58,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
     private void ValidateAssignedUserForNotApplicable(UserEntity userToAssign, ResourceContentStatus originalStatus)
     {
-        if (originalStatus == ResourceContentStatus.TranslationNotApplicable && (userToAssign.Role is not UserRole.Manager || userToAssign.Role is not UserRole.Reviewer))
+        if (originalStatus == ResourceContentStatus.TranslationNotApplicable && userToAssign.Role is not UserRole.Manager &&
+            userToAssign.Role is not UserRole.Reviewer)
         {
             ThrowError($"Can only assign a manager to resource content when pulling back from status: {originalStatus}");
         }
