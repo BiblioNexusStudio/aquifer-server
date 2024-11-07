@@ -7,6 +7,7 @@ public interface ITranslationMessagePublisher
     public Task PublishTranslateProjectResourcesMessageAsync(
         TranslateProjectResourcesMessage message,
         CancellationToken cancellationToken);
+
     public Task PublishTranslateResourceMessageAsync(
         TranslateResourceMessage message,
         CancellationToken cancellationToken);

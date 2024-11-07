@@ -49,6 +49,6 @@ public class Endpoint(
     public override async Task OnAfterHandleAsync(Request req, List<Response> res, CancellationToken ct)
     {
         const string endpointId = "resources-content-batch-text";
-        await trackingMessagePublisher.TrackAsync(HttpContext, req.Ids, endpointId, cancellationToken: ct);
+        await trackingMessagePublisher.PublishTrackResourceContentRequestMessageAsync(HttpContext, req.Ids, endpointId, source: null, ct);
     }
 }

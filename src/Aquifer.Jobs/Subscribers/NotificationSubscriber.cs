@@ -47,7 +47,7 @@ public sealed class NotificationSubscriber(
                 Tos: [NotificationsHelper.NotificationToEmailAddress],
                 Bccs: [NotificationsHelper.GetEmailAddress(companyLeadUser)]);
 
-            await _emailMessagePublisher.SendEmailAsync(templatedEmail, ct);
+            await _emailMessagePublisher.PublishSendTemplatedEmailMessageAsync(templatedEmail, ct);
 
             _logger.LogInformation(
                 "Project started notification sent for Project ID {ProjectId} to User ID {UserId}.",
@@ -120,7 +120,7 @@ public sealed class NotificationSubscriber(
                 .Select(NotificationsHelper.GetEmailAddress)
                 .ToList());
 
-        await _emailMessagePublisher.SendEmailAsync(templatedEmail, ct);
+        await _emailMessagePublisher.PublishSendTemplatedEmailMessageAsync(templatedEmail, ct);
 
         _logger.LogInformation(
             "Comment created notification was sent for Comment ID {CommentId} on Resource Content ID {ResourceContentId} by User ID {CommenterUserId}.",

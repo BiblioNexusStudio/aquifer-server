@@ -77,7 +77,7 @@ public class SendNewContentEmails(
         string emailContent,
         CancellationToken ct)
     {
-        await emailMessagePublisher.SendEmailAsync(
+        await emailMessagePublisher.PublishSendEmailMessageAsync(
             new SendEmailMessage(
                 From: new EmailAddress(options.Value.MarketingEmail.Address, options.Value.MarketingEmail.Name),
                 Subject: emailTemplate.Subject,

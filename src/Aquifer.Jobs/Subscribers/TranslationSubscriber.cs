@@ -209,7 +209,7 @@ public sealed class TranslationSubscriber(
 
         await _dbContext.SaveChangesAsync(activityContext.CancellationToken);
 
-        await _notificationMessagePublisher.SendProjectStartedNotificationAsync(
+        await _notificationMessagePublisher.PublishSendProjectStartedNotificationMessageAsync(
             new SendProjectStartedNotificationMessage(dto.ProjectId),
             activityContext.CancellationToken);
     }

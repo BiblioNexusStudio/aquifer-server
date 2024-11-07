@@ -5,19 +5,57 @@ namespace Aquifer.Common.Messages.Publishers;
 
 public interface IResourceContentRequestTrackingMessagePublisher
 {
-    Task TrackAsync(HttpContext httpContext, int resourceContentId, string endpointId, string? source = null, CancellationToken cancellationToken = default);
-    Task TrackAsync(HttpContext httpContext, List<int> resourceContentIds, string endpointId, string? source = null, CancellationToken cancellationToken = default);
+    Task PublishTrackResourceContentRequestMessageAsync(
+        TrackResourceContentRequestMessage message,
+        CancellationToken cancellationToken);
+
+    Task PublishTrackResourceContentRequestMessageAsync(
+        HttpContext httpContext,
+        int resourceContentId,
+        string endpointId,
+        string? source,
+        CancellationToken cancellationToken);
+
+    Task PublishTrackResourceContentRequestMessageAsync(
+        HttpContext httpContext,
+        List<int> resourceContentIds,
+        string endpointId,
+        string? source,
+        CancellationToken cancellationToken);
 }
 
 public class ResourceContentRequestTrackingMessagePublisher(IQueueClientFactory _queueClientFactory)
     : IResourceContentRequestTrackingMessagePublisher
 {
-    public async Task TrackAsync(HttpContext httpContext, int resourceContentId, string endpointId, string? source = null, CancellationToken cancellationToken = default)
+    public async Task PublishTrackResourceContentRequestMessageAsync(
+        TrackResourceContentRequestMessage message,
+        CancellationToken ct)
     {
-        await TrackAsync(httpContext, [resourceContentId], endpointId, source, cancellationToken);
+        var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.TrackResourceContentRequest, ct);
+        await queueClient.SendMessageAsync(message, cancellationToken: ct);
     }
 
-    public async Task TrackAsync(HttpContext httpContext, List<int> resourceContentIds, string endpointId, string? source = null, CancellationToken cancellationToken = default)
+    public async Task PublishTrackResourceContentRequestMessageAsync(
+        HttpContext httpContext,
+        int resourceContentId,
+        string endpointId,
+        string? source,
+        CancellationToken cancellationToken)
+    {
+        await PublishTrackResourceContentRequestMessageAsync(
+            httpContext,
+            [resourceContentId],
+            endpointId,
+            source,
+            cancellationToken);
+    }
+
+    public async Task PublishTrackResourceContentRequestMessageAsync(
+        HttpContext httpContext,
+        List<int> resourceContentIds,
+        string endpointId,
+        string? source,
+        CancellationToken cancellationToken)
     {
         if (httpContext.Response.StatusCode >= 400)
         {
@@ -35,8 +73,7 @@ public class ResourceContentRequestTrackingMessagePublisher(IQueueClientFactory 
             ResourceContentIds = resourceContentIds
         };
 
-        var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.TrackResourceContentRequest, cancellationToken);
-        await queueClient.SendMessageAsync(message, cancellationToken: cancellationToken);
+        await PublishTrackResourceContentRequestMessageAsync(message, cancellationToken);
     }
 
     private static string GetClientIp(HttpContext httpContext)

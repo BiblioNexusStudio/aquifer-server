@@ -36,7 +36,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, INot
 
         await dbContext.SaveChangesAsync(ct);
 
-        await notificationMessagePublisher.SendResourceCommentCreatedNotificationAsync(
+        await notificationMessagePublisher.PublishSendResourceCommentCreatedNotificationMessageAsync(
             new SendResourceCommentCreatedNotificationMessage(newComment.Id),
             ct);
 

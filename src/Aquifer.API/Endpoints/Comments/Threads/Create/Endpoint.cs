@@ -52,7 +52,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, INot
         resourceContentVersion!.CommentThreads.Add(new ResourceContentVersionCommentThreadEntity { CommentThread = newThread });
         await dbContext.SaveChangesAsync(ct);
 
-        await notificationMessagePublisher.SendResourceCommentCreatedNotificationAsync(
+        await notificationMessagePublisher.PublishSendResourceCommentCreatedNotificationMessageAsync(
             new SendResourceCommentCreatedNotificationMessage(newComment.Id),
             ct);
 

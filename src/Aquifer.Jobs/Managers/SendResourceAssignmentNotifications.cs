@@ -91,7 +91,7 @@ public class SendResourceAssignmentNotifications(
         // first during the initial failed run and again when the job retries (possibly with new data).
         foreach (var sendTemplatedEmailMessage in sendTemplatedEmailMessages)
         {
-            await _emailMessagePublisher.SendEmailAsync(sendTemplatedEmailMessage, CancellationToken.None);
+            await _emailMessagePublisher.PublishSendTemplatedEmailMessageAsync(sendTemplatedEmailMessage, CancellationToken.None);
         }
 
         if (userHistories.Count > 0)

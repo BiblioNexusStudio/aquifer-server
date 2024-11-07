@@ -33,6 +33,6 @@ public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackin
     public override async Task OnAfterHandleAsync(Request req, Response res, CancellationToken ct)
     {
         const string endpointId = "public-resources-get";
-        await trackingMessagePublisher.TrackAsync(HttpContext, req.ContentId, endpointId, "public-api", ct);
+        await trackingMessagePublisher.PublishTrackResourceContentRequestMessageAsync(HttpContext, req.ContentId, endpointId, source: "public-api", ct);
     }
 }

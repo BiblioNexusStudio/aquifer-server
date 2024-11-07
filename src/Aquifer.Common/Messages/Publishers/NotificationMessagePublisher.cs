@@ -4,10 +4,11 @@ namespace Aquifer.Common.Messages.Publishers;
 
 public interface INotificationMessagePublisher
 {
-    public Task SendProjectStartedNotificationAsync(
+    public Task PublishSendProjectStartedNotificationMessageAsync(
         SendProjectStartedNotificationMessage message,
         CancellationToken cancellationToken);
-    public Task SendResourceCommentCreatedNotificationAsync(
+
+    public Task PublishSendResourceCommentCreatedNotificationMessageAsync(
         SendResourceCommentCreatedNotificationMessage message,
         CancellationToken cancellationToken);
 }
@@ -15,7 +16,7 @@ public interface INotificationMessagePublisher
 public sealed class NotificationMessagePublisher(IQueueClientFactory _queueClientFactory)
     : INotificationMessagePublisher
 {
-    public async Task SendProjectStartedNotificationAsync(
+    public async Task PublishSendProjectStartedNotificationMessageAsync(
         SendProjectStartedNotificationMessage message,
         CancellationToken cancellationToken)
     {
@@ -23,7 +24,7 @@ public sealed class NotificationMessagePublisher(IQueueClientFactory _queueClien
         await queueClient.SendMessageAsync(message, cancellationToken: cancellationToken);
     }
 
-    public async Task SendResourceCommentCreatedNotificationAsync(
+    public async Task PublishSendResourceCommentCreatedNotificationMessageAsync(
         SendResourceCommentCreatedNotificationMessage message,
         CancellationToken cancellationToken)
     {
