@@ -1675,7 +1675,7 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("getutcdate()");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnType("int");
 
                     b.Property<byte>("UserRating")
@@ -2566,9 +2566,7 @@ namespace Aquifer.Data.Migrations
 
                     b.HasOne("Aquifer.Data.Entities.UserEntity", "User")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
 
                     b.Navigation("ResourceContentVersion");
 

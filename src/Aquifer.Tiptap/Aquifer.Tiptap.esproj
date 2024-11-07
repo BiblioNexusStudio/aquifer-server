@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.1184077">
+  <PropertyGroup>
+    <BuildCommand>npm install &amp;&amp; npx esbuild node_modules/aquifer-tiptap/src/TiptapUtilities.ts --bundle --outfile=dist/TiptapUtilities.js --platform=node --target=node12</BuildCommand>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="dist\**" />
+    <TypeScriptConfiguration Remove="dist\**" />
+  </ItemGroup>
+</Project>

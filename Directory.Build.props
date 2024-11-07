@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <NoWarn>MSB3245</NoWarn>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <GitHubOrganization>BiblioNexusStudio</GitHubOrganization>
         <RepositoryName>aquifer-server</RepositoryName>

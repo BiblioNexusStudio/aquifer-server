@@ -1,0 +1,1 @@
+console.log('This project is not designed to be run. See the readme.');

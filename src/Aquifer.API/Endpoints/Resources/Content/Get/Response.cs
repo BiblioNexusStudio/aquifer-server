@@ -173,7 +173,7 @@ public class MachineTranslationResponse
 {
     public int Id { get; set; }
     public int ContentIndex { get; set; }
-    public int UserId { get; set; }
+    public int? UserId { get; set; }
     public byte UserRating { get; set; }
     public bool ImproveClarity { get; set; }
     public bool ImproveTone { get; set; }

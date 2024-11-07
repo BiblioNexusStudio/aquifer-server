@@ -1,8 +1,10 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
-using Aquifer.Common.Services;
+using Aquifer.Common.Jobs.Messages;
+using Aquifer.Common.Jobs.Publishers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Aquifer.Data.Services;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +14,7 @@ public class Endpoint(
     AquiferDbContext dbContext,
     IUserService userService,
     IResourceHistoryService resourceHistoryService,
-    INotificationService notificationService)
+    ITranslationPublisher translationPublisher)
     : Endpoint<Request>
 {
     public override void Configure()
@@ -41,24 +43,21 @@ public class Endpoint(
         var resourceContentVersions = await dbContext.ResourceContentVersions
             .AsTracking()
             .Where(rcv => rcv.ResourceContent.ProjectResourceContents.Any(prc => prc.Project.Id == project.Id) && rcv.IsDraft)
-            .Include(rcv => rcv.ResourceContent)
-            .ThenInclude(rc => rc.Language).ToListAsync(ct);
+            .ToListAsync(ct);
 
+        // create original language snapshots before queuing for translation
         foreach (var resourceContentVersion in resourceContentVersions)
         {
-            if (project.CompanyLeadUserId is not null)
-            {
-                resourceContentVersion.AssignedUserId = project.CompanyLeadUserId;
-                await resourceHistoryService.AddAssignedUserHistoryAsync(resourceContentVersion, project.CompanyLeadUserId, user.Id, ct);
-                await resourceHistoryService.AddSnapshotHistoryAsync(resourceContentVersion, user.Id, ResourceContentStatus.New, ct);
-            }
+            await resourceHistoryService.AddSnapshotHistoryAsync(resourceContentVersion, user.Id, ResourceContentStatus.New, ct);
         }
 
         project.Started = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(ct);
 
-        await notificationService.SendProjectStartedNotificationAsync(project.Id, ct);
+        await translationPublisher.PublishTranslateProjectResourcesMessageAsync(
+            new TranslateProjectResourcesMessage(project.Id, user.Id),
+            ct);
 
         await SendNoContentAsync(ct);
     }
