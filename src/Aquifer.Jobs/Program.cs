@@ -1,7 +1,8 @@
 using Aquifer.AI;
 using Aquifer.Common.Clients;
 using Aquifer.Common.Clients.Http.IpAddressLookup;
-using Aquifer.Common.Jobs;
+using Aquifer.Common.Messages;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Services;
 using Aquifer.Data;
 using Aquifer.Data.Services;
@@ -21,7 +22,7 @@ var host = new HostBuilder()
         .SetBasePath(context.HostingEnvironment.ContentRootPath)
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
         .AddJsonFile(
-            $"appsettings.{context.HostingEnvironment.EnvironmentName}.json", 
+            $"appsettings.{context.HostingEnvironment.EnvironmentName}.json",
             optional: true, 
             reloadOnChange: true)
     )
@@ -54,10 +55,10 @@ var host = new HostBuilder()
         services.AddHttpClient<IIpAddressLookupHttpClient, IpAddressLookupHttpClient>();
         services.AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>();
         services.AddScoped<IResourceHistoryService, ResourceHistoryService>();
-        services.AddSingleton<IEmailService, EmailService>();
-        services.AddSingleton<INotificationService, NotificationService>();
+        services.AddSingleton<IEmailMessagePublisher, EmailMessagePublisher>();
+        services.AddSingleton<INotificationMessagePublisher, NotificationMessagePublisher>();
         services.AddSingleton<ITranslationService, OpenAiTranslationService>();
-        services.AddKeyedSingleton<IEmailService, SendGridEmailService>(nameof(SendGridEmailService));
+        services.AddSingleton<IEmailService, SendGridEmailService>();
     })
     .Build();
 

@@ -1,6 +1,6 @@
 using Aquifer.Common.Clients.Http.IpAddressLookup;
-using Aquifer.Common.Jobs;
-using Aquifer.Common.Jobs.Messages;
+using Aquifer.Common.Messages;
+using Aquifer.Common.Messages.Models;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Azure.Storage.Queues.Models;
@@ -8,19 +8,19 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Aquifer.Jobs;
+namespace Aquifer.Jobs.Subscribers;
 
-public class TrackResourceContentRequestJob(
-    ILogger<TrackResourceContentRequestJob> logger,
+public class TrackResourceContentRequestMessageSubscriber(
+    ILogger<TrackResourceContentRequestMessageSubscriber> logger,
     AquiferDbContext dbContext,
     IIpAddressLookupHttpClient ipAddressClient)
 {
-    [Function(nameof(TrackResourceContentRequestJob))]
+    [Function(nameof(TrackResourceContentRequestMessageSubscriber))]
     public async Task Run(
         [QueueTrigger(Queues.TrackResourceContentRequest)] QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var trackingMetadata = queueMessage.Deserialize<TrackResourceContentRequestMessage, TrackResourceContentRequestJob>(logger);
+        var trackingMetadata = queueMessage.Deserialize<TrackResourceContentRequestMessage, TrackResourceContentRequestMessageSubscriber>(logger);
 
         await LookupIpAddressAsync(trackingMetadata, ct);
         await dbContext.ResourceContentRequests

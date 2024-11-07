@@ -1,4 +1,5 @@
-using Aquifer.Common.Services;
+using Aquifer.Common.Messages.Models;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Jobs.Common;
@@ -8,15 +9,15 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace Aquifer.Jobs;
+namespace Aquifer.Jobs.Managers;
 
-public class SendNewContentEmails(
+public class SendNewContentEmailsManager(
     AquiferDbContext dbContext,
-    IEmailService emailService,
+    IEmailMessagePublisher emailMessagePublisher,
     IOptions<ConfigurationOptions> options,
     TelemetryClient telemetryClient)
 {
-    [Function(nameof(SendNewContentEmails))]
+    [Function(nameof(SendNewContentEmailsManager))]
 #pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings
     public async Task Run([TimerTrigger(CronSchedules.FirstOfMonthAtNoon)] TimerInfo timerInfo, CancellationToken ct)
 #pragma warning restore IDE0060 // Remove unused parameter
@@ -76,8 +77,8 @@ public class SendNewContentEmails(
         string emailContent,
         CancellationToken ct)
     {
-        await emailService.SendEmailAsync(
-            new Email(
+        await emailMessagePublisher.PublishSendEmailMessageAsync(
+            new SendEmailMessage(
                 From: new EmailAddress(options.Value.MarketingEmail.Address, options.Value.MarketingEmail.Name),
                 Subject: emailTemplate.Subject,
                 HtmlContent: emailContent,

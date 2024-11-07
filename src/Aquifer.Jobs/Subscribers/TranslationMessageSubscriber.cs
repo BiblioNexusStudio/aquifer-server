@@ -1,8 +1,8 @@
 ﻿using System.Text;
 using Aquifer.AI;
-using Aquifer.Common.Jobs;
-using Aquifer.Common.Jobs.Messages;
-using Aquifer.Common.Services;
+using Aquifer.Common.Messages;
+using Aquifer.Common.Messages.Models;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Tiptap;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
@@ -18,12 +18,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Aquifer.Jobs.Subscribers;
 
-public sealed class TranslationSubscriber(
+public sealed class TranslationMessageSubscriber(
     AquiferDbContext _dbContext,
-    ILogger<TranslationSubscriber> _logger,
+    ILogger<TranslationMessageSubscriber> _logger,
     ITranslationService _translationService,
     IResourceHistoryService _resourceHistoryService,
-    INotificationService _notificationService,
+    INotificationMessagePublisher _notificationMessagePublisher,
     IQueueClientFactory _queueClientFactory)
 {
     private static readonly TaskOptions s_durableFunctionTaskOptions = TaskOptions.FromRetryPolicy(
@@ -36,7 +36,7 @@ public sealed class TranslationSubscriber(
         [QueueTrigger(Queues.TranslateResource)] QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<TranslateResourceMessage, TranslationSubscriber>(_logger);
+        var message = queueMessage.Deserialize<TranslateResourceMessage, TranslationMessageSubscriber>(_logger);
 
         await TranslateResourceCoreAsync(
             message.ResourceContentId,
@@ -58,7 +58,7 @@ public sealed class TranslationSubscriber(
         [DurableClient] DurableTaskClient durableTaskClient,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<TranslateProjectResourcesMessage, TranslationSubscriber>(_logger);
+        var message = queueMessage.Deserialize<TranslateProjectResourcesMessage, TranslationMessageSubscriber>(_logger);
 
         var projectResourceContentIds = await _dbContext.ProjectResourceContents
             .Where(prc => prc.ProjectId == message.ProjectId)
@@ -209,7 +209,9 @@ public sealed class TranslationSubscriber(
 
         await _dbContext.SaveChangesAsync(activityContext.CancellationToken);
 
-        await _notificationService.SendProjectStartedNotificationAsync(dto.ProjectId, activityContext.CancellationToken);
+        await _notificationMessagePublisher.PublishSendProjectStartedNotificationMessageAsync(
+            new SendProjectStartedNotificationMessage(dto.ProjectId),
+            activityContext.CancellationToken);
     }
 
     /// <summary>

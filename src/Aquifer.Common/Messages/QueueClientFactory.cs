@@ -2,7 +2,7 @@
 using Aquifer.Common.Services;
 using Azure.Storage.Queues;
 
-namespace Aquifer.Common.Jobs;
+namespace Aquifer.Common.Messages;
 
 public interface IQueueClientFactory
 {

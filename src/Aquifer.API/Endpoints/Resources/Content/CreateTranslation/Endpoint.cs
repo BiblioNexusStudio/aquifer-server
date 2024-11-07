@@ -1,7 +1,7 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
-using Aquifer.Common.Jobs.Messages;
-using Aquifer.Common.Jobs.Publishers;
+using Aquifer.Common.Messages.Models;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Services;
@@ -14,7 +14,7 @@ public class Endpoint(
     AquiferDbContext dbContext,
     IUserService userService,
     IResourceHistoryService historyService,
-    ITranslationPublisher translationPublisher)
+    ITranslationMessagePublisher translationMessagePublisher)
     : Endpoint<Request, Response>
 {
     public override void Configure()
@@ -126,7 +126,7 @@ public class Endpoint(
 
         await dbContext.SaveChangesAsync(ct);
 
-        await translationPublisher.PublishTranslateResourceMessageAsync(
+        await translationMessagePublisher.PublishTranslateResourceMessageAsync(
             new TranslateResourceMessage(
                 newResourceContent.Id,
                 user.Id,

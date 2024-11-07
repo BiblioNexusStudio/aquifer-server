@@ -1,10 +1,34 @@
 using Aquifer.Common.Clients;
-using Aquifer.Common.Services;
 using SendGrid;
 using SendGrid.Helpers.Mail;
-using EmailAddress = Aquifer.Common.Services.EmailAddress;
 
 namespace Aquifer.Jobs.Services;
+
+public interface IEmailService
+{
+    Task SendEmailAsync(Email email, CancellationToken ct);
+    Task SendEmailAsync(TemplatedEmail templatedEmail, CancellationToken ct);
+}
+
+public sealed record Email(
+    EmailAddress From,
+    string Subject,
+    string HtmlContent,
+    IReadOnlyList<EmailAddress> Tos,
+    IReadOnlyList<EmailAddress>? Ccs = null,
+    IReadOnlyList<EmailAddress>? Bccs = null);
+
+public sealed record TemplatedEmail(
+    EmailAddress From,
+    string TemplateId,
+    IDictionary<string, object> DynamicTemplateData,
+    IReadOnlyList<EmailAddress> Tos,
+    IReadOnlyList<EmailAddress>? Ccs = null,
+    IReadOnlyList<EmailAddress>? Bccs = null);
+
+public sealed record EmailAddress(
+    string Email,
+    string? Name = null);
 
 public class SendGridEmailService : IEmailService
 {
