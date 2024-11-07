@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Aquifer.Common.Jobs;
+using Aquifer.Common.Messages;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Middleware;
 using Aquifer.Common.Services;
 using Aquifer.Data;
@@ -25,7 +26,7 @@ builder.Services
     .AddMemoryCache()
     .AddCachingServices()
     .AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount)
-    .AddSingleton<IResourceContentRequestTrackingService, ResourceContentRequestTrackingService>()
+    .AddSingleton<IResourceContentRequestTrackingMessagePublisher, ResourceContentRequestTrackingMessagePublisher>()
     .AddAzureClient(builder.Environment.IsDevelopment())
     .AddSwaggerDocumentSettings()
     .AddOutputCache()

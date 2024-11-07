@@ -1,10 +1,11 @@
-﻿using Aquifer.Common.Services;
+﻿using Aquifer.Common.Messages.Publishers;
 using Aquifer.Data;
 using FastEndpoints;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Get.ByLanguage;
 
-public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackingService trackingService) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackingMessagePublisher trackingMessagePublisher)
+    : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -31,6 +32,6 @@ public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackin
     public override async Task OnAfterHandleAsync(Request req, Response res, CancellationToken ct)
     {
         const string endpointId = "public-resources-get-by-language";
-        await trackingService.TrackAsync(HttpContext, res.Id, endpointId, "public-api", ct);
+        await trackingMessagePublisher.TrackAsync(HttpContext, res.Id, endpointId, "public-api", ct);
     }
 }

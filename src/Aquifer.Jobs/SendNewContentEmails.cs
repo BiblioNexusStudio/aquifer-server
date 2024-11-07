@@ -1,4 +1,5 @@
-using Aquifer.Common.Services;
+using Aquifer.Common.Messages.Models;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Jobs.Common;
@@ -12,7 +13,7 @@ namespace Aquifer.Jobs;
 
 public class SendNewContentEmails(
     AquiferDbContext dbContext,
-    IEmailService emailService,
+    IEmailMessagePublisher emailMessagePublisher,
     IOptions<ConfigurationOptions> options,
     TelemetryClient telemetryClient)
 {
@@ -76,8 +77,8 @@ public class SendNewContentEmails(
         string emailContent,
         CancellationToken ct)
     {
-        await emailService.SendEmailAsync(
-            new Email(
+        await emailMessagePublisher.SendEmailAsync(
+            new SendEmailMessage(
                 From: new EmailAddress(options.Value.MarketingEmail.Address, options.Value.MarketingEmail.Name),
                 Subject: emailTemplate.Subject,
                 HtmlContent: emailContent,

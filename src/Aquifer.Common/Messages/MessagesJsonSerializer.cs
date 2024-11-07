@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace Aquifer.Common.Jobs;
+namespace Aquifer.Common.Messages;
 
 public sealed class MessagesJsonSerializer
 {

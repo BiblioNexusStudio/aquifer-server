@@ -2,7 +2,7 @@
 using Azure.Storage.Queues.Models;
 using Microsoft.Extensions.Logging;
 
-namespace Aquifer.Common.Jobs;
+namespace Aquifer.Common.Messages;
 
 public static class QueueMessageExtensions
 {

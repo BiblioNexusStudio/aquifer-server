@@ -1,5 +1,5 @@
 ﻿using Aquifer.API.Modules.Resources;
-using Aquifer.Common.Services;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -13,7 +13,8 @@ namespace Aquifer.API.Endpoints.Resources.Content.GetContent;
 public class Endpoint(
     AquiferDbContext dbContext,
     TelemetryClient telemetry,
-    IResourceContentRequestTrackingService trackingService) : Endpoint<Request, object>
+    IResourceContentRequestTrackingMessagePublisher trackingMessagePublisher)
+    : Endpoint<Request, object>
 {
     public override void Configure()
     {
@@ -76,6 +77,6 @@ public class Endpoint(
     public override async Task OnAfterHandleAsync(Request req, object res, CancellationToken ct)
     {
         const string endpointId = "resources-content-getcontent";
-        await trackingService.TrackAsync(HttpContext, req.ResourceContentId, endpointId, cancellationToken: ct);
+        await trackingMessagePublisher.TrackAsync(HttpContext, req.ResourceContentId, endpointId, cancellationToken: ct);
     }
 }

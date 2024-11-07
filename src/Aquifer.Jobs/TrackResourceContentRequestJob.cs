@@ -1,6 +1,6 @@
 using Aquifer.Common.Clients.Http.IpAddressLookup;
-using Aquifer.Common.Jobs;
-using Aquifer.Common.Jobs.Messages;
+using Aquifer.Common.Messages;
+using Aquifer.Common.Messages.Models;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Azure.Storage.Queues.Models;

@@ -1,17 +1,16 @@
-﻿using Aquifer.Common.Jobs;
-using Aquifer.Common.Jobs.Messages;
+﻿using Aquifer.Common.Messages.Models;
 using Microsoft.AspNetCore.Http;
 
-namespace Aquifer.Common.Services;
+namespace Aquifer.Common.Messages.Publishers;
 
-public interface IResourceContentRequestTrackingService
+public interface IResourceContentRequestTrackingMessagePublisher
 {
     Task TrackAsync(HttpContext httpContext, int resourceContentId, string endpointId, string? source = null, CancellationToken cancellationToken = default);
     Task TrackAsync(HttpContext httpContext, List<int> resourceContentIds, string endpointId, string? source = null, CancellationToken cancellationToken = default);
 }
 
-public class ResourceContentRequestTrackingService(IQueueClientFactory _queueClientFactory)
-    : IResourceContentRequestTrackingService
+public class ResourceContentRequestTrackingMessagePublisher(IQueueClientFactory _queueClientFactory)
+    : IResourceContentRequestTrackingMessagePublisher
 {
     public async Task TrackAsync(HttpContext httpContext, int resourceContentId, string endpointId, string? source = null, CancellationToken cancellationToken = default)
     {

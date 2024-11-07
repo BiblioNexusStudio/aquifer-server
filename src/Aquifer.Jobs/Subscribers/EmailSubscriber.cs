@@ -1,69 +1,99 @@
-﻿using Aquifer.Common.Jobs;
-using Aquifer.Common.Services;
+﻿using Aquifer.Common.Messages;
+using Aquifer.Common.Messages.Models;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Jobs.Configuration;
 using Aquifer.Jobs.Services;
 using Azure.Storage.Queues.Models;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using EmailAddress = Aquifer.Jobs.Services.EmailAddress;
 
 namespace Aquifer.Jobs.Subscribers;
 
 public sealed class EmailSubscriber(
-    [FromKeyedServices(nameof(SendGridEmailService))] IEmailService _emailService,
+    IEmailService _emailService,
     IOptions<ConfigurationOptions> _configurationOptions,
     ILogger<EmailSubscriber> _logger)
 {
     [Function(nameof(SendEmail))]
     public async Task SendEmail(
         [QueueTrigger(Queues.SendEmail)]
-        QueueMessage message,
+        QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var email = message.Deserialize<Email, EmailSubscriber>(_logger);
+        var message = queueMessage.Deserialize<SendEmailMessage, EmailSubscriber>(_logger);
 
         try
         {
             await _emailService.SendEmailAsync(
-                email with { Subject = $"{_configurationOptions.Value.Email.SubjectPrefix}{email.Subject}" },
+                MapToEmail(message with { Subject = $"{_configurationOptions.Value.Email.SubjectPrefix}{message.Subject}" }),
                 ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unable to send email: \"{Email}\"", message.MessageText);
+            _logger.LogError(ex, "Unable to send email: \"{SendEmailMessage}\"", queueMessage.MessageText);
             throw;
         }
 
-        _logger.LogInformation("Email sent: {Email}", message.MessageText);
+        _logger.LogInformation("Email sent: {SendEmailMessage}", queueMessage.MessageText);
     }
 
     [Function(nameof(SendTemplatedEmail))]
     public async Task SendTemplatedEmail(
         [QueueTrigger(Queues.SendTemplatedEmail)]
-        QueueMessage message,
+        QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var templatedEmail = message.Deserialize<TemplatedEmail, EmailSubscriber>(_logger);
+        var message = queueMessage.Deserialize<SendTemplatedEmailMessage, EmailSubscriber>(_logger);
 
         // if `Subject` is present in the dynamic template data then add an environment specific prefix to it
-        if (templatedEmail.DynamicTemplateData.TryGetValue(EmailService.DynamicTemplateDataSubjectPropertyName, out var subject) &&
+        if (message.DynamicTemplateData.TryGetValue(EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName, out var subject) &&
             subject is string subjectString)
         {
-            templatedEmail.DynamicTemplateData[EmailService.DynamicTemplateDataSubjectPropertyName]
+            message.DynamicTemplateData[EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName]
                 = $"{_configurationOptions.Value.Email.SubjectPrefix}{subjectString}";
         }
 
         try
         {
-            await _emailService.SendEmailAsync(templatedEmail, ct);
+            await _emailService.SendEmailAsync(MapToTemplatedEmail(message), ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unable to send templated email: \"{TemplatedEmail}\"", message.MessageText);
+            _logger.LogError(ex, "Unable to send templated email: \"{SendTemplatedEmailMessage}\"", queueMessage.MessageText);
             throw;
         }
 
-        _logger.LogInformation("Templated email sent: {TemplatedEmail}", message.MessageText);
+        _logger.LogInformation("Templated email sent: {SendTemplatedEmailMessage}", queueMessage.MessageText);
+    }
+
+    private static Email MapToEmail(SendEmailMessage source)
+    {
+        return new Email(
+            MapToEmailAddress(source.From),
+            source.Subject,
+            source.HtmlContent,
+            source.Tos.Select(MapToEmailAddress).ToList(),
+            source.Ccs?.Select(MapToEmailAddress).ToList(),
+            source.Bccs?.Select(MapToEmailAddress).ToList());
+    }
+
+    private static EmailAddress MapToEmailAddress(Aquifer.Common.Messages.Models.EmailAddress source)
+    {
+        return new EmailAddress(
+            source.Email,
+            source.Name);
+    }
+
+    private static TemplatedEmail MapToTemplatedEmail(SendTemplatedEmailMessage source)
+    {
+        return new TemplatedEmail(
+            MapToEmailAddress(source.From),
+            source.TemplateId,
+            source.DynamicTemplateData,
+            source.Tos.Select(MapToEmailAddress).ToList(),
+            source.Ccs?.Select(MapToEmailAddress).ToList(),
+            source.Bccs?.Select(MapToEmailAddress).ToList());
     }
 }

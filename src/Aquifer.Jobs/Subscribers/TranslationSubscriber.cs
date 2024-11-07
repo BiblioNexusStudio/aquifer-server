@@ -1,8 +1,8 @@
 ﻿using System.Text;
 using Aquifer.AI;
-using Aquifer.Common.Jobs;
-using Aquifer.Common.Jobs.Messages;
-using Aquifer.Common.Services;
+using Aquifer.Common.Messages;
+using Aquifer.Common.Messages.Models;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Tiptap;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
@@ -23,7 +23,7 @@ public sealed class TranslationSubscriber(
     ILogger<TranslationSubscriber> _logger,
     ITranslationService _translationService,
     IResourceHistoryService _resourceHistoryService,
-    INotificationService _notificationService,
+    INotificationMessagePublisher _notificationMessagePublisher,
     IQueueClientFactory _queueClientFactory)
 {
     private static readonly TaskOptions s_durableFunctionTaskOptions = TaskOptions.FromRetryPolicy(
@@ -209,7 +209,9 @@ public sealed class TranslationSubscriber(
 
         await _dbContext.SaveChangesAsync(activityContext.CancellationToken);
 
-        await _notificationService.SendProjectStartedNotificationAsync(dto.ProjectId, activityContext.CancellationToken);
+        await _notificationMessagePublisher.SendProjectStartedNotificationAsync(
+            new SendProjectStartedNotificationMessage(dto.ProjectId),
+            activityContext.CancellationToken);
     }
 
     /// <summary>

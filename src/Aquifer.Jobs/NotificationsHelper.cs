@@ -1,4 +1,4 @@
-﻿using Aquifer.Common.Services;
+﻿using Aquifer.Common.Messages.Models;
 using Aquifer.Data.Entities;
 
 namespace Aquifer.Jobs;

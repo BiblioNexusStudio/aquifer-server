@@ -1,4 +1,4 @@
-﻿using Aquifer.Common.Services;
+﻿using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -9,7 +9,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.Batch.Text;
 
-public class Endpoint(AquiferDbContext dbContext, TelemetryClient telemetry, IResourceContentRequestTrackingService trackingService)
+public class Endpoint(
+    AquiferDbContext dbContext,
+    TelemetryClient telemetry,
+    IResourceContentRequestTrackingMessagePublisher trackingMessagePublisher)
     : Endpoint<Request, List<Response>>
 {
     public override void Configure()
@@ -46,6 +49,6 @@ public class Endpoint(AquiferDbContext dbContext, TelemetryClient telemetry, IRe
     public override async Task OnAfterHandleAsync(Request req, List<Response> res, CancellationToken ct)
     {
         const string endpointId = "resources-content-batch-text";
-        await trackingService.TrackAsync(HttpContext, req.Ids, endpointId, cancellationToken: ct);
+        await trackingMessagePublisher.TrackAsync(HttpContext, req.Ids, endpointId, cancellationToken: ct);
     }
 }
