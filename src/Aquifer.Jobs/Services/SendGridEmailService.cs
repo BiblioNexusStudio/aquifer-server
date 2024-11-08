@@ -15,16 +15,15 @@ public sealed record Email(
     string Subject,
     string HtmlContent,
     IReadOnlyList<EmailAddress> Tos,
-    IReadOnlyList<EmailAddress>? Ccs = null,
-    IReadOnlyList<EmailAddress>? Bccs = null);
+    IReadOnlyList<EmailAddress>? ReplyTos = null);
 
 public sealed record TemplatedEmail(
     EmailAddress From,
     string TemplateId,
-    IDictionary<string, object> DynamicTemplateData,
     IReadOnlyList<EmailAddress> Tos,
-    IReadOnlyList<EmailAddress>? Ccs = null,
-    IReadOnlyList<EmailAddress>? Bccs = null);
+    Dictionary<string, object> DynamicTemplateData,
+    Dictionary<string, Dictionary<string, object>>? EmailSpecificDynamicTemplateDataByToEmailAddressMap = null,
+    IReadOnlyList<EmailAddress>? ReplyTos = null);
 
 public sealed record EmailAddress(
     string Email,
@@ -73,15 +72,15 @@ public class SendGridEmailService : IEmailService
         {
             From = MapToSendGridEmailAddress(email.From),
             HtmlContent = email.HtmlContent,
-            Personalizations =
-            [
-                new Personalization
-                {
-                    Tos = email.Tos.Select(MapToSendGridEmailAddress).ToList(),
-                    Ccs = email.Ccs?.Select(MapToSendGridEmailAddress).ToList(),
-                    Bccs = email.Bccs?.Select(MapToSendGridEmailAddress).ToList(),
-                },
-            ],
+            Personalizations = email
+                .Tos
+                .Select(to =>
+                    new Personalization
+                    {
+                        Tos = [MapToSendGridEmailAddress(to)],
+                    })
+                .ToList(),
+            ReplyTos = email.ReplyTos?.Select(MapToSendGridEmailAddress).ToList(),
             Subject = email.Subject,
         };
     }
@@ -91,21 +90,37 @@ public class SendGridEmailService : IEmailService
         var sendGridMessage = new SendGridMessage
         {
             From = MapToSendGridEmailAddress(email.From),
-            Personalizations =
-            [
-                new Personalization
-                {
-                    Tos = email.Tos.Select(MapToSendGridEmailAddress).ToList(),
-                    Ccs = email.Ccs?.Select(MapToSendGridEmailAddress).ToList(),
-                    Bccs = email.Bccs?.Select(MapToSendGridEmailAddress).ToList(),
-                },
-            ],
             TemplateId = email.TemplateId,
+            Personalizations = email
+                .Tos
+                .Select(to => new Personalization
+                {
+                    Tos = [MapToSendGridEmailAddress(to)],
+                    TemplateData = MergeDynamicTemplateData(
+                        email.DynamicTemplateData,
+                        email.EmailSpecificDynamicTemplateDataByToEmailAddressMap,
+                        to.Email),
+                })
+                .ToList(),
+            ReplyTos = email.ReplyTos?.Select(MapToSendGridEmailAddress).ToList(),
         };
 
-        sendGridMessage.SetTemplateData(email.DynamicTemplateData);
-
         return sendGridMessage;
+    }
+
+    private static Dictionary<string, object> MergeDynamicTemplateData(
+        Dictionary<string, object> dynamicTemplateData,
+        Dictionary<string, Dictionary<string, object>>? emailSpecificDynamicTemplateDataByToEmailAddressMap,
+        string toEmailAddress)
+    {
+        var emailSpecificDynamicTemplateData = emailSpecificDynamicTemplateDataByToEmailAddressMap
+            ?.GetValueOrDefault(toEmailAddress)
+            ?? null;
+
+        return new List<Dictionary<string, object>?> { dynamicTemplateData, emailSpecificDynamicTemplateData }
+            .Where(d => d is not null)
+            .SelectMany(d => d!)
+            .ToDictionary();
     }
 
     private static SendGrid.Helpers.Mail.EmailAddress MapToSendGridEmailAddress(EmailAddress emailAddress)

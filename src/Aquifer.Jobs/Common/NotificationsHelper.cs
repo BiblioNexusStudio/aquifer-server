@@ -6,7 +6,7 @@ namespace Aquifer.Jobs.Common;
 public static class NotificationsHelper
 {
     public static readonly EmailAddress NotificationSenderEmailAddress = new("notifications@aquifer.bible", "Aquifer Notifications");
-    public static readonly EmailAddress NotificationToEmailAddress = new("no-reply@aquifer.bible", "Aquifer");
+    public static readonly EmailAddress NotificationNoReplyEmailAddress = new("no-reply@aquifer.bible", "Aquifer");
 
     public static EmailAddress GetEmailAddress(UserEntity userEntity)
     {

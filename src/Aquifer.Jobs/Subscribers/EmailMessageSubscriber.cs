@@ -75,8 +75,7 @@ public sealed class EmailMessageSubscriber(
             source.Subject,
             source.HtmlContent,
             source.Tos.Select(MapToEmailAddress).ToList(),
-            source.Ccs?.Select(MapToEmailAddress).ToList(),
-            source.Bccs?.Select(MapToEmailAddress).ToList());
+            source.ReplyTos?.Select(MapToEmailAddress).ToList());
     }
 
     private static EmailAddress MapToEmailAddress(Aquifer.Common.Messages.Models.EmailAddress source)
@@ -91,9 +90,9 @@ public sealed class EmailMessageSubscriber(
         return new TemplatedEmail(
             MapToEmailAddress(source.From),
             source.TemplateId,
-            source.DynamicTemplateData,
             source.Tos.Select(MapToEmailAddress).ToList(),
-            source.Ccs?.Select(MapToEmailAddress).ToList(),
-            source.Bccs?.Select(MapToEmailAddress).ToList());
+            source.DynamicTemplateData,
+            source.EmailSpecificDynamicTemplateDataByToEmailAddressMap,
+            source.ReplyTos?.Select(MapToEmailAddress).ToList());
     }
 }
