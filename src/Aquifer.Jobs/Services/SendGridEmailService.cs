@@ -31,6 +31,9 @@ public sealed record EmailAddress(
 
 public class SendGridEmailService : IEmailService
 {
+    // the SendGrid API limit is 1,000
+    private const int _maximumNumberOfTosPerApiCall = 1_000;
+
     private readonly SendGridClient _sendGridClient;
 
     public SendGridEmailService(IAzureKeyVaultClient keyVaultClient)
@@ -42,70 +45,86 @@ public class SendGridEmailService : IEmailService
 
     public async Task SendEmailAsync(Email email, CancellationToken ct)
     {
-        var sendGridMessage = MapToSendGridMessage(email);
-        var response = await _sendGridClient.SendEmailAsync(sendGridMessage, ct);
-        if (!response.IsSuccessStatusCode)
+        // Note: If one of these batch sends fails then we may send one or more batches but not all batches.
+        // This could be improved with retry handling in the future.
+        var sendGridMessages = MapToSendGridMessages(email);
+        foreach (var sendGridMessage in sendGridMessages)
         {
-            throw new SendGridEmailException(
-                "Unable to send email via SendGrid.",
-                sendGridMessage, 
-                await response.Body.ReadAsStringAsync(ct));
+            var response = await _sendGridClient.SendEmailAsync(sendGridMessage, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new SendGridEmailException(
+                    "Unable to send email via SendGrid.",
+                    sendGridMessage,
+                    await response.Body.ReadAsStringAsync(ct));
+            }
         }
     }
 
     public async Task SendEmailAsync(TemplatedEmail templatedEmail, CancellationToken ct)
     {
-        var sendGridMessage = MapToSendGridMessage(templatedEmail);
-        var response = await _sendGridClient.SendEmailAsync(sendGridMessage, ct);
-        if (!response.IsSuccessStatusCode)
+        // Note: If one of these batch sends fails then we may send one or more batches but not all batches.
+        // This could be improved with retry handling in the future.
+        var sendGridMessages = MapToSendGridMessages(templatedEmail);
+        foreach (var sendGridMessage in sendGridMessages)
         {
-            throw new SendGridEmailException(
-                "Unable to send templated email via SendGrid.",
-                sendGridMessage, 
-                await response.Body.ReadAsStringAsync(ct));
+            var response = await _sendGridClient.SendEmailAsync(sendGridMessage, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new SendGridEmailException(
+                    "Unable to send templated email via SendGrid.",
+                    sendGridMessage,
+                    await response.Body.ReadAsStringAsync(ct));
+            }
         }
     }
 
-    private static SendGridMessage MapToSendGridMessage(Email email)
+    private static IReadOnlyList<SendGridMessage> MapToSendGridMessages(Email email)
     {
-        return new SendGridMessage
-        {
-            From = MapToSendGridEmailAddress(email.From),
-            HtmlContent = email.HtmlContent,
-            Personalizations = email
-                .Tos
-                .Select(to =>
-                    new Personalization
-                    {
-                        Tos = [MapToSendGridEmailAddress(to)],
-                    })
-                .ToList(),
-            ReplyTos = email.ReplyTos?.Select(MapToSendGridEmailAddress).ToList(),
-            Subject = email.Subject,
-        };
+        return email
+            .Tos
+            .DistinctBy(to => to.Email)
+            .Chunk(_maximumNumberOfTosPerApiCall)
+            .Select(tos => new SendGridMessage
+            {
+                From = MapToSendGridEmailAddress(email.From),
+                HtmlContent = email.HtmlContent,
+                Personalizations = tos
+                    .Select(to =>
+                        new Personalization
+                        {
+                            Tos = [MapToSendGridEmailAddress(to)],
+                        })
+                    .ToList(),
+                ReplyTos = email.ReplyTos?.Select(MapToSendGridEmailAddress).ToList(),
+                Subject = email.Subject,
+            })
+            .ToList();
     }
 
-    private static SendGridMessage MapToSendGridMessage(TemplatedEmail email)
+    private static IReadOnlyList<SendGridMessage> MapToSendGridMessages(TemplatedEmail email)
     {
-        var sendGridMessage = new SendGridMessage
-        {
-            From = MapToSendGridEmailAddress(email.From),
-            TemplateId = email.TemplateId,
-            Personalizations = email
-                .Tos
-                .Select(to => new Personalization
-                {
-                    Tos = [MapToSendGridEmailAddress(to)],
-                    TemplateData = MergeDynamicTemplateData(
-                        email.DynamicTemplateData,
-                        email.EmailSpecificDynamicTemplateDataByToEmailAddressMap,
-                        to.Email),
-                })
-                .ToList(),
-            ReplyTos = email.ReplyTos?.Select(MapToSendGridEmailAddress).ToList(),
-        };
-
-        return sendGridMessage;
+        return email
+            .Tos
+            .DistinctBy(to => to.Email)
+            .Chunk(_maximumNumberOfTosPerApiCall)
+            .Select(tos => new SendGridMessage
+            {
+                From = MapToSendGridEmailAddress(email.From),
+                TemplateId = email.TemplateId,
+                Personalizations = tos
+                    .Select(to => new Personalization
+                    {
+                        Tos = [MapToSendGridEmailAddress(to)],
+                        TemplateData = MergeDynamicTemplateData(
+                            email.DynamicTemplateData,
+                            email.EmailSpecificDynamicTemplateDataByToEmailAddressMap,
+                            to.Email),
+                    })
+                    .ToList(),
+                ReplyTos = email.ReplyTos?.Select(MapToSendGridEmailAddress).ToList(),
+            })
+            .ToList();
     }
 
     private static Dictionary<string, object> MergeDynamicTemplateData(
