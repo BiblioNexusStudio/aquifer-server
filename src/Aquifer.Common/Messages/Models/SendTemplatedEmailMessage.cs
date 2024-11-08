@@ -12,7 +12,7 @@ namespace Aquifer.Common.Messages.Models;
 public sealed record SendTemplatedEmailMessage(
     EmailAddress From,
     string TemplateId,
-    IDictionary<string, object> DynamicTemplateData,
     IReadOnlyList<EmailAddress> Tos,
-    IReadOnlyList<EmailAddress>? Ccs = null,
-    IReadOnlyList<EmailAddress>? Bccs = null);
+    Dictionary<string, object> DynamicTemplateData,
+    Dictionary<string, Dictionary<string, object>>? EmailSpecificDynamicTemplateDataByToEmailAddressMap = null,
+    IReadOnlyList<EmailAddress>? ReplyTos = null);

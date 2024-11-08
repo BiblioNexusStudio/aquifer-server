@@ -56,35 +56,46 @@ public class SendResourceAssignmentNotificationsManager(
 
         var sendTemplatedEmailMessages = userHistories
             .GroupBy(uh => uh.AssignedUser.Id)
-            .Select(userGrouping => new SendTemplatedEmailMessage(
-                From: NotificationsHelper.NotificationSenderEmailAddress,
-                // Template Designer: https://mc.sendgrid.com/dynamic-templates/d-d85f76c6b4d344f5bc8b90b27cc40cc3/version/b6955fec-6f2e-41f7-a9f5-fb695a5b8ed7/editor
-                TemplateId: _configurationOptions.Value.Notifications.SendResourceAssignmentNotificationTemplateId,
-                DynamicTemplateData: new Dictionary<string, object>
-                {
-                    [EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notification: Resources Assigned",
-                    ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
-                    ["resourceCount"] = userGrouping.Count(),
-                    ["parentResources"] = userGrouping
-                        .GroupBy(uh => uh.ParentResourceName)
-                        .OrderBy(parentResourceGrouping => parentResourceGrouping.Key)
-                        .Select(parentResourceGrouping => new
+            .Select(userGrouping =>
+            {
+                var user = usersByIdMap[userGrouping.Key];
+
+                return new SendTemplatedEmailMessage(
+                    From: NotificationsHelper.NotificationSenderEmailAddress,
+                    TemplateId: _configurationOptions.Value.Notifications.SendResourceAssignmentNotificationTemplateId,
+                    Tos: [NotificationsHelper.GetEmailAddress(user)],
+                    DynamicTemplateData: new Dictionary<string, object>
+                    {
+                        [EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notification: Resources Assigned",
+                        ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
+                        ["resourceCount"] = userGrouping.Count(),
+                        ["parentResources"] = userGrouping
+                            .GroupBy(uh => uh.ParentResourceName)
+                            .OrderBy(parentResourceGrouping => parentResourceGrouping.Key)
+                            .Select(parentResourceGrouping => new
+                            {
+                                ParentResourceName = parentResourceGrouping.Key,
+                                Resources = parentResourceGrouping
+                                    .DistinctBy(uh => uh.ResourceContentId)
+                                    .OrderBy(uh => uh.ResourceName)
+                                    .Select(uh => new
+                                    {
+                                        uh.ResourceContentId,
+                                        uh.ResourceName,
+                                    })
+                                    .ToArray(),
+                            })
+                            .ToArray(),
+                    },
+                    EmailSpecificDynamicTemplateDataByToEmailAddressMap: new Dictionary<string, Dictionary<string, object>>
+                    {
+                        [user.Email] = new()
                         {
-                            ParentResourceName = parentResourceGrouping.Key,
-                            Resources = parentResourceGrouping
-                                .DistinctBy(uh => uh.ResourceContentId)
-                                .OrderBy(uh => uh.ResourceName)
-                                .Select(uh => new
-                                {
-                                    uh.ResourceContentId,
-                                    uh.ResourceName,
-                                })
-                                .ToArray(),
-                        })
-                        .ToArray(),
-                },
-                Tos: [NotificationsHelper.NotificationToEmailAddress],
-                Bccs: [NotificationsHelper.GetEmailAddress(usersByIdMap[userGrouping.Key])]))
+                            ["recipientName"] = NotificationsHelper.GetUserFullName(user),
+                        },
+                    },
+                    ReplyTos: [NotificationsHelper.NotificationNoReplyEmailAddress]);
+            })
             .ToList();
 
         // Note: If execution fails during this loop then it's possible that we will send multiple emails to a single user;

@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Aquifer.Common.Clients;
 using SendGrid;
 using SendGrid.Helpers.Mail;
@@ -15,16 +16,15 @@ public sealed record Email(
     string Subject,
     string HtmlContent,
     IReadOnlyList<EmailAddress> Tos,
-    IReadOnlyList<EmailAddress>? Ccs = null,
-    IReadOnlyList<EmailAddress>? Bccs = null);
+    IReadOnlyList<EmailAddress>? ReplyTos = null);
 
 public sealed record TemplatedEmail(
     EmailAddress From,
     string TemplateId,
-    IDictionary<string, object> DynamicTemplateData,
     IReadOnlyList<EmailAddress> Tos,
-    IReadOnlyList<EmailAddress>? Ccs = null,
-    IReadOnlyList<EmailAddress>? Bccs = null);
+    Dictionary<string, object> DynamicTemplateData,
+    Dictionary<string, Dictionary<string, object>>? EmailSpecificDynamicTemplateDataByToEmailAddressMap = null,
+    IReadOnlyList<EmailAddress>? ReplyTos = null);
 
 public sealed record EmailAddress(
     string Email,
@@ -32,6 +32,10 @@ public sealed record EmailAddress(
 
 public class SendGridEmailService : IEmailService
 {
+    // the SendGrid API limit is 1,000
+    private const int _maximumNumberOfTosPerApiCall = 1_000;
+    private static readonly Regex s_removePlusAddressing = new("\\+.*@", RegexOptions.Compiled);
+
     private readonly SendGridClient _sendGridClient;
 
     public SendGridEmailService(IAzureKeyVaultClient keyVaultClient)
@@ -43,69 +47,132 @@ public class SendGridEmailService : IEmailService
 
     public async Task SendEmailAsync(Email email, CancellationToken ct)
     {
-        var sendGridMessage = MapToSendGridMessage(email);
-        var response = await _sendGridClient.SendEmailAsync(sendGridMessage, ct);
-        if (!response.IsSuccessStatusCode)
+        // Note: If one of these batch sends fails then we may send one or more batches but not all batches.
+        // This could be improved with retry handling in the future.
+        var sendGridMessages = MapToSendGridMessages(email);
+        foreach (var sendGridMessage in sendGridMessages)
         {
-            throw new SendGridEmailException(
-                "Unable to send email via SendGrid.",
-                sendGridMessage, 
-                await response.Body.ReadAsStringAsync(ct));
+            var response = await _sendGridClient.SendEmailAsync(sendGridMessage, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new SendGridEmailException(
+                    "Unable to send email via SendGrid.",
+                    sendGridMessage,
+                    await response.Body.ReadAsStringAsync(ct));
+            }
         }
     }
 
     public async Task SendEmailAsync(TemplatedEmail templatedEmail, CancellationToken ct)
     {
-        var sendGridMessage = MapToSendGridMessage(templatedEmail);
-        var response = await _sendGridClient.SendEmailAsync(sendGridMessage, ct);
-        if (!response.IsSuccessStatusCode)
+        // Note: If one of these batch sends fails then we may send one or more batches but not all batches.
+        // This could be improved with retry handling in the future.
+        var sendGridMessages = MapToSendGridMessages(templatedEmail);
+        foreach (var sendGridMessage in sendGridMessages)
         {
-            throw new SendGridEmailException(
-                "Unable to send templated email via SendGrid.",
-                sendGridMessage, 
-                await response.Body.ReadAsStringAsync(ct));
+            var response = await _sendGridClient.SendEmailAsync(sendGridMessage, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new SendGridEmailException(
+                    "Unable to send templated email via SendGrid.",
+                    sendGridMessage,
+                    await response.Body.ReadAsStringAsync(ct));
+            }
         }
     }
 
-    private static SendGridMessage MapToSendGridMessage(Email email)
+    private static IReadOnlyList<SendGridMessage> MapToSendGridMessages(Email email)
     {
-        return new SendGridMessage
-        {
-            From = MapToSendGridEmailAddress(email.From),
-            HtmlContent = email.HtmlContent,
-            Personalizations =
-            [
-                new Personalization
-                {
-                    Tos = email.Tos.Select(MapToSendGridEmailAddress).ToList(),
-                    Ccs = email.Ccs?.Select(MapToSendGridEmailAddress).ToList(),
-                    Bccs = email.Bccs?.Select(MapToSendGridEmailAddress).ToList(),
-                },
-            ],
-            Subject = email.Subject,
-        };
+        return GetToEmailAddressBatches(email.Tos)
+            .Select(tos => new SendGridMessage
+            {
+                From = MapToSendGridEmailAddress(email.From),
+                HtmlContent = email.HtmlContent,
+                Personalizations = tos
+                    .Select(to =>
+                        new Personalization
+                        {
+                            Tos = [MapToSendGridEmailAddress(to)],
+                        })
+                    .ToList(),
+                ReplyTos = email.ReplyTos?.Select(MapToSendGridEmailAddress).ToList(),
+                Subject = email.Subject,
+            })
+            .ToList();
     }
 
-    private static SendGridMessage MapToSendGridMessage(TemplatedEmail email)
+    private static IReadOnlyList<SendGridMessage> MapToSendGridMessages(TemplatedEmail email)
     {
-        var sendGridMessage = new SendGridMessage
+        return GetToEmailAddressBatches(email.Tos)
+            .Select(tos => new SendGridMessage
+            {
+                From = MapToSendGridEmailAddress(email.From),
+                TemplateId = email.TemplateId,
+                Personalizations = tos
+                    .Select(to => new Personalization
+                    {
+                        Tos = [MapToSendGridEmailAddress(to)],
+                        TemplateData = MergeDynamicTemplateData(
+                            email.DynamicTemplateData,
+                            email.EmailSpecificDynamicTemplateDataByToEmailAddressMap,
+                            to.Email),
+                    })
+                    .ToList(),
+                ReplyTos = email.ReplyTos?.Select(MapToSendGridEmailAddress).ToList(),
+            })
+            .ToList();
+    }
+
+    private static Dictionary<string, object> MergeDynamicTemplateData(
+        Dictionary<string, object> dynamicTemplateData,
+        Dictionary<string, Dictionary<string, object>>? emailSpecificDynamicTemplateDataByToEmailAddressMap,
+        string toEmailAddress)
+    {
+        var emailSpecificDynamicTemplateData = emailSpecificDynamicTemplateDataByToEmailAddressMap
+            ?.GetValueOrDefault(toEmailAddress)
+            ?? null;
+
+        return new List<Dictionary<string, object>?> { dynamicTemplateData, emailSpecificDynamicTemplateData }
+            .Where(d => d is not null)
+            .SelectMany(d => d!)
+            .ToDictionary();
+    }
+
+    // Email providers (like Gmail) will not deliver all simultaneously sent emails from SendGrid
+    // if those emails are in the same batch with the same "Message-ID" (see https://mtsknn.fi/blog/tricky-email-aliases/).
+    // Thus, we need to send plus-aliased emails (e.g. "john.doe+testing@example.com") in separate batches
+    // when there is more than one plus-aliased email for the same email address in order for the provider to actually deliver them.
+    // This method will send most emails in the first batch but any duplicate email base email addresses will be sent in subsequent
+    // batches in order to force a different "Message-ID" for those plus-aliased email addresses.
+    private static IEnumerable<EmailAddress[]> GetToEmailAddressBatches(IEnumerable<EmailAddress> toEmailAddresses)
+    {
+        var plusAliasGroups = toEmailAddresses
+            .DistinctBy(to => to.Email)
+            .GroupBy(to => s_removePlusAddressing.Replace(to.Email, "@"))
+            .Select(grp => grp.ToList())
+            .ToList();
+
+        return RecursivelyChunkAndZipGroupedItems(plusAliasGroups);
+
+        // This method takes multiple lists and returns batches of items, each batch containing all items at index N in the lists.
+        // It then also batches the output batch if there are too many in a single batch.
+        static IEnumerable<EmailAddress[]> RecursivelyChunkAndZipGroupedItems(List<List<EmailAddress>> groups)
         {
-            From = MapToSendGridEmailAddress(email.From),
-            Personalizations =
-            [
-                new Personalization
-                {
-                    Tos = email.Tos.Select(MapToSendGridEmailAddress).ToList(),
-                    Ccs = email.Ccs?.Select(MapToSendGridEmailAddress).ToList(),
-                    Bccs = email.Bccs?.Select(MapToSendGridEmailAddress).ToList(),
-                },
-            ],
-            TemplateId = email.TemplateId,
-        };
+            if (groups.Count == 0)
+            {
+                return [];
+            }
 
-        sendGridMessage.SetTemplateData(email.DynamicTemplateData);
-
-        return sendGridMessage;
+            return groups
+                .Select(grp => grp.First())
+                .Chunk(_maximumNumberOfTosPerApiCall)
+                .Concat(
+                    RecursivelyChunkAndZipGroupedItems(
+                        groups
+                            .Select(grp => grp.Skip(1).ToList())
+                            .Where(grp => grp.Count > 0)
+                            .ToList()));
+        }
     }
 
     private static SendGrid.Helpers.Mail.EmailAddress MapToSendGridEmailAddress(EmailAddress emailAddress)

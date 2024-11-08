@@ -36,8 +36,8 @@ public sealed class NotificationMessageSubscriber(
         {
             var templatedEmail = new SendTemplatedEmailMessage(
                 From: NotificationsHelper.NotificationSenderEmailAddress,
-                // Template Designer: https://mc.sendgrid.com/dynamic-templates/d-7760ec3b5ce34b179384d4783cc1bd81/version/e83075a3-ba61-4d42-922f-9fd5df4ee45c/editor
                 TemplateId: _configurationOptions.Value.Notifications.SendProjectStartedNotificationTemplateId,
+                Tos: [NotificationsHelper.GetEmailAddress(companyLeadUser)],
                 DynamicTemplateData: new Dictionary<string, object>
                 {
                     [EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notifications: Project Started",
@@ -45,8 +45,14 @@ public sealed class NotificationMessageSubscriber(
                     ["projectId"] = project.Id,
                     ["projectName"] = project.Name,
                 },
-                Tos: [NotificationsHelper.NotificationToEmailAddress],
-                Bccs: [NotificationsHelper.GetEmailAddress(companyLeadUser)]);
+                EmailSpecificDynamicTemplateDataByToEmailAddressMap: new Dictionary<string, Dictionary<string, object>>
+                {
+                    [companyLeadUser.Email] = new()
+                    {
+                        ["recipientName"] = NotificationsHelper.GetUserFullName(companyLeadUser),
+                    },
+                },
+                ReplyTos: [NotificationsHelper.NotificationNoReplyEmailAddress]);
 
             await _emailMessagePublisher.PublishSendTemplatedEmailMessageAsync(templatedEmail, ct);
 
@@ -101,10 +107,16 @@ public sealed class NotificationMessageSubscriber(
             return;
         }
 
+        var recipientUsers = previouslyAssignedUsers
+            .Where(u => u.Id != resourceCommentData.UserId)
+            .ToList();
+
         var templatedEmail = new SendTemplatedEmailMessage(
             From: NotificationsHelper.NotificationSenderEmailAddress,
-            // Template Designer: https://mc.sendgrid.com/dynamic-templates/d-ea84b461ed0f439589098053f8810189/version/26393e82-7d17-4b8f-a37c-cb20f62d8802/editor
             TemplateId: _configurationOptions.Value.Notifications.SendResourceCommentCreatedNotificationTemplateId,
+            Tos: recipientUsers
+                .Select(NotificationsHelper.GetEmailAddress)
+                .ToList(),
             DynamicTemplateData: new Dictionary<string, object>
             {
                 [EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notifications: New Resource Comment",
@@ -115,11 +127,13 @@ public sealed class NotificationMessageSubscriber(
                 ["resourceContentId"] = resourceCommentData.ResourceContentId,
                 ["resourceName"] = resourceCommentData.ResourceEnglishLabel,
             },
-            Tos: [NotificationsHelper.NotificationToEmailAddress],
-            Bccs: previouslyAssignedUsers
-                .Where(u => u.Id != resourceCommentData.UserId)
-                .Select(NotificationsHelper.GetEmailAddress)
-                .ToList());
+            EmailSpecificDynamicTemplateDataByToEmailAddressMap: recipientUsers.ToDictionary(
+                user => user.Email,
+                (user) => new Dictionary<string, object>
+                {
+                    ["recipientName"] = NotificationsHelper.GetUserFullName(user),
+                }),
+            ReplyTos: [NotificationsHelper.NotificationNoReplyEmailAddress]);
 
         await _emailMessagePublisher.PublishSendTemplatedEmailMessageAsync(templatedEmail, ct);
 
