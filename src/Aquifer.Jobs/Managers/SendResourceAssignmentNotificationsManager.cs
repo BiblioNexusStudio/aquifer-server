@@ -98,7 +98,7 @@ public class SendResourceAssignmentNotificationsManager(
             })
             .ToList();
 
-            // Note: If execution fails during this loop then it's possible that we will send multiple emails to a single user;
+        // Note: If execution fails during this loop then it's possible that we will send multiple emails to a single user;
         // first during the initial failed run and again when the job retries (possibly with new data).
         foreach (var sendTemplatedEmailMessage in sendTemplatedEmailMessages)
         {
