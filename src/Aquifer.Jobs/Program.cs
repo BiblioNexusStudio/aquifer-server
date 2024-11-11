@@ -16,6 +16,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Contrib.WaitAndRetry;
+using Polly.Extensions.Http;
 
 var host = new HostBuilder()
     .ConfigureAppConfiguration((context, builder) => builder
@@ -37,7 +40,7 @@ var host = new HostBuilder()
         services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.OpenAiTranslation);
 
         var configuration = context.Configuration.Get<ConfigurationOptions>()
-            ?? throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
+                            ?? throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
         services.AddDbContext<AquiferDbContext>(options => options
             .UseSqlServer(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
@@ -52,7 +55,10 @@ var host = new HostBuilder()
 
         services.AddSingleton<IAquiferAppInsightsClient, AquiferAppInsightsClient>();
         services.AddSingleton<IAquiferApiManagementClient, AquiferApiManagementClient>();
-        services.AddHttpClient<IIpAddressLookupHttpClient, IpAddressLookupHttpClient>();
+        services.AddHttpClient<IIpAddressLookupHttpClient, IpAddressLookupHttpClient>()
+            .AddPolicyHandler(HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(0.5), 2)));
         services.AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>();
         services.AddScoped<IResourceHistoryService, ResourceHistoryService>();
         services.AddSingleton<IEmailMessagePublisher, EmailMessagePublisher>();
