@@ -232,6 +232,11 @@ public sealed class TranslationMessageSubscriber(
             startedByUserId,
             translationOrigin);
 
+        if (translationOrigin == TranslationOrigin.None)
+        {
+            throw new InvalidOperationException($"Translation Origin should never be \"{translationOrigin}\".");
+        }
+
         var resourceContentVersion = await _dbContext.ResourceContentVersions
             .AsTracking()
             .Include(rcv => rcv.ResourceContent)
