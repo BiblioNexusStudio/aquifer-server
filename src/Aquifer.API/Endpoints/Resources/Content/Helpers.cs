@@ -87,7 +87,7 @@ public static class Helpers
     public static void SanitizeTiptapContent(ResourceContentVersionEntity version)
     {
         // Remove inline comments or anything else that needs to be sanitized.
-        var deserializedContent = JsonUtilities.DefaultDeserialize<List<TiptapModel<TiptapRootContentFiltered>>>(version.Content);
+        var deserializedContent = TiptapConverter.DeserializeForPublish(version.Content);
         version.Content = JsonUtilities.DefaultSerialize(deserializedContent);
     }
 
