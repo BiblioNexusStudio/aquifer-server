@@ -1,6 +1,7 @@
 ﻿using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,9 +20,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var user = await userService.GetUserFromJwtAsync(ct);
         var existingMt = await dbContext.ResourceContentVersionMachineTranslations
             .AsTracking()
-            .FirstOrDefaultAsync(x => x.Id == req.Id, ct);
+            .FirstOrDefaultAsync(
+                x => x.Id == req.Id && x.ResourceContentVersion.AssignedUserId == user.Id &&
+                     x.ResourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview,
+                ct);
 
-        if (existingMt is null || existingMt.UserId != user.Id)
+        if (existingMt is null)
         {
             ThrowError(x => x.Id, "No machine translation exists for user");
         }
