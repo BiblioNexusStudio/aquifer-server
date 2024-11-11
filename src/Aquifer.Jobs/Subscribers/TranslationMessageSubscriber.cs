@@ -232,6 +232,11 @@ public sealed class TranslationMessageSubscriber(
             startedByUserId,
             translationOrigin);
 
+        if (translationOrigin == TranslationOrigin.None)
+        {
+            throw new InvalidOperationException($"Translation Origin should never be \"{translationOrigin}\".");
+        }
+
         var resourceContentVersion = await _dbContext.ResourceContentVersions
             .AsTracking()
             .Include(rcv => rcv.ResourceContent)
@@ -349,8 +354,8 @@ public sealed class TranslationMessageSubscriber(
             ct
         );
 
-        // if a Community Reviewer requested the translation then the status needs to be updated (again) now that translation has completed
-        if (translationOrigin == TranslationOrigin.CommunityReviewer)
+        // if an individual translation was requested then the status needs to be updated (again) now that translation has completed
+        if (translationOrigin is TranslationOrigin.CreateTranslation or TranslationOrigin.CommunityReviewer)
         {
             resourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationEditorReview;
             await _resourceHistoryService.AddStatusHistoryAsync(
