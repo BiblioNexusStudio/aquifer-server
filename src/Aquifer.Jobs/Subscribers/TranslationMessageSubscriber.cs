@@ -206,8 +206,7 @@ public sealed class TranslationMessageSubscriber(
         // Due to an unknown amount of time passing between translation and this post-processing it's unlikely but still possible
         // that the currently list of Draft Resource Content Versions is different from the list upon which the function originally acted.
         foreach (var resourceContentVersionToAssign in resourceContentVersionsToAssign
-            .Where(rcv =>
-                dto.TranslatedProjectResourceContentIds.Contains(rcv.ResourceContentId) ))
+            .Where(rcv => dto.TranslatedProjectResourceContentIds.Contains(rcv.ResourceContentId)))
         {
             // now that ALL translations are complete for the project, assign all resources in the project to the company lead
             resourceContentVersionToAssign.AssignedUserId = companyLeadUserId;
