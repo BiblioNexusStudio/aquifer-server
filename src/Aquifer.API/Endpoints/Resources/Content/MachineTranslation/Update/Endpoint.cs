@@ -20,11 +20,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var user = await userService.GetUserFromJwtAsync(ct);
         var existingMt = await dbContext.ResourceContentVersionMachineTranslations
             .AsTracking()
-            .Include(rcvmt => rcvmt.ResourceContentVersion)
-            .ThenInclude(rcv => rcv.ResourceContent)
             .FirstOrDefaultAsync(
-                x => x.Id == req.Id && (x.ResourceContentVersion.AssignedUserId == user.Id ||
-                                        x.ResourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview),
+                x => x.Id == req.Id && x.ResourceContentVersion.AssignedUserId == user.Id &&
+                     x.ResourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview,
                 ct);
 
         if (existingMt is null)
