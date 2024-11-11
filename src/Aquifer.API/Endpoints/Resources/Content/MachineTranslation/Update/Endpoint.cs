@@ -22,10 +22,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             .AsTracking()
             .Include(rcvmt => rcvmt.ResourceContentVersion)
             .ThenInclude(rcv => rcv.ResourceContent)
-            .FirstOrDefaultAsync(x => x.Id == req.Id, ct);
+            .FirstOrDefaultAsync(
+                x => x.Id == req.Id && (x.ResourceContentVersion.AssignedUserId == user.Id ||
+                                        x.ResourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview),
+                ct);
 
-        if (existingMt is null || existingMt.ResourceContentVersion.AssignedUserId != user.Id ||
-            existingMt.ResourceContentVersion.ResourceContent.Status != ResourceContentStatus.TranslationEditorReview)
+        if (existingMt is null)
         {
             ThrowError(x => x.Id, "No machine translation exists for user");
         }
