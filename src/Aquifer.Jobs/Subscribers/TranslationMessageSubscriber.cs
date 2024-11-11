@@ -181,11 +181,15 @@ public sealed class TranslationMessageSubscriber(
             ?? throw new InvalidOperationException($"Company Lead User ID is null for Project ID {project.Id}. This should never happen.");
 
         // Assign all Draft Resource Content Versions in the project to the Company Lead of the Project.
-        // Edge case handling: It's possible that something else acted on the resource content version status
+        //
+        // Edge case handling:
+        // 1) It's possible that something else acted on the resource content version status
         // and moved it out of the TranslationAiDraftComplete status between the resource finishing translation
         // and this project post-processing. If so, ignore those resources when performing assignments
         // because there might already have been a user assignment.
-        // Note: resource contents with the New status are also included as these were not translated but still
+        // 2) Skip assignment if the resource is already assigned to the company lead (probably by a previous run of this function).
+        //
+        // Note: Resource contents with the New status are also included as these were not translated but still
         // need to be assigned (for Aquiferization of English resources).
         var resourceContentVersionsToAssign = await _dbContext.ResourceContentVersions
             .AsTracking()
@@ -193,14 +197,17 @@ public sealed class TranslationMessageSubscriber(
             .Where(rcv => rcv.ResourceContent.ProjectResourceContents.Any(prc => prc.Project.Id == project.Id) &&
                 rcv.IsDraft &&
                 (rcv.ResourceContent.Status == ResourceContentStatus.TranslationAiDraftComplete ||
-                    rcv.ResourceContent.Status == ResourceContentStatus.New))
+                    rcv.ResourceContent.Status == ResourceContentStatus.New) &&
+                rcv.AssignedUserId != companyLeadUserId)
             .ToListAsync(activityContext.CancellationToken);
 
-        // Edge case handling: Only update resource content versions that were queued for translation (even if gracefully skipped).
-        // Due to an unknown amount of time passing between translation and this post-processing it's unlikely
-        // but still possible that the list is different.
+        // Edge case handling: Only update resource content versions that were queued for translation (even if gracefully skipped)
+        // by this fan out -> fan in orchestration process.
+        // Due to an unknown amount of time passing between translation and this post-processing it's unlikely but still possible
+        // that the currently list of Draft Resource Content Versions is different from the list upon which the function originally acted.
         foreach (var resourceContentVersionToAssign in resourceContentVersionsToAssign
-            .Where(rcv => dto.TranslatedProjectResourceContentIds.Contains(rcv.ResourceContentId)))
+            .Where(rcv =>
+                dto.TranslatedProjectResourceContentIds.Contains(rcv.ResourceContentId) ))
         {
             // now that ALL translations are complete for the project, assign all resources in the project to the company lead
             resourceContentVersionToAssign.AssignedUserId = companyLeadUserId;
