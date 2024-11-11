@@ -5,5 +5,4 @@ public sealed record SendEmailMessage(
     string Subject,
     string HtmlContent,
     IReadOnlyList<EmailAddress> Tos,
-    IReadOnlyList<EmailAddress>? Ccs = null,
-    IReadOnlyList<EmailAddress>? Bccs = null);
+    IReadOnlyList<EmailAddress>? ReplyTos = null);
