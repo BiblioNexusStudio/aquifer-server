@@ -11,6 +11,7 @@ namespace Aquifer.API.Endpoints.Resources.Content.AssignPublisherReview;
 
 public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService historyService, IUserService userService) : Endpoint<Request>
 {
+    // TODO: Deprecate/Delete in favor of  SendForPublisherReview after next deploy
     public override void Configure()
     {
         Post("/resources/content/{ContentId}/assign-publisher-review",

@@ -5,6 +5,7 @@ using Aquifer.Data.Entities;
 using Aquifer.Data.Services;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
+using static Aquifer.API.Helpers.EndpointHelpers;
 
 namespace Aquifer.API.Endpoints.Resources.Content.SendForPublisherReview;
 
@@ -20,9 +21,44 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var contentIds = request.ContentId is not null ? [request.ContentId.Value] : request.ContentIds!;
+        var draftVersions = await GetDraftVersions(contentIds, ct);
+
+        var user = await userService.GetUserFromJwtAsync(ct);
+        var isPublisher = user.Role == UserRole.Publisher;
+        foreach (var draftVersion in draftVersions)
+        {
+            await ValidateAssignedUser(user, request.AssignedUserId, draftVersion, ct);
+
+            var newStatus = GetNewStatus(isPublisher, draftVersion.ResourceContent.Status);
+
+            await historyService.AddSnapshotHistoryAsync(draftVersion,
+                draftVersion.AssignedUserId,
+                draftVersion.ResourceContent.Status,
+                ct);
+
+            draftVersion.ResourceContent.Status = newStatus;
+            await AssignUserToContent(newStatus, request.AssignedUserId, draftVersion, user, ct);
+
+            if (newStatus != draftVersion.ResourceContent.Status)
+            {
+                await historyService.AddStatusHistoryAsync(draftVersion, newStatus, user.Id, ct);
+            }
+
+            Helpers.SanitizeTiptapContent(draftVersion);
+        }
+
+        await dbContext.SaveChangesAsync(ct);
+
+        Response.ChangedByPublisher = isPublisher;
+    }
+
+    private async Task<List<ResourceContentVersionEntity>> GetDraftVersions(List<int> contentIds, CancellationToken ct)
+    {
         List<ResourceContentStatus> allowedStatuses =
         [
-            ResourceContentStatus.AquiferizeCompanyReview, ResourceContentStatus.TranslationCompanyReview
+            ResourceContentStatus.AquiferizeCompanyReview, ResourceContentStatus.TranslationCompanyReview,
+            ResourceContentStatus.AquiferizeReviewPending, ResourceContentStatus.TranslationReviewPending,
+            ResourceContentStatus.AquiferizePublisherReview, ResourceContentStatus.TranslationPublisherReview
         ];
 
         var draftVersions = await dbContext.ResourceContentVersions
@@ -35,47 +71,81 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ThrowError("One or more resources not found or not in correct status");
         }
 
-        var user = await userService.GetUserFromJwtAsync(ct);
-        var isPublisher = user.Role == UserRole.Publisher;
-        foreach (var draftVersion in draftVersions)
+        return draftVersions;
+    }
+
+    private async Task AssignUserToContent(ResourceContentStatus newStatus, int? assignedUserId, ResourceContentVersionEntity draftVersion,
+        UserEntity user, CancellationToken ct)
+    {
+        // there shouldn't be an assigned user if it's going into review pending
+        if (Constants.ReviewPendingStatuses.Contains(newStatus))
         {
-            if (user.Id != draftVersion.AssignedUserId)
+            await historyService.AddAssignedUserHistoryAsync(draftVersion, null, user.Id, ct);
+            draftVersion.AssignedUserId = null;
+        }
+        else
+        {
+            if (assignedUserId is not null && assignedUserId != draftVersion.AssignedUserId)
             {
-                ThrowError("User must be assigned to content to send for publisher review.");
+                await historyService.AddSnapshotHistoryAsync(draftVersion,
+                    draftVersion.AssignedUserId,
+                    draftVersion.ResourceContent.Status,
+                    ct);
+                await historyService.AddAssignedUserHistoryAsync(draftVersion, assignedUserId, user.Id, ct);
+                draftVersion.AssignedUserId = assignedUserId;
             }
+        }
+    }
 
-            var newStatus = GetNewStatus(isPublisher, draftVersion.ResourceContent.Status);
-
-            await historyService.AddSnapshotHistoryAsync(draftVersion,
-                draftVersion.AssignedUserId,
-                draftVersion.ResourceContent.Status,
-                ct);
-
-            Helpers.SanitizeTiptapContent(draftVersion);
-            draftVersion.ResourceContent.Status = newStatus;
-            if (!isPublisher)
-            {
-                await historyService.AddAssignedUserHistoryAsync(draftVersion, null, user.Id, ct);
-                draftVersion.AssignedUserId = null;
-            }
-
-            await historyService.AddStatusHistoryAsync(draftVersion, newStatus, user.Id, ct);
+    private async Task ValidateAssignedUser(UserEntity user, int? assignedUserId, ResourceContentVersionEntity draftVersion,
+        CancellationToken ct)
+    {
+        if (user.Id != draftVersion.AssignedUserId && Constants.CompanyReviewStatuses.Contains(draftVersion.ResourceContent.Status))
+        {
+            ThrowError("User must be assigned to content to send for publisher review.");
         }
 
-        await dbContext.SaveChangesAsync(ct);
+        if (assignedUserId is not null)
+        {
+            var assignedUser = await dbContext.Users
+                .AsTracking()
+                .SingleOrDefaultAsync(u => u.Id == assignedUserId && u.Enabled && u.Role == UserRole.Publisher, ct);
 
-        Response.ChangedByPublisher = isPublisher;
+            if (assignedUser is null)
+            {
+                ThrowEntityNotFoundError<Request>(r => r.AssignedUserId);
+            }
+        }
     }
 
     private static ResourceContentStatus GetNewStatus(bool isPublisher, ResourceContentStatus currentStatus)
     {
         var isCurrentStatusTranslation = Constants.TranslationStatuses.Contains(currentStatus);
-        return isPublisher switch
+
+        // CompanyReview -> ReviewPending, (if the user is the publisher skip that and go straight to Review)
+        if (Constants.CompanyReviewStatuses.Contains(currentStatus))
         {
-            true when isCurrentStatusTranslation => ResourceContentStatus.TranslationPublisherReview,
-            true when !isCurrentStatusTranslation => ResourceContentStatus.AquiferizePublisherReview,
-            false when isCurrentStatusTranslation => ResourceContentStatus.TranslationReviewPending,
-            _ => ResourceContentStatus.AquiferizeReviewPending
-        };
+            return isPublisher switch
+            {
+                true when isCurrentStatusTranslation => ResourceContentStatus.TranslationPublisherReview,
+                true when !isCurrentStatusTranslation => ResourceContentStatus.AquiferizePublisherReview,
+                false when isCurrentStatusTranslation => ResourceContentStatus.TranslationReviewPending,
+                _ => ResourceContentStatus.AquiferizeReviewPending
+            };
+        }
+
+        // ReviewPending -> PublisherReview
+        if (Constants.ReviewPendingStatuses.Contains(currentStatus))
+        {
+            return currentStatus == ResourceContentStatus.TranslationReviewPending
+                ? ResourceContentStatus.TranslationPublisherReview
+                : ResourceContentStatus.AquiferizePublisherReview;
+        }
+
+        // PublisherReview -> status is same, only assignment changes
+        return currentStatus == ResourceContentStatus.TranslationPublisherReview
+            ? ResourceContentStatus.TranslationPublisherReview
+            : ResourceContentStatus.AquiferizePublisherReview;
+
     }
 }
