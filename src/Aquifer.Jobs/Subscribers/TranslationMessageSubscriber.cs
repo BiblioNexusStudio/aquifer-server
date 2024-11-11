@@ -349,8 +349,8 @@ public sealed class TranslationMessageSubscriber(
             ct
         );
 
-        // if a Community Reviewer requested the translation then the status needs to be updated (again) now that translation has completed
-        if (translationOrigin == TranslationOrigin.CommunityReviewer)
+        // if an individual translation was requested then the status needs to be updated (again) now that translation has completed
+        if (translationOrigin is TranslationOrigin.CreateTranslation or TranslationOrigin.CommunityReviewer)
         {
             resourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationEditorReview;
             await _resourceHistoryService.AddStatusHistoryAsync(
