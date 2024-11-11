@@ -180,34 +180,41 @@ public sealed class TranslationMessageSubscriber(
         var companyLeadUserId = project.CompanyLeadUserId
             ?? throw new InvalidOperationException($"Company Lead User ID is null for Project ID {project.Id}. This should never happen.");
 
+        // Assign all Draft Resource Content Versions in the project to the Company Lead of the Project.
         // Edge case handling: It's possible that something else acted on the resource content version status
         // and moved it out of the TranslationAiDraftComplete status between the resource finishing translation
         // and this project post-processing. If so, ignore those resources when performing assignments
         // because there might already have been a user assignment.
-        var resourceContentVersions = await _dbContext.ResourceContentVersions
+        // Note: resource contents with the New status are also included as these were not translated but still
+        // need to be assigned (for Aquiferization of English resources).
+        var resourceContentVersionsToAssign = await _dbContext.ResourceContentVersions
             .AsTracking()
             .Include(rcv => rcv.ResourceContent)
             .Where(rcv => rcv.ResourceContent.ProjectResourceContents.Any(prc => prc.Project.Id == project.Id) &&
                 rcv.IsDraft &&
-                rcv.ResourceContent.Status == ResourceContentStatus.TranslationAiDraftComplete)
+                (rcv.ResourceContent.Status == ResourceContentStatus.TranslationAiDraftComplete ||
+                    rcv.ResourceContent.Status == ResourceContentStatus.New))
             .ToListAsync(activityContext.CancellationToken);
 
         // Edge case handling: Only update resource content versions that were queued for translation (even if gracefully skipped).
         // Due to an unknown amount of time passing between translation and this post-processing it's unlikely
         // but still possible that the list is different.
-        foreach (var resourceContentVersion in resourceContentVersions
+        foreach (var resourceContentVersionToAssign in resourceContentVersionsToAssign
             .Where(rcv => dto.TranslatedProjectResourceContentIds.Contains(rcv.ResourceContentId)))
         {
             // now that ALL translations are complete for the project, assign all resources in the project to the company lead
-            resourceContentVersion.AssignedUserId = companyLeadUserId;
+            resourceContentVersionToAssign.AssignedUserId = companyLeadUserId;
             await _resourceHistoryService.AddAssignedUserHistoryAsync(
-                resourceContentVersion,
+                resourceContentVersionToAssign,
                 assignedUserId: companyLeadUserId,
                 changedByUserId: dto.StartedByUserId,
                 activityContext.CancellationToken);
         }
 
-        await _dbContext.SaveChangesAsync(activityContext.CancellationToken);
+        if (resourceContentVersionsToAssign.Count > 0)
+        {
+            await _dbContext.SaveChangesAsync(activityContext.CancellationToken);
+        }
 
         await _notificationMessagePublisher.PublishSendProjectStartedNotificationMessageAsync(
             new SendProjectStartedNotificationMessage(dto.ProjectId),

@@ -23,7 +23,7 @@ var host = new HostBuilder()
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
         .AddJsonFile(
             $"appsettings.{context.HostingEnvironment.EnvironmentName}.json",
-            optional: true, 
+            optional: true,
             reloadOnChange: true)
     )
     .ConfigureFunctionsWorkerDefaults()
