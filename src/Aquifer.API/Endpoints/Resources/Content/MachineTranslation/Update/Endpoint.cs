@@ -50,6 +50,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             existingMt.ImproveTone = req.ImproveTone.Value;
         }
 
+        existingMt.UserId = user.Id;
+
         await dbContext.SaveChangesAsync(ct);
         await SendNoContentAsync(ct);
     }
