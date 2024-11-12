@@ -26,17 +26,37 @@ public sealed class TranslationMessageSubscriber(
     INotificationMessagePublisher _notificationMessagePublisher,
     IQueueClientFactory _queueClientFactory)
 {
+    private const int _englishLanguageId = 1;
+
+    private static readonly IReadOnlySet<TranslationOrigin> s_allowedTranslationOriginsForIndividualResourceContentTranslation =
+        new HashSet<TranslationOrigin>
+        {
+            TranslationOrigin.CreateTranslation,
+            TranslationOrigin.CommunityReviewer,
+            TranslationOrigin.BasicTranslationOnly,
+        };
+
     private static readonly TaskOptions s_durableFunctionTaskOptions = TaskOptions.FromRetryPolicy(
         new RetryPolicy(
             maxNumberOfAttempts: 5,
             firstRetryInterval: TimeSpan.FromSeconds(1)));
 
+    /// <summary>
+    /// Translates a single resource content item.
+    /// Only used by individual resource translation flows. Not used by project translation.
+    /// </summary>
     [Function(nameof(TranslateResource))]
     public async Task TranslateResource(
         [QueueTrigger(Queues.TranslateResource)] QueueMessage queueMessage,
         CancellationToken ct)
     {
         var message = queueMessage.Deserialize<TranslateResourceMessage, TranslationMessageSubscriber>(_logger);
+
+        if (!s_allowedTranslationOriginsForIndividualResourceContentTranslation.Contains(message.TranslationOrigin))
+        {
+            throw new InvalidOperationException(
+                $"Invalid {nameof(TranslationOrigin)} for the {nameof(TranslateResource)} flow: \"{message.TranslationOrigin}\".");
+        }
 
         await TranslateResourceCoreAsync(
             message.ResourceContentId,
@@ -46,7 +66,7 @@ public sealed class TranslationMessageSubscriber(
     }
 
     /// <summary>
-    /// Translates a project's resources and then takes a final action on the project itself.
+    /// Translates a project's resource content items and then takes a final action on the project itself.
     /// This is done using the fan out/fan in pattern
     /// (see https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview#fan-in-out)
     /// which requires using durable functions to maintain state.
@@ -124,7 +144,6 @@ public sealed class TranslationMessageSubscriber(
             // then something is very wrong. If this happens then swallow errors here to allow successful orchestration function
             // completion but publish a poison queue item for manual retry later.
             var ct = CancellationToken.None;
-
             try
             {
                 _logger.LogError(
@@ -187,7 +206,7 @@ public sealed class TranslationMessageSubscriber(
         // and moved it out of the TranslationAiDraftComplete status between the resource finishing translation
         // and this project post-processing. If so, ignore those resources when performing assignments
         // because there might already have been a user assignment.
-        // 2) Skip assignment if the resource is already assigned to the company lead (probably by a previous run of this function).
+        // 2) Skip assignment if the resource is already assigned (probably by a previous run of this function).
         //
         // Note: Resource contents with the New status are also included as these were not translated but still
         // need to be assigned (for Aquiferization of English resources).
@@ -198,7 +217,7 @@ public sealed class TranslationMessageSubscriber(
                 rcv.IsDraft &&
                 (rcv.ResourceContent.Status == ResourceContentStatus.TranslationAiDraftComplete ||
                     rcv.ResourceContent.Status == ResourceContentStatus.New) &&
-                rcv.AssignedUserId != companyLeadUserId)
+                rcv.AssignedUserId == null)
             .ToListAsync(activityContext.CancellationToken);
 
         // Edge case handling: Only update resource content versions that were queued for translation (even if gracefully skipped)
@@ -212,7 +231,7 @@ public sealed class TranslationMessageSubscriber(
             resourceContentVersionToAssign.AssignedUserId = companyLeadUserId;
             await _resourceHistoryService.AddAssignedUserHistoryAsync(
                 resourceContentVersionToAssign,
-                assignedUserId: companyLeadUserId,
+                assignedUserId: resourceContentVersionToAssign.AssignedUserId,
                 changedByUserId: dto.StartedByUserId,
                 activityContext.CancellationToken);
         }
@@ -270,7 +289,8 @@ public sealed class TranslationMessageSubscriber(
                 $"Aborting translation for Resource Content ID {resourceContentId} because there are no pre-existing Snapshots for Resource Content Version ID {resourceContentVersion.Id}.");
         }
 
-        if (resourceContentVersion.ResourceContent.Status != ResourceContentStatus.TranslationAwaitingAiDraft)
+        if (translationOrigin != TranslationOrigin.BasicTranslationOnly &&
+            resourceContentVersion.ResourceContent.Status != ResourceContentStatus.TranslationAwaitingAiDraft)
         {
             _logger.LogInformation(
                 "Gracefully skipping translation for Resource Content ID {ResourceContentId} because it is not in the {ExpectedStatus} status.",
@@ -280,7 +300,25 @@ public sealed class TranslationMessageSubscriber(
             return;
         }
 
+        if (resourceContentVersion.ResourceContent.ContentUpdated != null)
+        {
+            _logger.LogInformation(
+                "Gracefully skipping translation for Resource Content ID {ResourceContentId} because it already has updated content.",
+                resourceContentId);
+
+            return;
+        }
+
         var resourceContentLanguage = resourceContentVersion.ResourceContent.Language;
+        if (resourceContentLanguage.Id == _englishLanguageId)
+        {
+            _logger.LogInformation(
+                "Gracefully skipping translation for Resource Content ID {ResourceContentId} because it is does not have a non-English target language.",
+                resourceContentId);
+
+            return;
+        }
+
         var destinationLanguage =
             (Iso6393Code: resourceContentLanguage.ISO6393Code, EnglishName: resourceContentLanguage.EnglishDisplay);
 
@@ -355,17 +393,20 @@ public sealed class TranslationMessageSubscriber(
         await _resourceHistoryService.AddSnapshotHistoryAsync(
             resourceContentVersion,
             oldUserId: startedByUserId,
-            oldStatus: ResourceContentStatus.TranslationAwaitingAiDraft,
+            oldStatus: resourceContentVersion.ResourceContent.Status,
             ct);
 
-        // move to completed status
-        resourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationAiDraftComplete;
-        await _resourceHistoryService.AddStatusHistoryAsync(
-            resourceContentVersion,
-            ResourceContentStatus.TranslationAiDraftComplete,
-            changedByUserId: startedByUserId,
-            ct
-        );
+        // basic translations should not change the status unless transitioning from AI draft to complete
+        if (translationOrigin != TranslationOrigin.BasicTranslationOnly ||
+            resourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationAwaitingAiDraft)
+        {
+            resourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationAiDraftComplete;
+            await _resourceHistoryService.AddStatusHistoryAsync(
+                resourceContentVersion,
+                resourceContentVersion.ResourceContent.Status,
+                changedByUserId: startedByUserId,
+                ct);
+        }
 
         // if an individual translation was requested then the status needs to be updated (again) now that translation has completed
         if (translationOrigin is TranslationOrigin.CreateTranslation or TranslationOrigin.CommunityReviewer)
@@ -373,9 +414,22 @@ public sealed class TranslationMessageSubscriber(
             resourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationEditorReview;
             await _resourceHistoryService.AddStatusHistoryAsync(
                 resourceContentVersion,
-                ResourceContentStatus.TranslationEditorReview,
+                resourceContentVersion.ResourceContent.Status,
                 changedByUserId: startedByUserId,
                 ct);
+
+            // The resource content version should already be assigned but if it isn't then assign it to
+            // the user who requested the translation.
+            if (resourceContentVersion.AssignedUserId == null)
+            {
+                resourceContentVersion.AssignedUserId = startedByUserId;
+
+                await _resourceHistoryService.AddAssignedUserHistoryAsync(
+                    resourceContentVersion,
+                    assignedUserId: resourceContentVersion.AssignedUserId,
+                    changedByUserId: startedByUserId,
+                    ct);
+            }
         }
 
         await _dbContext.SaveChangesAsync(ct);
