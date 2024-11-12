@@ -1,14 +1,15 @@
-name: Create Hotfix or Patch
+name: Create Hotfix
 
 on:
     workflow_dispatch:
         inputs:
-            environment:
-                description: 'What current deployment do you want to apply the commit to?'
+            prod_environment:
+                description: 'What prod deployment do you want to apply the commit to?'
                 required: true
                 type: choice
                 options:
-                    - qa-internal
+                    - prod-jobs
+                    - prod-public
                     - prod-internal
             commit_id:
                 description: "Commit SHA from master you'd like to apply"
@@ -19,12 +20,12 @@ permissions:
     deployments: read
 
 jobs:
-    create-hotfix-or-patch:
+    create-hotfix:
         runs-on: ubuntu-latest
         steps:
-            - uses: BiblioNexusStudio/github-actions/create-hotfix-or-patch@master
+            - uses: BiblioNexusStudio/github-actions/create-hotfix@master
               with:
-                  environment: ${{ github.event.inputs.environment }}
+                  prod_environment: ${{ github.event.inputs.prod_environment }}
                   commit_id: ${{ github.event.inputs.commit_id }}
                   app_id: ${{ secrets.BIBLIONEXUS_BOT_APP_ID }}
                   private_key: ${{ secrets.BIBLIONEXUS_BOT_PRIVATE_KEY }}
