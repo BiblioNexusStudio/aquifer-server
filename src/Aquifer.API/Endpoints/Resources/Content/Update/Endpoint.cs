@@ -60,10 +60,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         {
             entity.ResourceContent.ContentUpdated = DateTime.Now;
             await dbContext.ResourceContentVersionEditTimes.AddAsync(new ResourceContentVersionEditTimeEntity
-                {
-                    UserId = user.Id,
-                    ResourceContentVersionId = entity.Id
-                },
+            {
+                UserId = user.Id,
+                ResourceContentVersionId = entity.Id
+            },
                 ct);
         }
 
@@ -78,23 +78,19 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             return true;
         }
 
-        // TODO: once our word counting is fixed this should be put back
-        // if (request.WordCount != currentVersion.WordCount)
-        // {
-        //     return true;
-        // }
-
         if (request.Content is null)
         {
             return false;
         }
 
-        var tiptapType = currentVersion.ResourceContent.MediaType == ResourceContentMediaType.Text
-            ? TiptapContentType.Html
-            : TiptapContentType.None;
-        var currentHtml = TiptapUtilities.ConvertFromJson(currentVersion.Content, tiptapType);
+        var requestContentString = JsonUtilities.DefaultSerialize(request.Content);
+        if (currentVersion.ResourceContent.MediaType != ResourceContentMediaType.Text)
+        {
+            return currentVersion.Content != requestContentString;
+        }
 
-        var newHtml = TiptapUtilities.ConvertFromJson(JsonUtilities.DefaultSerialize(request.Content), tiptapType);
+        var currentHtml = TiptapConverter.ConvertJsonToHtmlItems(currentVersion.Content);
+        var newHtml = TiptapConverter.ConvertJsonToHtmlItems(requestContentString);
 
         if (currentHtml is IEnumerable<string> currentHtmlStrings && newHtml is IEnumerable<string> newHtmlStrings)
         {
