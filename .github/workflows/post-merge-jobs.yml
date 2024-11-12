@@ -5,9 +5,14 @@ on:
         branches:
             - master
         paths:
+            - 'Directory.Build.props'
+            - 'Directory.Packages.props'
+            - 'src/Aquifer.AI/**'
             - 'src/Aquifer.Common/**'
             - 'src/Aquifer.Data/**'
+            - 'src/Aquifer.JSEngine/**'
             - 'src/Aquifer.Jobs/**'
+            - 'src/Aquifer.Tiptap/**'
     workflow_dispatch:
 
 permissions:
