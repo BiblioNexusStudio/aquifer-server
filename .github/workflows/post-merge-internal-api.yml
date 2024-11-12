@@ -6,9 +6,14 @@ on:
             - master
             - 'release-hotfix-*'
         paths:
-            - 'src/Aquifer.Common/**'
+            - 'Directory.Build.props'
+            - 'Directory.Packages.props'
+            - 'src/Aquifer.AI/**'
             - 'src/Aquifer.API/**'
+            - 'src/Aquifer.Common/**'
             - 'src/Aquifer.Data/**'
+            - 'src/Aquifer.JSEngine/**'
+            - 'src/Aquifer.Tiptap/**'
     workflow_dispatch:
 
 permissions:
