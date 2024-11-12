@@ -6,4 +6,5 @@ public class CompanyEntity
     public string Name { get; set; } = null!;
     public ICollection<UserEntity> Users { get; set; } = [];
     public ICollection<CompanyReviewerEntity> CompanyReviewers { get; set; } = [];
+    public ICollection<CompanyLanguageEntity> CompanyLanguages { get; set; } = [];
 }
