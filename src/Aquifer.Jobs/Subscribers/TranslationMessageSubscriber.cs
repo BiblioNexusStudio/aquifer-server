@@ -26,11 +26,14 @@ public sealed class TranslationMessageSubscriber(
     INotificationMessagePublisher _notificationMessagePublisher,
     IQueueClientFactory _queueClientFactory)
 {
+    private const int _englishLanguageId = 1;
+
     private static readonly IReadOnlySet<TranslationOrigin> s_allowedTranslationOriginsForIndividualResourceContentTranslation =
         new HashSet<TranslationOrigin>
         {
             TranslationOrigin.CreateTranslation,
             TranslationOrigin.CommunityReviewer,
+            TranslationOrigin.BasicTranslationOnly,
         };
 
     private static readonly TaskOptions s_durableFunctionTaskOptions = TaskOptions.FromRetryPolicy(
@@ -141,7 +144,6 @@ public sealed class TranslationMessageSubscriber(
             // then something is very wrong. If this happens then swallow errors here to allow successful orchestration function
             // completion but publish a poison queue item for manual retry later.
             var ct = CancellationToken.None;
-
             try
             {
                 _logger.LogError(
@@ -287,7 +289,8 @@ public sealed class TranslationMessageSubscriber(
                 $"Aborting translation for Resource Content ID {resourceContentId} because there are no pre-existing Snapshots for Resource Content Version ID {resourceContentVersion.Id}.");
         }
 
-        if (resourceContentVersion.ResourceContent.Status != ResourceContentStatus.TranslationAwaitingAiDraft)
+        if (translationOrigin != TranslationOrigin.BasicTranslationOnly &&
+            resourceContentVersion.ResourceContent.Status != ResourceContentStatus.TranslationAwaitingAiDraft)
         {
             _logger.LogInformation(
                 "Gracefully skipping translation for Resource Content ID {ResourceContentId} because it is not in the {ExpectedStatus} status.",
@@ -307,6 +310,15 @@ public sealed class TranslationMessageSubscriber(
         }
 
         var resourceContentLanguage = resourceContentVersion.ResourceContent.Language;
+        if (resourceContentLanguage.Id == _englishLanguageId)
+        {
+            _logger.LogInformation(
+                "Gracefully skipping translation for Resource Content ID {ResourceContentId} because it is does not have a non-English target language.",
+                resourceContentId);
+
+            return;
+        }
+
         var destinationLanguage =
             (Iso6393Code: resourceContentLanguage.ISO6393Code, EnglishName: resourceContentLanguage.EnglishDisplay);
 
@@ -384,14 +396,17 @@ public sealed class TranslationMessageSubscriber(
             oldStatus: resourceContentVersion.ResourceContent.Status,
             ct);
 
-        // move to completed status
-        resourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationAiDraftComplete;
-        await _resourceHistoryService.AddStatusHistoryAsync(
-            resourceContentVersion,
-            resourceContentVersion.ResourceContent.Status,
-            changedByUserId: startedByUserId,
-            ct
-        );
+        // basic translations should not change the status unless transitioning from AI draft to complete
+        if (translationOrigin != TranslationOrigin.BasicTranslationOnly ||
+            resourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationAwaitingAiDraft)
+        {
+            resourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationAiDraftComplete;
+            await _resourceHistoryService.AddStatusHistoryAsync(
+                resourceContentVersion,
+                resourceContentVersion.ResourceContent.Status,
+                changedByUserId: startedByUserId,
+                ct);
+        }
 
         // if an individual translation was requested then the status needs to be updated (again) now that translation has completed
         if (translationOrigin is TranslationOrigin.CreateTranslation or TranslationOrigin.CommunityReviewer)
