@@ -1,13 +1,12 @@
-﻿namespace Aquifer.Common.Tiptap;
+﻿using System.Text.Json.Serialization;
 
-public class TiptapModel
-{
-    public TiptapRoot<TiptapRootContent> Tiptap { get; set; } = null!;
-}
+namespace Aquifer.Common.Tiptap;
 
-public class TiptapModel<TRootContent> where TRootContent : TiptapRootContent<TRootContent>
+public class TiptapModel<TRootContent> where TRootContent : TiptapNode<TRootContent>
 {
     public TiptapRoot<TRootContent> Tiptap { get; set; } = null!;
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? StepNumber { get; set; }
 }
 
@@ -17,20 +16,28 @@ public class TiptapRoot<TRootContent>
     public List<TRootContent> Content { get; set; } = [];
 }
 
-public class TiptapRootContent<TRootContent>
+public class TiptapNode<TRootContent>
 {
     public virtual string Type { get; set; } = null!;
-    public virtual TiptapAttributes? Attrs { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public virtual object? Attrs { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public virtual List<TiptapMark>? Marks { get; set; }
-    public string Text { get; set; } = null!;
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Text { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<TRootContent>? Content { get; set; }
 }
 
-public class TiptapRootContent : TiptapRootContent<TiptapRootContent>
+public class TiptapNode : TiptapNode<TiptapNode>
 {
 }
 
-public class TiptapRootContentFiltered : TiptapRootContent<TiptapRootContentFiltered>
+public class TiptapNodeFiltered : TiptapNode<TiptapNodeFiltered>
 {
     private List<TiptapMark>? _marks;
 
@@ -39,8 +46,11 @@ public class TiptapRootContentFiltered : TiptapRootContent<TiptapRootContentFilt
     // This is primarily out of an abundance of caution to prevent the auto-save kicking in if someone not
     // assigned to content loads it and then Tiptap reorganizes the JSON.
     public override string Type { get; set; } = null!;
-    public override TiptapAttributes? Attrs { get; set; }
 
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public override object? Attrs { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public override List<TiptapMark>? Marks
     {
         get => _marks;
@@ -52,29 +62,10 @@ public class TiptapRootContentFiltered : TiptapRootContent<TiptapRootContentFilt
     }
 }
 
-public class TiptapAttributes
-{
-    public string? Dir { get; set; }
-    public int? Start { get; set; }
-    public int? Level { get; set; }
-
-    public List<TiptapVersesAttribute>? Verses { get; set; }
-
-    // Some ResourceIds weren't properly set to an id in our db, and are still strings. This makes both strings and ints work.
-    // This isn't a good long term fix, the data needs to be corrected.
-    public object? ResourceId { get; set; }
-    public string? ResourceType { get; set; }
-}
-
 public class TiptapMark
 {
     public string Type { get; set; } = null!;
-    public string Text { get; set; } = null!;
-    public TiptapAttributes? Attrs { get; set; }
-}
 
-public class TiptapVersesAttribute
-{
-    public object? StartVerse { get; set; }
-    public object? EndVerse { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public object? Attrs { get; set; }
 }

@@ -1,5 +1,4 @@
 ﻿using Aquifer.Common.Tiptap;
-using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +15,7 @@ public static class ResourceHelper
         var response = await dbContext.ResourceContentVersions
             .Where(x => ((req.LanguageCode == null && x.ResourceContentId == req.ContentId) ||
                          (x.ResourceContent.Resource.ResourceContents.Any(rc => rc.Id == req.ContentId) &&
-                         x.ResourceContent.Language.ISO6393Code == req.LanguageCode)) &&
+                          x.ResourceContent.Language.ISO6393Code == req.LanguageCode)) &&
                         x.IsPublished &&
                         x.ResourceContent.Resource.ParentResource.Enabled)
             .Select(x => new Response
@@ -48,8 +47,13 @@ public static class ResourceHelper
             throwError($"No record found for {req.ContentId}", 404);
         }
 
-        response!.Content = TiptapUtilities.ConvertFromJson(response.ContentValue,
-            response.Grouping.MediaTypeValue == ResourceContentMediaType.Text ? req.ContentTextType : TiptapContentType.None);
+        var contentTextType = response!.Grouping.MediaTypeValue == ResourceContentMediaType.Text
+            ? req.ContentTextType == TiptapContentType.None
+                ? TiptapContentType.Json
+                : req.ContentTextType
+            : TiptapContentType.None;
+
+        response!.Content = TiptapConverter.ConvertJsonToType(response.ContentValue, contentTextType);
         return response;
     }
 }
