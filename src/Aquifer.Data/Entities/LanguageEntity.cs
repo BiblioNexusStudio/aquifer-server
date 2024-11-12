@@ -20,6 +20,9 @@ public class LanguageEntity
     public bool Enabled { get; set; }
 
     public ScriptDirection ScriptDirection { get; set; }
+
+    public ICollection<TranslationPairEntity> TranslationPairs { get; set; } = [];
+    public ICollection<CompanyLanguageEntity> CompanyLanguages { get; set; } = [];
 }
 
 public enum ScriptDirection
