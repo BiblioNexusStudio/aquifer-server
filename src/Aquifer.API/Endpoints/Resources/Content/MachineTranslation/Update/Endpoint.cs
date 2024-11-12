@@ -25,14 +25,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                      x.ResourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview,
                 ct);
 
-        var existingUser = await dbContext.Users
-            .AsTracking()
-            .SingleOrDefaultAsync(u => u.Id == user.Id && u.Enabled, ct);
-        if (existingUser is null)
-        {
-            ThrowError(Helpers.InvalidUserIdResponse);
-        }
-
         if (existingMt is null)
         {
             ThrowError(x => x.Id, "No machine translation exists for user");
