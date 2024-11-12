@@ -30,6 +30,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ThrowError(x => x.Id, "No machine translation exists for user");
         }
 
+        existingMt.UserId = user.Id;
+
         if (req.UserRating.HasValue)
         {
             existingMt.UserRating = req.UserRating.Value;
