@@ -28,7 +28,7 @@ builder.Services.AddAuth(configuration.JwtSettings)
     .AddApplicationInsightsTelemetry()
     .AddSingleton<ITelemetryInitializer, RequestTelemetryInitializer>()
     .AddDbContext<AquiferDbContext>(options => options
-        .UseSqlServer(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
+        .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
         .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: builder.Environment.IsDevelopment())
         .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
     .RegisterModules()
