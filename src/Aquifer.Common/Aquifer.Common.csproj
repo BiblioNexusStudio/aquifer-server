@@ -1,21 +1,21 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Azure.Identity" Version="1.13.1" />
-        <PackageReference Include="Azure.ResourceManager.KeyVault" Version="1.3.0" />
-        <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.7.0" />
-        <PackageReference Include="Azure.Storage.Queues" Version="12.21.0" />
-        <PackageReference Include="FastEndpoints" Version="5.31.0" />
-        <PackageReference Include="HtmlAgilityPack" Version="1.11.71" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="ReverseMarkdown" Version="4.6.0" />
-        <PackageReference Include="SendGrid" Version="9.29.3" />
-        <PackageReference Include="SendGrid.Extensions.DependencyInjection" Version="1.0.1" />
+        <PackageReference Include="Azure.Identity" />
+        <PackageReference Include="Azure.ResourceManager.KeyVault" />
+        <PackageReference Include="Azure.Security.KeyVault.Secrets" />
+        <PackageReference Include="Azure.Storage.Queues" />
+        <PackageReference Include="FastEndpoints" />
+        <PackageReference Include="HtmlAgilityPack" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+        <PackageReference Include="Newtonsoft.Json" />
+        <PackageReference Include="ReverseMarkdown" />
+        <PackageReference Include="SendGrid" />
+        <PackageReference Include="SendGrid.Extensions.DependencyInjection" />
     </ItemGroup>
 
     <ItemGroup>
