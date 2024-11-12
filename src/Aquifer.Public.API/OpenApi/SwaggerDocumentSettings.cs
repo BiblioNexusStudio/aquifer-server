@@ -27,6 +27,13 @@ public static class SwaggerDocumentSettings
                                  <a href="https://cdn.aquifer.bible/training/aquifer-api-documentation.mp4" target="_blank">Understanding the documentation</a>
 
                                  <a href="https://cdn.aquifer.bible/training/aquifer-api-postman.mp4" target="_blank">Making requests with Postman</a>
+
+                                 <a href="https://cdn.aquifer.bible/training/aquifer-api-files-demo-csharp.mp4" target="_blank">Downloading resources to the file system with C#</a>
+
+                                 <br><br>
+                                 Example applications using the Aquifer API can be found in the <a href="https://github.com/BiblioNexusStudio/aquifer-api-samples" target="_blank">samples repository on GitHub</a>.
+
+                                 <a href="https://cdn.aquifer.bible/training/webpage-search-with-react-demo.mp4" target="_blank">React Sample Application Demo</a>
                                  """;
                 ds.AddAuth("ApiKey",
                     new OpenApiSecurityScheme

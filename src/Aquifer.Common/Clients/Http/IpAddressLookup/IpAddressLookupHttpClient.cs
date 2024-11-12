@@ -39,6 +39,6 @@ public class IpAddressLookupHttpClient : IIpAddressLookupHttpClient
             response.StatusCode,
             await response.Content.ReadAsStringAsync(ct));
 
-        throw new Exception($"IP address lookup failed for {ipAddress}. If this happens regularly we should build in automated retries with Polly.");
+        throw new Exception($"IP address lookup failed for {ipAddress}.");
     }
 }
