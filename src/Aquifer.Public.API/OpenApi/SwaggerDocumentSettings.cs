@@ -32,6 +32,8 @@ public static class SwaggerDocumentSettings
 
                                  <br><br>
                                  Example applications using the Aquifer API can be found in the <a href="https://github.com/BiblioNexusStudio/aquifer-api-samples" target="_blank">samples repository on GitHub</a>.
+
+                                 <a href="https://cdn.aquifer.bible/training/webpage-search-with-react-demo.mp4" target="_blank">React Sample Application Demo</a>
                                  """;
                 ds.AddAuth("ApiKey",
                     new OpenApiSecurityScheme
