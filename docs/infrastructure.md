@@ -30,16 +30,17 @@ to the Client ID of the Managed Identity:
 
 `Server=DB_URL;Authentication=Active Directory MSI;Encrypt=True;User Id=CLIENT_ID;Database=DB_NAME`
 
-## Azure Devops Configuration
+## GitHub Actions Configuration
 
-In order to allow Azure Devops pipelines to run migrations and deploy the
-service you'll need to setup a connection from Azure Devops to Azure itself.
-Once the connection is created it should be in Azure as an Enterprise
-Application Service Principal. Note the name (you can rename if you want) and
-use it with the above SQL statement to create permissions in the MSSQL DB
-itself.
+In order to allow GitHub Actions to run migrations, GitHub Actions is setup as
+an Application inside of Azure Portal.
 
-Next, you'll need to assign the Service Principal to the subscription. You can
-do this by going to the Subscription object, then the IAM tab, then using the
-Add button to create a role assignment for `SqlDb Migration Role` for the
-Service Principal you just made.
+It's configured with Federated Credentials that allow each of the
+repos/environments to authenticate via OIDC.
+
+The Application will link to an Enterprise Application Service Principal which
+needs to be setup with a role assignment of `SqlDb Migration Role` for the
+databases.
+
+Lastly, using the above SQL you'll need to give the Service Principal
+permissions within the MSQQL DB itself.
