@@ -1,14 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="JavaScriptEngineSwitcher.V8" Version="3.24.2" />
-        <PackageReference Include="Microsoft.ClearScript.Complete" Version="7.4.5" />
+        <PackageReference Include="JavaScriptEngineSwitcher.V8" />
+        <PackageReference Include="Microsoft.ClearScript.Complete" />
     </ItemGroup>
 
     <ItemGroup>

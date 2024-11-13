@@ -18,7 +18,7 @@ var configuration = builder.Configuration.Get<ConfigurationOptions>()
 
 builder.Services
     .AddDbContext<AquiferDbContext>(options => options
-        .UseSqlServer(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
+        .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
         .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: builder.Environment.IsDevelopment())
         .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
     .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))

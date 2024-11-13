@@ -43,7 +43,7 @@ var host = new HostBuilder()
                             ?? throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
         services.AddDbContext<AquiferDbContext>(options => options
-            .UseSqlServer(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
+            .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
             .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: isDevelopment)
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
