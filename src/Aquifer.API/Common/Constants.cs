@@ -8,51 +8,40 @@ public static class Constants
     public const string PermissionsClaim = "permissions";
     public const string RolesClaim = "bnRoles";
 
+    public const int EnglishLanguageId = 1;
+
     // Some guide types have predetermined passages (rather than freeform "select any Bible section").
     // ID 1 = FIA (formerly CBBT-ER)
     public static readonly ReadOnlyCollection<int> PredeterminedPassageGuideIds = new([1]);
-
-    public const int EnglishLanguageId = 1;
 
     // this represents the media types that we default to English for
     public static readonly ReadOnlyCollection<ResourceContentMediaType> FallbackToEnglishForMediaTypes =
         new([ResourceContentMediaType.Image, ResourceContentMediaType.Video]);
 
-    public static readonly ReadOnlyCollection<ResourceContentStatus> AquiferizationStatuses =
-        new([
-            ResourceContentStatus.AquiferizeEditorReview,
-            ResourceContentStatus.AquiferizeReviewPending,
-            ResourceContentStatus.AquiferizePublisherReview,
-            ResourceContentStatus.AquiferizeCompanyReview
-        ]);
+    public static readonly ReadOnlyCollection<ResourceContentStatus> AquiferizationStatuses = new([
+        ResourceContentStatus.AquiferizeEditorReview,
+        ResourceContentStatus.AquiferizeReviewPending,
+        ResourceContentStatus.AquiferizePublisherReview,
+        ResourceContentStatus.AquiferizeCompanyReview
+    ]);
 
-    public static readonly ReadOnlyCollection<ResourceContentStatus> TranslationStatuses =
-        new([
-            ResourceContentStatus.TranslationAwaitingAiDraft,
-            ResourceContentStatus.TranslationAiDraftComplete,
-            ResourceContentStatus.TranslationEditorReview,
-            ResourceContentStatus.TranslationReviewPending,
-            ResourceContentStatus.TranslationPublisherReview,
-            ResourceContentStatus.TranslationCompanyReview
-        ]);
+    public static readonly ReadOnlyCollection<ResourceContentStatus> TranslationStatuses = new([
+        ResourceContentStatus.TranslationAwaitingAiDraft,
+        ResourceContentStatus.TranslationAiDraftComplete,
+        ResourceContentStatus.TranslationEditorReview,
+        ResourceContentStatus.TranslationReviewPending,
+        ResourceContentStatus.TranslationPublisherReview,
+        ResourceContentStatus.TranslationCompanyReview
+    ]);
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> ReviewPendingStatuses =
-        new([
-            ResourceContentStatus.TranslationReviewPending,
-            ResourceContentStatus.AquiferizeReviewPending
-        ]);
+        new([ResourceContentStatus.TranslationReviewPending, ResourceContentStatus.AquiferizeReviewPending]);
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> PublisherReviewStatuses =
-        new([
-            ResourceContentStatus.TranslationPublisherReview,
-            ResourceContentStatus.AquiferizePublisherReview
-        ]);
+        new([ResourceContentStatus.TranslationPublisherReview, ResourceContentStatus.AquiferizePublisherReview]);
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> CompanyReviewStatuses =
-        new([
-            ResourceContentStatus.TranslationCompanyReview,
-            ResourceContentStatus.AquiferizeCompanyReview
-        ]);
+        new([ResourceContentStatus.TranslationCompanyReview, ResourceContentStatus.AquiferizeCompanyReview]);
 }
 
 public static class PermissionName
@@ -86,13 +75,14 @@ public static class PermissionName
         SendReviewContent = "send-review:content",
         SendReviewCommunityContent = "send-review:community-content",
         SetStatusTranslationNotApplicable = "set-status:translation-not-applicable",
-        SetStatusCompleteNotApplicable = "set-status:complete-not-applicable";
+        SetStatusCompleteNotApplicable = "set-status:complete-not-applicable",
+        SetTranslationPair = "set:translation-pair",
+        GetTranslationPair = "get:translation-pair";
 }
 
 public static class KeyVaultSecretName
 {
-    public const string Auth0ClientSecret = "Auth0ClientSecret",
-        OpenAiApiKey = "OpenAiApiKey";
+    public const string Auth0ClientSecret = "Auth0ClientSecret", OpenAiApiKey = "OpenAiApiKey";
 }
 
 public static class Auth0Constants
