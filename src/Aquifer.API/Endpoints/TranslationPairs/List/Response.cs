@@ -2,7 +2,9 @@ namespace Aquifer.API.Endpoints.TranslationPairs.List;
 
 public class Response
 {
-    public int Id { get; set; }
-    public string Key { get; set; } = null!;
-    public string Value { get; set; } = null!;
+    public string LanguageId { get; set; } = null!;
+    public int TranslationPairId { get; set; }
+    public string LanguageEnglishDisplay { get; set; } = null!;
+    public string TranslationPairKey { get; set; } = null!;
+    public string TranslationPairValue { get; set; } = null!;
 }
