@@ -17,7 +17,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        if (userService.HasPermission(PermissionName.ReadProjectsInCompany) && !await HasSameCompanyAsProject(req.ProjectId, ct))
+        if (!userService.HasPermission(PermissionName.ReadProject) && !await HasSameCompanyAsProject(req.ProjectId, ct))
         {
             await SendForbiddenAsync(ct);
             return;
@@ -47,8 +47,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             Name = x.Name,
             Company = x.Company.Name,
             Language = x.Language.EnglishDisplay,
-            CompanyLead = x.CompanyLeadUser != null 
-                ? $"{x.CompanyLeadUser.FirstName} {x.CompanyLeadUser.LastName}" 
+            CompanyLead = x.CompanyLeadUser != null
+                ? $"{x.CompanyLeadUser.FirstName} {x.CompanyLeadUser.LastName}"
                 : null,
             CompanyLeadUser = UserDto.FromUserEntity(x.CompanyLeadUser),
             ProjectPlatform = x.ProjectPlatform.Name,
@@ -76,7 +76,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 InPublisherReview =
                     x.ProjectResourceContents.Count(prc =>
                         ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(prc.ResourceContent.Status)),
-                Completed = 
+                Completed =
                     x.ProjectResourceContents.Count(prc =>
                         ProjectResourceStatusCounts.CompletedStatuses.Contains(prc.ResourceContent.Status))
             }
