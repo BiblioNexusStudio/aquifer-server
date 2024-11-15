@@ -412,7 +412,7 @@ public sealed class TranslationMessageSubscriber(
     {
         foreach (var pair in translationPairs.OrderByDescending(x => x.Key.Length))
         {
-            if (string.Equals(pair.Key, text, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(pair.Key, text, StringComparison.InvariantCultureIgnoreCase))
             {
                 return (pair.Value, true);
             }
