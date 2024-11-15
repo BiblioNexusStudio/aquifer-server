@@ -1,5 +1,5 @@
 name: Deploy to env
-description: Deploys to a specific environment.
+description: Deploys to a specific environment. Migrations are run first, then Azure Web Apps deploy happens. Dev environment is a simple deploy with downtime. Other environments (QA/Prod) do a slot swap to avoid downtime.
 
 inputs:
     environment:
