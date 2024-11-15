@@ -408,7 +408,7 @@ public sealed class TranslationMessageSubscriber(
         await _dbContext.SaveChangesAsync(ct);
     }
 
-    private static (string text, bool isFullReplace) ReplaceTranslationPairs(string text, Dictionary<string, string> translationPairs)
+    private static (string Text, bool IsFullReplace) ReplaceTranslationPairs(string text, Dictionary<string, string> translationPairs)
     {
         foreach (var pair in translationPairs.OrderByDescending(x => x.Key.Length))
         {
