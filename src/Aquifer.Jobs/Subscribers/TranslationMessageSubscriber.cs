@@ -290,12 +290,22 @@ public sealed class TranslationMessageSubscriber(
 
         var destinationLanguage = (Iso6393Code: resourceContentLanguage.ISO6393Code, EnglishName: resourceContentLanguage.EnglishDisplay);
 
+        var translationPairs = await _dbContext.TranslationPairs.Where(x => x.LanguageId == resourceContentLanguage.Id)
+            .Select(x => new
+            {
+                x.Key,
+                x.Value
+            })
+            .ToDictionaryAsync(x => x.Key, x => x.Value, ct);
+
         // translate the display name
         string translatedDisplayName;
         try
         {
-            translatedDisplayName =
-                await _translationService.TranslateTextAsync(resourceContentVersion.DisplayName, destinationLanguage, ct);
+            var (preprocessedDisplayName, isExactMatch) = ReplaceTranslationPairs(resourceContentVersion.DisplayName, translationPairs);
+            translatedDisplayName = isExactMatch
+                ? preprocessedDisplayName
+                : await _translationService.TranslateTextAsync(preprocessedDisplayName, destinationLanguage, ct);
         }
         catch (Exception ex)
         {
@@ -305,14 +315,6 @@ public sealed class TranslationMessageSubscriber(
                 resourceContentVersion.Id);
             throw;
         }
-
-        var translationPairs = await _dbContext.TranslationPairs.Where(x => x.LanguageId == resourceContentLanguage.Id)
-            .Select(x => new
-            {
-                x.Key,
-                x.Value
-            })
-            .ToDictionaryAsync(x => x.Key, x => x.Value, ct);
 
         // Translate the resource content.
         // Note: Resource content is saved as Tiptap JSON in the DB.
@@ -328,7 +330,7 @@ public sealed class TranslationMessageSubscriber(
             var translatedContentHtmlItems = new List<string>();
             for (var contentIndex = 0; contentIndex < contentHtmlItems.Count; contentIndex++)
             {
-                var contentHtmlItem = ReplaceTranslationPairs(contentHtmlItems[contentIndex], translationPairs);
+                var (contentHtmlItem, _) = ReplaceTranslationPairs(contentHtmlItems[contentIndex], translationPairs);
 
                 var translatedContentHtmlItem = await _translationService.TranslateHtmlAsync(contentHtmlItem, destinationLanguage, ct);
                 translatedContentHtmlItems.Add(translatedContentHtmlItem);
@@ -406,14 +408,19 @@ public sealed class TranslationMessageSubscriber(
         await _dbContext.SaveChangesAsync(ct);
     }
 
-    private static string ReplaceTranslationPairs(string text, Dictionary<string, string> translationPairs)
+    private static (string text, bool isFullReplace) ReplaceTranslationPairs(string text, Dictionary<string, string> translationPairs)
     {
         foreach (var pair in translationPairs.OrderByDescending(x => x.Key.Length))
         {
+            if (string.Equals(pair.Key, text, StringComparison.OrdinalIgnoreCase))
+            {
+                return (pair.Value, true);
+            }
+
             text = Regex.Replace(text, $"""\b(?:{pair.Key})\b""", pair.Value, RegexOptions.IgnoreCase);
         }
 
-        return text;
+        return (text, false);
     }
 
     public sealed record OrchestrateProjectResourcesTranslationDto(
