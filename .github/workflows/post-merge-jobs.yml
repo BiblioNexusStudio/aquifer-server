@@ -1,9 +1,21 @@
+# This workflow runs automatically on pushes to master that affect Jobs and its dependencies.
+# It can also be run manually via workflow_dispatch. It uses check-if-branch-should-deploy
+# to prevent cluttering the deployments list with initial release-hotfix- branches.
+#
+# It follows a build-then-deploy pattern:
+# 1. Build: Compiles the Jobs project and upload as artifact
+# 2. Deploy to Dev/QA: Download artifact and deploy
+# 3. Deploy to Production: Download artifact and deploy
+#
+# Note: Environment deployments require approval through GitHub environment protection rules
+
 name: Post-merge (Jobs)
 
 on:
     push:
         branches:
             - master
+            - 'release-hotfix-*'
         paths:
             - 'Directory.Build.props'
             - 'Directory.Packages.props'
@@ -20,8 +32,22 @@ permissions:
     contents: write
 
 jobs:
+    check_should_deploy:
+        runs-on: ubuntu-latest
+        outputs:
+            should_deploy: ${{ github.event_name == 'workflow_dispatch' || steps.check_deploy.outputs.should_deploy == 'true' }}
+        steps:
+            - id: check_deploy
+              if: github.event_name != 'workflow_dispatch'
+              uses: BiblioNexusStudio/github-actions/check-if-branch-should-deploy@master
+              with:
+                  current_branch: ${{ github.ref_name }}
+
     build:
         name: Build
+        needs:
+            - check_should_deploy
+        if: needs.check_should_deploy.outputs.should_deploy == 'true'
         runs-on: ubuntu-latest
         steps:
             - name: Checkout source code
@@ -45,10 +71,12 @@ jobs:
                   path: build
 
     deploy_jobs_to_dev_qa:
-        if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+        if: needs.check_should_deploy.outputs.should_deploy == 'true'
         name: Deploy Jobs to dev/qa
         runs-on: ubuntu-latest
-        needs: build
+        needs:
+            - build
+            - check_should_deploy
         environment:
             name: dev-qa-jobs
         steps:
@@ -93,10 +121,12 @@ jobs:
                     LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
 
     deploy_jobs_to_prod:
-        if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+        if: needs.check_should_deploy.outputs.should_deploy == 'true'
         name: Deploy Jobs to prod
         runs-on: ubuntu-latest
-        needs: build
+        needs:
+            - build
+            - check_should_deploy
         environment:
             name: prod-jobs
         steps:

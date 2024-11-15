@@ -1,3 +1,6 @@
+# Creates a Hotfix PR using the BiblioNexusStudio/github-actions/create-hotfix action
+# See https://github.com/BiblioNexusStudio/github-actions for docs
+
 name: Create Hotfix
 
 on:
