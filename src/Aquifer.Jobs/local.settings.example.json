@@ -13,9 +13,9 @@
         "AzureWebJobs.SyncCustomEventsToStorageTableManager.Disabled": false,
         "AzureWebJobs.SyncPageViewsToStorageTableManager.Disabled": false,
 
-        // email jobs
-        "AzureWebJobs.SendEmail.Disabled": false,
-        "AzureWebJobs.SendTemplatedEmail.Disabled": false,
+        // email jobs (suggest leaving disabled unless doing email testing)
+        "AzureWebJobs.SendEmail.Disabled": true,
+        "AzureWebJobs.SendTemplatedEmail.Disabled": true,
 
         // marketing email jobs
         "AzureWebJobs.SendNewContentEmailsManager.Disabled": false,
