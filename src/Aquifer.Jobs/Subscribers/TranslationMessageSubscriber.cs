@@ -364,6 +364,7 @@ public sealed class TranslationMessageSubscriber(
         resourceContentVersion.DisplayName = translatedDisplayName;
         resourceContentVersion.Content = translatedContentJson;
         resourceContentVersion.ContentSize = Encoding.UTF8.GetByteCount(translatedContentJson);
+        resourceContentVersion.Updated = DateTime.UtcNow;
         resourceContentVersion.WordCount = wordCount;
 
         // save a snapshot of the translation
