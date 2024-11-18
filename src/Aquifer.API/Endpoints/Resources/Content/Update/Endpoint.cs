@@ -58,7 +58,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         if (changesMade)
         {
-            entity.ResourceContent.ContentUpdated = DateTime.Now;
+            entity.ResourceContent.ContentUpdated = DateTime.UtcNow;
             await dbContext.ResourceContentVersionEditTimes.AddAsync(new ResourceContentVersionEditTimeEntity
             {
                 UserId = user.Id,
