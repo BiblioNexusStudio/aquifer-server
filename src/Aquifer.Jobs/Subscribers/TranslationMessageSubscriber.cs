@@ -368,10 +368,11 @@ public sealed class TranslationMessageSubscriber(
 
         resourceContentVersion.ResourceContent.ContentUpdated = DateTime.UtcNow;
 
-        // save a snapshot of the translation
+        // Save a snapshot of the translation.
+        // Always save it as TranslationAwaitingAiDraft in order to prevent a user's name from appearing with the snapshot.
         await _resourceHistoryService.AddSnapshotHistoryAsync(resourceContentVersion,
             startedByUserId,
-            resourceContentVersion.ResourceContent.Status,
+            ResourceContentStatus.TranslationAwaitingAiDraft,
             ct);
 
         // basic translations should not change the status unless transitioning from AI draft to complete
