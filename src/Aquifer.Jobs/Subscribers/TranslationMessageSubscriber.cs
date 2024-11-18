@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Aquifer.AI;
+using Aquifer.Common;
 using Aquifer.Common.Messages;
 using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Messages.Publishers;
@@ -33,7 +34,8 @@ public sealed class TranslationMessageSubscriber(
         {
             TranslationOrigin.CreateTranslation,
             TranslationOrigin.CommunityReviewer,
-            TranslationOrigin.BasicTranslationOnly
+            TranslationOrigin.BasicTranslationOnly,
+            TranslationOrigin.CreateAquiferization
         };
 
     private static readonly TaskOptions s_durableFunctionTaskOptions =
@@ -181,19 +183,16 @@ public sealed class TranslationMessageSubscriber(
         //
         // Edge case handling:
         // 1) It's possible that something else acted on the resource content version status
-        // and moved it out of the TranslationAiDraftComplete status between the resource finishing translation
-        // and this project post-processing. If so, ignore those resources when performing assignments
-        // because there might already have been a user assignment.
+        // and moved it out of the TranslationAiDraftComplete/AquiferizeAiDraftComplete status between the resource finishing translation
+        // and this project post-processing. If so, ignore those resources when performing assignments because there might already have been
+        // a user assignment.
         // 2) Skip assignment if the resource is already assigned (probably by a previous run of this function).
-        //
-        // Note: Resource contents with the New status are also included as these were not translated but still
-        // need to be assigned (for Aquiferization of English resources).
         var resourceContentVersionsToAssign = await _dbContext.ResourceContentVersions.AsTracking()
             .Include(rcv => rcv.ResourceContent)
             .Where(rcv => rcv.ResourceContent.ProjectResourceContents.Any(prc => prc.Project.Id == project.Id) &&
                 rcv.IsDraft &&
                 (rcv.ResourceContent.Status == ResourceContentStatus.TranslationAiDraftComplete ||
-                    rcv.ResourceContent.Status == ResourceContentStatus.New) &&
+                    rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeAiDraftComplete) &&
                 rcv.AssignedUserId == null)
             .ToListAsync(activityContext.CancellationToken);
 
@@ -264,19 +263,38 @@ public sealed class TranslationMessageSubscriber(
             throw new InvalidOperationException(
                 $"Aborting translation for Resource Content ID {resourceContentId} because it has no Resource Content Version with Text Media Type in the Draft status.");
 
+        var isAquiferization = Constants.AquiferizationStatuses.Contains(resourceContentVersion.ResourceContent.Status);
+        var awaitingStatus = isAquiferization ? ResourceContentStatus.AquiferizeAwaitingAiDraft : ResourceContentStatus.TranslationAwaitingAiDraft;
+        var completeStatus = isAquiferization ? ResourceContentStatus.AquiferizeAiDraftComplete : ResourceContentStatus.TranslationAiDraftComplete;
+        var editorStatus = isAquiferization ? ResourceContentStatus.AquiferizeEditorReview : ResourceContentStatus.TranslationEditorReview;
+
         if (resourceContentVersion.ResourceContentVersionSnapshots.Count == 0)
         {
             throw new InvalidOperationException(
                 $"Aborting translation for Resource Content ID {resourceContentId} because there are no pre-existing Snapshots for Resource Content Version ID {resourceContentVersion.Id}.");
         }
 
+        var resourceContentLanguage = resourceContentVersion.ResourceContent.Language;
+
+        if (isAquiferization && resourceContentLanguage.Id != _englishLanguageId)
+        {
+            throw new InvalidOperationException(
+                $"Aborting aquiferization for Resource Content ID {resourceContentId} because status indicates aquiferization but content language is {resourceContentLanguage.EnglishDisplay}.");
+        }
+
+        if (!isAquiferization && resourceContentLanguage.Id == _englishLanguageId)
+        {
+            throw new InvalidOperationException(
+                $"Aborting translation for Resource Content ID {resourceContentId} because status indicates translation but content language is English.");
+        }
+
         if (translationOrigin != TranslationOrigin.BasicTranslationOnly &&
-            resourceContentVersion.ResourceContent.Status != ResourceContentStatus.TranslationAwaitingAiDraft)
+            resourceContentVersion.ResourceContent.Status != awaitingStatus)
         {
             _logger.LogInformation(
                 "Gracefully skipping translation for Resource Content ID {ResourceContentId} because it is not in the {ExpectedStatus} status.",
                 resourceContentId,
-                ResourceContentStatus.TranslationAwaitingAiDraft.ToString());
+                awaitingStatus.ToString());
 
             return;
         }
@@ -285,16 +303,6 @@ public sealed class TranslationMessageSubscriber(
         {
             _logger.LogInformation(
                 "Gracefully skipping translation for Resource Content ID {ResourceContentId} because it already has updated content.",
-                resourceContentId);
-
-            return;
-        }
-
-        var resourceContentLanguage = resourceContentVersion.ResourceContent.Language;
-        if (resourceContentLanguage.Id == _englishLanguageId)
-        {
-            _logger.LogInformation(
-                "Gracefully skipping translation for Resource Content ID {ResourceContentId} because it is does not have a non-English target language.",
                 resourceContentId);
 
             return;
@@ -323,21 +331,25 @@ public sealed class TranslationMessageSubscriber(
             ? resourceContentVersion.Content
             : firstResourceContentVersionSnapshot.Content;
 
-        // translate the display name
-        string translatedDisplayName;
-        try
+        // translate the display name unless aquiferizing
+        var translatedDisplayName = displayNameToTranslate;
+
+        if (!isAquiferization)
         {
-            translatedDisplayName = await _translationService.TranslateTextAsync(displayNameToTranslate, destinationLanguage, translationPairs, ct);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex,
-                "An error occurred during translation of the display name. Resource Content ID: {ResourceContentId}; Resource Content Version ID: {ResourceContentVersionId}; Should Force Retranslation: {ShouldForceRetranslation}; Translation Origin: {TranslationOrigin}.",
-                resourceContentId,
-                resourceContentVersion.Id,
-                shouldForceRetranslation,
-                translationOrigin);
-            throw;
+            try
+            {
+                translatedDisplayName = await _translationService.TranslateTextAsync(displayNameToTranslate, destinationLanguage, translationPairs, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "An error occurred during translation of the display name. Resource Content ID: {ResourceContentId}; Resource Content Version ID: {ResourceContentVersionId}; Should Force Retranslation: {ShouldForceRetranslation}; Translation Origin: {TranslationOrigin}.",
+                    resourceContentId,
+                    resourceContentVersion.Id,
+                    shouldForceRetranslation,
+                    translationOrigin);
+                throw;
+            }
         }
 
         // Translate the resource content.
@@ -399,7 +411,7 @@ public sealed class TranslationMessageSubscriber(
         {
             await _resourceHistoryService.AddSnapshotHistoryAsync(resourceContentVersion,
                 startedByUserId,
-                ResourceContentStatus.TranslationAwaitingAiDraft,
+                awaitingStatus,
                 ct);
         }
         // If a retranslation then update the existing snapshot to not create too many snapshots.
@@ -418,9 +430,9 @@ public sealed class TranslationMessageSubscriber(
 
         // basic translations should not change the status unless transitioning from AI Draft to AI Draft Complete
         if (translationOrigin != TranslationOrigin.BasicTranslationOnly ||
-            resourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationAwaitingAiDraft)
+            resourceContentVersion.ResourceContent.Status == awaitingStatus)
         {
-            resourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationAiDraftComplete;
+            resourceContentVersion.ResourceContent.Status = completeStatus;
             await _resourceHistoryService.AddStatusHistoryAsync(resourceContentVersion,
                 resourceContentVersion.ResourceContent.Status,
                 startedByUserId,
@@ -428,9 +440,9 @@ public sealed class TranslationMessageSubscriber(
         }
 
         // if an individual translation was requested then the status needs to be updated (again) now that translation has completed
-        if (translationOrigin is TranslationOrigin.CreateTranslation or TranslationOrigin.CommunityReviewer)
+        if (translationOrigin is TranslationOrigin.CreateTranslation or TranslationOrigin.CommunityReviewer or TranslationOrigin.CreateAquiferization)
         {
-            resourceContentVersion.ResourceContent.Status = ResourceContentStatus.TranslationEditorReview;
+            resourceContentVersion.ResourceContent.Status = editorStatus;
             await _resourceHistoryService.AddStatusHistoryAsync(resourceContentVersion,
                 resourceContentVersion.ResourceContent.Status,
                 startedByUserId,

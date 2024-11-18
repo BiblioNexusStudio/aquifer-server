@@ -105,5 +105,11 @@ public enum ResourceContentStatus
     CompleteNotApplicable = 14,
 
     [Display(Name = "Translation - AI Draft Complete")]
-    TranslationAiDraftComplete = 15
+    TranslationAiDraftComplete = 15,
+
+    [Display(Name = "Aquiferize - Awaiting AI Draft")]
+    AquiferizeAwaitingAiDraft = 16,
+
+    [Display(Name = "Aquiferize - AI Draft Complete")]
+    AquiferizeAiDraftComplete = 17
 }

@@ -1,13 +1,10 @@
 using System.Collections.ObjectModel;
 using Aquifer.Data.Entities;
 
-namespace Aquifer.API.Common;
+namespace Aquifer.Common;
 
 public static class Constants
 {
-    public const string PermissionsClaim = "permissions";
-    public const string RolesClaim = "bnRoles";
-
     // Some guide types have predetermined passages (rather than freeform "select any Bible section").
     // ID 1 = FIA (formerly CBBT-ER)
     public static readonly ReadOnlyCollection<int> PredeterminedPassageGuideIds = new([1]);
@@ -20,6 +17,8 @@ public static class Constants
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> AquiferizationStatuses =
         new([
+            ResourceContentStatus.AquiferizeAwaitingAiDraft,
+            ResourceContentStatus.AquiferizeAiDraftComplete,
             ResourceContentStatus.AquiferizeEditorReview,
             ResourceContentStatus.AquiferizeReviewPending,
             ResourceContentStatus.AquiferizePublisherReview,
@@ -53,50 +52,4 @@ public static class Constants
             ResourceContentStatus.TranslationCompanyReview,
             ResourceContentStatus.AquiferizeCompanyReview
         ]);
-}
-
-public static class PermissionName
-{
-    public const string AiSimplify = "ai:simplify",
-        AiTranslate = "ai:translate",
-        AssignContent = "assign:content",
-        AssignOutsideCompany = "assign:outside-company",
-        AssignOverride = "assign:override",
-        CreateCommunityContent = "create:community-content",
-        CreateContent = "create:content",
-        CreateProject = "create:project",
-        CreateUser = "create:user",
-        CreateUsersInCompany = "create:users-in-company",
-        DisableUser = "disable:users",
-        DisableUsersInCompany = "disable:users-in-company",
-        EditContent = "edit:content",
-        EditContentBibleReferences = "edit:content-bible-references",
-        EditContentResourceReferences = "edit:content-resource-references",
-        EditProject = "edit:projects",
-        PublishContent = "publish:content",
-        ReadAllUsers = "read:all-users",
-        ReadCompanyContentAssignments = "read:company-content-assignments",
-        ReadProject = "read:projects",
-        ReadProjectsInCompany = "read:projects-in-company",
-        ReadReports = "read:reports",
-        ReadResourceLists = "read:resource-lists",
-        ReadResources = "read:resources",
-        ReadUsers = "read:users",
-        ReviewContent = "review:content",
-        SendReviewContent = "send-review:content",
-        SendReviewCommunityContent = "send-review:community-content",
-        SetStatusTranslationNotApplicable = "set-status:translation-not-applicable",
-        SetStatusCompleteNotApplicable = "set-status:complete-not-applicable";
-}
-
-public static class KeyVaultSecretName
-{
-    public const string Auth0ClientSecret = "Auth0ClientSecret",
-        OpenAiApiKey = "OpenAiApiKey";
-}
-
-public static class Auth0Constants
-{
-    public const string ClientCredentials = "client_credentials";
-    public const string Connection = "Username-Password-Authentication";
 }

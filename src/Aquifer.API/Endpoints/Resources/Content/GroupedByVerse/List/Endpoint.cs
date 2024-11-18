@@ -1,5 +1,5 @@
-using Aquifer.API.Common;
 using Aquifer.Common.Utilities;
+using Aquifer.Common;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -44,9 +44,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                         WHERE
                              pr.Enabled = 1 AND
                              vr.VerseId BETWEEN {startVerseId} AND {endVerseId}
-                     
+
                          UNION
-                     
+
                          SELECT
                              COALESCE(rc.Id, rce.Id) AS Id,
                              rct.Id AS DependentOnId,
@@ -73,7 +73,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                              ((p.StartVerseId BETWEEN {startVerseId} AND {endVerseId})
                              OR (p.EndVerseId BETWEEN {startVerseId} AND {endVerseId})
                              OR (p.StartVerseId < {startVerseId} AND p.EndVerseId > {endVerseId}))
-                     
+
                          ORDER BY
                              VerseId
                      """;
