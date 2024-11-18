@@ -1,7 +1,9 @@
-﻿using System.Text;
+﻿using System.ClientModel;
+using System.Text;
 using System.Text.RegularExpressions;
 using Aquifer.Common.Clients;
 using Aquifer.Common.Utilities;
+using OpenAI;
 using OpenAI.Chat;
 
 namespace Aquifer.AI;
@@ -53,6 +55,8 @@ public sealed partial class OpenAiTranslationService : ITranslationService
     private const int _maxContentLength = 5_000;
     private const int _maxParallelizationForSingleTranslation = 5;
 
+    private static readonly TimeSpan s_openAiNetworkTimeout = TimeSpan.FromMinutes(10);
+
     private readonly ChatClient _chatClient;
     private readonly ChatCompletionOptions _chatCompletionOptions;
 
@@ -69,7 +73,14 @@ public sealed partial class OpenAiTranslationService : ITranslationService
         const string openAiApiKeySecretName = "OpenAiApiKey";
         var openApiKey = keyVaultClient.GetSecretAsync(openAiApiKeySecretName).GetAwaiter().GetResult();
 
-        _chatClient = new ChatClient(openAiOptions.Model, openApiKey);
+        _chatClient = new ChatClient(
+            openAiOptions.Model,
+            new ApiKeyCredential(openApiKey),
+            new OpenAIClientOptions
+            {
+                NetworkTimeout = s_openAiNetworkTimeout,
+            });
+
         _chatCompletionOptions = new ChatCompletionOptions
         {
             Temperature = _options.Temperature,
