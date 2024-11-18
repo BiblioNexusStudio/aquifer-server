@@ -9,24 +9,24 @@
         // The below settings are optional and only for local development (disabling jobs can help reduce noise).
 
         // analytics jobs
-        "AzureWebJobs.SyncApiRequestStatsToStorageTable.Disabled": false,
-        "AzureWebJobs.SyncCustomEventsToStorageTable.Disabled": false,
-        "AzureWebJobs.SyncPageViewsToStorageTable.Disabled": false,
+        "AzureWebJobs.SyncApiRequestStatsToStorageTableManager.Disabled": false,
+        "AzureWebJobs.SyncCustomEventsToStorageTableManager.Disabled": false,
+        "AzureWebJobs.SyncPageViewsToStorageTableManager.Disabled": false,
 
         // email jobs
         "AzureWebJobs.SendEmail.Disabled": false,
         "AzureWebJobs.SendTemplatedEmail.Disabled": false,
 
         // marketing email jobs
-        "AzureWebJobs.SendNewContentEmails.Disabled": false,
+        "AzureWebJobs.SendNewContentEmailsManager.Disabled": false,
 
         // notification jobs
         "AzureWebJobs.SendProjectStartedNotification.Disabled": false,
         "AzureWebJobs.SendResourceCommentCreatedNotification.Disabled": false,
-        "AzureWebJobs.SendResourceAssignmentNotifications.Disabled": false,
+        "AzureWebJobs.SendResourceAssignmentNotificationsManager.Disabled": false,
 
         // resource tracking jobs
-        "AzureWebJobs.TrackResourceContentRequestJob.Disabled": false,
+        "AzureWebJobs.TrackResourceContentRequestMessageSubscriber.Disabled": false,
 
         // translation jobs
         "AzureWebJobs.TranslateProjectResources.Disabled": false,
