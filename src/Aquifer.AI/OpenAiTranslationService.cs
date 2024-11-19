@@ -132,10 +132,10 @@ public sealed partial class OpenAiTranslationService : ITranslationService
             var paragraphTranslationTasks = paragraphs
                 .Select(paragraph => HtmlUtilities.ProcessHtmlContentAsync(
                     paragraph,
-                    minifiedHtml =>
+                    async minifiedHtml =>
                     {
                         var (minifiedHtmlWithReplacements, _) = ReplaceTranslationPairs(minifiedHtml, translationPairs);
-                        return TranslateHtmlChunkAsync(prompt, minifiedHtmlWithReplacements, cancellationToken);
+                        return await TranslateHtmlChunkAsync(prompt, minifiedHtmlWithReplacements, cancellationToken);
                     }))
                 .ToList();
 
