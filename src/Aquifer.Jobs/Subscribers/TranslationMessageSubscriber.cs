@@ -393,12 +393,28 @@ public sealed class TranslationMessageSubscriber(
 
         resourceContentVersion.ResourceContent.ContentUpdated = DateTime.UtcNow;
 
-        // Save a snapshot of the translation.
+        // If not a retranslation then save a new snapshot of the translation.
         // Always save it as TranslationAwaitingAiDraft in order to prevent a user's name from appearing with the snapshot.
-        await _resourceHistoryService.AddSnapshotHistoryAsync(resourceContentVersion,
-            startedByUserId,
-            ResourceContentStatus.TranslationAwaitingAiDraft,
-            ct);
+        if (!shouldForceRetranslation)
+        {
+            await _resourceHistoryService.AddSnapshotHistoryAsync(resourceContentVersion,
+                startedByUserId,
+                ResourceContentStatus.TranslationAwaitingAiDraft,
+                ct);
+        }
+        // If a retranslation then update the existing snapshot to not create too many snapshots.
+        else
+        {
+            var existingAiTranslationSnapshot = resourceContentVersion.ResourceContentVersionSnapshots
+                .OrderBy(rcvs => rcvs.Created)
+                .Last(rcvs => rcvs.Status == ResourceContentStatus.TranslationAwaitingAiDraft);
+
+            existingAiTranslationSnapshot.Content = resourceContentVersion.Content;
+            existingAiTranslationSnapshot.DisplayName = resourceContentVersion.DisplayName;
+            existingAiTranslationSnapshot.WordCount = resourceContentVersion.WordCount;
+            existingAiTranslationSnapshot.UserId = startedByUserId;
+            existingAiTranslationSnapshot.Created = DateTime.UtcNow;
+        }
 
         // basic translations should not change the status unless transitioning from AI Draft to AI Draft Complete
         if (translationOrigin != TranslationOrigin.BasicTranslationOnly ||
