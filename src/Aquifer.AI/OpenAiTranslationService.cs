@@ -17,6 +17,7 @@ public interface ITranslationService
     public Task<string> TranslateTextAsync(
         string text,
         (string Iso6393Code, string EnglishName) destinationLanguage,
+        IDictionary<string, string> translationPairs,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -26,6 +27,7 @@ public interface ITranslationService
     public Task<string> TranslateHtmlAsync(
         string html,
         (string Iso6393Code, string EnglishName) destinationLanguage,
+        IDictionary<string, string> translationPairs,
         CancellationToken cancellationToken);
 }
 
@@ -90,6 +92,7 @@ public sealed partial class OpenAiTranslationService : ITranslationService
     public async Task<string> TranslateTextAsync(
         string text,
         (string Iso6393Code, string EnglishName) destinationLanguage,
+        IDictionary<string, string> translationPairs,
         CancellationToken cancellationToken)
     {
         if (text.Length > _maxContentLength)
@@ -101,28 +104,17 @@ public sealed partial class OpenAiTranslationService : ITranslationService
 
         var prompt = GetTextTranslationPrompt(destinationLanguage);
 
-        var chatCompletion = await _chatClient.CompleteChatAsync(
-            [
-                ChatMessage.CreateSystemMessage(prompt),
-                ChatMessage.CreateUserMessage(text),
-            ],
-            _chatCompletionOptions,
-            cancellationToken);
+        var (textWithReplacements, isFullReplacement) = ReplaceTranslationPairs(text, translationPairs);
 
-        if (chatCompletion.Value.FinishReason != ChatFinishReason.Stop)
-        {
-            throw new OpenAiChatCompletionException(
-                $"OpenAI chat completion returned an unhandled finish reason: {chatCompletion.Value.FinishReason}.",
-                prompt,
-                text);
-        }
-
-        return chatCompletion.Value.Content[0].Text;
+        return isFullReplacement
+            ? textWithReplacements
+            : await TranslateTextAsync(prompt, textWithReplacements, cancellationToken);
     }
 
     public async Task<string> TranslateHtmlAsync(
         string html,
         (string Iso6393Code, string EnglishName) destinationLanguage,
+        IDictionary<string, string> translationPairs,
         CancellationToken cancellationToken)
     {
         var prompt = GetHtmlTranslationPrompt(destinationLanguage);
@@ -140,7 +132,11 @@ public sealed partial class OpenAiTranslationService : ITranslationService
             var paragraphTranslationTasks = paragraphs
                 .Select(paragraph => HtmlUtilities.ProcessHtmlContentAsync(
                     paragraph,
-                    minifiedHtml => TranslateHtmlChunkAsync(prompt, minifiedHtml, cancellationToken)))
+                    minifiedHtml =>
+                    {
+                        var (minifiedHtmlWithReplacements, _) = ReplaceTranslationPairs(minifiedHtml, translationPairs);
+                        return TranslateHtmlChunkAsync(prompt, minifiedHtmlWithReplacements, cancellationToken);
+                    }))
                 .ToList();
 
             await Task.WhenAll(paragraphTranslationTasks);
@@ -152,6 +148,42 @@ public sealed partial class OpenAiTranslationService : ITranslationService
         }
 
         return translatedHtml.ToString();
+    }
+
+    private static (string Text, bool IsFullReplace) ReplaceTranslationPairs(string text, IDictionary<string, string> translationPairs)
+    {
+        foreach (var pair in translationPairs.OrderByDescending(x => x.Key.Length))
+        {
+            if (string.Equals(pair.Key, text, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return (pair.Value, true);
+            }
+
+            text = Regex.Replace(text, $"""\b(?:{pair.Key})\b""", pair.Value, RegexOptions.IgnoreCase);
+        }
+
+        return (text, false);
+    }
+
+    private async Task<string> TranslateTextAsync(string prompt, string text, CancellationToken cancellationToken)
+    {
+        var chatCompletion = await _chatClient.CompleteChatAsync(
+            [
+                ChatMessage.CreateSystemMessage(prompt),
+                ChatMessage.CreateUserMessage(text),
+            ],
+            _chatCompletionOptions,
+            cancellationToken);
+
+        if (chatCompletion.Value.FinishReason != ChatFinishReason.Stop)
+        {
+            throw new OpenAiChatCompletionException(
+                $"OpenAI chat completion returned an unhandled finish reason: {chatCompletion.Value.FinishReason}.",
+                prompt,
+                text);
+        }
+
+        return chatCompletion.Value.Content[0].Text;
     }
 
     private async Task<string> TranslateHtmlChunkAsync(string prompt, string html, CancellationToken cancellationToken)
