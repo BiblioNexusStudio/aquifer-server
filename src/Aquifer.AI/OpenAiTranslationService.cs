@@ -55,7 +55,7 @@ public sealed class OpenAiChatCompletionException(string message, string prompt,
 public sealed partial class OpenAiTranslationService : ITranslationService
 {
     private const int _maxContentLength = 5_000;
-    private const int _maxParallelizationForSingleTranslation = 5;
+    private const int _maxParallelizationForSingleTranslation = 3;
 
     private static readonly TimeSpan s_openAiNetworkTimeout = TimeSpan.FromMinutes(10);
 
@@ -132,10 +132,10 @@ public sealed partial class OpenAiTranslationService : ITranslationService
             var paragraphTranslationTasks = paragraphs
                 .Select(paragraph => HtmlUtilities.ProcessHtmlContentAsync(
                     paragraph,
-                    minifiedHtml =>
+                    async minifiedHtml =>
                     {
                         var (minifiedHtmlWithReplacements, _) = ReplaceTranslationPairs(minifiedHtml, translationPairs);
-                        return TranslateHtmlChunkAsync(prompt, minifiedHtmlWithReplacements, cancellationToken);
+                        return await TranslateHtmlChunkAsync(prompt, minifiedHtmlWithReplacements, cancellationToken);
                     }))
                 .ToList();
 
