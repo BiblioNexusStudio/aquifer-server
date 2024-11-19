@@ -108,7 +108,7 @@ public sealed partial class OpenAiTranslationService : ITranslationService
 
         return isFullReplacement
             ? textWithReplacements
-            : await TranslateTextAsync(prompt, text, cancellationToken);
+            : await TranslateTextAsync(prompt, textWithReplacements, cancellationToken);
     }
 
     public async Task<string> TranslateHtmlAsync(
