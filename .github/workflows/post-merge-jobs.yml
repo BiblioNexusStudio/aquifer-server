@@ -87,7 +87,7 @@ jobs:
                   channel_id: C05UPTGQGP9
                   status: RUNNING
                   color: warning
-                  environment: dev-qa
+                  environment: dev-qa-jobs
                   default_branch_name: master
                   service_name: Jobs
               env:
@@ -111,7 +111,7 @@ jobs:
                   channel_id: C05UPTGQGP9
                   status: ${{ job.status == 'failure' && 'FAILURE' || 'SUCCESS' }}
                   color: ${{ job.status == 'failure' && 'danger' || 'good' }}
-                  environment: dev-qa
+                  environment: dev-qa-jobs
                   default_branch_name: master
                   service_name: Jobs
                   message_id: ${{ steps.slack-notify.outputs.message_id }}
@@ -137,7 +137,7 @@ jobs:
                   channel_id: C05UPTGQGP9
                   status: RUNNING
                   color: warning
-                  environment: prod
+                  environment: prod-jobs
                   default_branch_name: master
                   service_name: Jobs
               env:
@@ -161,7 +161,7 @@ jobs:
                   channel_id: C05UPTGQGP9
                   status: ${{ job.status == 'failure' && 'FAILURE' || 'SUCCESS' }}
                   color: ${{ job.status == 'failure' && 'danger' || 'good' }}
-                  environment: prod
+                  environment: prod-jobs
                   default_branch_name: master
                   service_name: Jobs
                   message_id: ${{ steps.slack-notify.outputs.message_id }}
