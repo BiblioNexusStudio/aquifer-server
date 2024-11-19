@@ -54,7 +54,12 @@ public sealed class TranslationMessageSubscriber(
                 $"Invalid {nameof(TranslationOrigin)} for the {nameof(TranslateResource)} flow: \"{message.TranslationOrigin}\".");
         }
 
-        await TranslateResourceCoreAsync(message.ResourceContentId, message.StartedByUserId, message.TranslationOrigin, ct);
+        await TranslateResourceCoreAsync(
+            message.ResourceContentId,
+            message.StartedByUserId,
+            message.ShouldForceRetranslation,
+            message.TranslationOrigin,
+            ct);
     }
 
     /// <summary>
@@ -154,6 +159,7 @@ public sealed class TranslationMessageSubscriber(
     {
         await TranslateResourceCoreAsync(dto.ResourceContentId,
             dto.StartedByUserId,
+            shouldForceRetranslation: false,
             TranslationOrigin.Project,
             activityContext.CancellationToken);
 
@@ -224,6 +230,7 @@ public sealed class TranslationMessageSubscriber(
     /// </summary>
     private async Task TranslateResourceCoreAsync(int resourceContentId,
         int startedByUserId,
+        bool shouldForceRetranslation,
         TranslationOrigin translationOrigin,
         CancellationToken ct)
     {
@@ -236,6 +243,12 @@ public sealed class TranslationMessageSubscriber(
         if (translationOrigin == TranslationOrigin.None)
         {
             throw new InvalidOperationException($"Translation Origin should never be \"{translationOrigin}\".");
+        }
+
+        if (shouldForceRetranslation && translationOrigin != TranslationOrigin.BasicTranslationOnly)
+        {
+            throw new InvalidOperationException(
+                $"Translation Origin must be {TranslationOrigin.BasicTranslationOnly} when {nameof(shouldForceRetranslation)} is true but was \"{translationOrigin}\".");
         }
 
         var resourceContentVersion = await _dbContext.ResourceContentVersions
@@ -268,7 +281,7 @@ public sealed class TranslationMessageSubscriber(
             return;
         }
 
-        if (resourceContentVersion.ResourceContent.ContentUpdated != null)
+        if (!shouldForceRetranslation && resourceContentVersion.ResourceContent.ContentUpdated != null)
         {
             _logger.LogInformation(
                 "Gracefully skipping translation for Resource Content ID {ResourceContentId} because it already has updated content.",
@@ -297,18 +310,33 @@ public sealed class TranslationMessageSubscriber(
             })
             .ToDictionaryAsync(x => x.Key, x => x.Value, ct);
 
+        // if this is a forced retranslation then use the original snapshot data instead of the ResourceContentVersion's data
+        var firstResourceContentVersionSnapshot = resourceContentVersion.ResourceContentVersionSnapshots
+            .OrderBy(rcvs => rcvs.Created)
+            .First();
+
+        var displayNameToTranslate = !shouldForceRetranslation
+            ? resourceContentVersion.DisplayName
+            : firstResourceContentVersionSnapshot.DisplayName;
+
+        var contentToTranslate = !shouldForceRetranslation
+            ? resourceContentVersion.Content
+            : firstResourceContentVersionSnapshot.Content;
+
         // translate the display name
         string translatedDisplayName;
         try
         {
-            translatedDisplayName = await _translationService.TranslateTextAsync(resourceContentVersion.DisplayName, destinationLanguage, translationPairs, ct);
+            translatedDisplayName = await _translationService.TranslateTextAsync(displayNameToTranslate, destinationLanguage, translationPairs, ct);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "An error occurred during translation of the display name. Resource Content ID: {ResourceContentId}; Resource Content Version ID: {ResourceContentVersionId}.",
+                "An error occurred during translation of the display name. Resource Content ID: {ResourceContentId}; Resource Content Version ID: {ResourceContentVersionId}; Should Force Retranslation: {ShouldForceRetranslation}; Translation Origin: {TranslationOrigin}.",
                 resourceContentId,
-                resourceContentVersion.Id);
+                resourceContentVersion.Id,
+                shouldForceRetranslation,
+                translationOrigin);
             throw;
         }
 
@@ -320,7 +348,7 @@ public sealed class TranslationMessageSubscriber(
         var wordCount = 0;
         try
         {
-            var contentHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(resourceContentVersion.Content);
+            var contentHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(contentToTranslate);
 
             // translate each Tiptap step independently
             var translatedContentHtmlItems = new List<string>();
@@ -350,9 +378,11 @@ public sealed class TranslationMessageSubscriber(
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "An error occurred during translation. Resource Content ID: {ResourceContentId}; Resource Content Version ID: {ResourceContentVersionId}.",
+                "An error occurred during translation of the HTML content. Resource Content ID: {ResourceContentId}; Resource Content Version ID: {ResourceContentVersionId}; Should Force Retranslation: {ShouldForceRetranslation}; Translation Origin: {TranslationOrigin}.",
                 resourceContentId,
-                resourceContentVersion.Id);
+                resourceContentVersion.Id,
+                shouldForceRetranslation,
+                translationOrigin);
             throw;
         }
 
@@ -370,7 +400,7 @@ public sealed class TranslationMessageSubscriber(
             ResourceContentStatus.TranslationAwaitingAiDraft,
             ct);
 
-        // basic translations should not change the status unless transitioning from AI draft to complete
+        // basic translations should not change the status unless transitioning from AI Draft to AI Draft Complete
         if (translationOrigin != TranslationOrigin.BasicTranslationOnly ||
             resourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationAwaitingAiDraft)
         {

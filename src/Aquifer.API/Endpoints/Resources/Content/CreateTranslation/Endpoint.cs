@@ -130,6 +130,7 @@ public class Endpoint(
             new TranslateResourceMessage(
                 newResourceContent.Id,
                 user.Id,
+                ShouldForceRetranslation: false,
                 isCommunityUser
                     ? TranslationOrigin.CommunityReviewer
                     : TranslationOrigin.CreateTranslation),
