@@ -55,7 +55,7 @@ public sealed class OpenAiChatCompletionException(string message, string prompt,
 public sealed partial class OpenAiTranslationService : ITranslationService
 {
     private const int _maxContentLength = 5_000;
-    private const int _maxParallelizationForSingleTranslation = 5;
+    private const int _maxParallelizationForSingleTranslation = 3;
 
     private static readonly TimeSpan s_openAiNetworkTimeout = TimeSpan.FromMinutes(10);
 
