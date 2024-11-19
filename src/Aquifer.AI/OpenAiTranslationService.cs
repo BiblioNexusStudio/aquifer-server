@@ -60,7 +60,7 @@ public sealed partial class OpenAiTranslationService : ITranslationService
     private static readonly TimeSpan s_openAiNetworkTimeout = TimeSpan.FromMinutes(10);
 
     private readonly ChatClient _chatClient;
-    private readonly ChatCompletionOptions _chatCompletionOptions;
+    private readonly float _temperature;
 
     private readonly OpenAiTranslationOptions _options;
 
@@ -83,10 +83,7 @@ public sealed partial class OpenAiTranslationService : ITranslationService
                 NetworkTimeout = s_openAiNetworkTimeout,
             });
 
-        _chatCompletionOptions = new ChatCompletionOptions
-        {
-            Temperature = _options.Temperature,
-        };
+        _temperature = _options.Temperature;
     }
 
     public async Task<string> TranslateTextAsync(
@@ -172,7 +169,10 @@ public sealed partial class OpenAiTranslationService : ITranslationService
                 ChatMessage.CreateSystemMessage(prompt),
                 ChatMessage.CreateUserMessage(text),
             ],
-            _chatCompletionOptions,
+            new ChatCompletionOptions
+            {
+                Temperature = _temperature,
+            },
             cancellationToken);
 
         if (chatCompletion.Value.FinishReason != ChatFinishReason.Stop)
@@ -193,7 +193,10 @@ public sealed partial class OpenAiTranslationService : ITranslationService
                 ChatMessage.CreateSystemMessage(prompt),
                 ChatMessage.CreateUserMessage(html),
             ],
-            _chatCompletionOptions,
+            new ChatCompletionOptions
+            {
+                Temperature = _temperature,
+            },
             cancellationToken);
 
         if (chatCompletion.Value.FinishReason != ChatFinishReason.Stop)
