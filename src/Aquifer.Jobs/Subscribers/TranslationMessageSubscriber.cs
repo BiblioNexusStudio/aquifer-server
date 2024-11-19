@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using System.Text.RegularExpressions;
 using Aquifer.AI;
 using Aquifer.Common.Messages;
 using Aquifer.Common.Messages.Models;
@@ -302,10 +301,7 @@ public sealed class TranslationMessageSubscriber(
         string translatedDisplayName;
         try
         {
-            var (preprocessedDisplayName, isExactMatch) = ReplaceTranslationPairs(resourceContentVersion.DisplayName, translationPairs);
-            translatedDisplayName = isExactMatch
-                ? preprocessedDisplayName
-                : await _translationService.TranslateTextAsync(preprocessedDisplayName, destinationLanguage, ct);
+            translatedDisplayName = await _translationService.TranslateTextAsync(resourceContentVersion.DisplayName, destinationLanguage, translationPairs, ct);
         }
         catch (Exception ex)
         {
@@ -330,9 +326,8 @@ public sealed class TranslationMessageSubscriber(
             var translatedContentHtmlItems = new List<string>();
             for (var contentIndex = 0; contentIndex < contentHtmlItems.Count; contentIndex++)
             {
-                var (contentHtmlItem, _) = ReplaceTranslationPairs(contentHtmlItems[contentIndex], translationPairs);
-
-                var translatedContentHtmlItem = await _translationService.TranslateHtmlAsync(contentHtmlItem, destinationLanguage, ct);
+                var contentHtmlItem = contentHtmlItems[contentIndex];
+                var translatedContentHtmlItem = await _translationService.TranslateHtmlAsync(contentHtmlItem, destinationLanguage, translationPairs, ct);
                 translatedContentHtmlItems.Add(translatedContentHtmlItem);
 
                 wordCount += HtmlUtilities.GetWordCount(translatedContentHtmlItem);
@@ -409,21 +404,6 @@ public sealed class TranslationMessageSubscriber(
         }
 
         await _dbContext.SaveChangesAsync(ct);
-    }
-
-    private static (string Text, bool IsFullReplace) ReplaceTranslationPairs(string text, Dictionary<string, string> translationPairs)
-    {
-        foreach (var pair in translationPairs.OrderByDescending(x => x.Key.Length))
-        {
-            if (string.Equals(pair.Key, text, StringComparison.InvariantCultureIgnoreCase))
-            {
-                return (pair.Value, true);
-            }
-
-            text = Regex.Replace(text, $"""\b(?:{pair.Key})\b""", pair.Value, RegexOptions.IgnoreCase);
-        }
-
-        return (text, false);
     }
 
     public sealed record OrchestrateProjectResourcesTranslationDto(
