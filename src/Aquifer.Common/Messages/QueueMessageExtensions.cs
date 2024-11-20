@@ -6,25 +6,52 @@ namespace Aquifer.Common.Messages;
 
 public static class QueueMessageExtensions
 {
-    public static TDto Deserialize<TDto, TLogger>(this QueueMessage message, ILogger<TLogger> logger)
+    public static TMessage Deserialize<TMessage, TLogger>(this QueueMessage queueMessage, ILogger<TLogger> logger)
     {
-        TDto? dto;
+        TMessage? message;
         try
         {
-            dto = MessagesJsonSerializer.Deserialize<TDto>(message.MessageText);
+            message = MessagesJsonSerializer.Deserialize<TMessage>(queueMessage.MessageText);
         }
         catch (JsonException ex)
         {
-            logger.LogError(ex, "An error occurred while deserializing JSON messageText (ID: {MessageId}): {MessageText}", message.MessageId, message.MessageText);
+            logger.LogError(ex, "An error occurred while deserializing JSON message text (ID: {MessageId}): {MessageText}",
+                queueMessage.MessageId, queueMessage.MessageText);
             throw;
         }
 
-        if (dto == null)
+        if (message == null)
         {
-            logger.LogError("Message (ID: {MessageId}) unexpectedly deserialized to null: {MessageText}", message.MessageId, message.MessageText);
-            throw new InvalidOperationException($"Message (ID: {message.MessageId}) unexpectedly deserialized to null.");
+            logger.LogError("Message (ID: {MessageId}) unexpectedly deserialized to null: {MessageText}", queueMessage.MessageId,
+                queueMessage.MessageText);
+            throw new InvalidOperationException($"Message (ID: {queueMessage.MessageId}) unexpectedly deserialized to null.");
         }
 
-        return dto;
+        return message;
+    }
+
+    public static async Task ProcessAsync<TMessage, TLogger>(
+        this QueueMessage queueMessage,
+        ILogger<TLogger> logger,
+        string functionName,
+        Func<QueueMessage, TMessage, CancellationToken, Task> processAsync,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var message = Deserialize<TMessage, TLogger>(queueMessage, logger);
+            await processAsync(queueMessage, message, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "An error occurred during queue processing in {FunctionName}. Message ID: {MessageId}; Retry Count: {RetryCount}; Message Text: {MessageText}",
+                functionName,
+                queueMessage.MessageId,
+                queueMessage.DequeueCount,
+                queueMessage.MessageText);
+            throw;
+        }
     }
 }
