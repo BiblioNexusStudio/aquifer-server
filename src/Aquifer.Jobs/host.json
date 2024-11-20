@@ -22,6 +22,7 @@
             "maxConcurrentActivityFunctions": 10,
             "maxConcurrentOrchestratorFunctions": 5,
 
+            "storeInputsInOrchestrationHistory": true,
             "useGracefulShutdown": true
         }
     },
