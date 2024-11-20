@@ -20,7 +20,9 @@
             // (making this explicit to allow easier configuration).
             // See https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-bindings?tabs=python-v2%2Cin-process%2C2x-durable-functions&pivots=programming-language-csharp#hostjson-settings.
             "maxConcurrentActivityFunctions": 10,
-            "maxConcurrentOrchestratorFunctions": 5
+            "maxConcurrentOrchestratorFunctions": 5,
+
+            "useGracefulShutdown": true
         }
     },
 
