@@ -6,6 +6,12 @@
             "Azure.Core": "Error" // suppressing noisy SDK warnings
         }
     },
+    "concurrency": {
+        // Let Azure handle concurrency.
+        // See https://learn.microsoft.com/en-us/azure/azure-functions/functions-concurrency#dynamic-concurrency-configuration.
+        "dynamicConcurrencyEnabled": true,
+        "snapshotPersistenceEnabled": true
+    },
     "extensions": {
         "durableTask": {
             "hubName": "AquiferTaskHub",
