@@ -45,15 +45,22 @@ public sealed class TranslationMessageSubscriber(
     ///     Translates a single resource content item.
     ///     Only used by individual resource translation flows. Not used by project translation.
     /// </summary>
-    [Function(nameof(TranslateResource))]
-    public async Task TranslateResource([QueueTrigger(Queues.TranslateResource)] QueueMessage queueMessage, CancellationToken ct)
+    [Function(nameof(TranslateResourceMessageSubscriber))]
+    public async Task TranslateResourceMessageSubscriber([QueueTrigger(Queues.TranslateResource)] QueueMessage queueMessage, CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<TranslateResourceMessage, TranslationMessageSubscriber>(_logger);
+        await queueMessage.ProcessAsync<TranslateResourceMessage, TranslationMessageSubscriber>(
+            _logger,
+            nameof(TranslateResourceMessageSubscriber),
+            ProcessAsync,
+            ct);
+    }
 
+    private async Task ProcessAsync(QueueMessage queueMessage, TranslateResourceMessage message, CancellationToken ct)
+    {
         if (!s_allowedTranslationOriginsForIndividualResourceContentTranslation.Contains(message.TranslationOrigin))
         {
             throw new InvalidOperationException(
-                $"Invalid {nameof(TranslationOrigin)} for the {nameof(TranslateResource)} flow: \"{message.TranslationOrigin}\".");
+                $"Invalid {nameof(TranslationOrigin)} for the {nameof(TranslateResourceMessageSubscriber)} flow: \"{message.TranslationOrigin}\".");
         }
 
         await TranslateResourceCoreAsync(
@@ -71,13 +78,24 @@ public sealed class TranslationMessageSubscriber(
     ///     which requires using durable functions to maintain state.
     ///     (see https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-bindings#durableTaskClient-usage).
     /// </summary>
-    [Function(nameof(TranslateProjectResources))]
-    public async Task TranslateProjectResources([QueueTrigger(Queues.TranslateProjectResources)] QueueMessage queueMessage,
+    [Function(nameof(TranslateProjectResourcesMessageSubscriber))]
+    public async Task TranslateProjectResourcesMessageSubscriber([QueueTrigger(Queues.TranslateProjectResources)] QueueMessage queueMessage,
         [DurableClient] DurableTaskClient durableTaskClient,
+        CancellationToken cancellationToken)
+    {
+        await queueMessage.ProcessAsync<TranslateProjectResourcesMessage, TranslationMessageSubscriber>(
+            _logger,
+            nameof(TranslateProjectResourcesMessageSubscriber),
+            (qm, m, ct) => ProcessAsync(qm, m, durableTaskClient, ct),
+            cancellationToken);
+    }
+
+    private async Task ProcessAsync(
+        QueueMessage queueMessage,
+        TranslateProjectResourcesMessage message,
+        DurableTaskClient durableTaskClient,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<TranslateProjectResourcesMessage, TranslationMessageSubscriber>(_logger);
-
         var projectResourceContentIds = await _dbContext.ProjectResourceContents.Where(prc => prc.ProjectId == message.ProjectId)
             .Select(prc => prc.ResourceContentId)
             .ToListAsync(ct);

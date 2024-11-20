@@ -20,19 +20,26 @@ public class TrackResourceContentRequestMessageSubscriber(
         [QueueTrigger(Queues.TrackResourceContentRequest)] QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var trackingMetadata = queueMessage.Deserialize<TrackResourceContentRequestMessage, TrackResourceContentRequestMessageSubscriber>(logger);
+        await queueMessage.ProcessAsync<TrackResourceContentRequestMessage, TrackResourceContentRequestMessageSubscriber>(
+            logger,
+            nameof(TrackResourceContentRequestMessageSubscriber),
+            ProcessAsync,
+            ct);
+    }
 
-        await LookupIpAddressAsync(trackingMetadata, ct);
-        await dbContext.ResourceContentRequests
-            .AddRangeAsync(trackingMetadata.ResourceContentIds.Select(x =>
-                new ResourceContentRequestEntity
+    private async Task ProcessAsync(QueueMessage queueMessage, TrackResourceContentRequestMessage message, CancellationToken ct)
+    {
+        await LookupIpAddressAsync(message, ct);
+        await dbContext.ResourceContentRequests.AddRangeAsync(
+            message.ResourceContentIds
+                .Select(x => new ResourceContentRequestEntity
                 {
                     ResourceContentId = x,
-                    IpAddress = trackingMetadata.IpAddress,
-                    SubscriptionName = trackingMetadata.SubscriptionName,
-                    EndpointId = trackingMetadata.EndpointId,
-                    Source = trackingMetadata.Source,
-                    UserId = trackingMetadata.UserId,
+                    IpAddress = message.IpAddress,
+                    SubscriptionName = message.SubscriptionName,
+                    EndpointId = message.EndpointId,
+                    Source = message.Source,
+                    UserId = message.UserId,
                     Created = queueMessage.InsertedOn?.UtcDateTime ?? DateTime.UtcNow
                 }),
             ct);
@@ -41,8 +48,8 @@ public class TrackResourceContentRequestMessageSubscriber(
 
         logger.LogInformation(
             "Resource tracking successful for Endpoint ID {EndpointId} for IP Address {IpAddress}.",
-            trackingMetadata.EndpointId,
-            trackingMetadata.IpAddress);
+            message.EndpointId,
+            message.IpAddress);
     }
 
     private async Task LookupIpAddressAsync(TrackResourceContentRequestMessage trackingMetadata, CancellationToken ct)
