@@ -3,6 +3,7 @@ using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.TranslationPairs.Post;
 
@@ -16,9 +17,20 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var user = await userService.GetUserFromJwtAsync(ct);
+        var checkForExistingTranslationPair =
+            await dbContext.TranslationPairs.FirstOrDefaultAsync(x => x.Key.Equals(request.Key) && x.LanguageId == request.LanguageId, ct);
 
-        if (request.LanguageId != user.Company.CompanyLanguages.FirstOrDefault(x => x.LanguageId == request.LanguageId)?.LanguageId)
+        if (checkForExistingTranslationPair != null)
+        {
+            AddError("Key already exists for this language");
+            await SendErrorsAsync(409, ct);
+            return;
+        }
+
+        var user = await userService.GetUserWithCompanyLanguagesFromJwtAsync(ct);
+        var companyLanguage = user.Company.CompanyLanguages.FirstOrDefault(x => x.LanguageId == request.LanguageId);
+
+        if (request.LanguageId != companyLanguage?.LanguageId)
         {
             await SendForbiddenAsync(ct);
             return;
@@ -34,13 +46,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         await dbContext.TranslationPairs.AddAsync(translationPair, ct);
         await dbContext.SaveChangesAsync(ct);
 
-        Response = new Response
-        {
-            Id = translationPair.Id,
-            LanguageId = translationPair.LanguageId,
-            Key = translationPair.Key,
-            Value = translationPair.Value,
-            LanguageEnglishDisplay = translationPair.Language.EnglishDisplay
-        };
+        Response = new Response { Id = translationPair.Id };
     }
 }

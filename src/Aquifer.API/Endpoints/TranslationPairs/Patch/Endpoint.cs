@@ -24,17 +24,24 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             return;
         }
 
-        var user = await userService.GetUserFromJwtAsync(ct);
+        var user = await userService.GetUserWithCompanyLanguagesFromJwtAsync(ct);
+        var companyLanguage = user.Company.CompanyLanguages.FirstOrDefault(x => x.LanguageId == translationPair.LanguageId);
 
-        if (translationPair.LanguageId !=
-            user.Company.CompanyLanguages.FirstOrDefault(x => x.LanguageId == translationPair.LanguageId)?.LanguageId)
+        if (translationPair.LanguageId != companyLanguage?.LanguageId)
         {
             await SendForbiddenAsync(ct);
             return;
         }
 
-        translationPair.Key = req.Key;
-        translationPair.Value = req.Value;
+        if (req.Key is not null)
+        {
+            translationPair.Key = req.Key;
+        }
+
+        if (req.Value is not null)
+        {
+            translationPair.Value = req.Value;
+        }
 
         dbContext.TranslationPairs.Update(translationPair);
         await dbContext.SaveChangesAsync(ct);
