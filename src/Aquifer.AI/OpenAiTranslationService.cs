@@ -39,6 +39,7 @@ public class OpenAiOptions
 public sealed class OpenAiTranslationOptions
 {
     public required string DefaultLanguageSpecificPromptAppendixFormatString { get; init; }
+    public required string HtmlAquiferizationBasePrompt { get; init; }
     public required string HtmlTranslationBasePrompt { get; init; }
     public required Dictionary<string, string> LanguageSpecificPromptAppendixByLanguageIso6393CodeMap { get; init; }
     public required float Temperature { get; init; }
@@ -212,12 +213,20 @@ public sealed partial class OpenAiTranslationService : ITranslationService
 
     private string GetHtmlTranslationPrompt((string Iso6393Code, string EnglishName) destinationLanguage)
     {
-        var languageSpecificPromptAppendix =
-            _options.LanguageSpecificPromptAppendixByLanguageIso6393CodeMap
-                .GetValueOrDefault(destinationLanguage.Iso6393Code.ToUpper())
-            ?? string.Format(_options.DefaultLanguageSpecificPromptAppendixFormatString, destinationLanguage.EnglishName);
+        var uppercaseCode = destinationLanguage.Iso6393Code.ToUpper();
+        if (uppercaseCode == "ENG")
+        {
+            return _options.HtmlAquiferizationBasePrompt;
+        }
+        else
+        {
+            var languageSpecificPromptAppendix =
+                _options.LanguageSpecificPromptAppendixByLanguageIso6393CodeMap
+                .GetValueOrDefault(uppercaseCode)
+                ?? string.Format(_options.DefaultLanguageSpecificPromptAppendixFormatString, destinationLanguage.EnglishName);
 
-        return $"{_options.HtmlTranslationBasePrompt} {languageSpecificPromptAppendix}";
+            return $"{_options.HtmlTranslationBasePrompt} {languageSpecificPromptAppendix}";
+        }
     }
 
     private string GetTextTranslationPrompt((string Iso6393Code, string EnglishName) destinationLanguage)

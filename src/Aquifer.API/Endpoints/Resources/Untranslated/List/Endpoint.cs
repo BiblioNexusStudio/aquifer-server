@@ -1,4 +1,4 @@
-﻿using Aquifer.API.Common;
+﻿using Aquifer.Common;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -43,8 +43,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                              WHERE rc2.ResourceId = rc.ResourceId
                              AND rc2.MediaType = {(int)ResourceContentMediaType.Text}
                              AND rc2.LanguageId = @LanguageId
-                             AND ((rc2.Status != {(int)ResourceContentStatus.TranslationAwaitingAiDraft} 
-                                    AND rc2.Status != {(int)ResourceContentStatus.TranslationAiDraftComplete}) 
+                             AND ((rc2.Status != {(int)ResourceContentStatus.TranslationAwaitingAiDraft}
+                                    AND rc2.Status != {(int)ResourceContentStatus.TranslationAiDraftComplete})
                                 OR EXISTS (SELECT 1 FROM ProjectResourceContents prc WHERE prc.ResourceContentId = rc2.Id))
                          )
                          AND (@SearchQuery = '' OR r.EnglishLabel LIKE '%' + @SearchQuery + '%')

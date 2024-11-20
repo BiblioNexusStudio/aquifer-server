@@ -1,5 +1,6 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
+using Aquifer.Common;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -159,6 +160,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             {
                 ThrowError(r => r.ResourceIds, "One or more resources are already in a project.");
             }
+
+            resourceContent.Status = ResourceContentStatus.AquiferizeAwaitingAiDraft;
 
             var draftVersion = resourceContent.Versions.FirstOrDefault(v => v.IsDraft);
             if (draftVersion is null)
