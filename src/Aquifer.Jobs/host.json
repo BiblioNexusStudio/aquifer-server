@@ -1,12 +1,24 @@
 {
     "version": "2.0",
+
     "logging": {
         "logLevel": {
             "default": "Information",
-            "Azure.Core": "Error" // suppressing noisy SDK warnings
+            "Azure.Core": "Error" // suppress noisy SDK warnings
         }
     },
+
+    // Let Azure handle concurrency.
+    // See https://learn.microsoft.com/en-us/azure/azure-functions/functions-concurrency#dynamic-concurrency-configuration.
+    "concurrency": {
+        "dynamicConcurrencyEnabled": true,
+        "snapshotPersistenceEnabled": true
+    },
+
     "extensions": {
+
+        // Durable Function settings.
+        // See https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-bindings?tabs=python-v2%2Cin-process%2C2x-durable-functions&pivots=programming-language-csharp#host-json.
         "durableTask": {
             "hubName": "AquiferTaskHub",
 
@@ -14,8 +26,43 @@
             // (making this explicit to allow easier configuration).
             // See https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-bindings?tabs=python-v2%2Cin-process%2C2x-durable-functions&pivots=programming-language-csharp#hostjson-settings.
             "maxConcurrentActivityFunctions": 10,
-            "maxConcurrentOrchestratorFunctions": 5
+            "maxConcurrentOrchestratorFunctions": 5,
+
+            "storeInputsInOrchestrationHistory": true,
+            "useGracefulShutdown": true
+        },
+
+        // Message Subscriber settings.
+        // See https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-storage-queue?tabs=isolated-process%2Cextensionv5%2Cextensionv3&pivots=programming-language-csharp#host-json.
+        "queues": {
+            // default is 1 minute; setting lower to ensure faster pick up of translation jobs
+            "maxPollingInterval": "00:00:30",
+
+            // default is 0; wait ten seconds before retrying failed operations
+            "visibilityTimeout": "00:00:10",
+
+            // default; maximum number of queue messages to process in parallel
+            "batchSize": 16,
+
+            // default; maximum number of retries for failed operations
+            "maxDequeueCount": 5,
+
+            // default; the maximum number of in-process operations allowed before pulling a new batch
+            "newBatchThreshold": 8,
+
+            // default
+            "messageEncoding": "base64"
         }
+    },
+
+    // Prevents functions from exceeding Azure Web App sandbox limits.
+    // See https://github.com/Azure/azure-functions-host/wiki/Host-Health-Monitor.
+    "healthMonitor": {
+        "enabled": true,
+        "healthCheckInterval": "00:00:10",
+        "healthCheckWindow": "00:02:00",
+        "healthCheckThreshold": 6,
+        "counterThreshold": 0.80
     },
 
     // Maximum is 10 minutes for Consumption plan (default is 5 minutes).

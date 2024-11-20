@@ -20,13 +20,20 @@ public sealed class NotificationMessageSubscriber(
     IEmailMessagePublisher _emailMessagePublisher,
     ILogger<NotificationMessageSubscriber> _logger)
 {
-    [Function(nameof(SendProjectStartedNotification))]
-    public async Task SendProjectStartedNotification(
+    [Function(nameof(SendProjectStartedNotificationMessageSubscriber))]
+    public async Task SendProjectStartedNotificationMessageSubscriber(
         [QueueTrigger(Queues.SendProjectStartedNotification)] QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<SendProjectStartedNotificationMessage, NotificationMessageSubscriber>(_logger);
+        await queueMessage.ProcessAsync<SendProjectStartedNotificationMessage, NotificationMessageSubscriber>(
+            _logger,
+            nameof(SendProjectStartedNotificationMessageSubscriber),
+            ProcessAsync,
+            ct);
+    }
 
+    private async Task ProcessAsync(QueueMessage queueMessage, SendProjectStartedNotificationMessage message, CancellationToken ct)
+    {
         var project = await _dbContext.Projects
             .Include(projectEntity => projectEntity.CompanyLeadUser)
             .FirstAsync(p => p.Id == message.ProjectId, ct);
@@ -68,13 +75,20 @@ public sealed class NotificationMessageSubscriber(
         }
     }
 
-    [Function(nameof(SendResourceCommentCreatedNotification))]
-    public async Task SendResourceCommentCreatedNotification(
+    [Function(nameof(SendResourceCommentCreatedNotificationMessageSubscriber))]
+    public async Task SendResourceCommentCreatedNotificationMessageSubscriber(
         [QueueTrigger(Queues.SendResourceCommentCreatedNotification)] QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<SendResourceCommentCreatedNotificationMessage, NotificationMessageSubscriber>(_logger);
+        await queueMessage.ProcessAsync<SendResourceCommentCreatedNotificationMessage, NotificationMessageSubscriber>(
+            _logger,
+            nameof(SendResourceCommentCreatedNotificationMessageSubscriber),
+            ProcessAsync,
+            ct);
+    }
 
+    private async Task ProcessAsync(QueueMessage queueMessage, SendResourceCommentCreatedNotificationMessage message, CancellationToken ct)
+    {
         var dbConnection = _dbContext.Database.GetDbConnection();
         var resourceCommentData = await GetResourceCommentDataAsync(dbConnection, message.CommentId, ct);
 
@@ -121,7 +135,9 @@ public sealed class NotificationMessageSubscriber(
             {
                 [EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notifications: New Resource Comment",
                 ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
-                ["commenterUserName"] = NotificationsHelper.GetUserFullName(resourceCommentData.UserFirstName, resourceCommentData.UserLastName),
+                ["commenterUserName"] = NotificationsHelper.GetUserFullName(
+                    resourceCommentData.UserFirstName,
+                    resourceCommentData.UserLastName),
                 ["commentHtml"] = HttpUtility.HtmlEncode(resourceCommentData.Comment).Replace("\n", "<br>"),
                 ["parentResourceName"] = resourceCommentData.ParentResourceDisplayName,
                 ["resourceContentId"] = resourceCommentData.ResourceContentId,

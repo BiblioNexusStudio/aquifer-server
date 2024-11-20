@@ -16,54 +16,53 @@ public sealed class EmailMessageSubscriber(
     IOptions<ConfigurationOptions> _configurationOptions,
     ILogger<EmailMessageSubscriber> _logger)
 {
-    [Function(nameof(SendEmail))]
-    public async Task SendEmail(
+    [Function(nameof(SendEmailMessageSubscriber))]
+    public async Task SendEmailMessageSubscriber(
         [QueueTrigger(Queues.SendEmail)]
         QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<SendEmailMessage, EmailMessageSubscriber>(_logger);
+        await queueMessage.ProcessAsync<SendEmailMessage, EmailMessageSubscriber>(
+            _logger,
+            nameof(SendEmailMessageSubscriber),
+            ProcessAsync,
+            ct);
+    }
 
-        try
-        {
-            await _emailService.SendEmailAsync(
-                MapToEmail(message with { Subject = $"{_configurationOptions.Value.Email.SubjectPrefix}{message.Subject}" }),
-                ct);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unable to send email: \"{SendEmailMessage}\"", queueMessage.MessageText);
-            throw;
-        }
+    private async Task ProcessAsync(QueueMessage queueMessage, SendEmailMessage message, CancellationToken ct)
+    {
+        await _emailService.SendEmailAsync(
+            MapToEmail(message with { Subject = $"{_configurationOptions.Value.Email.SubjectPrefix}{message.Subject}" }),
+            ct);
 
         _logger.LogInformation("Email sent: {SendEmailMessage}", queueMessage.MessageText);
     }
 
-    [Function(nameof(SendTemplatedEmail))]
-    public async Task SendTemplatedEmail(
+    [Function(nameof(SendTemplatedEmailMessageSubscriber))]
+    public async Task SendTemplatedEmailMessageSubscriber(
         [QueueTrigger(Queues.SendTemplatedEmail)]
         QueueMessage queueMessage,
         CancellationToken ct)
     {
-        var message = queueMessage.Deserialize<SendTemplatedEmailMessage, EmailMessageSubscriber>(_logger);
+        await queueMessage.ProcessAsync<SendTemplatedEmailMessage, EmailMessageSubscriber>(
+            _logger,
+            nameof(SendTemplatedEmailMessageSubscriber),
+            ProcessAsync,
+            ct);
+    }
 
+    private async Task ProcessAsync(QueueMessage queueMessage, SendTemplatedEmailMessage message, CancellationToken ct)
+    {
         // if `Subject` is present in the dynamic template data then add an environment specific prefix to it
-        if (message.DynamicTemplateData.TryGetValue(EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName, out var subject) &&
+        if (message.DynamicTemplateData
+                .TryGetValue(EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName, out var subject) &&
             subject is string subjectString)
         {
             message.DynamicTemplateData[EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName]
                 = $"{_configurationOptions.Value.Email.SubjectPrefix}{subjectString}";
         }
 
-        try
-        {
-            await _emailService.SendEmailAsync(MapToTemplatedEmail(message), ct);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unable to send templated email: \"{SendTemplatedEmailMessage}\"", queueMessage.MessageText);
-            throw;
-        }
+        await _emailService.SendEmailAsync(MapToTemplatedEmail(message), ct);
 
         _logger.LogInformation("Templated email sent: {SendTemplatedEmailMessage}", queueMessage.MessageText);
     }
