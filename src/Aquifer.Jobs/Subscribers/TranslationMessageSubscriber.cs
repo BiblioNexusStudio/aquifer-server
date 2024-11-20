@@ -406,7 +406,7 @@ public sealed class TranslationMessageSubscriber(
         resourceContentVersion.ResourceContent.ContentUpdated = DateTime.UtcNow;
 
         // If not a retranslation then save a new snapshot of the translation.
-        // Always save it as TranslationAwaitingAiDraft in order to prevent a user's name from appearing with the snapshot.
+        // Always save it as TranslationAwaitingAiDraft/AquiferizeAwaitingAiDraft in order to prevent a user's name from appearing with the snapshot.
         if (!shouldForceRetranslation)
         {
             await _resourceHistoryService.AddSnapshotHistoryAsync(resourceContentVersion,
@@ -419,7 +419,7 @@ public sealed class TranslationMessageSubscriber(
         {
             var existingAiTranslationSnapshot = resourceContentVersion.ResourceContentVersionSnapshots
                 .OrderBy(rcvs => rcvs.Created)
-                .Last(rcvs => rcvs.Status == ResourceContentStatus.TranslationAwaitingAiDraft);
+                .Last(rcvs => rcvs.Status == awaitingStatus);
 
             existingAiTranslationSnapshot.Content = resourceContentVersion.Content;
             existingAiTranslationSnapshot.DisplayName = resourceContentVersion.DisplayName;
