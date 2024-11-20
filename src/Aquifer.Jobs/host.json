@@ -1,17 +1,20 @@
 {
     "version": "2.0",
+
     "logging": {
         "logLevel": {
             "default": "Information",
-            "Azure.Core": "Error" // suppressing noisy SDK warnings
+            "Azure.Core": "Error" // suppress noisy SDK warnings
         }
     },
+
+    // Let Azure handle concurrency.
+    // See https://learn.microsoft.com/en-us/azure/azure-functions/functions-concurrency#dynamic-concurrency-configuration.
     "concurrency": {
-        // Let Azure handle concurrency.
-        // See https://learn.microsoft.com/en-us/azure/azure-functions/functions-concurrency#dynamic-concurrency-configuration.
         "dynamicConcurrencyEnabled": true,
         "snapshotPersistenceEnabled": true
     },
+
     "extensions": {
         "durableTask": {
             "hubName": "AquiferTaskHub",
@@ -25,6 +28,16 @@
             "storeInputsInOrchestrationHistory": true,
             "useGracefulShutdown": true
         }
+    },
+
+    // Prevents functions from exceeding Azure Web App sandbox limits.
+    // See https://github.com/Azure/azure-functions-host/wiki/Host-Health-Monitor.
+    "healthMonitor": {
+        "enabled": true,
+        "healthCheckInterval": "00:00:10",
+        "healthCheckWindow": "00:02:00",
+        "healthCheckThreshold": 6,
+        "counterThreshold": 0.80
     },
 
     // Maximum is 10 minutes for Consumption plan (default is 5 minutes).
