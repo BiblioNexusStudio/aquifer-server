@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.TranslationPairs.List;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request, IEnumerable<Response>>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService) : EndpointWithoutRequest<IEnumerable<Response>>
 {
     public override void Configure()
     {
@@ -15,7 +15,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         Permissions(PermissionName.GetTranslationPair);
     }
 
-    public override async Task HandleAsync(Request req, CancellationToken ct)
+    public override async Task HandleAsync(CancellationToken ct)
     {
         var user = await userService.GetUserWithCompanyFromJwtAsync(ct);
 
@@ -33,7 +33,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         var connection = dbContext.Database.GetDbConnection();
         var queryResults = await connection.QueryAsync<Response>(query, new { user.CompanyId });
+        var sortedResults = queryResults.OrderBy(r => r.TranslationPairKey).ToList();
 
-        Response = queryResults.ToList();
+        Response = sortedResults;
     }
 }

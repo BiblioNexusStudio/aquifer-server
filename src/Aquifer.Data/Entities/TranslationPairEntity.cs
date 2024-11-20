@@ -1,6 +1,8 @@
+using Aquifer.Data.EventHandlers;
+
 namespace Aquifer.Data.Entities;
 
-public class TranslationPairEntity
+public class TranslationPairEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
     public LanguageEntity Language { get; set; } = null!;
