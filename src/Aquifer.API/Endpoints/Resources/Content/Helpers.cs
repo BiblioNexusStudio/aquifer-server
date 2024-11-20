@@ -1,11 +1,14 @@
 using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
+using Aquifer.Common;
 using Aquifer.Common.Tiptap;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Services;
 using Microsoft.EntityFrameworkCore;
+using Aquifer.Common.Messages.Publishers;
+using Aquifer.Common.Messages.Models;
 
 namespace Aquifer.API.Endpoints.Resources.Content;
 
@@ -33,7 +36,9 @@ public static class Helpers
             resourceContentVersions.SingleOrDefault(x => x.IsDraft));
     }
 
-    public static async Task CreateNewDraft(AquiferDbContext dbContext,
+    public static async Task CreateNewDraft(
+        AquiferDbContext dbContext,
+        ITranslationMessagePublisher translationMessagePublisher,
         int contentId,
         int? assignedUserId,
         ResourceContentVersionEntity mostRecentResourceContentVersion,
@@ -68,20 +73,40 @@ public static class Helpers
         {
             await historyService.AddAssignedUserHistoryAsync(newResourceContentVersion, assignedUserId, user.Id, ct);
         }
-        else
+
+        var resourceContent = await dbContext.ResourceContents.AsTracking().SingleOrDefaultAsync(rc => rc.Id == contentId, ct) ?? throw new ArgumentNullException();
+
+        if (assignedUserId is null || resourceContent.LanguageId == Constants.EnglishLanguageId)
         {
             await historyService.AddSnapshotHistoryAsync(newResourceContentVersion, user.Id, ResourceContentStatus.New, ct);
         }
 
-        var resourceContent = await dbContext.ResourceContents.FindAsync([contentId], ct) ?? throw new ArgumentNullException();
-
-        resourceContent.Status = ResourceContentStatus.AquiferizeEditorReview;
-        if (resourceContentIsUpdating)
+        if (resourceContent.LanguageId == Constants.EnglishLanguageId)
         {
-            resourceContent.Updated = DateTime.UtcNow;
-        }
+            resourceContent.Status = ResourceContentStatus.AquiferizeAwaitingAiDraft;
+            await historyService.AddStatusHistoryAsync(newResourceContentVersion, ResourceContentStatus.AquiferizeAwaitingAiDraft, user.Id, ct);
 
-        await historyService.AddStatusHistoryAsync(newResourceContentVersion, ResourceContentStatus.AquiferizeEditorReview, user.Id, ct);
+            // a save has to happen here (even though the callers will also do their own saves)
+            // to ensure data is in the right state for TranslationMessageSubscriber
+            await dbContext.SaveChangesAsync(ct);
+
+            await translationMessagePublisher.PublishTranslateResourceMessageAsync(
+                    new TranslateResourceMessage(
+                        contentId,
+                        user.Id,
+                        ShouldForceRetranslation: false,
+                        TranslationOrigin.CreateAquiferization),
+                    ct);
+        }
+        else
+        {
+            resourceContent.Status = ResourceContentStatus.AquiferizeEditorReview;
+            if (resourceContentIsUpdating)
+            {
+                resourceContent.Updated = DateTime.UtcNow;
+            }
+            await historyService.AddStatusHistoryAsync(newResourceContentVersion, ResourceContentStatus.AquiferizeEditorReview, user.Id, ct);
+        }
     }
 
     public static void SanitizeTiptapContent(ResourceContentVersionEntity version)

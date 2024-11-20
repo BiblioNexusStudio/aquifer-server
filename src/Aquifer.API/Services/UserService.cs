@@ -39,17 +39,18 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
 
     public List<string> GetAllJwtRoles()
     {
-        return httpContextAccessor.HttpContext?.User.FindAll(Constants.RolesClaim).Select(c => c.Value).ToList() ?? [];
+        return httpContextAccessor.HttpContext?.User.FindAll(Permissions.RolesClaim).Select(c => c.Value).ToList() ?? [];
     }
 
     public List<string> GetAllJwtPermissions()
     {
-        return httpContextAccessor.HttpContext?.User.FindAll(Constants.PermissionsClaim).Select(c => c.Value).ToList() ?? [];
+        return httpContextAccessor.HttpContext?.User.FindAll(Permissions.PermissionsClaim).Select(c => c.Value).ToList() ?? [];
     }
 
     public bool HasPermission(string permission)
     {
-        return httpContextAccessor.HttpContext?.User.HasClaim(c => c.Type == Constants.PermissionsClaim && c.Value == permission) ?? false;
+        return httpContextAccessor.HttpContext?.User.HasClaim(c => c.Type == Permissions.PermissionsClaim && c.Value == permission) ??
+               false;
     }
 
     public async Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken)

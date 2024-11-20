@@ -1,12 +1,13 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Data;
 using Aquifer.Data.Services;
 using FastEndpoints;
 
 namespace Aquifer.API.Endpoints.Resources.Content.Aquiferize;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService) : Endpoint<Request>
+public class Endpoint(AquiferDbContext dbContext, ITranslationMessagePublisher translationMessagePublisher, IUserService userService, IResourceHistoryService historyService) : Endpoint<Request>
 {
     public override void Configure()
     {
@@ -37,6 +38,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
 
         await Helpers.CreateNewDraft(dbContext,
+            translationMessagePublisher,
             request.ContentId,
             request.AssignedUserId,
             mostRecentContentVersion,

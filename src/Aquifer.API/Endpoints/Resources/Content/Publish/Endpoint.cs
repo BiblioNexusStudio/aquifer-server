@@ -1,5 +1,6 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Services;
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.Publish;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService historyService) : Endpoint<Request>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService, ITranslationMessagePublisher translationMessagePublisher, IResourceHistoryService historyService) : Endpoint<Request>
 {
     public override void Configure()
     {
@@ -65,6 +66,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             {
                 // create draft of published version
                 await Helpers.CreateNewDraft(dbContext,
+                    translationMessagePublisher,
                     contentId,
                     request.AssignedUserId,
                     mostRecentContentVersion,
