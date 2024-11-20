@@ -1,3 +1,15 @@
+# This workflow runs automatically on pushes to master that affect Internal API and its dependencies.
+# It can also be run manually via workflow_dispatch. It uses check-if-branch-should-deploy
+# to prevent cluttering the deployments list with initial release-hotfix- branches.
+#
+# It follows a build-then-deploy pattern:
+# - Build: Compiles the Internal API project and upload as artifact
+#     - Deploy to Dev: Download artifact and deploy
+#     - Deploy to QA: Download artifact and deploy
+#     - Deploy to Production: Download artifact and deploy
+#
+# Note: Environment deployments require approval through GitHub environment protection rules
+
 name: Post-merge (Internal API)
 
 on:

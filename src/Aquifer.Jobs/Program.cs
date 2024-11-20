@@ -70,4 +70,4 @@ var host = new HostBuilder()
 
 StaticLoggerFactory.LoggerFactory = host.Services.GetRequiredService<ILoggerFactory>();
 
-host.Run();
+await host.RunAsync();

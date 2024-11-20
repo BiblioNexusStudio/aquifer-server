@@ -1,5 +1,4 @@
-﻿using Aquifer.API.Common;
-using Aquifer.API.Services;
+﻿using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -12,17 +11,16 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override void Configure()
     {
         Patch("/resources/content/machine-translation/{Id}");
-        Permissions(PermissionName.AiTranslate);
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var existingMt = await dbContext.ResourceContentVersionMachineTranslations
-            .AsTracking()
-            .FirstOrDefaultAsync(
-                x => x.Id == req.Id && x.ResourceContentVersion.AssignedUserId == user.Id &&
-                     x.ResourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview,
+        var existingMt = await dbContext.ResourceContentVersionMachineTranslations.AsTracking()
+            .FirstOrDefaultAsync(x =>
+                    x.Id == req.Id &&
+                    x.ResourceContentVersion.AssignedUserId == user.Id &&
+                    x.ResourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview,
                 ct);
 
         if (existingMt is null)
