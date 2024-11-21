@@ -8,8 +8,7 @@ public static class Permissions
 
 public static class PermissionName
 {
-    public const string AiSimplify = "ai:simplify",
-        AiTranslate = "ai:translate",
+    public const string AiTranslate = "ai:translate",
         AssignContent = "assign:content",
         AssignOutsideCompany = "assign:outside-company",
         AssignOverride = "assign:override",
