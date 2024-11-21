@@ -22,10 +22,7 @@ public class AquiferDbContext : DbContext
     }
 
     public DbSet<AssociatedResourceEntity> AssociatedResources { get; set; }
-    public DbSet<BibleBookChapterEntity> BibleBookChapters { get; set; } // TODO: delete after deploy
-    public DbSet<BibleBookChapterVerseEntity> BibleBookChapterVerses { get; set; } // TODO: delete after deploy
     public DbSet<BibleBookContentEntity> BibleBookContents { get; set; }
-    public DbSet<BibleBookEntity> BibleBooks { get; set; } // TODO: delete after deploy
     public DbSet<BibleEntity> Bibles { get; set; }
     public DbSet<BibleTextEntity> BibleTexts { get; set; }
     public DbSet<BibleVersionWordEntity> BibleVersionWords { get; set; }

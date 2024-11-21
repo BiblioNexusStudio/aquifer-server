@@ -21,7 +21,6 @@ public class BibleEntity : IHasUpdatedTimestamp
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
     public LanguageEntity Language { get; set; } = null!;
-    public ICollection<BibleBookEntity> BibleBooks { get; set; } = []; // TODO: delete after deploy
     public ICollection<BibleBookContentEntity> BibleBookContents { get; set; } = [];
     public ICollection<BibleVersionWordEntity> BibleVersionWords { get; set; } = [];
 

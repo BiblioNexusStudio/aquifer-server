@@ -11,12 +11,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 {
     public override void Configure()
     {
-        Post(
-            //TODO: Delete assign-editor after next deploy
-            "/resources/content/{ContentId}/assign-editor",
-            "/resources/content/assign-editor",
-            "/resources/content/send-for-editor-review",
-            "/resources/content/{ContentId}/send-for-editor-review");
+        Post("/resources/content/send-for-editor-review", "/resources/content/{ContentId}/send-for-editor-review");
         Permissions(PermissionName.AssignContent, PermissionName.AssignOverride, PermissionName.AssignOutsideCompany);
     }
     public override async Task HandleAsync(Request request, CancellationToken ct)
