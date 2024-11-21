@@ -36,13 +36,14 @@ public static class PermissionName
         SendReviewContent = "send-review:content",
         SendReviewCommunityContent = "send-review:community-content",
         SetStatusTranslationNotApplicable = "set-status:translation-not-applicable",
-        SetStatusCompleteNotApplicable = "set-status:complete-not-applicable";
+        SetStatusCompleteNotApplicable = "set-status:complete-not-applicable",
+        SetTranslationPair = "set:translation-pair",
+        GetTranslationPair = "get:translation-pair";
 }
 
 public static class KeyVaultSecretName
 {
-    public const string Auth0ClientSecret = "Auth0ClientSecret",
-        OpenAiApiKey = "OpenAiApiKey";
+    public const string Auth0ClientSecret = "Auth0ClientSecret", OpenAiApiKey = "OpenAiApiKey";
 }
 
 public static class Auth0Constants

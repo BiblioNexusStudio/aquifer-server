@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Aquifer.Data.EventHandlers;
 
 namespace Aquifer.Data.Entities;
 
 [Index(nameof(LanguageId), nameof(Key), IsUnique = true)]
-public class TranslationPairEntity
+public class TranslationPairEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
     public int LanguageId { get; set; }
