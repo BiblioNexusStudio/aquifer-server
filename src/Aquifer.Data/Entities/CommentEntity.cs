@@ -1,7 +1,9 @@
 ﻿using Aquifer.Data.EventHandlers;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
 
+[Index(nameof(ThreadId))]
 public class CommentEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }

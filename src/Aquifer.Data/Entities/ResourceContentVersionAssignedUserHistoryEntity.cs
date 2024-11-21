@@ -39,5 +39,8 @@ public class ResourceContentVersionAssignedUserHistoryEntityConfiguration
 
         builder.HasIndex(e => new { e.ChangedByUserId, e.Created })
             .IncludeProperties(e => e.ResourceContentVersionId);
+
+        builder.HasIndex(e => e.Created)
+            .IncludeProperties(e => new { e.AssignedUserId, e.ResourceContentVersionId });
     }
 }
