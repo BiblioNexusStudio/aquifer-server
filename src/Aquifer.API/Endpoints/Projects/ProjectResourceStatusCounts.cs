@@ -29,7 +29,9 @@ public class ProjectResourceStatusCounts
     [
         ResourceContentStatus.New,
         ResourceContentStatus.TranslationAwaitingAiDraft,
-        ResourceContentStatus.TranslationAiDraftComplete
+        ResourceContentStatus.TranslationAiDraftComplete,
+        ResourceContentStatus.AquiferizeAwaitingAiDraft,
+        ResourceContentStatus.AquiferizeAiDraftComplete
     ];
 
     internal static readonly List<ResourceContentStatus> CompletedStatuses =
