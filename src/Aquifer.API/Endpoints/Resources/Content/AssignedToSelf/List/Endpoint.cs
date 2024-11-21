@@ -10,6 +10,11 @@ namespace Aquifer.API.Endpoints.Resources.Content.AssignedToSelf.List;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService) : EndpointWithoutRequest<IEnumerable<Response>>
 {
+    /// -------------------------------------------------------------------------------------------
+    /// -------------------------------------------------------------------------------------------
+    /// IMPORTANT: WHEN THIS QUERY IS UPDATED THE /next-up ENDPOINT NEEDS TO BE UPDATED ACCORDINGLY
+    /// -------------------------------------------------------------------------------------------
+    /// -------------------------------------------------------------------------------------------
     private const string Query = """
                                  SELECT RCV.ResourceContentId AS ResourceContentId, RCV.Id AS ResourceContentVersionId, R.EnglishLabel, PR.DisplayName AS ParentResourceName,
                                         L.EnglishDisplay AS LanguageEnglishDisplay, RCV.SourceWordCount AS WordCount, RC.Status AS StatusValue,
@@ -27,7 +32,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                                          WHERE RCV.Id = RCVAUH.ResourceContentVersionId AND RCVAUH.AssignedUserId = {0}
                                          ORDER BY RCVAUH.Id DESC
                                      ) AS History
-                                 WHERE RCV.AssignedUserId = {0} AND RC.Status != {1}
+                                 WHERE RCV.AssignedUserId = {0} AND RC.Status NOT IN ({1}, {2})
                                  """;
 
     public override void Configure()
@@ -40,7 +45,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         var user = await userService.GetUserFromJwtAsync(ct);
         var queryResults = await dbContext.Database
-            .SqlQueryRaw<SqlQueryResult>(Query, user.Id, (int)ResourceContentStatus.TranslationAiDraftComplete).ToListAsync(ct);
+            .SqlQueryRaw<SqlQueryResult>(Query, user.Id, (int)ResourceContentStatus.TranslationAiDraftComplete,
+                (int)ResourceContentStatus.AquiferizeAiDraftComplete).ToListAsync(ct);
         var resourceContentVersionIds = queryResults.Select(x => x.ResourceContentVersionId);
         var lastAssignments =
             await Helpers.GetLastAssignmentsAsync(resourceContentVersionIds, dbContext, ct);

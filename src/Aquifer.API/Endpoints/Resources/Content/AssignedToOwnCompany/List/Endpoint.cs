@@ -23,11 +23,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         List<ResourceContentStatus> statuses =
         [
             ResourceContentStatus.New,
+            ResourceContentStatus.AquiferizeAiDraftComplete,
+            ResourceContentStatus.AquiferizeCompanyReview,
             ResourceContentStatus.AquiferizeEditorReview,
             ResourceContentStatus.TranslationAiDraftComplete,
-            ResourceContentStatus.TranslationEditorReview,
-            ResourceContentStatus.AquiferizeCompanyReview,
-            ResourceContentStatus.TranslationCompanyReview
+            ResourceContentStatus.TranslationCompanyReview,
+            ResourceContentStatus.TranslationEditorReview
         ];
 
         var query = $"""
@@ -62,7 +63,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             SortOrder = x.SortOrder,
             StatusValue = x.StatusValue,
             StatusDisplayName = x.StatusValue.GetDisplayName(),
-            AssignedUser = new UserDto { Id = x.UserId, Name = $"{x.UserFirstName} {x.UserLastName}" },
+            AssignedUser = new UserDto
+            {
+                Id = x.UserId,
+                Name = $"{x.UserFirstName} {x.UserLastName}"
+            },
             DaysSinceContentUpdated = x.ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)x.ContentUpdated).Days,
             DaysUntilProjectDeadline =
                     x.ProjectProjectedDeliveryDate == null

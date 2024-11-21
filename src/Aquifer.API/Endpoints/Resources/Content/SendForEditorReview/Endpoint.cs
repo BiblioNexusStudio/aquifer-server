@@ -19,6 +19,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             "/resources/content/{ContentId}/send-for-editor-review");
         Permissions(PermissionName.AssignContent, PermissionName.AssignOverride, PermissionName.AssignOutsideCompany);
     }
+
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
@@ -31,7 +32,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         var draftVersions = await ResourceStatusHelpers.GetDraftVersions<Request>(contentIds,
         [
-            ResourceContentStatus.TranslationEditorReview, ResourceContentStatus.TranslationAiDraftComplete, ResourceContentStatus.New,
+            ResourceContentStatus.TranslationEditorReview, ResourceContentStatus.TranslationAiDraftComplete,
+            ResourceContentStatus.New, ResourceContentStatus.AquiferizeAiDraftComplete,
             ResourceContentStatus.AquiferizeEditorReview, ResourceContentStatus.AquiferizeCompanyReview,
             ResourceContentStatus.TranslationCompanyReview
         ], dbContext, ct);
@@ -63,7 +65,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         {
             draftVersion.ResourceContent.Status = ResourceContentStatus.TranslationEditorReview;
         }
-        else if (originalStatus == ResourceContentStatus.New)
+        else if (originalStatus is ResourceContentStatus.New or ResourceContentStatus.AquiferizeAiDraftComplete)
         {
             draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeEditorReview;
         }
