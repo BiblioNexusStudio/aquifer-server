@@ -47,14 +47,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         try
         {
             await dbContext.SaveChangesAsync(ct);
+            await SendNoContentAsync(ct);
         }
         catch (TranslationPairKeyNotAllowedException)
         {
             AddError("Keys must be at least 3 characters long. Some keywords are not allowed.");
             await SendErrorsAsync(400, ct);
-            return;
         }
-
-        await SendNoContentAsync(ct);
     }
 }
