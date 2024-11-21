@@ -1,6 +1,7 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
+using Aquifer.Data.Exceptions;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,7 +44,16 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             translationPair.Value = req.Value;
         }
 
-        await dbContext.SaveChangesAsync(ct);
+        try
+        {
+            await dbContext.SaveChangesAsync(ct);
+        }
+        catch (TranslationPairKeyNotAllowedException)
+        {
+            AddError("Keys must be at least 3 characters long. Some keywords are not allowed.");
+            await SendErrorsAsync(400, ct);
+            return;
+        }
 
         await SendNoContentAsync(ct);
     }
