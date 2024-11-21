@@ -6,5 +6,5 @@ public class Response
     public required string Title { get; set; }
     public required string ParentResourceName { get; set; }
     public required string Language { get; set; }
-    public required string ProjectName { get; set; }
+    public required string? ProjectName { get; set; }
 }
