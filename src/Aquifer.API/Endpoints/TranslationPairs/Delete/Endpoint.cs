@@ -25,9 +25,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         }
 
         var user = await userService.GetUserWithCompanyLanguagesFromJwtAsync(ct);
-        var companyLanguage = user.Company.CompanyLanguages.FirstOrDefault(x => x.LanguageId == translationPair.LanguageId);
+        var hasCompanyLanguage = user.Company.CompanyLanguages.Any(x => x.LanguageId == translationPair.LanguageId);
 
-        if (translationPair.LanguageId != companyLanguage?.LanguageId)
+        if (!hasCompanyLanguage)
         {
             await SendForbiddenAsync(ct);
             return;

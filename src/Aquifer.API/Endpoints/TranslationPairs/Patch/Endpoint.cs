@@ -16,7 +16,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var translationPair = await dbContext.TranslationPairs.FirstOrDefaultAsync(x => x.Id == req.Id, ct);
+        var translationPair = await dbContext.TranslationPairs.AsTracking().FirstOrDefaultAsync(x => x.Id == req.Id, ct);
 
         if (translationPair is null)
         {
@@ -25,9 +25,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         }
 
         var user = await userService.GetUserWithCompanyLanguagesFromJwtAsync(ct);
-        var companyLanguage = user.Company.CompanyLanguages.FirstOrDefault(x => x.LanguageId == translationPair.LanguageId);
+        var hasCompanyLanguage = user.Company.CompanyLanguages.Any(x => x.LanguageId == translationPair.LanguageId);
 
-        if (translationPair.LanguageId != companyLanguage?.LanguageId)
+        if (!hasCompanyLanguage)
         {
             await SendForbiddenAsync(ct);
             return;
@@ -43,7 +43,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             translationPair.Value = req.Value;
         }
 
-        dbContext.TranslationPairs.Update(translationPair);
         await dbContext.SaveChangesAsync(ct);
 
         await SendNoContentAsync(ct);
