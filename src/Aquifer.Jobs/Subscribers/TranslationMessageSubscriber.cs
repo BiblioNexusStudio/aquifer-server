@@ -328,13 +328,15 @@ public sealed class TranslationMessageSubscriber(
 
         var destinationLanguage = (Iso6393Code: resourceContentLanguage.ISO6393Code, EnglishName: resourceContentLanguage.EnglishDisplay);
 
-        var translationPairs = await _dbContext.TranslationPairs.Where(x => x.LanguageId == resourceContentLanguage.Id)
-            .Select(x => new
-            {
-                x.Key,
-                x.Value
-            })
-            .ToDictionaryAsync(x => x.Key, x => x.Value, ct);
+        var translationPairs = isAquiferization
+            ? []
+            : await _dbContext.TranslationPairs.Where(x => x.LanguageId == resourceContentLanguage.Id)
+                .Select(x => new
+                {
+                    x.Key,
+                    x.Value
+                })
+                .ToDictionaryAsync(x => x.Key, x => x.Value, ct);
 
         // if this is a forced retranslation then use the original snapshot data instead of the ResourceContentVersion's data
         var firstResourceContentVersionSnapshot = resourceContentVersion.ResourceContentVersionSnapshots

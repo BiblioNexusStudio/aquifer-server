@@ -18,7 +18,8 @@ public class AquiferDbContext : DbContext
         // a wrapper around it. https://www.jetbrains.com/help/resharper/VirtualMemberCallInConstructor.html
         // It's likely irrelevant anyway, because the events are additive.
         ChangeTracker.StateChanged += OnStateChange;
-        SavedChanges += async (s, e) => await OnSavingChanges(s, e);
+        SavedChanges += async (s, e) => await OnSavedChanges(s, e);
+        SavingChanges += OnSavingChanges;
     }
 
     public DbSet<AssociatedResourceEntity> AssociatedResources { get; set; }
@@ -97,9 +98,15 @@ public class AquiferDbContext : DbContext
         UpdatedTimestampHandler.Handle(e.Entry);
     }
 
-    private async Task OnSavingChanges(object? sender, SavedChangesEventArgs e)
+    private async Task OnSavedChanges(object? sender, SavedChangesEventArgs e)
     {
         var entries = ChangeTracker.Entries();
         await ResourceStatusChangeHandler.HandleAsync(_options, entries);
+    }
+
+    private void OnSavingChanges(object? sender, SavingChangesEventArgs e)
+    {
+        var entries = ChangeTracker.Entries();
+        BadTranslationPairHandler.Handle(entries);
     }
 }

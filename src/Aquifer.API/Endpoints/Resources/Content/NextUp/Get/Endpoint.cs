@@ -9,6 +9,11 @@ namespace Aquifer.API.Endpoints.Resources.Content.NextUp.Get;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request, Response>
 {
+    /// -------------------------------------------------------------------------------------------
+    /// -------------------------------------------------------------------------------------------
+    /// IMPORTANT: THESE QUERIES SHOULD BE UPDATED ALONGSIDE THE /assigned-to-self ENDPOINT QUERIES
+    /// -------------------------------------------------------------------------------------------
+    /// -------------------------------------------------------------------------------------------
     private const string NextUpForEditorQuery = """
                                                 WITH UserAssignedResources AS (
                                                    SELECT RCV.ResourceContentId,
@@ -22,14 +27,14 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                                                            WHERE RCV.Id = RCVAUH.ResourceContentVersionId AND RCVAUH.AssignedUserId = {0}
                                                            ORDER BY RCVAUH.Id DESC
                                                        ) AS History
-                                                   WHERE RCV.AssignedUserId = {0}
+                                                   WHERE RCV.AssignedUserId = {0} AND RC.Status NOT IN ({1}, {2})
                                                 )
                                                 SELECT ResourceContentId AS Value
                                                 FROM UserAssignedResources
                                                 WHERE RowNum = (
                                                     SELECT RowNum + 1
                                                     FROM UserAssignedResources
-                                                    WHERE ResourceContentId = {1}
+                                                    WHERE ResourceContentId = {3}
                                                 );
                                                 """;
 
@@ -43,14 +48,14 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                                                         INNER JOIN Resources AS R ON RC.ResourceId = R.Id
                                                         LEFT JOIN ProjectResourceContents PRC ON RC.Id = PRC.ResourceContentId
                                                         LEFT JOIN Projects P ON PRC.ProjectId = P.Id
-                                                    WHERE RCV.AssignedUserId = {0}
+                                                    WHERE RCV.AssignedUserId = {0} AND RC.Status NOT IN ({1}, {2})
                                                  )
                                                  SELECT ResourceContentId AS Value
                                                  FROM UserAssignedResources
                                                  WHERE RowNum = (
                                                      SELECT RowNum + 1
                                                      FROM UserAssignedResources
-                                                     WHERE ResourceContentId = {1}
+                                                     WHERE ResourceContentId = {3}
                                                  );
                                                  """;
 
@@ -67,7 +72,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         {
             NextUpResourceContentId =
                 (await dbContext.Database
-                    .SqlQueryRaw<int?>(user.Role == UserRole.Manager ? NextUpForManagerQuery : NextUpForEditorQuery, user.Id,
+                    .SqlQueryRaw<int?>(user.Role == UserRole.Manager ? NextUpForManagerQuery : NextUpForEditorQuery,
+                        user.Id,
+                        (int)ResourceContentStatus.TranslationAiDraftComplete,
+                        (int)ResourceContentStatus.AquiferizeAiDraftComplete,
                         request.Id).ToListAsync(ct)).FirstOrDefault()
         };
         await SendOkAsync(response, ct);
