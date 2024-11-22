@@ -13,4 +13,5 @@ public class Response
 public class CompanyResponse
 {
     public int Id { get; set; }
+    public IReadOnlyList<int> LanguageIds { get; set; } = [];
 }

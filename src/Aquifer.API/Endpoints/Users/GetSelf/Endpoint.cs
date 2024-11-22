@@ -15,7 +15,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var user = await userService.GetUserFromJwtAsync(ct);
+        var user = await userService.GetUserWithCompanyLanguagesFromJwtAsync(ct);
         var permissions = userService.GetAllJwtPermissions();
 
         var response = new Response
@@ -23,17 +23,21 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             Id = user.Id,
             Name = $"{user.FirstName} {user.LastName}",
             Permissions = permissions,
-            Company = new CompanyResponse { Id = user.CompanyId },
+            Company = new CompanyResponse
+            {
+                Id = user.CompanyId,
+                LanguageIds = user.Company.CompanyLanguages.Select(cl => cl.LanguageId).ToList()
+            },
             LanguageId = user.LanguageId,
-            CanBeAssignedContent = true,
+            CanBeAssignedContent = true
         };
 
-        if (userService.HasPermission(PermissionName.CreateCommunityContent) && 
-            !userService.HasPermission(PermissionName.CreateContent)) {
-            var isAssignedContent = await dbContext.ResourceContentVersions
-                .AnyAsync(x => x.AssignedUserId == user.Id, ct);
-            
-            if (isAssignedContent) {
+        if (userService.HasPermission(PermissionName.CreateCommunityContent) && !userService.HasPermission(PermissionName.CreateContent))
+        {
+            var isAssignedContent = await dbContext.ResourceContentVersions.AnyAsync(x => x.AssignedUserId == user.Id, ct);
+
+            if (isAssignedContent)
+            {
                 response.CanBeAssignedContent = false;
             }
         }
