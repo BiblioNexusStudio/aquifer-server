@@ -42,7 +42,18 @@ public static class ResourceHelper
             })
             .ToListAsync(ct);
 
-        var response = responseChoices.SingleOrDefault(x => x.Id == req.ContentId);
+        Response? response = null;
+        if (responseChoices.Count == 1)
+        {
+            response = responseChoices[0];
+        }
+        else if (responseChoices.Count > 1)
+        {
+            var originalMediaType =
+                await dbContext.ResourceContents.Where(x => x.Id == req.ContentId).Select(x => x.MediaType).SingleAsync(ct);
+            response = responseChoices.SingleOrDefault(x => x.Grouping.MediaTypeValue == originalMediaType);
+        }
+
         if (response is null)
         {
             throwError($"No record found for {req.ContentId}", 404);
@@ -52,7 +63,7 @@ public static class ResourceHelper
             ? req.ContentTextType == TiptapContentType.None ? TiptapContentType.Json : req.ContentTextType
             : TiptapContentType.None;
 
-        response!.Content = TiptapConverter.ConvertJsonToType(response.ContentValue, contentTextType);
+        response.Content = TiptapConverter.ConvertJsonToType(response.ContentValue, contentTextType);
         return response;
     }
 }
