@@ -12,12 +12,12 @@ public static class ResourceHelper
         Action<string, int?> throwError,
         CancellationToken ct)
     {
-        var response = await dbContext.ResourceContentVersions
+        var responseChoices = await dbContext.ResourceContentVersions
             .Where(x => ((req.LanguageCode == null && x.ResourceContentId == req.ContentId) ||
-                         (x.ResourceContent.Resource.ResourceContents.Any(rc => rc.Id == req.ContentId) &&
-                          x.ResourceContent.Language.ISO6393Code == req.LanguageCode)) &&
-                        x.IsPublished &&
-                        x.ResourceContent.Resource.ParentResource.Enabled)
+                    (x.ResourceContent.Resource.ResourceContents.Any(rc => rc.Id == req.ContentId) &&
+                        x.ResourceContent.Language.ISO6393Code == req.LanguageCode)) &&
+                x.IsPublished &&
+                x.ResourceContent.Resource.ParentResource.Enabled)
             .Select(x => new Response
             {
                 Id = x.ResourceContentId,
@@ -40,17 +40,16 @@ public static class ResourceHelper
                     LicenseInfoValue = x.ResourceContent.Resource.ParentResource.LicenseInfo
                 }
             })
-            .SingleOrDefaultAsync(ct);
+            .ToListAsync(ct);
 
+        var response = responseChoices.SingleOrDefault(x => x.Id == req.ContentId);
         if (response is null)
         {
             throwError($"No record found for {req.ContentId}", 404);
         }
 
         var contentTextType = response!.Grouping.MediaTypeValue == ResourceContentMediaType.Text
-            ? req.ContentTextType == TiptapContentType.None
-                ? TiptapContentType.Json
-                : req.ContentTextType
+            ? req.ContentTextType == TiptapContentType.None ? TiptapContentType.Json : req.ContentTextType
             : TiptapContentType.None;
 
         response!.Content = TiptapConverter.ConvertJsonToType(response.ContentValue, contentTextType);
