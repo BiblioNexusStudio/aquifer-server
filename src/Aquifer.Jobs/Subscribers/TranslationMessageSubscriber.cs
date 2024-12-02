@@ -317,7 +317,11 @@ public sealed class TranslationMessageSubscriber(
             return;
         }
 
-        if (!shouldForceRetranslation && resourceContentVersion.ResourceContent.ContentUpdated != null)
+        // Translation should not have existing content (if not a forced retranslation)
+        // but Aquiferization of English may have existing content.
+        if (!shouldForceRetranslation &&
+            resourceContentLanguage.Id != _englishLanguageId &&
+            resourceContentVersion.ResourceContent.ContentUpdated != null)
         {
             _logger.LogInformation(
                 "Gracefully skipping translation for Resource Content ID {ResourceContentId} because it already has updated content.",
