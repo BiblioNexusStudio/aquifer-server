@@ -1,3 +1,4 @@
+using Aquifer.Common.Messages;
 using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Messages.Publishers;
 using Aquifer.Data;
@@ -98,14 +99,30 @@ public class SendResourceAssignmentNotificationsManager(
             })
             .ToList();
 
-        // Note: If execution fails during this loop then it's possible that we will send multiple emails to a single user;
-        // first during the initial failed run and again when the job retries (possibly with new data).
+        // If execution fails during this loop without exception handling then it's possible that we will send multiple emails to a single
+        // user, first during the initial failed run and then again when the job retries (possibly with new data). We can prevent this
+        // by skipping any failed message publishing in order to ensure that the majority of the batch succeeds.
+        // Any failed messages will be logged and must be replayed manually by a developer.
+        // The entire batch will be retried only if all messages failed to publish.
+        var shouldUpdateJobHistory = false;
         foreach (var sendTemplatedEmailMessage in sendTemplatedEmailMessages)
         {
-            await _emailMessagePublisher.PublishSendTemplatedEmailMessageAsync(sendTemplatedEmailMessage, CancellationToken.None);
+            try
+            {
+                await _emailMessagePublisher.PublishSendTemplatedEmailMessageAsync(sendTemplatedEmailMessage, CancellationToken.None);
+                shouldUpdateJobHistory = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex, 
+                    "Unable to publish resource assignment notification message for \"{EmailAddress}\". Skipping notification. Manual developer replay is required: {MessageContent}",
+                    sendTemplatedEmailMessage.Tos[0].Email,
+                    MessagesJsonSerializer.Serialize(sendTemplatedEmailMessage));
+            }
         }
 
-        if (userHistories.Count > 0)
+        if (shouldUpdateJobHistory)
         {
             jobHistory.LastProcessed = userHistories.Select(uh => uh.Created).Max();
             await _dbContext.SaveChangesAsync(CancellationToken.None);
