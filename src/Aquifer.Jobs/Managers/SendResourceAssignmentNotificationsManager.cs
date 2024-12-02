@@ -119,13 +119,13 @@ public class SendResourceAssignmentNotificationsManager(
         // by skipping any failed message publishing in order to ensure that the majority of the batch succeeds.
         // Any failed messages will be logged and must be replayed manually by a developer.
         // The entire batch will be retried only if all messages failed to publish.
-        var shouldUpdateJobHistory = false;
+        var successCount = 0;
         foreach (var sendTemplatedEmailMessage in sendTemplatedEmailMessages)
         {
             try
             {
                 await _emailMessagePublisher.PublishSendTemplatedEmailMessageAsync(sendTemplatedEmailMessage, CancellationToken.None);
-                shouldUpdateJobHistory = true;
+                successCount++;
             }
             catch (Exception ex)
             {
@@ -137,12 +137,18 @@ public class SendResourceAssignmentNotificationsManager(
             }
         }
 
-        if (shouldUpdateJobHistory)
+        if (successCount > 0)
         {
             jobHistory.LastProcessed = userHistories.Select(uh => uh.Created).Max();
             await _dbContext.SaveChangesAsync(CancellationToken.None);
         }
 
-        _logger.LogInformation("Resource assignment notifications sent to {UserCount} users.", sendTemplatedEmailMessages.Count);
+        _logger.LogInformation("Resource assignment notifications successfully sent to {UserCount} users.", successCount);
+
+        var skippedCount = sendTemplatedEmailMessages.Count - successCount;
+        if (skippedCount > 0)
+        {
+            _logger.LogWarning("Skipped resource assignment notifications for {UserCount} users.", skippedCount);
+        }
     }
 }
