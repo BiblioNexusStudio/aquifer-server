@@ -61,6 +61,7 @@ public class SendResourceAssignmentNotificationsManager(
             .Select(userGrouping =>
             {
                 var user = usersByIdMap[userGrouping.Key];
+                var countOfResourcesAssignedToUser = userGrouping.Count();
 
                 return new SendTemplatedEmailMessage(
                     From: NotificationsHelper.NotificationSenderEmailAddress,
@@ -70,7 +71,8 @@ public class SendResourceAssignmentNotificationsManager(
                     {
                         [EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notification: Resources Assigned",
                         ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
-                        ["resourceCount"] = userGrouping.Count(),
+                        ["resourceCount"] = countOfResourcesAssignedToUser,
+                        ["additionalResourceCount"] = Math.Max(countOfResourcesAssignedToUser - _maxNumberOfResourcesToDisplayInNotificationContent, 0),
                         ["parentResources"] = userGrouping
                             .Take(_maxNumberOfResourcesToDisplayInNotificationContent)
                             .GroupBy(uh => uh.ParentResourceName)
