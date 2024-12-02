@@ -81,7 +81,8 @@ public static class Helpers
             await historyService.AddSnapshotHistoryAsync(newResourceContentVersion, user.Id, ResourceContentStatus.New, ct);
         }
 
-        if (resourceContent.LanguageId == Constants.EnglishLanguageId)
+        // new English resources go through the AI Aquiferization (English text simplification) process
+        if (resourceContent is { LanguageId: Constants.EnglishLanguageId, Status: ResourceContentStatus.New })
         {
             resourceContent.Status = ResourceContentStatus.AquiferizeAwaitingAiDraft;
             await historyService.AddStatusHistoryAsync(newResourceContentVersion, ResourceContentStatus.AquiferizeAwaitingAiDraft, user.Id, ct);
