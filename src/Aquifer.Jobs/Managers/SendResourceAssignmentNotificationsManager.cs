@@ -118,7 +118,7 @@ public class SendResourceAssignmentNotificationsManager(
                     ex, 
                     "Unable to publish resource assignment notification message for \"{EmailAddress}\". Skipping notification. Manual developer replay is required: {MessageContent}",
                     sendTemplatedEmailMessage.Tos[0].Email,
-                    MessagesJsonSerializer.Serialize(sendTemplatedEmailMessage));
+                    MessagesJsonSerializer.Serialize(sendTemplatedEmailMessage, shouldAllowInvalidMessageLength: true));
             }
         }
 
