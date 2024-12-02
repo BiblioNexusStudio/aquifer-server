@@ -19,6 +19,7 @@ public class SendResourceAssignmentNotificationsManager(
     IEmailMessagePublisher _emailMessagePublisher,
     ILogger<SendResourceAssignmentNotificationsManager> _logger)
 {
+    private const int _maxNumberOfResourcesToDisplayInNotificationContent = 25;
     private const string _tenSecondDelayInterval = "00:00:10";
 
     [Function(nameof(SendResourceAssignmentNotificationsManager))]
@@ -71,6 +72,7 @@ public class SendResourceAssignmentNotificationsManager(
                         ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
                         ["resourceCount"] = userGrouping.Count(),
                         ["parentResources"] = userGrouping
+                            .Take(_maxNumberOfResourcesToDisplayInNotificationContent)
                             .GroupBy(uh => uh.ParentResourceName)
                             .OrderBy(parentResourceGrouping => parentResourceGrouping.Key)
                             .Select(parentResourceGrouping => new
