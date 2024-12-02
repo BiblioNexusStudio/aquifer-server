@@ -20,6 +20,7 @@ public class SendResourceAssignmentNotificationsManager(
     ILogger<SendResourceAssignmentNotificationsManager> _logger)
 {
     private const int _maxNumberOfResourcesToDisplayInNotificationContent = 25;
+    private const int _maxAgeOfResourceAssignmentInMinutes = 120;
     private const string _tenSecondDelayInterval = "00:00:10";
 
     [Function(nameof(SendResourceAssignmentNotificationsManager))]
@@ -32,6 +33,16 @@ public class SendResourceAssignmentNotificationsManager(
             .AsTracking()
             .SingleAsync(jh => jh.JobId == JobId.SendResourceAssignmentNotifications, ct);
 
+        // Don't send notifications for very old resource assignments.
+        // Normally we expect to find only recent resource assignments but if there are errors during processing
+        // or the Azure Function is temporarily disabled then we don't want to send out-of-date notification content.
+        var includeResourcesAssignedSince = new[]
+        {
+            jobHistory.LastProcessed,
+            DateTime.UtcNow.AddMinutes(-_maxAgeOfResourceAssignmentInMinutes),
+        }
+        .Max();
+
         // Possible Improvement: Only send notifications when a user is assigned to the *most recent* ResourceContentVersion.
         var userHistories = await _dbContext.ResourceContentVersionAssignedUserHistory
                 .Where(rcvauh =>
@@ -40,7 +51,7 @@ public class SendResourceAssignmentNotificationsManager(
                     rcvauh.AssignedUser.AquiferNotificationsEnabled &&
                     (rcvauh.AssignedUser.Role == UserRole.Editor || rcvauh.AssignedUser.Role == UserRole.Reviewer) &&
                     rcvauh.AssignedUserId == rcvauh.ResourceContentVersion.AssignedUserId &&
-                    (rcvauh.Created > jobHistory.LastProcessed))
+                    (rcvauh.Created > includeResourcesAssignedSince))
                 .Select(rcvauh => new
                 {
                     AssignedUser = rcvauh.AssignedUser!,
