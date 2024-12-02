@@ -5,6 +5,9 @@ namespace Aquifer.Common.Messages;
 
 public sealed class MessagesJsonSerializer
 {
+    // max Azure Storage Queue message size is 64 KB: https://learn.microsoft.com/en-us/azure/storage/queues/storage-queues-introduction
+    private const int _maxMessageSizeInBytes = 65_536;
+
     private static readonly JsonSerializerSettings s_settings = new()
     {
         ContractResolver = new DefaultContractResolver
@@ -20,8 +23,17 @@ public sealed class MessagesJsonSerializer
         return JsonConvert.DeserializeObject<T>(json, s_settings);
     }
 
-    public static string Serialize<T>(T dto)
+    public static string Serialize<T>(T dto, bool shouldAllowInvalidMessageLength = false)
     {
-        return JsonConvert.SerializeObject(dto, s_settings);
+        var json = JsonConvert.SerializeObject(dto, s_settings);
+
+        if (!shouldAllowInvalidMessageLength && System.Text.Encoding.Unicode.GetByteCount(json) > _maxMessageSizeInBytes)
+        {
+            throw new ArgumentException(
+                $"Serialized JSON message is {System.Text.Encoding.Unicode.GetByteCount(json)} bytes but must be less than {_maxMessageSizeInBytes} bytes. Content: {json}",
+                nameof(dto));
+        }
+
+        return json;
     }
 }

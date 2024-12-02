@@ -1,3 +1,4 @@
+using Aquifer.Common.Messages;
 using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Messages.Publishers;
 using Aquifer.Data;
@@ -18,6 +19,8 @@ public class SendResourceAssignmentNotificationsManager(
     IEmailMessagePublisher _emailMessagePublisher,
     ILogger<SendResourceAssignmentNotificationsManager> _logger)
 {
+    private const int _maxNumberOfResourcesToDisplayInNotificationContent = 25;
+    private const int _maxAgeOfResourceAssignmentInMinutes = 120;
     private const string _tenSecondDelayInterval = "00:00:10";
 
     [Function(nameof(SendResourceAssignmentNotificationsManager))]
@@ -30,6 +33,16 @@ public class SendResourceAssignmentNotificationsManager(
             .AsTracking()
             .SingleAsync(jh => jh.JobId == JobId.SendResourceAssignmentNotifications, ct);
 
+        // Don't send notifications for very old resource assignments.
+        // Normally we expect to find only recent resource assignments but if there are errors during processing
+        // or the Azure Function is temporarily disabled then we don't want to send out-of-date notification content.
+        var includeResourcesAssignedSince = new[]
+        {
+            jobHistory.LastProcessed,
+            DateTime.UtcNow.AddMinutes(-_maxAgeOfResourceAssignmentInMinutes),
+        }
+        .Max();
+
         // Possible Improvement: Only send notifications when a user is assigned to the *most recent* ResourceContentVersion.
         var userHistories = await _dbContext.ResourceContentVersionAssignedUserHistory
                 .Where(rcvauh =>
@@ -38,7 +51,7 @@ public class SendResourceAssignmentNotificationsManager(
                     rcvauh.AssignedUser.AquiferNotificationsEnabled &&
                     (rcvauh.AssignedUser.Role == UserRole.Editor || rcvauh.AssignedUser.Role == UserRole.Reviewer) &&
                     rcvauh.AssignedUserId == rcvauh.ResourceContentVersion.AssignedUserId &&
-                    (rcvauh.Created > jobHistory.LastProcessed))
+                    (rcvauh.Created > includeResourcesAssignedSince))
                 .Select(rcvauh => new
                 {
                     AssignedUser = rcvauh.AssignedUser!,
@@ -59,6 +72,7 @@ public class SendResourceAssignmentNotificationsManager(
             .Select(userGrouping =>
             {
                 var user = usersByIdMap[userGrouping.Key];
+                var countOfResourcesAssignedToUser = userGrouping.Count();
 
                 return new SendTemplatedEmailMessage(
                     From: NotificationsHelper.NotificationSenderEmailAddress,
@@ -68,8 +82,10 @@ public class SendResourceAssignmentNotificationsManager(
                     {
                         [EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notification: Resources Assigned",
                         ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
-                        ["resourceCount"] = userGrouping.Count(),
+                        ["resourceCount"] = countOfResourcesAssignedToUser,
+                        ["additionalResourceCount"] = Math.Max(countOfResourcesAssignedToUser - _maxNumberOfResourcesToDisplayInNotificationContent, 0),
                         ["parentResources"] = userGrouping
+                            .Take(_maxNumberOfResourcesToDisplayInNotificationContent)
                             .GroupBy(uh => uh.ParentResourceName)
                             .OrderBy(parentResourceGrouping => parentResourceGrouping.Key)
                             .Select(parentResourceGrouping => new
@@ -98,19 +114,41 @@ public class SendResourceAssignmentNotificationsManager(
             })
             .ToList();
 
-        // Note: If execution fails during this loop then it's possible that we will send multiple emails to a single user;
-        // first during the initial failed run and again when the job retries (possibly with new data).
+        // If execution fails during this loop without exception handling then it's possible that we will send multiple emails to a single
+        // user, first during the initial failed run and then again when the job retries (possibly with new data). We can prevent this
+        // by skipping any failed message publishing in order to ensure that the majority of the batch succeeds.
+        // Any failed messages will be logged and must be replayed manually by a developer.
+        // The entire batch will be retried only if all messages failed to publish.
+        var successCount = 0;
         foreach (var sendTemplatedEmailMessage in sendTemplatedEmailMessages)
         {
-            await _emailMessagePublisher.PublishSendTemplatedEmailMessageAsync(sendTemplatedEmailMessage, CancellationToken.None);
+            try
+            {
+                await _emailMessagePublisher.PublishSendTemplatedEmailMessageAsync(sendTemplatedEmailMessage, CancellationToken.None);
+                successCount++;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex, 
+                    "Unable to publish resource assignment notification message for \"{EmailAddress}\". Skipping notification. Manual developer replay is required: {MessageContent}",
+                    sendTemplatedEmailMessage.Tos[0].Email,
+                    MessagesJsonSerializer.Serialize(sendTemplatedEmailMessage, shouldAllowInvalidMessageLength: true));
+            }
         }
 
-        if (userHistories.Count > 0)
+        if (successCount > 0)
         {
             jobHistory.LastProcessed = userHistories.Select(uh => uh.Created).Max();
             await _dbContext.SaveChangesAsync(CancellationToken.None);
         }
 
-        _logger.LogInformation("Resource assignment notifications sent to {UserCount} users.", sendTemplatedEmailMessages.Count);
+        _logger.LogInformation("Resource assignment notifications successfully sent to {UserCount} users.", successCount);
+
+        var skippedCount = sendTemplatedEmailMessages.Count - successCount;
+        if (skippedCount > 0)
+        {
+            _logger.LogWarning("Skipped resource assignment notifications for {UserCount} users.", skippedCount);
+        }
     }
 }
