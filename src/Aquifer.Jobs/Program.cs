@@ -52,6 +52,7 @@ var host = new HostBuilder()
         services.AddAzureClient(isDevelopment);
 
         services.AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount);
+        services.AddTranslationPostProcessingServices();
 
         services.AddSingleton<IAquiferAppInsightsClient, AquiferAppInsightsClient>();
         services.AddSingleton<IAquiferApiManagementClient, AquiferApiManagementClient>();
