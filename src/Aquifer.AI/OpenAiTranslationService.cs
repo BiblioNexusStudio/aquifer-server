@@ -47,11 +47,7 @@ public sealed class OpenAiTranslationOptions
 }
 
 public sealed class OpenAiChatCompletionException(string message, string prompt, string text)
-    : Exception(message)
-{
-    public string Prompt { get; } = prompt;
-    public string Text { get; } = text;
-}
+    : Exception($"{message} Prompt:{Environment.NewLine}{prompt}{Environment.NewLine}Text:{Environment.NewLine}{text}");
 
 public sealed partial class OpenAiTranslationService : ITranslationService
 {
