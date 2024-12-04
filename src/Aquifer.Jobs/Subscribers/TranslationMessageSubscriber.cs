@@ -10,6 +10,7 @@ using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
 using Aquifer.Data.Services;
+using Aquifer.Jobs.Services;
 using Azure.Storage.Queues.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
@@ -23,6 +24,7 @@ public sealed class TranslationMessageSubscriber(
     AquiferDbContext _dbContext,
     ILogger<TranslationMessageSubscriber> _logger,
     ITranslationService _translationService,
+    ITranslationPostProcessingService _translationPostProcessingService,
     IResourceHistoryService _resourceHistoryService,
     INotificationMessagePublisher _notificationMessagePublisher,
     IQueueClientFactory _queueClientFactory)
@@ -381,7 +383,7 @@ public sealed class TranslationMessageSubscriber(
         // It must be converted to HTML in order to be translated and then converted back to JSON after translation.
         // Some Resource Content, such as FIA, also has multiple steps.
         string translatedContentJson;
-        var wordCount = 0;
+        int wordCount;
         try
         {
             var contentHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(contentToTranslate);
@@ -392,9 +394,6 @@ public sealed class TranslationMessageSubscriber(
             {
                 var contentHtmlItem = contentHtmlItems[contentIndex];
                 var translatedContentHtmlItem = await _translationService.TranslateHtmlAsync(contentHtmlItem, destinationLanguage, translationPairs, ct);
-                translatedContentHtmlItems.Add(translatedContentHtmlItem);
-
-                wordCount += HtmlUtilities.GetWordCount(translatedContentHtmlItem);
 
                 // each step gets its own machine translation record
                 _dbContext.ResourceContentVersionMachineTranslations.Add(new ResourceContentVersionMachineTranslationEntity
@@ -407,8 +406,17 @@ public sealed class TranslationMessageSubscriber(
                     SourceId = MachineTranslationSourceId.OpenAi,
                     RetranslationReason = null
                 });
+
+                // some languages require additional post-processing of content
+                var postProcessedContentHtmlItem = await _translationPostProcessingService.PostProcessHtmlAsync(
+                    translatedContentHtmlItem,
+                    destinationLanguage.Iso6393Code,
+                    ct);
+
+                translatedContentHtmlItems.Add(postProcessedContentHtmlItem);
             }
 
+            wordCount = translatedContentHtmlItems.Sum(HtmlUtilities.GetWordCount);
             translatedContentJson = TiptapConverter.ConvertHtmlItemsToJson(translatedContentHtmlItems);
         }
         catch (Exception ex)
