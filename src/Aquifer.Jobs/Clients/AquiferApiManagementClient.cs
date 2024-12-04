@@ -15,7 +15,18 @@ public interface IAquiferApiManagementClient
 public class AquiferApiManagementClient(IOptions<ConfigurationOptions> _options, IAzureClientService _azureClientService)
     : IAquiferApiManagementClient
 {
-    private readonly ArmClient _armClient = new(_azureClientService.GetCredential());
+    private static readonly ArmClientOptions s_armClientOptions = new()
+    {
+        Retry = {
+            Delay = TimeSpan.FromMilliseconds(500),
+            MaxRetries = 5,
+            Mode = RetryMode.Exponential,
+            MaxDelay = TimeSpan.FromSeconds(10),
+            NetworkTimeout = TimeSpan.FromSeconds(100),
+        },
+    };
+
+    private readonly ArmClient _armClient = new(_azureClientService.GetCredential(), default, s_armClientOptions);
 
     public List<ApiManagementStats> QuerySinceTimestamp(DateTime timestamp)
     {
