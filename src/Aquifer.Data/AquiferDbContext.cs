@@ -79,6 +79,8 @@ public class AquiferDbContext : DbContext
     public DbSet<UserEntity> Users { get; set; }
     public DbSet<VerseEntity> Verses { get; set; }
     public DbSet<VerseResourceEntity> VerseResources { get; set; }
+    public DbSet<VersificationMappingEntity> VersificationMappings { get; set; }
+    public DbSet<VersificationExclusionEntity> VersificationExclusions { get; set; }
     public DbSet<TranslationPairEntity> TranslationPairs { get; set; }
     public DbSet<CompanyLanguageEntity> CompanyLanguages { get; set; }
 
