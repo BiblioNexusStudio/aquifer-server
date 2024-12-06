@@ -21,14 +21,9 @@ using Polly.Contrib.WaitAndRetry;
 using Polly.Extensions.Http;
 
 var host = new HostBuilder()
-    .ConfigureAppConfiguration((context, builder) => builder
-        .SetBasePath(context.HostingEnvironment.ContentRootPath)
-        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-        .AddJsonFile(
-            $"appsettings.{context.HostingEnvironment.EnvironmentName}.json",
-            optional: true,
-            reloadOnChange: true)
-    )
+    .ConfigureAppConfiguration((context, builder) => builder.SetBasePath(context.HostingEnvironment.ContentRootPath)
+        .AddJsonFile("appsettings.json", false, true)
+        .AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", true, true))
     .ConfigureFunctionsWorkerDefaults()
     .ConfigureServices((context, services) =>
     {
@@ -39,12 +34,12 @@ var host = new HostBuilder()
         services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.OpenAi);
         services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.OpenAiTranslation);
 
-        var configuration = context.Configuration.Get<ConfigurationOptions>()
-                            ?? throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
+        var configuration = context.Configuration.Get<ConfigurationOptions>() ??
+            throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
         services.AddDbContext<AquiferDbContext>(options => options
             .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
-            .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: isDevelopment)
+            .EnableSensitiveDataLogging(isDevelopment)
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
         services.AddApplicationInsightsTelemetryWorkerService();
@@ -52,12 +47,12 @@ var host = new HostBuilder()
         services.AddAzureClient(isDevelopment);
 
         services.AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount);
+        services.AddTranslationPostProcessingServices();
 
         services.AddSingleton<IAquiferAppInsightsClient, AquiferAppInsightsClient>();
         services.AddSingleton<IAquiferApiManagementClient, AquiferApiManagementClient>();
         services.AddHttpClient<IIpAddressLookupHttpClient, IpAddressLookupHttpClient>()
-            .AddPolicyHandler(HttpPolicyExtensions
-                .HandleTransientHttpError()
+            .AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
                 .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(0.5), 2)));
         services.AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>();
         services.AddScoped<IResourceHistoryService, ResourceHistoryService>();
@@ -66,6 +61,15 @@ var host = new HostBuilder()
         services.AddSingleton<ITranslationService, OpenAiTranslationService>();
         services.AddSingleton<IEmailService, SendGridEmailService>();
     })
+    .ConfigureLogging(logging => logging.Services.Configure<LoggerFilterOptions>(options =>
+    {
+        const string applicationInsightsProviderName = "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider";
+        var defaultRule = options.Rules.FirstOrDefault(rule => rule.ProviderName == applicationInsightsProviderName);
+        if (defaultRule is not null)
+        {
+            options.Rules.Remove(defaultRule);
+        }
+    }))
     .Build();
 
 StaticLoggerFactory.LoggerFactory = host.Services.GetRequiredService<ILoggerFactory>();

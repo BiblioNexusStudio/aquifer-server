@@ -38,23 +38,20 @@ public class OpenAiOptions
 
 public sealed class OpenAiTranslationOptions
 {
-    public required string DefaultLanguageSpecificPromptAppendixFormatString { get; init; }
-    public required string HtmlAquiferizationBasePrompt { get; init; }
-    public required string HtmlTranslationBasePrompt { get; init; }
-    public required Dictionary<string, string> LanguageSpecificPromptAppendixByLanguageIso6393CodeMap { get; init; }
+    public required string HtmlBasePrompt { get; init; }
+    public required Dictionary<string, string> LanguageSpecificTextImprovementPromptAppendixByLanguageIso6393CodeMap { get; init; }
+    public required string PlainTextTranslationPromptFormatString { get; init; }
     public required float Temperature { get; init; }
-    public required string TextTranslationPromptFormatString { get; init; }
+    public required string TextImprovementPromptFormatString { get; init; }
+    public required string TranslationPromptFormatString { get; init; }
 }
 
 public sealed class OpenAiChatCompletionException(string message, string prompt, string text)
-    : Exception(message)
-{
-    public string Prompt { get; } = prompt;
-    public string Text { get; } = text;
-}
+    : Exception($"{message} Prompt:{Environment.NewLine}{prompt}{Environment.NewLine}Text:{Environment.NewLine}{text}");
 
 public sealed partial class OpenAiTranslationService : ITranslationService
 {
+    private const string _englishLanguageCode = "ENG";
     private const int _maxContentLength = 5_000;
     private const int _maxParallelizationForSingleTranslation = 3;
 
@@ -100,13 +97,13 @@ public sealed partial class OpenAiTranslationService : ITranslationService
                 nameof(text));
         }
 
-        var prompt = GetTextTranslationPrompt(destinationLanguage);
+        var prompt = GetPlainTextTranslationPrompt(destinationLanguage);
 
         var (textWithReplacements, isFullReplacement) = ReplaceTranslationPairs(text, translationPairs);
 
         return isFullReplacement
             ? textWithReplacements
-            : await TranslateTextAsync(prompt, textWithReplacements, cancellationToken);
+            : await CompleteChatAsync(prompt, textWithReplacements, cancellationToken);
     }
 
     public async Task<string> TranslateHtmlAsync(
@@ -115,7 +112,8 @@ public sealed partial class OpenAiTranslationService : ITranslationService
         IDictionary<string, string> translationPairs,
         CancellationToken cancellationToken)
     {
-        var prompt = GetHtmlTranslationPrompt(destinationLanguage);
+        var htmlTranslationPrompt = GetHtmlTranslationPrompt(destinationLanguage);
+        var htmlTextImprovementPrompt = GetHtmlTextImprovementPrompt(destinationLanguage);
 
         var translatedHtml = new StringBuilder();
 
@@ -125,15 +123,27 @@ public sealed partial class OpenAiTranslationService : ITranslationService
             .Where(x => !string.IsNullOrWhiteSpace(x) && x.Length > 2)
             .Chunk(_maxParallelizationForSingleTranslation))
         {
-            // Translate paragraphs in each batch in parallel,
+            // Operate on the paragraphs in each batch in parallel,
             // but wait for all paragraphs in the batch to finish before starting the next batch.
+            //
+            // Order of operations:
+            // 1. Minify HTML (reduces the amount of text we need to send to Open AI).
+            // 2. Replace translation pairs (resulting in a mix of English and non-English text).
+            // 3. Translate the HTML content via Open AI (note that Aquiferization skips this step).
+            // 4. Improve the text's grammar and clarity via Open AI.
+            // 5. Expand the minified HTML.
             var paragraphTranslationTasks = paragraphs
                 .Select(paragraph => HtmlUtilities.ProcessHtmlContentAsync(
                     paragraph,
-                    async minifiedHtml =>
+                    async minifiedHtmlChunk =>
                     {
-                        var (minifiedHtmlWithReplacements, _) = ReplaceTranslationPairs(minifiedHtml, translationPairs);
-                        return await TranslateHtmlChunkAsync(prompt, minifiedHtmlWithReplacements, cancellationToken);
+                        var (minifiedHtmlChunkWithReplacements, _) = ReplaceTranslationPairs(minifiedHtmlChunk, translationPairs);
+
+                        var translatedHtmlChunk = htmlTranslationPrompt == null
+                            ? minifiedHtmlChunkWithReplacements
+                            : await CompleteChatAsync(htmlTranslationPrompt, minifiedHtmlChunkWithReplacements, cancellationToken);
+
+                        return await CompleteChatAsync(htmlTextImprovementPrompt, translatedHtmlChunk, cancellationToken);
                     }))
                 .ToList();
 
@@ -163,13 +173,14 @@ public sealed partial class OpenAiTranslationService : ITranslationService
         return (text, false);
     }
 
-    private async Task<string> TranslateTextAsync(string prompt, string text, CancellationToken cancellationToken)
+    private async Task<string> CompleteChatAsync(string prompt, string text, CancellationToken cancellationToken)
     {
         var chatCompletion = await _chatClient.CompleteChatAsync(
             [
                 ChatMessage.CreateSystemMessage(prompt),
                 ChatMessage.CreateUserMessage(text),
             ],
+            // DO NOT reuse ChatCompletionOptions because the Open AI client mutates this object under the hood
             new ChatCompletionOptions
             {
                 Temperature = _temperature,
@@ -184,54 +195,35 @@ public sealed partial class OpenAiTranslationService : ITranslationService
                 text);
         }
 
-        return chatCompletion.Value.Content[0].Text;
-    }
-
-    private async Task<string> TranslateHtmlChunkAsync(string prompt, string html, CancellationToken cancellationToken)
-    {
-        var chatCompletion = await _chatClient.CompleteChatAsync(
-            [
-                ChatMessage.CreateSystemMessage(prompt),
-                ChatMessage.CreateUserMessage(html),
-            ],
-            new ChatCompletionOptions
-            {
-                Temperature = _temperature,
-            },
-            cancellationToken);
-
-        if (chatCompletion.Value.FinishReason != ChatFinishReason.Stop)
-        {
-            throw new OpenAiChatCompletionException(
-                $"OpenAI chat completion returned an unhandled finish reason: {chatCompletion.Value.FinishReason}.",
-                prompt,
-                html);
-        }
-
         return chatCompletion.Value.Content[0].Text.Replace(Environment.NewLine, "");
     }
 
-    private string GetHtmlTranslationPrompt((string Iso6393Code, string EnglishName) destinationLanguage)
+    private string? GetHtmlTranslationPrompt((string Iso6393Code, string EnglishName) destinationLanguage)
     {
-        var uppercaseCode = destinationLanguage.Iso6393Code.ToUpper();
-        if (uppercaseCode == "ENG")
+        if (string.Equals(destinationLanguage.Iso6393Code, _englishLanguageCode, StringComparison.OrdinalIgnoreCase))
         {
-            return _options.HtmlAquiferizationBasePrompt;
+            return null;
         }
-        else
-        {
-            var languageSpecificPromptAppendix =
-                _options.LanguageSpecificPromptAppendixByLanguageIso6393CodeMap
-                .GetValueOrDefault(uppercaseCode)
-                ?? string.Format(_options.DefaultLanguageSpecificPromptAppendixFormatString, destinationLanguage.EnglishName);
 
-            return $"{_options.HtmlTranslationBasePrompt} {languageSpecificPromptAppendix}";
-        }
+        var translationPrompt = string.Format(_options.TranslationPromptFormatString, destinationLanguage.EnglishName);
+
+        return $"{_options.HtmlBasePrompt} {translationPrompt}";
     }
 
-    private string GetTextTranslationPrompt((string Iso6393Code, string EnglishName) destinationLanguage)
+    private string GetHtmlTextImprovementPrompt((string Iso6393Code, string EnglishName) destinationLanguage)
     {
-        return string.Format(_options.TextTranslationPromptFormatString, destinationLanguage.EnglishName);
+        var textImprovementPrompt = string.Format(_options.TextImprovementPromptFormatString, destinationLanguage.EnglishName);
+
+        var languageSpecificTextImprovementPromptAppendix =
+            _options.LanguageSpecificTextImprovementPromptAppendixByLanguageIso6393CodeMap
+                .GetValueOrDefault(destinationLanguage.Iso6393Code.ToUpper());
+
+        return $"{_options.HtmlBasePrompt} {textImprovementPrompt}{(languageSpecificTextImprovementPromptAppendix == null ? "" : $" {languageSpecificTextImprovementPromptAppendix}")}";
+    }
+
+    private string GetPlainTextTranslationPrompt((string Iso6393Code, string EnglishName) destinationLanguage)
+    {
+        return string.Format(_options.PlainTextTranslationPromptFormatString, destinationLanguage.EnglishName);
     }
 
     [GeneratedRegex("(?=<([hH][1-6]|[pP])\\b[^>]*>)")]
