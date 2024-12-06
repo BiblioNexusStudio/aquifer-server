@@ -18,7 +18,8 @@ public sealed class AppFixture : AppFixture<Program>
     /// <summary>
     /// Configure Clients here.
     /// The default Client is anonymous and has no API Key header value.
-    /// That is sufficient for Public API tests because all routes are anonymous and no actual web requests are sent via this fixture.
+    /// This is sufficient for Public API tests because all routes are anonymous and no actual web requests are sent via this fixture.
+    /// The API key is enforced by Azure API Management when proxying requests, and thus it is not needed locally.
     /// </summary>
     /// <remarks>
     /// Example of adding a default header to the existing client:
