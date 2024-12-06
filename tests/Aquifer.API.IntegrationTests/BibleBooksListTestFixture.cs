@@ -2,7 +2,6 @@
 using System.Net;
 using Aquifer.API.Endpoints.BibleBooks.List;
 using FastEndpoints.Testing;
-using FluentAssertions;
 
 namespace Aquifer.API.IntegrationTests;
 
