@@ -1894,12 +1894,6 @@ namespace Aquifer.Data.Migrations
 
             modelBuilder.Entity("Aquifer.Data.Entities.VersificationExclusionEntity", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
                     b.Property<int>("BibleId")
                         .HasColumnType("int");
 
@@ -1911,15 +1905,10 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("getutcdate()");
 
-                    b.Property<DateTime>("Updated")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("getutcdate()");
-
                     b.Property<int>("VerseId")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("BibleId", "BibleVerseId");
 
                     b.ToTable("VersificationExclusions");
                 });

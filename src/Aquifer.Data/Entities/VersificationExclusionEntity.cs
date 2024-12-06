@@ -1,8 +1,10 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace Aquifer.Data.Entities;
 
+[PrimaryKey(nameof(BibleId), nameof(BibleVerseId))]
 public class VersificationExclusionEntity
 {
-    public int Id { get; set; }
     public int BibleId { get; set; }
     public int BibleVerseId { get; set; }
     public BibleEntity Bible { get; set; } = null!;

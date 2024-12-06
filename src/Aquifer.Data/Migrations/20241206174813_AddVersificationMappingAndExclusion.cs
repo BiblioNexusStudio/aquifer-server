@@ -15,17 +15,14 @@ namespace Aquifer.Data.Migrations
                 name: "VersificationExclusions",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
                     BibleId = table.Column<int>(type: "int", nullable: false),
                     BibleVerseId = table.Column<int>(type: "int", nullable: false),
                     VerseId = table.Column<int>(type: "int", nullable: false),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "getutcdate()"),
-                    Updated = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "getutcdate()")
+                    Created = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "getutcdate()")
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_VersificationExclusions", x => x.Id);
+                    table.PrimaryKey("PK_VersificationExclusions", x => new { x.BibleId, x.BibleVerseId });
                     table.ForeignKey(
                         name: "FK_VersificationExclusions_Bibles_BibleId",
                         column: x => x.BibleId,
