@@ -84,3 +84,6 @@ app.UseResponseCachingVaryByAllQueryKeys();
 
 app.MapEndpoints();
 app.Run();
+
+// make this class public in order to access from integration tests
+public partial class Program;
