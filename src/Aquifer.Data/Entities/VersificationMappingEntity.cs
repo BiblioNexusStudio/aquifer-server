@@ -1,4 +1,6 @@
 using Aquifer.Data.EventHandlers;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
@@ -18,4 +20,12 @@ public class VersificationMappingEntity : IHasUpdatedTimestamp
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
+}
+
+public class VersificationMappingEntityConfiguration : IEntityTypeConfiguration<VersificationMappingEntity>
+{
+    public void Configure(EntityTypeBuilder<VersificationMappingEntity> builder)
+    {
+        builder.HasOne(p => p.BibleVerse).WithMany().OnDelete(DeleteBehavior.NoAction);
+    }
 }
