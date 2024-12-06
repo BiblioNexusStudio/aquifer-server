@@ -9,16 +9,21 @@ using Microsoft.Extensions.Options;
 
 namespace Aquifer.Jobs.Managers;
 
-public class SyncApiRequestStatsToStorageTableManager(
+public sealed class SyncApiRequestStatsToStorageTableManager(
     IAquiferApiManagementClient _apiManagementClient,
     ILogger<SyncApiRequestStatsToStorageTableManager> _logger,
     IAzureClientService _azureClientService,
     IOptions<ConfigurationOptions> _options)
+    : ManagerBase<SyncApiRequestStatsToStorageTableManager>(_logger)
 {
     [Function(nameof(SyncApiRequestStatsToStorageTableManager))]
-#pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings
-    public async Task Run([TimerTrigger(CronSchedules.EveryHourAtFiveAfter)] TimerInfo timerInfo, CancellationToken ct)
-#pragma warning restore IDE0060 // Remove unused parameter
+    [FixedDelayRetry(maxRetryCount: 1, Timings.TenSecondDelayInterval)]
+    public override async Task RunAsync([TimerTrigger(CronSchedules.EveryHourAtFiveAfter)] TimerInfo timerInfo, CancellationToken ct)
+    {
+        await base.RunAsync(timerInfo, ct);
+    }
+
+    protected override async Task RunCoreAsync(CancellationToken ct)
     {
         const string partitionKey = "ApiRequestStats";
         var tableClient = new AquiferTableClient(_options.Value.Analytics.ApiRequestStatsTableName, partitionKey, _azureClientService,
@@ -59,7 +64,7 @@ public class SyncApiRequestStatsToStorageTableManager(
                 {
                     if (error.Message.Contains("already exists"))
                     {
-                        _logger.LogError(
+                        Logger.LogError(
                             "Tried to insert an entity that already exists. This could be the result of items with identical timestamps but most likely indicates an error with filtering logs to the correct time range. Partition Key: {partitionKey} ",
                             partitionKey);
                     }
@@ -72,7 +77,7 @@ public class SyncApiRequestStatsToStorageTableManager(
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex,
+            Logger.LogError(ex,
                 "An error occurred while syncing API Request Stats to the Azure Storage Table. Partition Key: {partitionKey} ",
                 partitionKey);
             throw;

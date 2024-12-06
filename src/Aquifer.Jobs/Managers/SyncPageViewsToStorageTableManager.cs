@@ -15,11 +15,16 @@ public class SyncPageViewsToStorageTableManager(
     ILogger<SyncPageViewsToStorageTableManager> _logger,
     IAzureClientService _azureClientService,
     IOptions<ConfigurationOptions> _options)
+    : ManagerBase<SyncPageViewsToStorageTableManager>(_logger)
 {
     [Function(nameof(SyncPageViewsToStorageTableManager))]
-#pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings
-    public async Task Run([TimerTrigger(CronSchedules.EveryHourAtFiveAfter)] TimerInfo timerInfo, CancellationToken ct)
-#pragma warning restore IDE0060 // Remove unused parameter
+    [FixedDelayRetry(maxRetryCount: 1, Timings.TenSecondDelayInterval)]
+    public override async Task RunAsync([TimerTrigger(CronSchedules.EveryHourAtFiveAfter)] TimerInfo timerInfo, CancellationToken ct)
+    {
+        await base.RunAsync(timerInfo, ct);
+    }
+
+    protected override async Task RunCoreAsync(CancellationToken ct)
     {
         await SyncSourceToPartitionKey("content-manager-web", "AquiferAdminPageViews", ct);
         await SyncSourceToPartitionKey("well-web", "BibleWellPageViews", ct);
@@ -78,7 +83,7 @@ public class SyncPageViewsToStorageTableManager(
                 {
                     if (error.Message.Contains("already exists"))
                     {
-                        _logger.LogError(
+                        Logger.LogError(
                             "Tried to insert an entity that already exists. This could be the result of items with identical timestamps but most likely indicates an error with filtering logs to the correct time range. Source: {source}. Partition Key: {partitionKey} ",
                             source, partitionKey);
                     }
@@ -91,7 +96,7 @@ public class SyncPageViewsToStorageTableManager(
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex,
+            Logger.LogError(ex,
                 "An error occurred while syncing pageViews to the Azure Storage Table. Source: {source}. Partition Key: {partitionKey} ",
                 source, partitionKey);
             throw;
