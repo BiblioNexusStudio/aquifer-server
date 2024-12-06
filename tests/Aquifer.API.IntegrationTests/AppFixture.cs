@@ -15,6 +15,8 @@ namespace Aquifer.API.IntegrationTests;
 /// </summary>
 public sealed class AppFixture : AppFixture<Program>
 {
+    public HttpClient PublisherClient { get; private set; } = null!;
+
     /// <summary>
     /// The app is configured in <see cref="Program"/> before this method is called.
     /// Only use this method to override or extend existing host configuration.
@@ -55,6 +57,8 @@ public sealed class AppFixture : AppFixture<Program>
     /// </remarks>
     protected override Task SetupAsync()
     {
+        PublisherClient = CreateClient();
+
         return Task.CompletedTask;
     }
 
@@ -63,6 +67,8 @@ public sealed class AppFixture : AppFixture<Program>
     /// </summary>
     protected override Task TearDownAsync()
     {
+        PublisherClient.Dispose();
+
         return Task.CompletedTask;
     }
 }
