@@ -2718,7 +2718,7 @@ namespace Aquifer.Data.Migrations
                     b.HasOne("Aquifer.Data.Entities.VerseEntity", "BibleVerse")
                         .WithMany()
                         .HasForeignKey("BibleVerseId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("BaseVerse");
