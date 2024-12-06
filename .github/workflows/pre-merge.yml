@@ -5,6 +5,9 @@ on:
         branches:
             - '**'
 
+permissions:
+    id-token: read
+
 jobs:
     lint_and_test:
         name: Lint and test
@@ -30,7 +33,7 @@ jobs:
                   subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
             - name: Test
               run: |
-                dotnet test \
-                  -e ASPNETCORE_ENVIRONMENT="${{ vars.ASPNETCORE_ENVIRONMENT }}" \
-                  -e ConnectionStrings__AzureStorageAccount="${{ secrets.AZURE_STORAGE_ACCOUNT_CONNECTION_STRING }}" \
-                  -e ConnectionStrings__BiblioNexusDb="${{ secrets.BIBLIONEXUS_DB_CONNECTION_STRING }}"
+                  dotnet test \
+                      -e ASPNETCORE_ENVIRONMENT="${{ vars.ASPNETCORE_ENVIRONMENT }}" \
+                      -e ConnectionStrings__AzureStorageAccount="${{ secrets.AZURE_STORAGE_ACCOUNT_CONNECTION_STRING }}" \
+                      -e ConnectionStrings__BiblioNexusDb="${{ secrets.BIBLIONEXUS_DB_CONNECTION_STRING }}"
