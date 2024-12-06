@@ -9,6 +9,8 @@ jobs:
     lint_and_test:
         name: Lint and test
         runs-on: ubuntu-latest
+        environment:
+            name: qa-tests
         steps:
             - name: Checkout source code
               uses: actions/checkout@v4.1.7
