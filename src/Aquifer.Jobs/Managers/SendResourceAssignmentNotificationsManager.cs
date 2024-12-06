@@ -13,21 +13,24 @@ using Microsoft.Extensions.Options;
 
 namespace Aquifer.Jobs.Managers;
 
-public class SendResourceAssignmentNotificationsManager(
+public sealed class SendResourceAssignmentNotificationsManager(
     IOptions<ConfigurationOptions> _configurationOptions,
     AquiferDbContext _dbContext,
     IEmailMessagePublisher _emailMessagePublisher,
     ILogger<SendResourceAssignmentNotificationsManager> _logger)
+    : ManagerBase<SendResourceAssignmentNotificationsManager>(_logger)
 {
     private const int _maxNumberOfResourcesToDisplayInNotificationContent = 25;
     private const int _maxAgeOfResourceAssignmentInMinutes = 120;
-    private const string _tenSecondDelayInterval = "00:00:10";
 
     [Function(nameof(SendResourceAssignmentNotificationsManager))]
-    [FixedDelayRetry(maxRetryCount: 1, delayInterval: _tenSecondDelayInterval)]
-#pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings.
-    public async Task RunAsync([TimerTrigger(CronSchedules.EveryTenMinutes)] TimerInfo timerInfo, CancellationToken ct)
-#pragma warning restore IDE0060 // Remove unused parameter
+    [FixedDelayRetry(maxRetryCount: 1, Timings.TenSecondDelayInterval)]
+    public override async Task RunAsync([TimerTrigger(CronSchedules.EveryTenMinutes)] TimerInfo timerInfo, CancellationToken ct)
+    {
+        await base.RunAsync(timerInfo, ct);
+    }
+
+    protected override async Task RunCoreAsync(CancellationToken ct)
     {
         var jobHistory = await _dbContext.JobHistory
             .AsTracking()
@@ -129,7 +132,7 @@ public class SendResourceAssignmentNotificationsManager(
             }
             catch (Exception ex)
             {
-                _logger.LogError(
+                Logger.LogError(
                     ex, 
                     "Unable to publish resource assignment notification message for \"{EmailAddress}\". Skipping notification. Manual developer replay is required: {MessageContent}",
                     sendTemplatedEmailMessage.Tos[0].Email,
@@ -143,12 +146,12 @@ public class SendResourceAssignmentNotificationsManager(
             await _dbContext.SaveChangesAsync(CancellationToken.None);
         }
 
-        _logger.LogInformation("Resource assignment notifications successfully sent to {UserCount} users.", successCount);
+        Logger.LogInformation("Resource assignment notifications successfully sent to {UserCount} users.", successCount);
 
         var skippedCount = sendTemplatedEmailMessages.Count - successCount;
         if (skippedCount > 0)
         {
-            _logger.LogWarning("Skipped resource assignment notifications for {UserCount} users.", skippedCount);
+            Logger.LogWarning("Skipped resource assignment notifications for {UserCount} users.", skippedCount);
         }
     }
 }

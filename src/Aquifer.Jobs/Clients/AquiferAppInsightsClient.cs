@@ -15,7 +15,18 @@ public interface IAquiferAppInsightsClient
 public class AquiferAppInsightsClient(IAzureClientService _azureClientService, IOptions<ConfigurationOptions> _options)
     : IAquiferAppInsightsClient
 {
-    private readonly LogsQueryClient _logsClient = new(_azureClientService.GetCredential());
+    private static readonly LogsQueryClientOptions s_logsQueryClientOptions = new()
+    {
+        Retry = {
+            Delay = TimeSpan.FromMilliseconds(500),
+            MaxRetries = 5,
+            Mode = RetryMode.Exponential,
+            MaxDelay = TimeSpan.FromSeconds(10),
+            NetworkTimeout = TimeSpan.FromSeconds(100),
+        },
+    };
+
+    private readonly LogsQueryClient _logsClient = new(_azureClientService.GetCredential(), s_logsQueryClientOptions);
 
     public async Task<Response<IReadOnlyList<T>>> QueryAsyncSinceTimestamp<T>(string query, DateTime? timestamp, CancellationToken ct)
     {

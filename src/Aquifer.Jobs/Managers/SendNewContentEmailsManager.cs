@@ -7,20 +7,27 @@ using Aquifer.Jobs.Configuration;
 using Microsoft.ApplicationInsights;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Aquifer.Jobs.Managers;
 
-public class SendNewContentEmailsManager(
+public sealed class SendNewContentEmailsManager(
     AquiferDbContext dbContext,
     IEmailMessagePublisher emailMessagePublisher,
     IOptions<ConfigurationOptions> options,
-    TelemetryClient telemetryClient)
+    TelemetryClient telemetryClient,
+    ILogger<SendNewContentEmailsManager> logger)
+    : ManagerBase<SendNewContentEmailsManager>(logger)
 {
     [Function(nameof(SendNewContentEmailsManager))]
-#pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings
-    public async Task Run([TimerTrigger(CronSchedules.FirstOfMonthAtNoon)] TimerInfo timerInfo, CancellationToken ct)
-#pragma warning restore IDE0060 // Remove unused parameter
+    [FixedDelayRetry(maxRetryCount: 1, Timings.TenSecondDelayInterval)]
+    public override async Task RunAsync([TimerTrigger(CronSchedules.FirstOfMonthAtNoon)] TimerInfo timerInfo, CancellationToken ct)
+    {
+        await base.RunAsync(timerInfo, ct);
+    }
+
+    protected override async Task RunCoreAsync(CancellationToken ct)
     {
         var subscribers = await GetSubscribersAsync(ct);
         var allNewItems = await GetAllNewItemsAsync(subscribers, ct);

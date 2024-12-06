@@ -15,11 +15,16 @@ public class SyncCustomEventsToStorageTableManager(
     ILogger<SyncCustomEventsToStorageTableManager> _logger,
     IAzureClientService _azureClientService,
     IOptions<ConfigurationOptions> _options)
+    : ManagerBase<SyncCustomEventsToStorageTableManager>(_logger)
 {
     [Function(nameof(SyncCustomEventsToStorageTableManager))]
-#pragma warning disable IDE0060 // Remove unused parameter: A (non-discard) TimerInfo parameter is required for correct Azure bindings
-    public async Task Run([TimerTrigger(CronSchedules.EveryHourAtFiveAfter)] TimerInfo timerInfo, CancellationToken ct)
-#pragma warning restore IDE0060 // Remove unused parameter
+    [FixedDelayRetry(maxRetryCount: 1, Timings.TenSecondDelayInterval)]
+    public override async Task RunAsync([TimerTrigger(CronSchedules.EveryHourAtFiveAfter)] TimerInfo timerInfo, CancellationToken ct)
+    {
+        await base.RunAsync(timerInfo, ct);
+    }
+
+    protected override async Task RunCoreAsync(CancellationToken ct)
     {
         await SyncSourceToPartitionKey("content-manager-web", "AquiferAdminCustomEvents", ct);
         await SyncSourceToPartitionKey("well-web", "BibleWellCustomEvents", ct);
@@ -79,7 +84,7 @@ public class SyncCustomEventsToStorageTableManager(
                 {
                     if (error.Message.Contains("already exists"))
                     {
-                        _logger.LogError(
+                        Logger.LogError(
                             "Tried to insert an entity that already exists. This could be the result of items with identical timestamps but most likely indicates an error with filtering logs to the correct time range. Source: {source}. Partition Key: {partitionKey} ",
                             source, partitionKey);
                     }
@@ -92,7 +97,7 @@ public class SyncCustomEventsToStorageTableManager(
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex,
+            Logger.LogError(ex,
                 "An error occurred while syncing customEvents to the Azure Storage Table. Source: {source}. Partition Key: {partitionKey} ",
                 source, partitionKey);
             throw;

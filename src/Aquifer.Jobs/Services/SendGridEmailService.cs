@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Aquifer.Common.Clients;
 using SendGrid;
 using SendGrid.Helpers.Mail;
+using SendGrid.Helpers.Reliability;
 
 namespace Aquifer.Jobs.Services;
 
@@ -42,7 +43,16 @@ public class SendGridEmailService : IEmailService
     {
         const string apiKeySecretName = "SendGridMarketingApiKey";
         var apiToken = keyVaultClient.GetSecretAsync(apiKeySecretName).GetAwaiter().GetResult();
-        _sendGridClient = new SendGridClient(apiToken);
+        _sendGridClient = new SendGridClient(
+            new SendGridClientOptions
+            {
+                ApiKey = apiToken,
+                ReliabilitySettings = new ReliabilitySettings(
+                    maximumNumberOfRetries: 5,
+                    minimumBackoff: TimeSpan.FromMilliseconds(200),
+                    maximumBackOff: TimeSpan.FromSeconds(5),
+                    deltaBackOff: TimeSpan.FromMilliseconds(50)),
+            });
     }
 
     public async Task SendEmailAsync(Email email, CancellationToken ct)

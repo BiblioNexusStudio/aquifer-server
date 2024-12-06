@@ -1,6 +1,7 @@
 using Aquifer.Common.Services;
 using Aquifer.Jobs.Configuration;
 using Azure;
+using Azure.Core;
 using Azure.Data.Tables;
 using Microsoft.Extensions.Options;
 
@@ -12,8 +13,19 @@ public class AquiferTableClient(
     IAzureClientService _azureClientService,
     IOptions<ConfigurationOptions> _options)
 {
+    private static readonly TableClientOptions s_tableClientOptions = new()
+    {
+        Retry = {
+            Delay = TimeSpan.FromMilliseconds(500),
+            MaxRetries = 5,
+            Mode = RetryMode.Exponential,
+            MaxDelay = TimeSpan.FromSeconds(10),
+            NetworkTimeout = TimeSpan.FromSeconds(100),
+        },
+    };
+
     private readonly TableClient _tableClient =
-        new(new Uri(_options.Value.Analytics.StorageAccountUri), _tableName, _azureClientService.GetCredential());
+        new(new Uri(_options.Value.Analytics.StorageAccountUri), _tableName, _azureClientService.GetCredential(), s_tableClientOptions);
 
     public async Task<DateTime?> GetLastTimestampAsync(string timestampName, CancellationToken ct)
     {
