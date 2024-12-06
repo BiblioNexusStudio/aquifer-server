@@ -60,3 +60,6 @@ app.UseHealthChecks("/_health")
 app.UseResponseCachingVaryByAllQueryKeys();
 
 app.Run();
+
+// make this class public in order to access from integration tests
+public partial class Program;
