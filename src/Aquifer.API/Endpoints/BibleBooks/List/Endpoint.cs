@@ -4,7 +4,7 @@ using FastEndpoints;
 
 namespace Aquifer.API.Endpoints.BibleBooks.List;
 
-public class Endpoint : EndpointWithoutRequest<IEnumerable<Response>>
+public class Endpoint : EndpointWithoutRequest<IReadOnlyList<Response>>
 {
     public override void Configure()
     {
@@ -21,7 +21,9 @@ public class Endpoint : EndpointWithoutRequest<IEnumerable<Response>>
             Id = (int)x.BookId,
             Name = x.BookFullName,
             Code = x.BookCode
-        });
+        })
+        .ToList();
+
         await SendOkAsync(response, ct);
     }
 }

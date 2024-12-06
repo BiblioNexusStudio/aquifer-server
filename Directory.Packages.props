@@ -17,6 +17,7 @@
     <PackageVersion Include="FastEndpoints.ClientGen.Kiota" Version="5.32.0" />
     <PackageVersion Include="FastEndpoints.Swagger" Version="5.32.0" />
     <PackageVersion Include="FastEndpoints.Testing" Version="5.32.0" />
+    <PackageVersion Include="FluentAssertions" Version="7.0.0" />
     <PackageVersion Include="HtmlAgilityPack" Version="1.11.71" />
     <PackageVersion Include="JavaScriptEngineSwitcher.V8" Version="3.24.2" />
     <PackageVersion Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
