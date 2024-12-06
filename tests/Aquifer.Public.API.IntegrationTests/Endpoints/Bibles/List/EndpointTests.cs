@@ -19,7 +19,8 @@ public sealed class EndpointTests(App _app) : TestBase<App>
                 HasGreekAlignment = true,
             });
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains(result, r => r.Abbreviation == "BSB");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        result.Should().Contain(r => r.Abbreviation == "BSB");
     }
 }
