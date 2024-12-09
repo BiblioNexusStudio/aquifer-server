@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    [Migration("20241209143920_AddVersificationMappingAndExclusion")]
+    [Migration("20241209173443_AddVersificationMappingAndExclusion")]
     partial class AddVersificationMappingAndExclusion
     {
         /// <inheritdoc />
