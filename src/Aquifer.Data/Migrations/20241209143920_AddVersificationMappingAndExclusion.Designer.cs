@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    [Migration("20241206174813_AddVersificationMappingAndExclusion")]
+    [Migration("20241209143920_AddVersificationMappingAndExclusion")]
     partial class AddVersificationMappingAndExclusion
     {
         /// <inheritdoc />
@@ -2721,7 +2721,7 @@ namespace Aquifer.Data.Migrations
                     b.HasOne("Aquifer.Data.Entities.VerseEntity", "BibleVerse")
                         .WithMany()
                         .HasForeignKey("BibleVerseId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("BaseVerse");
