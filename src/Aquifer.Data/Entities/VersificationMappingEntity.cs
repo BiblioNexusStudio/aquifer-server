@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
+[EntityTypeConfiguration(typeof(VersificationMappingEntityConfiguration))]
 public class VersificationMappingEntity : IHasUpdatedTimestamp
 {
     public int Id { get; private set; }
