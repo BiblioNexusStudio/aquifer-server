@@ -6,9 +6,11 @@ namespace Aquifer.Public.API.OpenApi;
 
 public static class SwaggerDocumentSettings
 {
-    public static IServiceCollection AddSwaggerDocumentSettings(this IServiceCollection service)
+    public const string DocumentName = "v1";
+
+    public static IServiceCollection AddSwaggerDocumentSettings(this IServiceCollection services)
     {
-        return service.SwaggerDocument(sd =>
+        return services.SwaggerDocument(sd =>
         {
             // turn off auto-grouping (but now must manually tag each endpoint using `WithTags()`)
             sd.AutoTagPathSegmentIndex = 0;
@@ -18,6 +20,7 @@ public static class SwaggerDocumentSettings
             sd.EndpointFilter = ep => ep.EndpointTags?.Contains(EndpointHelpers.EndpointTags.ExcludeFromSwaggerDocument) != true;
             sd.DocumentSettings = ds =>
             {
+                ds.DocumentName = DocumentName;
                 ds.Title = "Aquifer API Documentation";
                 ds.Description = """
                                  All endpoints require an API key in the `api-key` header.<br><br>
@@ -61,6 +64,7 @@ public static class SwaggerDocumentSettings
                 td["Resources/Types"] = "Endpoints for retrieving the different types of resource collections and resources.";
                 td["Languages"] = "Endpoints for pulling data specific to languages.";
                 td["Bibles"] = "Endpoints for discovering available Bibles and pulling down Bible text and audio information.";
+                td["Clients"] = "Endpoints for downloading generated client source code for calling this API.";
             };
         });
     }
