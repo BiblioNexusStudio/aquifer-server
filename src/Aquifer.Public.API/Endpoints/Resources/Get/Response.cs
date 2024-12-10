@@ -17,16 +17,7 @@ public class Response
     [JsonIgnore]
     public string ContentValue { get; set; } = null!;
 
-    /// <summary>
-    /// Converted object from Tiptap.
-    /// </summary>
-    [JsonIgnore]
-    public object ContentObject { get; set; } = null!;
-
-    // Manually serialize the content in order to return a string instead of an object
-    // which allows auto-generated clients to work correctly.
-    [JsonConverter(typeof(JsonUtilities.RawJsonConverter))]
-    public string Content => JsonUtilities.DefaultSerialize(ContentObject);
+    public object Content { get; set; } = null!;
 
     public ResourceTypeMetadata Grouping { get; set; } = null!;
     public ResourceContentLanguage Language { get; set; } = null!;
@@ -44,7 +35,7 @@ public class ResourceTypeMetadata
     public string MediaType => MediaTypeValue.ToString();
 
     [JsonConverter(typeof(JsonUtilities.RawJsonConverter))]
-    public required string? LicenseInfo { get; init; }
+    public required object? LicenseInfo { get; init; }
 }
 
 public class ResourceContentLanguage

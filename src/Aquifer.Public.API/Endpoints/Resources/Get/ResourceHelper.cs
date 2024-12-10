@@ -63,7 +63,7 @@ public static class ResourceHelper
             ? req.ContentTextType == TiptapContentType.None ? TiptapContentType.Json : req.ContentTextType
             : TiptapContentType.None;
 
-        response.ContentObject = TiptapConverter.ConvertJsonToType(response.ContentValue, contentTextType);
+        response.Content = TiptapConverter.ConvertJsonToType(response.ContentValue, contentTextType);
         return response;
     }
 }

@@ -15,5 +15,5 @@ public class AvailableResourceCollection
     public required string Title { get; set; }
 
     [JsonConverter(typeof(JsonUtilities.RawJsonConverter))]
-    public required string? LicenseInformation { get; init; }
+    public required object? LicenseInformation { get; init; }
 }

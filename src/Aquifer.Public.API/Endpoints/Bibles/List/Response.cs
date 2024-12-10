@@ -14,8 +14,5 @@ public record Response
     public required bool HasGreekAlignment { get; init; }
 
     [JsonConverter(typeof(JsonUtilities.RawJsonConverter))]
-    public required string? LicenseInfo { get; init; }
-
-    [JsonIgnore]
-    public string? SerializedLicenseInfo { get; init; }
+    public required object? LicenseInfo { get; init; }
 }
