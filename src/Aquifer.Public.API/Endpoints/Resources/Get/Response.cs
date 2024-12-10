@@ -31,10 +31,8 @@ public class ResourceTypeMetadata
 
     public string MediaType => MediaTypeValue.ToString();
 
-    [JsonIgnore]
-    public string? LicenseInfoValue { get; set; } = null!;
-
-    public object? LicenseInfo => LicenseInfoValue is null ? null : JsonUtilities.DefaultDeserialize(LicenseInfoValue);
+    [JsonConverter(typeof(JsonUtilities.RawJsonConverter))]
+    public required string? LicenseInfo { get; init; }
 }
 
 public class ResourceContentLanguage

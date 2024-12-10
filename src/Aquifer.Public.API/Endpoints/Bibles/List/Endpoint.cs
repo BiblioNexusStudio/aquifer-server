@@ -41,6 +41,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IReadOnlyL
                 IsLanguageDefault = bible.LanguageDefault,
                 HasAudio = bible.BibleBookContents.Any(bbc => bbc.AudioUrls != null),
                 HasGreekAlignment = bible.GreekAlignment,
+                LicenseInfo = bible.LicenseInfo,
             })
             .ToListAsync(ct);
 
