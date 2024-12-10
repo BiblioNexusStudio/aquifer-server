@@ -84,13 +84,18 @@ public static class ClientGenerationSettings
                             Retrieved Resource:
                               - ID: {resource?.Id}
                               - Name: {resource?.Name}
-                              - Content: {resource?.Content}
+                              - Content: {await GetUntypedNodeOriginalJsonAsync(resource.Content!)}
                             """);
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"ERROR: {ex.Message}");
                         Console.WriteLine(ex.StackTrace);
+                    }
+                    
+                    private static async Task<string> GetUntypedNodeOriginalJsonAsync(UntypedNode untypedNode)
+                    {
+                        return await KiotaJsonSerializer.SerializeAsStringAsync(untypedNode);
                     }
                     ```
                     The following class is used above to inject the API Key into the header:
