@@ -33,13 +33,80 @@ public static class ClientGenerationSettings
                 o.CacheOutput(p => p.Expire(clientZipCacheDuration));
                 o.WithTags("Clients");
                 o.WithSummary("Downloads C# client.");
-                o.WithDescription("""
+                o.WithDescription(""""
                     Downloads a zip file containing a generated C# client to use when calling this API.
                     The generated source code uses [Kiota](https://learn.microsoft.com/en-us/openapi/kiota/) in order to make web requests. You will need to install the following dependencies:
                       * `dotnet add package Microsoft.Kiota.Bundle --version 1.15.2` (or newer version)
 
                     See also [this C# Kiota example](https://github.com/microsoft/kiota-samples/blob/main/get-started/quickstart/dotnet/src/Program.cs) for how to use a generated Kiota client.
-                    """);
+                    
+                    Full example of a `Program.cs` file using the generated client and injecting an API key header:
+                    ```
+                    using System.Net.Http;
+                    using BiblioNexus.Aquifer.API.Client;
+                    using Microsoft.Kiota.Abstractions.Authentication;
+                    using Microsoft.Kiota.Http.HttpClientLibrary;
+                    
+                    // see https://learn.microsoft.com/en-us/openapi/kiota/middleware?tabs=csharp
+                    var httpMessageHandler = KiotaClientFactory.ChainHandlersCollectionAndGetFirstLink(
+                        KiotaClientFactory.GetDefaultHttpMessageHandler(),
+                        [..KiotaClientFactory.CreateDefaultHandlers(), new SetApiKeyHeaderRequestHandler("your-api-key-goes-here")]);
+                    var adapter = new HttpClientRequestAdapter(
+                        new AnonymousAuthenticationProvider(),
+                        httpClient: new HttpClient(httpMessageHandler!))
+                    {
+                        BaseUrl = GetAquiferPublicApiBaseUri(environment),
+                    };
+                    
+                    var aquiferClient = new AquiferClient(adapter);
+                    
+                    try
+                    {
+                        // GET /biblebooks
+                        var bibleBooks = await aquiferClient.Bibles.Books.GetAsync();
+                        
+                        Console.WriteLine($"Retrieved {bibleBooks?.Count} Bible books.");
+                        
+                        // GET /bibles
+                        var englishDefaultBible = (await aquiferClient.Bibles.GetAsync(b =>
+                        {
+                            b.QueryParameters.LanguageCode = "eng";
+                            b.QueryParameters.IsLanguageDefault = true;
+                        }))
+                        ?.SingleOrDefault();
+                        
+                        Console.WriteLine($"The English language default Bible is \"{englishDefaultBible?.Name}\" ({englishDefaultBible?.Abbreviation})");
+                        
+                        // GET /resources/{id}
+                        var resource = await aquiferClient.Resources[1717].GetAsync();
+                        
+                        Console.WriteLine($"""
+                            Retrieved Resource:
+                              - ID: {resource?.Id}
+                              - Name: {resource?.Name}
+                              - Content: {resource?.Content}
+                            """);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"ERROR: {ex.Message}");
+                        Console.WriteLine(ex.StackTrace);
+                    }
+                    ```
+                    The following class is used above to inject the API Key into the header:
+                    ```
+                    public sealed class SetApiKeyHeaderRequestHandler(string _apiKey) : DelegatingHandler
+                    {
+                        protected override async Task<HttpResponseMessage> SendAsync(
+                            HttpRequestMessage request, CancellationToken cancellationToken)
+                        {
+                            request.Headers.Add("api-key", _apiKey);
+                            return await base.SendAsync(request, cancellationToken);
+                        }
+                    }
+                    ```
+                    """");
+                o.WithName("AquiferPublicAPIEndpointsClientsGetCsEndpoint");
                 o.WithOpenApi();
             });
 
@@ -67,6 +134,7 @@ public static class ClientGenerationSettings
 
                     See also [this Java Kiota example](https://github.com/microsoft/kiota-samples/blob/main/get-started/quickstart/java/app/src/main/java/kiotaposts/App.java) for how to use a generated Kiota client.
                     """);
+                o.WithName("AquiferPublicAPIEndpointsClientsGetJavaEndpoint");
                 o.WithOpenApi();
             });
 
@@ -93,6 +161,7 @@ public static class ClientGenerationSettings
 
                     See also [this Python Kiota example](https://github.com/microsoft/kiota-samples/blob/main/get-started/quickstart/python/main.py) for how to use a generated Kiota client.
                     """);
+                o.WithName("AquiferPublicAPIEndpointsClientsGetPyEndpoint");
                 o.WithOpenApi();
             });
 
@@ -119,6 +188,7 @@ public static class ClientGenerationSettings
 
                     See also [this TypeScript Kiota example](https://github.com/microsoft/kiota-samples/blob/main/get-started/quickstart/typescript/index.ts) for how to use a generated Kiota client.
                     """);
+                o.WithName("AquiferPublicAPIEndpointsClientsGetTsEndpoint");
                 o.WithOpenApi();
             });
 
