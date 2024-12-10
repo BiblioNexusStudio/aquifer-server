@@ -1,6 +1,6 @@
 # Aquifer.Jobs
 
-We have two kinds of Azure Function jobs, Subscriber and Managers.  Both kinds are triggered and run asynchronously.
+We have two kinds of Azure Function jobs, MessageSubscribers and Managers.  Both kinds are triggered and run asynchronously.
 
 ## Managers
 
