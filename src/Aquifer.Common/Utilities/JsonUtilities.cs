@@ -29,24 +29,27 @@ public static class JsonUtilities
 
     /// <summary>
     /// Serializes the contents of a string value as raw JSON.  The string is validated as being an RFC 8259-compliant JSON payload.
+    /// The property is represented as an <see cref="object"/> instead of a <see cref="string"/> for API spec generation purposes.
     /// </summary>
     /// <example>
     /// [JsonConverter(typeof(JsonUtilities.RawJsonConverter))]
-    /// public required string Data { get; init; } // JSON string
+    /// public required object Data { get; init; } // JSON string
     /// </example>
-    public sealed class RawJsonConverter : JsonConverter<string>
+    public sealed class RawJsonConverter : JsonConverter<object>
     {
-        public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override object Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             using var doc = JsonDocument.ParseValue(ref reader);
             return doc.RootElement.GetRawText();
         }
 
-        public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, object value, JsonSerializerOptions options)
         {
             // Setting skipInputValidation to true will result in better performance.
             // However, unless the data is guaranteed to be valid JSON it should not be used.
-            writer.WriteRawValue(value, skipInputValidation: false);
+            writer.WriteRawValue(
+                value as string ?? throw new ArgumentException("Value must be a string", nameof(value)),
+                skipInputValidation: false);
         }
     }
 }

@@ -59,6 +59,8 @@ app.UseHealthChecks("/_health")
 
 app.UseResponseCachingVaryByAllQueryKeys();
 
+app.ConfigureClientGeneration(SwaggerDocumentSettings.DocumentName, TimeSpan.FromDays(365));
+
 app.Run();
 
 // make this class public in order to access from integration tests

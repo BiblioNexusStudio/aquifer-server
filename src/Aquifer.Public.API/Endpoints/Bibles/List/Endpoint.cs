@@ -36,7 +36,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IReadOnlyL
                 Name = bible.Name,
                 Abbreviation = bible.Abbreviation,
                 Id = bible.Id,
-                SerializedLicenseInfo = bible.LicenseInfo,
+                LicenseInfo = bible.LicenseInfo,
                 LanguageId = bible.LanguageId,
                 IsLanguageDefault = bible.LanguageDefault,
                 HasAudio = bible.BibleBookContents.Any(bbc => bbc.AudioUrls != null),

@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-        <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+        <WarningsNotAsErrors>NU1608;NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
         <NoWarn>MSB3245</NoWarn>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <GitHubOrganization>BiblioNexusStudio</GitHubOrganization>

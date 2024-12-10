@@ -98,6 +98,6 @@ public static class TiptapConverter
         ///     Keep the Tiptap JSON as-is.
         /// </summary>
         [JsonConverter(typeof(JsonUtilities.RawJsonConverter))]
-        public required string Tiptap { get; init; }
+        public required object Tiptap { get; init; }
     }
 }

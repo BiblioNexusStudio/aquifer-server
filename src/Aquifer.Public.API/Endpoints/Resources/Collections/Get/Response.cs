@@ -12,7 +12,7 @@ public sealed class Response
     public required ResourceType ResourceType { get; init; }
 
     [JsonConverter(typeof(JsonUtilities.RawJsonConverter))]
-    public required string? LicenseInfo { get; init; }
+    public required object? LicenseInfo { get; init; }
 
     public required IReadOnlyList<AvailableLanguageResponse> AvailableLanguages { get; init; }
 }
