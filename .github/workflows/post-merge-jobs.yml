@@ -63,6 +63,8 @@ jobs:
                 cd src/Aquifer.Jobs
                 dotnet build --configuration Release --output ../../build --runtime win-x64
                 cd ../..
+            - name: Bundle migrations
+              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --output build/Migrate --self-contained
             - name: Publish artifact
               uses: actions/upload-artifact@v4.4.0
               with:
@@ -98,6 +100,18 @@ jobs:
               with:
                   name: build
                   path: build
+            - name: Login to Azure
+              uses: azure/login@v2.1.1
+              with:
+                  client-id: ${{ secrets.AZURE_CLIENT_ID }}
+                  tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+                  subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+            - name: Make migration script executable
+              run: chmod +x ./build/Migrate
+              shell: bash
+            - name: Run migrations
+              run: ./build/Migrate --connection '${{ vars.DB_CONNECTION_URL_DEV_QA }}'
+              shell: bash
             - name: Deploy Jobs to dev/qa
               uses: Azure/functions-action@v1.5.2
               with:
@@ -148,6 +162,18 @@ jobs:
               with:
                   name: build
                   path: build
+            - name: Login to Azure
+              uses: azure/login@v2.1.1
+              with:
+                  client-id: ${{ secrets.AZURE_CLIENT_ID }}
+                  tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+                  subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+            - name: Make migration script executable
+              run: chmod +x ./build/Migrate
+              shell: bash
+            - name: Run migrations
+              run: ./build/Migrate --connection '${{ vars.DB_CONNECTION_URL_PROD }}'
+              shell: bash
             - name: Deploy Jobs to prod
               uses: Azure/functions-action@v1.5.2
               with:
