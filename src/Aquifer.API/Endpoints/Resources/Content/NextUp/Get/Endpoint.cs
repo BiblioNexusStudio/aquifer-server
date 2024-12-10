@@ -70,13 +70,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var user = await userService.GetUserFromJwtAsync(ct);
         var response = new Response
         {
-            NextUpResourceContentId =
-                (await dbContext.Database
-                    .SqlQueryRaw<int?>(user.Role == UserRole.Manager ? NextUpForManagerQuery : NextUpForEditorQuery,
-                        user.Id,
-                        (int)ResourceContentStatus.TranslationAiDraftComplete,
-                        (int)ResourceContentStatus.AquiferizeAiDraftComplete,
-                        request.Id).ToListAsync(ct)).FirstOrDefault()
+            NextUpResourceContentId = (await dbContext.Database
+                .SqlQueryRaw<int?>(user.Role is UserRole.Manager or UserRole.Reviewer ? NextUpForManagerQuery : NextUpForEditorQuery,
+                    user.Id,
+                    (int)ResourceContentStatus.TranslationAiDraftComplete,
+                    (int)ResourceContentStatus.AquiferizeAiDraftComplete,
+                    request.Id)
+                .ToListAsync(ct)).FirstOrDefault()
         };
         await SendOkAsync(response, ct);
     }
