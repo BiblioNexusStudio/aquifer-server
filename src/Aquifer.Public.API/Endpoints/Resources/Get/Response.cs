@@ -11,10 +11,22 @@ public class Response
     public string Name { get; set; } = null!;
     public string LocalizedName { get; set; } = null!;
 
+    /// <summary>
+    /// DB Value (Tiptap string).
+    /// </summary>
     [JsonIgnore]
     public string ContentValue { get; set; } = null!;
 
-    public object Content { get; set; } = null!;
+    /// <summary>
+    /// Converted object from Tiptap.
+    /// </summary>
+    [JsonIgnore]
+    public object ContentObject { get; set; } = null!;
+
+    // Manually serialize the content in order to return a string instead of an object
+    // which allows auto-generated clients to work correctly.
+    [JsonConverter(typeof(JsonUtilities.RawJsonConverter))]
+    public string Content => JsonUtilities.DefaultSerialize(ContentObject);
 
     public ResourceTypeMetadata Grouping { get; set; } = null!;
     public ResourceContentLanguage Language { get; set; } = null!;
