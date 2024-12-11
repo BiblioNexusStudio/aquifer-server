@@ -9,6 +9,7 @@ using Aquifer.Data.Services;
 using Aquifer.Jobs.Clients;
 using Aquifer.Jobs.Configuration;
 using Aquifer.Jobs.Services;
+using Aquifer.Jobs.Services.TranslationProcessors;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -47,7 +48,7 @@ var host = new HostBuilder()
         services.AddAzureClient(isDevelopment);
 
         services.AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount);
-        services.AddTranslationPostProcessingServices();
+        services.AddTranslationProcessingServices();
 
         services.AddSingleton<IAquiferAppInsightsClient, AquiferAppInsightsClient>();
         services.AddSingleton<IAquiferApiManagementClient, AquiferApiManagementClient>();

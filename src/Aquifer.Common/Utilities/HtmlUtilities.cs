@@ -8,11 +8,13 @@ namespace Aquifer.Common.Utilities;
 public static partial class HtmlUtilities
 {
     private static readonly char[] s_separators = [' ', '\u00a0', '\t', '\r', '\n'];
-    private static readonly IReadOnlySet<string> s_nodeNamesToSkip = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
-    {
-        "script",
-        "style"
-    };
+
+    private static readonly IReadOnlySet<string> s_nodeNamesToSkip =
+        new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "script",
+            "style"
+        };
 
     public static IEnumerable<(string name, string html)> GetChunks(string html)
     {
@@ -30,25 +32,23 @@ public static partial class HtmlUtilities
     }
 
     /// <summary>
-    /// Note: Returned plain text will not necessarily be formatted in a friendly human-readable way.
+    ///     Note: Returned plain text will not necessarily be formatted in a friendly human-readable way.
     /// </summary>
     public static string GetPlainText(string html)
     {
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
-        return string.Join(
-            separator: ' ',
-            doc.DocumentNode
-                .Descendants()
+        return string.Join(' ',
+            doc.DocumentNode.Descendants()
                 .Where(n => n.NodeType == HtmlNodeType.Text && !s_nodeNamesToSkip.Contains(n.ParentNode.Name))
                 .Select(n => WebUtility.HtmlDecode(n.InnerText).Trim())
                 .Where(t => !string.IsNullOrWhiteSpace(t)));
     }
 
     /// <summary>
-    /// Minifies HTML element attributes before processing and then reinstates the original element attributes after processing.
-    /// Thus, processing should only act on the human-readable content, not directly elements or attribute markdown.
+    ///     Minifies HTML element attributes before processing and then reinstates the original element attributes after processing.
+    ///     Thus, processing should only act on the human-readable content, not directly elements or attribute markdown.
     /// </summary>
     /// <param name="html">The original HTML.</param>
     /// <param name="processAsync">A function which takes in HTML and processes the content without changing elements or attribute markdown.</param>
@@ -91,6 +91,37 @@ public static partial class HtmlUtilities
 
             return expandedHtml.ToString();
         }
+    }
+
+    /// <summary>
+    ///     Extracts the text of each HTML node and runs the processor on the text, replacing the extracted text with the result.
+    ///     Thus, processing should only act on the human-readable content, not directly elements or attribute markdown.
+    ///     Note that this doesn't HTML decode the text, as re-encoding might change more things that we expect and potentially cause
+    ///     issues. So if you need to act upon a potentially encoded character make sure you account for that.
+    /// </summary>
+    /// <param name="html">The original HTML.</param>
+    /// <param name="processAsync">
+    ///     A function which takes in HTML and processes the readable text content without changing elements or attribute
+    ///     markdown.
+    /// </param>
+    /// <returns>The processed HTML.</returns>
+    public static async Task<string> ProcessHtmlTextContentAsync(string html, Func<string, Task<string>> processAsync)
+    {
+        HtmlDocument doc = new();
+        doc.LoadHtml(html);
+
+        var textNodes = doc.DocumentNode.Descendants()
+            .Where(n => n.NodeType == HtmlNodeType.Text && !s_nodeNamesToSkip.Contains(n.ParentNode.Name));
+
+        foreach (var node in textNodes)
+        {
+            if (!string.IsNullOrWhiteSpace(node.InnerHtml))
+            {
+                node.InnerHtml = await processAsync(node.InnerHtml);
+            }
+        }
+
+        return doc.DocumentNode.OuterHtml;
     }
 
     [GeneratedRegex("(?<=<span\\s)([^>]*)(?=>)")]
