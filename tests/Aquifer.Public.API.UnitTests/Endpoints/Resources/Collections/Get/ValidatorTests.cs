@@ -3,7 +3,7 @@ using FluentValidation.TestHelper;
 
 namespace Aquifer.Public.API.UnitTests.Endpoints.Resources.Collections.Get;
 
-public sealed class ResourcesCollectionsGetEndpointValidatorTests
+public sealed class ValidatorTests
 {
     private readonly Validator _validator = new();
 
