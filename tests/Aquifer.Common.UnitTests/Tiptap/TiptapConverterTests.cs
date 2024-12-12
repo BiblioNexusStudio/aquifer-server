@@ -1,6 +1,6 @@
 ﻿using Aquifer.Common.Tiptap;
 
-namespace Aquifer.Common.UnitTests;
+namespace Aquifer.Common.UnitTests.Tiptap;
 
 public sealed class TiptapConverterTests
 {
