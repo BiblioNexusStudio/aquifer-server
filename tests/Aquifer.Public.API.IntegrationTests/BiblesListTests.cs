@@ -5,7 +5,7 @@ using FastEndpoints;
 
 namespace Aquifer.Public.API.IntegrationTests;
 
-public sealed class BiblesListTestFixture(AppFixture _appFixture) : TestBase<AppFixture>
+public sealed class BiblesListTests(AppFixture _appFixture) : TestBase<AppFixture>
 {
     [Fact]
     public async Task ValidRequest_ShouldReturnSuccess()
