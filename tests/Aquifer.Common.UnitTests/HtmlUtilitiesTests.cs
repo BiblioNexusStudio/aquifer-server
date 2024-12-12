@@ -68,4 +68,21 @@ public sealed class HtmlUtilitiesTests
 
         Assert.Equal(html, roundTrippedHtml);
     }
+
+    [Theory]
+    [InlineData( /* lang=html */
+        """<p><strong>«&nbsp;la maison d'Israël »</strong></p><p>Ici, <strong>maison</strong> représente un groupe de personnes, les Israélites, qui descendaient de Jacob, qui était aussi nommé Israël. Si cela est utile dans votre langue, vous pourriez utiliser une métaphore de votre langue ou traduire le sens. C'est une métaphore biblique courante, donc vous pourriez vouloir vérifier d'autres endroits où cela se produit. La <strong>maison d'Israël</strong> est équivalente à « fils d'Israël » ou « Israélites ».</p><p>Voir&nbsp;: <span data-bnType="resourceReference" data-resourceId="26706" data-resourceType="UWTranslationManual">Métaphore</span></p>""",
+        /* lang=html */
+        """<p><strong>«&nbsp;la maison d'Israël »</strong></p><p>Ici, <strong>maison</strong> représente un groupe de personnes, les Israélites, qui descendaient de Jacob, qui était aussi nommé Israël. Si cela est utile dans votre langue, vous pourriez utiliser une métaphore de votre langue ou traduire le sens. C'est une métaphore biblique courante, donc vous pourriez vouloir vérifier d'autres endroits où cela se produit. La <strong>maison d'Israël</strong> est équivalente à « fils d'Israël » ou « Israélites ».</p><p>Voir&nbsp;: <span data-bntype="resourceReference" data-resourceid="26706" data-resourcetype="UWTranslationManual">Métaphore</span></p>""")]
+    public async Task ProcessHtmlTextContentAsync_Success(string html, string expectedHtml)
+    {
+        var roundTrippedHtml = await HtmlUtilities.ProcessHtmlTextContentAsync(html,
+            text =>
+            {
+                text = text.Replace("\u202f", "\u00a0").Replace("« ", "«\u00a0").Replace(" »", "\u00a0»");
+                return Task.FromResult(text);
+            });
+
+        Assert.Equal(expectedHtml, roundTrippedHtml);
+    }
 }
