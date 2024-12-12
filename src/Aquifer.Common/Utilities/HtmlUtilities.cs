@@ -48,7 +48,7 @@ public static partial class HtmlUtilities
 
     /// <summary>
     ///     Minifies HTML element attributes before processing and then reinstates the original element attributes after processing.
-    ///     Thus, processing should only act on the human-readable content, not directly elements or attribute markdown.
+    ///     Thus, processing should only act on the human-readable content, not directly on elements or attribute markdown.
     /// </summary>
     /// <param name="html">The original HTML.</param>
     /// <param name="processAsync">A function which takes in HTML and processes the content without changing elements or attribute markdown.</param>
