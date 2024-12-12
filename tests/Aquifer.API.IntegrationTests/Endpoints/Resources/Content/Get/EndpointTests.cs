@@ -3,14 +3,14 @@ using Aquifer.API.Endpoints.Resources.Content.Get;
 using FastEndpoints;
 using FastEndpoints.Testing;
 
-namespace Aquifer.API.IntegrationTests;
+namespace Aquifer.API.IntegrationTests.Endpoints.Resources.Content.Get;
 
-public sealed class ResourcesContentGetTestFixture(AppFixture _appFixture) : TestBase<AppFixture>
+public sealed class EndpointTests(App _app) : TestBase<App>
 {
     [Fact]
     public async Task UnauthenticatedRequest_ShouldReturnUnauthorized()
     {
-        var (response, _) = await _appFixture.Client.GETAsync<Endpoint, Request, ErrorResponse>(
+        var (response, _) = await _app.Client.GETAsync<Endpoint, Request, ErrorResponse>(
             new Request
             {
                 Id = 1890,
@@ -22,7 +22,7 @@ public sealed class ResourcesContentGetTestFixture(AppFixture _appFixture) : Tes
     [Fact]
     public async Task ValidRequest_ShouldReturnSuccess()
     {
-        var (response, result) = await _appFixture.PublisherClient.GETAsync<Endpoint, Request, Response>(
+        var (response, result) = await _app.PublisherClient.GETAsync<Endpoint, Request, Response>(
             new Request
             {
                 Id = 1890,
