@@ -5,8 +5,8 @@ namespace Aquifer.Jobs.Services.TranslationProcessors;
 
 public sealed partial class FrenchTranslationProcessingService : ILanguageSpecificTranslationProcessingService
 {
-    private const char NarrowNonBreakingSpace = '\u202f';
-    private const char NonBreakingSpace = '\u00a0';
+    private const string NarrowNonBreakingSpace = "\u202f";
+    private const string NonBreakingSpace = "\u00a0";
     private const string HtmlEncodedNonBreakingSpace = "&nbsp;";
 
     private static readonly IReadOnlySet<string> s_RegexItemsThatHaveNnbspAfterSelf = new HashSet<string>
@@ -48,25 +48,25 @@ public sealed partial class FrenchTranslationProcessingService : ILanguageSpecif
 
     private Task<string> SetNarrowNonBreakingSpacesAsync(string text)
     {
-        text = text.Replace(NonBreakingSpace, NarrowNonBreakingSpace).Replace(HtmlEncodedNonBreakingSpace, $"{NarrowNonBreakingSpace}");
+        text = text.Replace(NonBreakingSpace, NarrowNonBreakingSpace).Replace(HtmlEncodedNonBreakingSpace, NarrowNonBreakingSpace);
 
         text = Regex.Replace(text, _nnbspAfterPattern, m => m.Value + NarrowNonBreakingSpace);
         text = Regex.Replace(text, _nnbspBeforePattern, m => NarrowNonBreakingSpace + m.Value);
 
         // The regex matches the value but not the character before/after, so if a space comes before/after we'll end up with two spaces.
-        text = text.Replace($"{NarrowNonBreakingSpace} ", $"{NarrowNonBreakingSpace}")
-            .Replace($" {NarrowNonBreakingSpace}", $"{NarrowNonBreakingSpace}")
+        text = text.Replace($"{NarrowNonBreakingSpace} ", NarrowNonBreakingSpace)
+            .Replace($" {NarrowNonBreakingSpace}", NarrowNonBreakingSpace)
             // Replace this dash specifically with non-breaking dash
             .Replace("J.-C.", "J.‑C.");
 
         return Task.FromResult(text);
     }
 
-    private Task<string> SetCorrectBibleBookAbbreviation(string text)
+    private static Task<string> SetCorrectBibleBookAbbreviation(string text)
     {
         text = BibleBookRegex()
             .Replace(text,
-                m => m.Value.ToLower().Replace(NarrowNonBreakingSpace, ' ') switch
+                m => m.Value.ToLower().Replace(NarrowNonBreakingSpace, " ") switch
                 {
                     "gen" or "ge" => "Gn",
                     "exod" => "Ex",
