@@ -9,7 +9,7 @@ public sealed partial class FrenchTranslationProcessingService : ILanguageSpecif
     private const char NonBreakingSpace = '\u00a0';
     private const string HtmlEncodedNonBreakingSpace = "&nbsp;";
 
-    private static readonly IReadOnlySet<string> s_RegexItemsThatHaveNnbspAfterSelfRegex = new HashSet<string>
+    private static readonly IReadOnlySet<string> s_RegexItemsThatHaveNnbspAfterSelf = new HashSet<string>
     {
         @"\bv\.", // v.
         @"\bp\.", // p.
@@ -28,7 +28,7 @@ public sealed partial class FrenchTranslationProcessingService : ILanguageSpecif
         ";"
     };
 
-    private readonly string _nnbspAfterPattern = @$"({string.Join("|", s_RegexItemsThatHaveNnbspAfterSelfRegex)})(?=[A-Za-zà-üÀ-Ü0-9\x20])";
+    private readonly string _nnbspAfterPattern = @$"({string.Join("|", s_RegexItemsThatHaveNnbspAfterSelf)})(?=[A-Za-zà-üÀ-Ü0-9\x20])";
     private readonly string _nnbspBeforePattern = @$"(\b|\x20)({string.Join("|", s_RegexItemsThatHaveNnbspBeforeSelf)})";
 
     public string Iso6393Code => "FRA";
