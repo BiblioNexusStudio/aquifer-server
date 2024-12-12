@@ -95,7 +95,7 @@ public static partial class HtmlUtilities
 
     /// <summary>
     ///     Extracts the text of each HTML node and runs the processor on the text, replacing the extracted text with the result.
-    ///     Thus, processing should only act on the human-readable content, not directly elements or attribute markdown.
+    ///     Thus, processing should only act on the human-readable content, not directly on elements or attribute markdown.
     ///     Note that this doesn't HTML decode the text, as re-encoding might change more things that we expect and potentially cause
     ///     issues. So if you need to act upon a potentially encoded character make sure you account for that.
     /// </summary>
