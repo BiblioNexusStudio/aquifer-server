@@ -32,15 +32,13 @@ public static class ClientGenerationSettings
             {
                 o.CacheOutput(p => p.Expire(clientZipCacheDuration));
                 o.WithTags("Clients");
-                o.WithSummary("Downloads C# client.");
+                o.WithSummary("Download C# client.");
                 o.WithDescription(""""
                     Downloads a zip file containing a generated C# client to use when calling this API.
                     The generated source code uses [Kiota](https://learn.microsoft.com/en-us/openapi/kiota/) in order to make web requests. You will need to install the following dependencies:
                       * `dotnet add package Microsoft.Kiota.Bundle --version 1.15.2` (or newer version)
-
-                    See also [this C# Kiota example](https://github.com/microsoft/kiota-samples/blob/main/get-started/quickstart/dotnet/src/Program.cs) for how to use a generated Kiota client.
                     
-                    Full example of a `Program.cs` file using the generated client and injecting an API key header.
+                    The following is a full example of a `Program.cs` file using the generated client and injecting an API key header.
                     The example code assumes that the downloaded client code files are contained in the same solution in the `BiblioNexus.Aquifer.API.Client` namespace.
                     ```
                     using System.Net.Http;
@@ -138,6 +136,7 @@ public static class ClientGenerationSettings
                         }
                     }
                     ```
+                    See also [this C# Kiota example](https://github.com/microsoft/kiota-samples/blob/main/get-started/quickstart/dotnet/src/Program.cs) for how to use a generated Kiota client.
                     """");
                 o.WithName("AquiferPublicAPIEndpointsClientsGetCsEndpoint");
                 o.WithOpenApi();
@@ -219,8 +218,6 @@ public static class ClientGenerationSettings
                     The generated source code uses [Kiota](https://learn.microsoft.com/en-us/openapi/kiota/) in order to make web requests. You will need to install the following dependencies:
                       * `npm install @microsoft/kiota-bundle@1.0.0-preview.77 -SE` (or newer version)
 
-                    See also [this TypeScript Kiota example](https://github.com/microsoft/kiota-samples/blob/main/get-started/quickstart/typescript/index.ts) for how to use a generated Kiota client.
-                    
                     The following is a full example of an `index.tx` file using the generated client and injecting an API key header.
                     The example code assumes that the downloaded client code files are unzipped into a subdirectory named `client`.
                     ```
@@ -309,6 +306,7 @@ public static class ClientGenerationSettings
                         }
                     }
                     ```
+                    See also [this TypeScript Kiota example](https://github.com/microsoft/kiota-samples/blob/main/get-started/quickstart/typescript/index.ts) for how to use a generated Kiota client.
                     """);
                 o.WithName("AquiferPublicAPIEndpointsClientsGetTsEndpoint");
                 o.WithOpenApi();
