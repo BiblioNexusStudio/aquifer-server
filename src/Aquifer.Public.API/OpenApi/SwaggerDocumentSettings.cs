@@ -33,6 +33,8 @@ public static class SwaggerDocumentSettings
 
                                  <a href="https://cdn.aquifer.bible/training/aquifer-api-files-demo-csharp.mp4" target="_blank">Downloading resources to the file system with C#</a>
 
+                                 <a href="https://cdn.aquifer.bible/training/api-and-flat-files.mp4" target="_blank">Why use a web API instead of flat files?</a>
+
                                  <br><br>
                                  Example applications using the Aquifer API can be found in the <a href="https://github.com/BiblioNexusStudio/aquifer-api-samples" target="_blank">samples repository on GitHub</a>.
 
