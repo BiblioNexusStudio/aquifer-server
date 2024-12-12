@@ -1,7 +1,7 @@
 using Aquifer.Public.API.Endpoints.Resources.Collections.Get;
 using FluentValidation.TestHelper;
 
-namespace Aquifer.Public.API.UnitTests;
+namespace Aquifer.Public.API.UnitTests.Endpoints.Resources.Collections.Get;
 
 public sealed class ResourcesCollectionsGetEndpointValidatorTests
 {

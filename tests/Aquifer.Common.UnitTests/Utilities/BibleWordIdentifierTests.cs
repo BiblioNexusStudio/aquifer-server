@@ -1,7 +1,7 @@
 using Aquifer.Common.Utilities;
 using Aquifer.Data.Enums;
 
-namespace Aquifer.Common.UnitTests;
+namespace Aquifer.Common.UnitTests.Utilities;
 
 public sealed class BibleWordIdentifierTests
 {

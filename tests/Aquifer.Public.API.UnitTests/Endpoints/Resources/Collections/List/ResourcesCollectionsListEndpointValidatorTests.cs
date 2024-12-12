@@ -2,7 +2,7 @@ using Aquifer.Data.Entities;
 using Aquifer.Public.API.Endpoints.Resources.Collections.List;
 using FluentValidation.TestHelper;
 
-namespace Aquifer.Public.API.UnitTests;
+namespace Aquifer.Public.API.UnitTests.Endpoints.Resources.Collections.List;
 
 public sealed class ResourcesCollectionsListEndpointValidatorTests
 {
