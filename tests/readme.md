@@ -3,7 +3,16 @@
 This directory contains automated tests which must succeed as part of the CI/CD process.
 Health checks are not included here; they run as part of deployment.
 
-We currently use XUnit for testing in .net.
+## Technologies
+
+We currently use [XUnit](https://xunit.net/) for testing in .net.
+
+.net testing best practices (consider these documents as guidance but not necessarily as law):
+* [Unit testing](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices).
+* [Integration testing](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests).
+
+Note that common test project configuration is in the `Directory.Build.props` file in this directory which
+inherits from and overrides the Solution root's `Directory.Build.props` file.
 
 ## Running the Tests
 
@@ -14,6 +23,15 @@ dotnet test
 ```
 
 You can also use an IDE to run one or more tests with results visible in the IDE's Test Runner UI.
+
+## Naming
+
+1. Test projects should match the naming of the project under test but with an `.IntegrationTests` or `.UnitTests` suffix.
+1. Test classes should be in their own file and class names should end with the `Tests` suffix, _not_ `TestFixture`.
+1. When only a single class (or endpoint) is under test then the corresponding test class should be located in an equivalent
+   folder/namespace hierarchy as the class under test.
+1. Test method names should strive to follow [.net test naming conventions](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices#naming-your-tests)
+   though shorter names are often acceptable.
 
 ## Testing Philosophy
 
