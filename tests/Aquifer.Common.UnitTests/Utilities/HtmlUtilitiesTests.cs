@@ -4,52 +4,48 @@ namespace Aquifer.Common.UnitTests.Utilities;
 
 public sealed class HtmlUtilitiesTests
 {
-    public static IEnumerable<object[]> GetHtmlToPlainTextConversionTestData =>
-    [
-        [
-            (
-                Html: /* lang=html */ """
-                    <body>
-                        <div>
-                            <p>
-                            <!-- This is a comment.-->
-                                Test  &nbsp;   *HTML.
-                            </p>
-                        </div>
-                    </body>
-                    """,
-                PlainText: "Test  \u00a0   *HTML.",
-                WordCount: 2
-            ),
-        ],
-        [
-            (
-                Html: /* lang=html */ """<div><span>This is <span>important</span> text.</span></div>""",
-                PlainText: "This is important text.",
-                WordCount: 4
-            ),
-        ],
-        [
-            (Html: /* lang=html */ """<h1>AARON’S <b>ROD</b></h1><p>Staff <br /> ... Abiram (<span data-bnType="bibleReference" data-verses="[[1004016001,1004016040]]">Nm 16:1-40</span>).</p><p>مرحبا بالعالم</p><p><em>See also</em> <span data-bnType="resourceReference" data-resourceId="1242" data-resourceType="TyndaleBibleDictionary">Aaron</span>.</p>""",
-                PlainText: "AARON’S ROD Staff ... Abiram ( Nm 16:1-40 ). مرحبا بالعالم See also Aaron .",
-                WordCount: 11),
-        ],
-    ];
+    public static TheoryData<string, string, int> GetHtmlToPlainTextConversionTestData => new()
+    {
+        {
+            /* lang=html */ """
+                <body>
+                    <div>
+                        <p>
+                        <!-- This is a comment.-->
+                            Test  &nbsp;   *HTML.
+                        </p>
+                    </div>
+                </body>
+                """,
+            "Test  \u00a0   *HTML.",
+            2
+        },
+        {
+            /* lang=html */ """<div><span>This is <span>important</span> text.</span></div>""",
+            "This is important text.",
+            4
+        },
+        {
+            /* lang=html */ """<h1>AARON’S <b>ROD</b></h1><p>Staff <br /> ... Abiram (<span data-bnType="bibleReference" data-verses="[[1004016001,1004016040]]">Nm 16:1-40</span>).</p><p>مرحبا بالعالم</p><p><em>See also</em> <span data-bnType="resourceReference" data-resourceId="1242" data-resourceType="TyndaleBibleDictionary">Aaron</span>.</p>""",
+            "AARON’S ROD Staff ... Abiram ( Nm 16:1-40 ). مرحبا بالعالم See also Aaron .",
+            11
+        },
+    };
 
     [Theory]
     [MemberData(nameof(GetHtmlToPlainTextConversionTestData))]
-    public void GetPlainText_Success((string Html, string PlainText, int _) data)
+    public void GetPlainText_Success(string html, string plainText, int _)
     {
-        var convertedPlainText = HtmlUtilities.GetPlainText(data.Html);
-        Assert.Equal(data.PlainText, convertedPlainText);
+        var convertedPlainText = HtmlUtilities.GetPlainText(html);
+        Assert.Equal(plainText, convertedPlainText);
     }
 
     [Theory]
     [MemberData(nameof(GetHtmlToPlainTextConversionTestData))]
-    public void GetWordCount_Success((string Html, string _, int WordCount) data)
+    public void GetWordCount_Success(string html, string _, int wordCount)
     {
-        var wordCount = HtmlUtilities.GetWordCount(data.Html);
-        Assert.Equal(data.WordCount, wordCount);
+        var actualWordCount = HtmlUtilities.GetWordCount(html);
+        Assert.Equal(wordCount, actualWordCount);
     }
 
     [Theory]

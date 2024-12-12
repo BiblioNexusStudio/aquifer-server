@@ -8,13 +8,13 @@ public sealed class ValidatorTests
 {
     private readonly Validator _validator = new();
 
-    public static IEnumerable<object[]> GetInvalidRequestData =>
-    [
-        [new Request { ResourceType = (ResourceType)int.MaxValue, Offset = 0, Limit = 1 }, nameof(Request.ResourceType)],
-        [new Request { ResourceType = ResourceType.None, Offset = -1, Limit = 1 }, nameof(Request.Offset)],
-        [new Request { ResourceType = ResourceType.None, Offset = 0, Limit = 0 }, nameof(Request.Limit)],
-        [new Request { ResourceType = ResourceType.None, Offset = 0, Limit = 101 }, nameof(Request.Limit)],
-    ];
+    public static TheoryData<Request, string> GetInvalidRequestData => new()
+    {
+        { new Request { ResourceType = (ResourceType)int.MaxValue, Offset = 0, Limit = 1 }, nameof(Request.ResourceType) },
+        { new Request { ResourceType = ResourceType.None, Offset = -1, Limit = 1 }, nameof(Request.Offset) },
+        { new Request { ResourceType = ResourceType.None, Offset = 0, Limit = 0 }, nameof(Request.Limit) },
+        { new Request { ResourceType = ResourceType.None, Offset = 0, Limit = 101 }, nameof(Request.Limit) },
+    };
 
     [Theory]
     [MemberData(nameof(GetInvalidRequestData))]
@@ -26,12 +26,12 @@ public sealed class ValidatorTests
             .Only();
     }
 
-    public static IEnumerable<object[]> GetValidRequestData =>
+    public static TheoryData<Request> GetValidRequestData =>
     [
-        [new Request { ResourceType = ResourceType.None, Offset = 0, Limit = 1 }],
-        [new Request { ResourceType = ResourceType.None, Offset = 0, Limit = 100 }],
-        [new Request { ResourceType = ResourceType.None, Offset = int.MaxValue, Limit = 1 }],
-        [new Request { ResourceType = ResourceType.Dictionary, Offset = int.MaxValue, Limit = 1 }],
+        new() { ResourceType = ResourceType.None, Offset = 0, Limit = 1 },
+        new() { ResourceType = ResourceType.None, Offset = 0, Limit = 100 },
+        new() { ResourceType = ResourceType.None, Offset = int.MaxValue, Limit = 1 },
+        new() { ResourceType = ResourceType.Dictionary, Offset = int.MaxValue, Limit = 1 },
     ];
 
     [Theory]
