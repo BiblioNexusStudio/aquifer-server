@@ -37,7 +37,7 @@ public static class ResourceHelper
                     Name = x.ResourceContent.Resource.ParentResource.DisplayName,
                     Type = x.ResourceContent.Resource.ParentResource.ResourceType,
                     MediaTypeValue = x.ResourceContent.MediaType,
-                    LicenseInfoValue = x.ResourceContent.Resource.ParentResource.LicenseInfo
+                    LicenseInfo = x.ResourceContent.Resource.ParentResource.LicenseInfo
                 }
             })
             .ToListAsync(ct);

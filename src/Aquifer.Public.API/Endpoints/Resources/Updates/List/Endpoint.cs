@@ -25,7 +25,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService cachin
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         ValidateCollectionCode(req);
-        var query = await GetQuery(req, ct);
+        var query = await GetQueryAsync(req, ct);
         var totalCount = await GetTotalResourceCountAsync(req, query, ct);
 
         if (totalCount == 0)
@@ -76,7 +76,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService cachin
         return totalCount;
     }
 
-    private async Task<IQueryable<ResourceContentVersionEntity>> GetQuery(Request req, CancellationToken ct)
+    private async Task<IQueryable<ResourceContentVersionEntity>> GetQueryAsync(Request req, CancellationToken ct)
     {
         var (isValidLanguageId, isValidLanguageCode, validLanguageId) =
             await cachingLanguageService.ValidateLanguageIdOrCodeAsync(req.LanguageId, req.LanguageCode, false, ct);

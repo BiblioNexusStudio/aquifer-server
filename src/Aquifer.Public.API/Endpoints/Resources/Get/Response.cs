@@ -11,6 +11,9 @@ public class Response
     public string Name { get; set; } = null!;
     public string LocalizedName { get; set; } = null!;
 
+    /// <summary>
+    /// DB Value (Tiptap string).
+    /// </summary>
     [JsonIgnore]
     public string ContentValue { get; set; } = null!;
 
@@ -31,10 +34,8 @@ public class ResourceTypeMetadata
 
     public string MediaType => MediaTypeValue.ToString();
 
-    [JsonIgnore]
-    public string? LicenseInfoValue { get; set; } = null!;
-
-    public object? LicenseInfo => LicenseInfoValue is null ? null : JsonUtilities.DefaultDeserialize(LicenseInfoValue);
+    [JsonConverter(typeof(JsonUtilities.RawJsonConverter))]
+    public required object? LicenseInfo { get; init; }
 }
 
 public class ResourceContentLanguage

@@ -13,9 +13,6 @@ public record Response
     public required bool HasAudio { get; init; }
     public required bool HasGreekAlignment { get; init; }
 
-    public object? LicenseInfo =>
-        SerializedLicenseInfo == null ? null : JsonUtilities.DefaultDeserialize(SerializedLicenseInfo);
-
-    [JsonIgnore]
-    public string? SerializedLicenseInfo { get; init; }
+    [JsonConverter(typeof(JsonUtilities.RawJsonConverter))]
+    public required object? LicenseInfo { get; init; }
 }
