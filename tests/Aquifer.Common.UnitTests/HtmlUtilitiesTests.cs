@@ -7,25 +7,33 @@ public sealed class HtmlUtilitiesTests
     public static IEnumerable<object[]> GetHtmlToPlainTextConversionTestData =>
     [
         [
-            (Html: /* lang=html */ """
-                                   <body>
-                                       <div>
-                                           <p>
-                                           <!-- This is a comment.-->
-                                               Test  &nbsp;   *HTML.
-                                           </p>
-                                       </div>
-                                   </body>
-                                   """, PlainText: "Test  \u00a0   *HTML.", WordCount: 2)
+            (
+                Html: /* lang=html */ """
+                    <body>
+                        <div>
+                            <p>
+                            <!-- This is a comment.-->
+                                Test  &nbsp;   *HTML.
+                            </p>
+                        </div>
+                    </body>
+                    """,
+                PlainText: "Test  \u00a0   *HTML.",
+                WordCount: 2
+            ),
         ],
         [
-            (Html: /* lang=html */ """<div><span>This is <span>important</span> text.</span></div>""", PlainText: "This is important text.",
-                WordCount: 4)
+            (
+                Html: /* lang=html */ """<div><span>This is <span>important</span> text.</span></div>""",
+                PlainText: "This is important text.",
+                WordCount: 4
+            ),
         ],
         [
             (Html: /* lang=html */ """<h1>AARON’S <b>ROD</b></h1><p>Staff <br /> ... Abiram (<span data-bnType="bibleReference" data-verses="[[1004016001,1004016040]]">Nm 16:1-40</span>).</p><p>مرحبا بالعالم</p><p><em>See also</em> <span data-bnType="resourceReference" data-resourceId="1242" data-resourceType="TyndaleBibleDictionary">Aaron</span>.</p>""",
-                PlainText: "AARON’S ROD Staff ... Abiram ( Nm 16:1-40 ). مرحبا بالعالم See also Aaron .", WordCount: 11)
-        ]
+                PlainText: "AARON’S ROD Staff ... Abiram ( Nm 16:1-40 ). مرحبا بالعالم See also Aaron .",
+                WordCount: 11),
+        ],
     ];
 
     [Theory]
@@ -46,13 +54,12 @@ public sealed class HtmlUtilitiesTests
 
     [Theory]
     [InlineData(
-        /* lang=html */
-        """<h1>AARON’S <b>ROD</b></h1><p>Staff <br /> ... Abiram (<span data-bnType="bibleReference" data-verses="[[1004016001,1004016040]]">Nm 16:1-40</span>).</p><p>مرحبا بالعالم</p><p><em>See also</em> <span data-bnType="resourceReference" data-resourceId="1242" data-resourceType="TyndaleBibleDictionary">Aaron</span>.</p>""",
-        /* lang=html */
-        """<h1>AARON’S <b>ROD</b></h1><p>Staff <br /> ... Abiram (<span a="0">Nm 16:1-40</span>).</p><p>مرحبا بالعالم</p><p><em>See also</em> <span a="1">Aaron</span>.</p>""")]
+        /* lang=html */"""<h1>AARON’S <b>ROD</b></h1><p>Staff <br /> ... Abiram (<span data-bnType="bibleReference" data-verses="[[1004016001,1004016040]]">Nm 16:1-40</span>).</p><p>مرحبا بالعالم</p><p><em>See also</em> <span data-bnType="resourceReference" data-resourceId="1242" data-resourceType="TyndaleBibleDictionary">Aaron</span>.</p>""",
+        /* lang=html */"""<h1>AARON’S <b>ROD</b></h1><p>Staff <br /> ... Abiram (<span a="0">Nm 16:1-40</span>).</p><p>مرحبا بالعالم</p><p><em>See also</em> <span a="1">Aaron</span>.</p>""")]
     public async Task ProcessHtmlContentAsync_Success(string html, string expectedMinifiedHtml)
     {
-        var roundTrippedHtml = await HtmlUtilities.ProcessHtmlContentAsync(html,
+        var roundTrippedHtml = await HtmlUtilities.ProcessHtmlContentAsync(
+            html,
             minifiedHtml =>
             {
                 Assert.Equal(expectedMinifiedHtml, minifiedHtml);
