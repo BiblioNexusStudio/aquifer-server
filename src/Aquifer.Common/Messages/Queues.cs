@@ -14,6 +14,7 @@ public static class Queues
     public const string TrackResourceContentRequest = "track-resource-content-request";
 
     // translations
+    public const string TranslateLanguageResources = "translate-language-resources";
     public const string TranslateProjectResources = "translate-project-resources";
     public const string TranslateResource = "translate-resource";
 

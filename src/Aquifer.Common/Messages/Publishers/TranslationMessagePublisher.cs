@@ -4,6 +4,10 @@ namespace Aquifer.Common.Messages.Publishers;
 
 public interface ITranslationMessagePublisher
 {
+    public Task PublishTranslateLanguageResourcesMessageAsync(
+        TranslateLanguageResourcesMessage message,
+        CancellationToken cancellationToken);
+
     public Task PublishTranslateProjectResourcesMessageAsync(
         TranslateProjectResourcesMessage message,
         CancellationToken cancellationToken);
@@ -15,6 +19,14 @@ public interface ITranslationMessagePublisher
 
 public sealed class TranslationMessagePublisher(IQueueClientFactory _queueClientFactory) : ITranslationMessagePublisher
 {
+    public async Task PublishTranslateLanguageResourcesMessageAsync(
+        TranslateLanguageResourcesMessage message,
+        CancellationToken cancellationToken)
+    {
+        var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.TranslateLanguageResources, cancellationToken);
+        await queueClient.SendMessageAsync(message, cancellationToken: cancellationToken);
+    }
+
     public async Task PublishTranslateProjectResourcesMessageAsync(
         TranslateProjectResourcesMessage message,
         CancellationToken cancellationToken)
