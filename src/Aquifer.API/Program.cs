@@ -9,6 +9,7 @@ using Aquifer.Common.Messages;
 using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Middleware;
 using Aquifer.Common.Services;
+using Aquifer.Common.Services.Caching;
 using Aquifer.Data;
 using Aquifer.Data.Services;
 using FastEndpoints;
@@ -43,6 +44,7 @@ builder.Services.AddAuth(configuration.JwtSettings)
     .AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount)
     .AddScoped<IUserService, UserService>()
     .AddScoped<IResourceHistoryService, ResourceHistoryService>()
+    .AddScoped<ICachingVersificationService, CachingVersificationService>()
     .AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>()
     .AddSingleton<IResourceContentRequestTrackingMessagePublisher, ResourceContentRequestTrackingMessagePublisher>()
     .AddSingleton<INotificationMessagePublisher, NotificationMessagePublisher>()
