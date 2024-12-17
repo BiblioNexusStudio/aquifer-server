@@ -62,15 +62,26 @@ var host = new HostBuilder()
         services.AddSingleton<ITranslationService, OpenAiTranslationService>();
         services.AddSingleton<IEmailService, SendGridEmailService>();
     })
-    .ConfigureLogging(logging => logging.Services.Configure<LoggerFilterOptions>(options =>
+    .ConfigureLogging((hostingContext, logging) =>
     {
-        const string applicationInsightsProviderName = "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider";
-        var defaultRule = options.Rules.FirstOrDefault(rule => rule.ProviderName == applicationInsightsProviderName);
-        if (defaultRule is not null)
+        logging.Services.Configure<LoggerFilterOptions>(options =>
         {
-            options.Rules.Remove(defaultRule);
-        }
-    }))
+            const string applicationInsightsProviderName =
+                "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider";
+            var defaultRule = options.Rules.FirstOrDefault(rule => rule.ProviderName == applicationInsightsProviderName);
+            if (defaultRule is not null)
+            {
+                options.Rules.Remove(defaultRule);
+            }
+        });
+
+        logging.AddApplicationInsights(console =>
+        {
+            console.IncludeScopes = true;
+        });
+
+        logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+    })
     .Build();
 
 StaticLoggerFactory.LoggerFactory = host.Services.GetRequiredService<ILoggerFactory>();
