@@ -1,5 +1,4 @@
-﻿using System.Data;
-using System.Text;
+﻿using System.Text;
 using Aquifer.AI;
 using Aquifer.Common;
 using Aquifer.Common.Messages;
@@ -420,16 +419,16 @@ public sealed class TranslationMessageSubscriber(
             ?? throw new InvalidOperationException(
                 $"Published English Resource Content Version not found for ID {dto.EnglishResourceContentVersionId}.");
 
-        // find resource contents to translate
-        var existingResourceContentVersionForLanguage = await _dbContext.ResourceContentVersions
+        // find resource contents to potentially translate
+        var existingResourceContentVersionsForLanguage = await _dbContext.ResourceContentVersions
             .Where(rcv =>
-                rcv.IsDraft &&
+                (rcv.IsDraft || rcv.IsPublished) &&
                 rcv.ResourceContent.LanguageId == dto.LanguageId &&
                 rcv.ResourceContent.MediaType == ResourceContentMediaType.Text &&
                 rcv.ResourceContent.Resource.ResourceContents.Any(rc => rc.Id == englishResourceContentVersionToTranslate.ResourceContentId))
             .Include(x => x.ResourceContent)
             .ThenInclude(x => x.ProjectResourceContents)
-            .SingleOrDefaultAsync(ct);
+            .ToListAsync(ct);
 
         ResourceContentVersionEntity resourceContentVersionToTranslate;
 
@@ -446,31 +445,39 @@ public sealed class TranslationMessageSubscriber(
         // in a manual (human) translation flow.
         //
         // Handle existing data first:
-        if (existingResourceContentVersionForLanguage != null)
+        if (existingResourceContentVersionsForLanguage.Count > 0)
         {
+            var existingDraftResourceContentVersion =
+                existingResourceContentVersionsForLanguage.SingleOrDefault(rcv => rcv.IsDraft);
+
+            var existingPublishedResourceContentVersion =
+                existingResourceContentVersionsForLanguage.SingleOrDefault(rcv => rcv.IsPublished);
+
             // Case 2: Entities were created already but no translation yet. Skip entity creation and go straight to translation.
-            if (existingResourceContentVersionForLanguage.ResourceContent.Status == ResourceContentStatus.TranslationAwaitingAiDraft &&
-                existingResourceContentVersionForLanguage.IsDraft &&
-                existingResourceContentVersionForLanguage.ResourceContent.ProjectResourceContents.Count == 0)
+            if (existingDraftResourceContentVersion != null &&
+                existingPublishedResourceContentVersion == null &&
+                existingDraftResourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationAwaitingAiDraft &&
+                existingDraftResourceContentVersion.ResourceContent.ProjectResourceContents.Count == 0)
             {
                 _logger.LogInformation(
                     "Gracefully skipping creation of Resource Content item and Resource Content Version for Language ID {LanguageId} and English Resource Content Version ID {EnglishResourceContentVersionId} because entities already exist. Resource Content Version ID: {ResourceContentVersionId}.",
                     dto.LanguageId,
                     dto.EnglishResourceContentVersionId,
-                    existingResourceContentVersionForLanguage.Id);
+                    existingDraftResourceContentVersion.Id);
 
-                resourceContentVersionToTranslate = existingResourceContentVersionForLanguage;
+                resourceContentVersionToTranslate = existingDraftResourceContentVersion;
             }
             // Case 3: Translation completed already so skip everything.
-            else if (existingResourceContentVersionForLanguage.ResourceContent.Status == ResourceContentStatus.Complete &&
-                existingResourceContentVersionForLanguage.IsPublished &&
-                existingResourceContentVersionForLanguage.ResourceContent.ProjectResourceContents.Count == 0)
+            else if (existingPublishedResourceContentVersion != null &&
+                 existingDraftResourceContentVersion == null &&
+                 existingPublishedResourceContentVersion.ResourceContent.Status == ResourceContentStatus.Complete &&
+                 existingPublishedResourceContentVersion.ResourceContent.ProjectResourceContents.Count == 0)
             {
                 _logger.LogInformation(
                     "Gracefully skipping translation for Language ID {LanguageId} and English Resource Content Version ID {EnglishResourceContentVersionId} because a translation was already completed (probably by this job). Resource Content Version ID: {ResourceContentVersionId}.",
                     dto.LanguageId,
                     dto.EnglishResourceContentVersionId,
-                    existingResourceContentVersionForLanguage.Id);
+                    existingPublishedResourceContentVersion.Id);
 
                 return null;
             }
@@ -481,7 +488,7 @@ public sealed class TranslationMessageSubscriber(
                     "Gracefully skipping translation for Language ID {LanguageId} and English Resource Content Version ID {EnglishResourceContentVersionId} because a Resource Content Version already exists that was likely created manually (not via this job). Resource Content Version ID: {ResourceContentVersionId}.",
                     dto.LanguageId,
                     dto.EnglishResourceContentVersionId,
-                    existingResourceContentVersionForLanguage.Id);
+                    existingDraftResourceContentVersion?.Id ?? existingPublishedResourceContentVersion!.Id);
 
                 return null;
             }
