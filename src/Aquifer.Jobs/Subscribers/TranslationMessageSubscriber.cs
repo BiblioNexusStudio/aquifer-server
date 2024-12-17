@@ -338,26 +338,31 @@ public sealed class TranslationMessageSubscriber(
     {
         try
         {
-            var createLanguageResourceContentTasks = dto.EnglishResourceContentVersionIds
-                .Select(rcvid => context.CallActivityAsync<int?>(
-                    nameof(CreateLanguageResourceContentActivity),
-                    new CreateLanguageResourceContentActivityDto(dto.LanguageId, rcvid, dto.StartedByUserId),
-                    s_durableFunctionTaskOptions))
+            var createAndTranslateResourceContentTasks = dto.EnglishResourceContentVersionIds
+                .Select(async englishResourceContentVersionId =>
+                {
+                    var resourceContentIdToTranslate = await context.CallActivityAsync<int?>(
+                        nameof(CreateLanguageResourceContentActivity),
+                        new CreateLanguageResourceContentActivityDto(
+                            dto.LanguageId,
+                            englishResourceContentVersionId,
+                            dto.StartedByUserId),
+                        s_durableFunctionTaskOptions);
+
+                    if (resourceContentIdToTranslate != null)
+                    {
+                        await context.CallActivityAsync<int>(
+                            nameof(TranslateResourceActivity),
+                            new TranslateResourceActivityDto(
+                                resourceContentIdToTranslate.Value,
+                                dto.StartedByUserId,
+                                TranslationOrigin.Language),
+                            s_durableFunctionTaskOptions);
+                    }
+                })
                 .ToList();
 
-            var resourceContentIdsToTranslate = (await Task.WhenAll(createLanguageResourceContentTasks))
-                .Where(x => x.HasValue)
-                .Select(x => x!.Value)
-                .ToList();
-
-            var translateResourceTasks = resourceContentIdsToTranslate
-                .Select(resourceContentId => context.CallActivityAsync<int>(
-                    nameof(TranslateResourceActivity),
-                    new TranslateResourceActivityDto(resourceContentId, dto.StartedByUserId, TranslationOrigin.Project),
-                    s_durableFunctionTaskOptions))
-                .ToList();
-
-            await Task.WhenAll(translateResourceTasks);
+            await Task.WhenAll(createAndTranslateResourceContentTasks);
 
             _logger.LogInformation(
                 "Successfully translated resource contents for Language ID {LanguageId} and Parent Resource ID {ParentResourceId}.",
