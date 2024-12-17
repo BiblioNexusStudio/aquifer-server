@@ -350,7 +350,7 @@ public sealed class TranslationMessageSubscriber(
 
                     if (resourceContentIdToTranslate != null)
                     {
-                        await context.CallActivityAsync<int>(
+                        return await context.CallActivityAsync<int>(
                             nameof(TranslateResourceActivity),
                             new TranslateResourceActivityDto(
                                 resourceContentIdToTranslate.Value,
@@ -358,15 +358,31 @@ public sealed class TranslationMessageSubscriber(
                                 TranslationOrigin.Language),
                             s_durableFunctionTaskOptions);
                     }
+
+                    return (int?)null;
                 })
                 .ToList();
 
-            await Task.WhenAll(createAndTranslateResourceContentTasks);
+            var translatedResourceContentIds = (await Task.WhenAll(createAndTranslateResourceContentTasks))
+                .Where(x => x.HasValue)
+                .Select(x => x!.Value)
+                .ToList();
 
-            _logger.LogInformation(
-                "Successfully translated resource contents for Language ID {LanguageId} and Parent Resource ID {ParentResourceId}.",
-                dto.LanguageId,
-                dto.ParentResourceId);
+            if (translatedResourceContentIds.Count > 0)
+            {
+                _logger.LogInformation(
+                    "Successfully translated resource contents for Language ID {LanguageId} and Parent Resource ID {ParentResourceId}. Translated Resource Content IDs: {TranslatedResourceContentIds}.",
+                    dto.LanguageId,
+                    dto.ParentResourceId,
+                    string.Join(", ", translatedResourceContentIds));
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "There were no untranslated resource contents for Language ID {LanguageId} and Parent Resource ID {ParentResourceId}.",
+                    dto.LanguageId,
+                    dto.ParentResourceId);
+            }
         }
         catch (Exception orchestrationException)
         {
