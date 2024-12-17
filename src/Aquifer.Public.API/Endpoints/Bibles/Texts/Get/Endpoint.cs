@@ -1,4 +1,5 @@
-﻿using Aquifer.Common.Utilities;
+﻿using Aquifer.Common.Services.Caching;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
@@ -7,15 +8,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Bibles.Texts.Get;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService versificationService) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
         Get("/bibles/{BibleId}/texts");
-        Description(d => d
-            .WithTags("Bibles")
-            .ProducesProblemFE()
-            .ProducesProblemFE(404));
+        Description(d => d.WithTags("Bibles").ProducesProblemFE().ProducesProblemFE(404));
         Summary(s =>
         {
             s.Summary = "Get the Bible text contained within a book of the Bible.";
@@ -26,9 +24,23 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
+        var (startVerseId, endVerseId) = BibleUtilities.GetVerseIds(request.BookCode,
+            request.StartChapter,
+            request.EndChapter,
+            request.StartVerse,
+            request.EndVerse);
+
+        var verseRange = Enumerable.Range(startVerseId, endVerseId - startVerseId).ToArray();
+
+        var fromCache = await versificationService.GetVersificationsByBibleIdAsync(9, ct);
+
+        foreach (var verse in verseRange)
+        {
+            var foundVersifications = fromCache.Keys.Contains((verse, null));
+        }
+
         var bookData = await dbContext.BibleBookContents
-            .Where(bbc =>
-                bbc.Bible.Enabled &&
+            .Where(bbc => bbc.Bible.Enabled &&
                 !bbc.Bible.RestrictedLicense &&
                 bbc.Bible.Id == request.BibleId &&
                 bbc.Book.Code == request.BookCode.ToUpper())
@@ -47,22 +59,24 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         if (bookData is not null)
         {
             bookData.Chapters = await dbContext.BibleTexts
-                .Where(bt => bt.BibleId == bookData.BibleId && bt.BookId == bookData.BookId &&
-                             bt.ChapterNumber >= request.StartChapter && bt.ChapterNumber <= request.EndChapter &&
-                             (bt.ChapterNumber != request.StartChapter || bt.VerseNumber >= request.StartVerse) &&
-                             (bt.ChapterNumber != request.EndChapter || bt.VerseNumber <= request.EndVerse))
+                .Where(bt => bt.BibleId == bookData.BibleId &&
+                    bt.BookId == bookData.BookId &&
+                    bt.ChapterNumber >= request.StartChapter &&
+                    bt.ChapterNumber <= request.EndChapter &&
+                    (bt.ChapterNumber != request.StartChapter || bt.VerseNumber >= request.StartVerse) &&
+                    (bt.ChapterNumber != request.EndChapter || bt.VerseNumber <= request.EndVerse))
                 .OrderBy(bt => bt.ChapterNumber)
                 .GroupBy(bt => bt.ChapterNumber)
                 .Select(bt => new IntermediateChapter
                 {
                     Number = bt.Key,
-                    Verses = bt
-                        .OrderBy(bti => bti.VerseNumber)
+                    Verses = bt.OrderBy(bti => bti.VerseNumber)
                         .Select(bti => new IntermediateChapterVerse
                         {
                             Number = bti.VerseNumber,
                             Text = bti.Text
-                        }).ToList()
+                        })
+                        .ToList()
                 })
                 .ToListAsync(ct);
         }
@@ -76,8 +90,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 BibleAbbreviation = bookData.BibleAbbreviation,
                 BookCode = bookData.BookCode,
                 BookName = bookData.BookName,
-                Chapters = bookData.Chapters!
-                    .Select(ch =>
+                Chapters = bookData.Chapters!.Select(ch =>
                     {
                         var chapterAudio = !request.ShouldReturnAudioData
                             ? null
@@ -87,8 +100,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                         {
                             Number = ch.Number,
                             Audio = MapToResponseChapterAudio(chapterAudio),
-                            Verses = ch.Verses
-                                .Select(v => new ResponseChapterVerse
+                            Verses = ch.Verses.Select(v => new ResponseChapterVerse
                                 {
                                     Number = v.Number,
                                     AudioTimestamp =
