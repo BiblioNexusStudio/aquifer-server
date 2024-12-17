@@ -29,6 +29,7 @@
         "AzureWebJobs.TrackResourceContentRequestMessageSubscriber.Disabled": false,
 
         // translation jobs
+        "AzureWebJobs.TranslateLanguageResourcesMessageSubscriber.Disabled": false,
         "AzureWebJobs.TranslateProjectResourcesMessageSubscriber.Disabled": false,
         "AzureWebJobs.TranslateResourceMessageSubscriber.Disabled": false
     }

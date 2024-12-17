@@ -46,6 +46,8 @@ public sealed class TranslationMessageSubscriber(
     /// <summary>
     ///     Translates a single resource content item.
     ///     Only used by individual resource translation flows. Not used by project translation.
+    ///     All resource content items to translate must have a draft resource content version with English content
+    ///     which will be overwritten by the translated content.
     /// </summary>
     [Function(nameof(TranslateResourceMessageSubscriber))]
     public async Task TranslateResourceMessageSubscriber([QueueTrigger(Queues.TranslateResource)] QueueMessage queueMessage,
@@ -74,6 +76,9 @@ public sealed class TranslationMessageSubscriber(
 
     /// <summary>
     ///     Translates a project's resource content items and then takes a final action on the project itself.
+    ///     All resource content items in the project to translate must have a draft resource content version with English content
+    ///     which will be overwritten by the translated content.
+    ///
     ///     This is done using the fan out/fan in pattern
     ///     (see https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview#fan-in-out)
     ///     which requires using durable functions to maintain state.
@@ -106,7 +111,7 @@ public sealed class TranslationMessageSubscriber(
 
         // Kick off the durable function orchestration.
         // If it fails it will put a message on the poison queue.
-        await durableTaskClient.ScheduleNewOrchestrationInstanceAsync(nameof(OrchestrateProjectResourcesTranslation),
+        var orchestrationInstanceId = await durableTaskClient.ScheduleNewOrchestrationInstanceAsync(nameof(OrchestrateProjectResourcesTranslation),
             new OrchestrateProjectResourcesTranslationDto(message.ProjectId,
                 message.StartedByUserId,
                 projectResourceContentIds,
@@ -114,8 +119,9 @@ public sealed class TranslationMessageSubscriber(
                 queueMessage.MessageText),
             ct);
 
-        _logger.LogInformation("Kicked off {FunctionName} for Project ID {ProjectId}.",
+        _logger.LogInformation("Kicked off {FunctionName} (Orchestration Instance ID: {OrchestrationInstanceId}) for Project ID {ProjectId}.",
             nameof(OrchestrateProjectResourcesTranslation),
+            orchestrationInstanceId,
             message.ProjectId);
     }
 
@@ -131,8 +137,8 @@ public sealed class TranslationMessageSubscriber(
         try
         {
             var translateResourceTasks = dto.ProjectResourceContentIds.Select(resourceContentId =>
-                    context.CallActivityAsync<int>(nameof(TranslateProjectResourceActivity),
-                        new TranslateProjectResourceActivityDto(resourceContentId, dto.StartedByUserId),
+                    context.CallActivityAsync<int>(nameof(TranslateResourceActivity),
+                        new TranslateResourceActivityDto(resourceContentId, dto.StartedByUserId, TranslationOrigin.Project),
                         s_durableFunctionTaskOptions))
                 .ToList();
 
@@ -172,14 +178,17 @@ public sealed class TranslationMessageSubscriber(
         }
     }
 
-    [Function(nameof(TranslateProjectResourceActivity))]
-    public async Task<int> TranslateProjectResourceActivity([ActivityTrigger] TranslateProjectResourceActivityDto dto,
+    /// <summary>
+    /// Returns the ResourceContentId that was successfully translated (or gracefully skipped).
+    /// </summary>
+    [Function(nameof(TranslateResourceActivity))]
+    public async Task<int> TranslateResourceActivity([ActivityTrigger] TranslateResourceActivityDto dto,
         FunctionContext activityContext)
     {
         await TranslateResourceCoreAsync(dto.ResourceContentId,
             dto.StartedByUserId,
             false,
-            TranslationOrigin.Project,
+            dto.TranslationOrigin,
             activityContext.CancellationToken);
 
         return dto.ResourceContentId;
@@ -239,12 +248,338 @@ public sealed class TranslationMessageSubscriber(
     }
 
     /// <summary>
+    ///     Translates all resources under a parent resource that have not yet been translated to a target language and do not yet
+    ///     have a resource content item or resource content version for that language.
+    ///     Translated resource content versions will be immediately published
+    ///     and the created resource content item will be marked as Complete.
+    ///
+    ///     Translation is done using the fan out/fan in pattern
+    ///     (see https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-overview#fan-in-out)
+    ///     which requires using durable functions to maintain state.
+    ///     (see https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-bindings#durableTaskClient-usage).
+    /// </summary>
+    [Function(nameof(TranslateLanguageResourcesMessageSubscriber))]
+    public async Task TranslateLanguageResourcesMessageSubscriber(
+        [QueueTrigger(Queues.TranslateLanguageResources)] QueueMessage queueMessage,
+        [DurableClient] DurableTaskClient durableTaskClient,
+        CancellationToken cancellationToken)
+    {
+        await queueMessage.ProcessAsync<TranslateLanguageResourcesMessage, TranslationMessageSubscriber>(
+            _logger,
+            nameof(TranslateLanguageResourcesMessageSubscriber),
+            (qm, m, ct) => ProcessAsync(qm, m, durableTaskClient, ct),
+            cancellationToken);
+    }
+
+    private async Task ProcessAsync(
+        QueueMessage queueMessage,
+        TranslateLanguageResourcesMessage message,
+        DurableTaskClient durableTaskClient,
+        CancellationToken ct)
+    {
+        var parentResource = await _dbContext.ParentResources
+            .Where(pr => pr.Id == message.ParentResourceId)
+            .SingleOrDefaultAsync(ct)
+            ?? throw new InvalidOperationException($"Parent Resource ID {message.ParentResourceId} does not exist.");
+
+        var targetLanguage = await _dbContext.Languages
+            .Where(l => l.Id == message.LanguageId)
+            .SingleOrDefaultAsync(ct)
+            ?? throw new InvalidOperationException($"Language ID {message.LanguageId} does not exist.");
+
+        var englishResourceContentVersionsToTranslate = await _dbContext.ResourceContentVersions
+            .Where(rcv =>
+                rcv.IsPublished &&
+                rcv.ResourceContent.LanguageId == _englishLanguageId &&
+                rcv.ResourceContent.MediaType == ResourceContentMediaType.Text &&
+                rcv.ResourceContent.Resource.ParentResourceId == parentResource.Id)
+            .ToListAsync(ct);
+
+        if (englishResourceContentVersionsToTranslate.Count == 0)
+        {
+            _logger.LogInformation(
+                "Gracefully skipping translations for Language ID {LanguageId} and Parent Resource ID {ParentResourceId} because there are no resources to translate.",
+                targetLanguage.Id,
+                parentResource.Id);
+
+            return;
+        }
+
+        // Kick off the durable function orchestration.
+        // If it fails it will put a message on the poison queue.
+        var orchestrationInstanceId = await durableTaskClient.ScheduleNewOrchestrationInstanceAsync(
+            nameof(OrchestrateLanguageResourcesTranslation),
+            new OrchestrateLanguageResourcesTranslationDto(
+                message.LanguageId,
+                message.ParentResourceId,
+                message.StartedByUserId,
+                englishResourceContentVersionsToTranslate.Select(rcv => rcv.Id).Order().ToList(),
+                Queues.GetPoisonQueueName(Queues.TranslateLanguageResources),
+                queueMessage.MessageText),
+            ct);
+
+        _logger.LogInformation("Kicked off {FunctionName} (Orchestration Instance ID: {OrchestrationInstanceId}) for Language ID {LanguageId} and Parent Resource ID {ParentResourceId}.",
+            nameof(OrchestrateLanguageResourcesTranslation),
+            orchestrationInstanceId,
+            message.LanguageId,
+            message.ParentResourceId);
+    }
+
+    /// <summary>
+    ///     Durable orchestration function.
+    ///     This function is single-threaded and thus should not do any DB operations or any substantial processing.
+    ///     It should only orchestrate activities.
+    /// </summary>
+    [Function(nameof(OrchestrateLanguageResourcesTranslation))]
+    public async Task OrchestrateLanguageResourcesTranslation(
+        [OrchestrationTrigger] TaskOrchestrationContext context,
+        OrchestrateLanguageResourcesTranslationDto dto)
+    {
+        try
+        {
+            var createAndTranslateResourceContentTasks = dto.EnglishResourceContentVersionIds
+                .Select(async englishResourceContentVersionId =>
+                {
+                    var resourceContentIdToTranslate = await context.CallActivityAsync<int?>(
+                        nameof(CreateLanguageResourceContentActivity),
+                        new CreateLanguageResourceContentActivityDto(
+                            dto.LanguageId,
+                            englishResourceContentVersionId,
+                            dto.StartedByUserId),
+                        s_durableFunctionTaskOptions);
+
+                    if (resourceContentIdToTranslate != null)
+                    {
+                        return await context.CallActivityAsync<int>(
+                            nameof(TranslateResourceActivity),
+                            new TranslateResourceActivityDto(
+                                resourceContentIdToTranslate.Value,
+                                dto.StartedByUserId,
+                                TranslationOrigin.Language),
+                            s_durableFunctionTaskOptions);
+                    }
+
+                    return (int?)null;
+                })
+                .ToList();
+
+            var translatedResourceContentIds = (await Task.WhenAll(createAndTranslateResourceContentTasks))
+                .Where(x => x.HasValue)
+                .Select(x => x!.Value)
+                .ToList();
+
+            if (translatedResourceContentIds.Count > 0)
+            {
+                _logger.LogInformation(
+                    "Successfully translated resource contents for Language ID {LanguageId} and Parent Resource ID {ParentResourceId}. Translated Resource Content IDs: {TranslatedResourceContentIds}.",
+                    dto.LanguageId,
+                    dto.ParentResourceId,
+                    string.Join(", ", translatedResourceContentIds));
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "There were no untranslated resource contents for Language ID {LanguageId} and Parent Resource ID {ParentResourceId}.",
+                    dto.LanguageId,
+                    dto.ParentResourceId);
+            }
+        }
+        catch (Exception orchestrationException)
+        {
+            // All the Activities orchestrated here have a retry policy.  If things are still failing after multiple retries
+            // then something is very wrong. If this happens then swallow errors here to allow successful orchestration function
+            // completion but publish a poison queue item for manual retry later.
+            var ct = CancellationToken.None;
+            try
+            {
+                _logger.LogError(orchestrationException,
+                    "Error translating resource content for Language ID {LanguageId} and Parent Resource ID {ParentResourceId}. A poison message will be published to \"{PoisonQueueName}\" to enable manual retry. Manual dev intervention is required.",
+                    dto.LanguageId,
+                    dto.ParentResourceId,
+                    dto.PoisonQueueName);
+
+                var translateLanguageResourcesPoisonQueueClient = await _queueClientFactory.GetQueueClientAsync(dto.PoisonQueueName, ct);
+                await translateLanguageResourcesPoisonQueueClient.SendMessageAsync(dto.OriginalQueueMessageText, ct);
+            }
+            catch (Exception queuePublishingException)
+            {
+                // don't allow errors during poison queue publishing to fail the durable function
+                _logger.LogError(queuePublishingException,
+                    "After an error translating resource content for Language ID {LanguageId} and Parent Resource ID {ParentResourceId} another error occurred when attempting to publish a poison message to \"{PoisonQueueName}\". Manual dev intervention is required to replay the message. Message text: {MessageText}",
+                    dto.LanguageId,
+                    dto.ParentResourceId,
+                    dto.PoisonQueueName,
+                    dto.OriginalQueueMessageText);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Returns the ResourceContentId to translate or <c>null</c> if there is no translation needed.
+    /// </summary>
+    [Function(nameof(CreateLanguageResourceContentActivity))]
+    public async Task<int?> CreateLanguageResourceContentActivity(
+        [ActivityTrigger] CreateLanguageResourceContentActivityDto dto,
+        FunctionContext activityContext)
+    {
+        var ct = activityContext.CancellationToken;
+
+        var englishResourceContentVersionToTranslate = await _dbContext.ResourceContentVersions
+            .Where(rcv =>
+                rcv.Id == dto.EnglishResourceContentVersionId &&
+                rcv.IsPublished &&
+                rcv.ResourceContent.LanguageId == _englishLanguageId &&
+                rcv.ResourceContent.MediaType == ResourceContentMediaType.Text)
+            .Include(x => x.ResourceContent)
+            .SingleOrDefaultAsync(ct)
+            ?? throw new InvalidOperationException(
+                $"Published English Resource Content Version not found for ID {dto.EnglishResourceContentVersionId}.");
+
+        // find resource contents to potentially translate
+        var existingResourceContentVersionsForLanguage = await _dbContext.ResourceContentVersions
+            .Where(rcv =>
+                (rcv.IsDraft || rcv.IsPublished) &&
+                rcv.ResourceContent.LanguageId == dto.LanguageId &&
+                rcv.ResourceContent.MediaType == ResourceContentMediaType.Text &&
+                rcv.ResourceContent.Resource.ResourceContents.Any(rc => rc.Id == englishResourceContentVersionToTranslate.ResourceContentId))
+            .Include(x => x.ResourceContent)
+            .ThenInclude(x => x.ProjectResourceContents)
+            .ToListAsync(ct);
+
+        ResourceContentVersionEntity resourceContentVersionToTranslate;
+
+        // There are four scenarios to handle:
+        // 1. Expected case: There is no Resource Content or Resource Content Version for the given language,
+        // and we need to create them here.
+        // 2. Edge case: This job failed between creating the Resource Content and Resource Content Version entities and performing
+        // the translation (there are two separate DB saves). For that scenario we can skip the creation of the entities and
+        // jump right to translation. Note: The Resource Content must not be in any project.
+        // 3. Edge case: This job already executed successfully but somehow got run again, in which case we can gracefully
+        // skip doing any work for this method.
+        // 4. Expected case: A manually created translation is in progress or data is not as expected, in which case we can gracefully skip
+        // doing any work for this method because we run this processing for all resource contents so it's expected that some might be
+        // in a manual (human) translation flow.
+        //
+        // Handle existing data first:
+        if (existingResourceContentVersionsForLanguage.Count > 0)
+        {
+            var existingDraftResourceContentVersion =
+                existingResourceContentVersionsForLanguage.SingleOrDefault(rcv => rcv.IsDraft);
+
+            var existingPublishedResourceContentVersion =
+                existingResourceContentVersionsForLanguage.SingleOrDefault(rcv => rcv.IsPublished);
+
+            // Case 2: Entities were created already but no translation yet. Skip entity creation and go straight to translation.
+            if (existingDraftResourceContentVersion != null &&
+                existingPublishedResourceContentVersion == null &&
+                existingDraftResourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationAwaitingAiDraft &&
+                existingDraftResourceContentVersion.ResourceContent.ProjectResourceContents.Count == 0)
+            {
+                _logger.LogInformation(
+                    "Gracefully skipping creation of Resource Content item and Resource Content Version for Language ID {LanguageId} and English Resource Content Version ID {EnglishResourceContentVersionId} because entities already exist. Resource Content Version ID: {ResourceContentVersionId}.",
+                    dto.LanguageId,
+                    dto.EnglishResourceContentVersionId,
+                    existingDraftResourceContentVersion.Id);
+
+                resourceContentVersionToTranslate = existingDraftResourceContentVersion;
+            }
+            // Case 3: Translation completed already so skip everything.
+            else if (existingPublishedResourceContentVersion != null &&
+                 existingDraftResourceContentVersion == null &&
+                 existingPublishedResourceContentVersion.ResourceContent.Status == ResourceContentStatus.Complete &&
+                 existingPublishedResourceContentVersion.ResourceContent.ProjectResourceContents.Count == 0)
+            {
+                _logger.LogInformation(
+                    "Gracefully skipping translation for Language ID {LanguageId} and English Resource Content Version ID {EnglishResourceContentVersionId} because a translation was already completed (probably by this job). Resource Content Version ID: {ResourceContentVersionId}.",
+                    dto.LanguageId,
+                    dto.EnglishResourceContentVersionId,
+                    existingPublishedResourceContentVersion.Id);
+
+                return null;
+            }
+            // Case 4: Data isn't in a state that can be handled by this job so skip everything.
+            else
+            {
+                _logger.LogInformation(
+                    "Gracefully skipping translation for Language ID {LanguageId} and English Resource Content Version ID {EnglishResourceContentVersionId} because a Resource Content Version already exists that was likely created manually (not via this job). Resource Content Version ID: {ResourceContentVersionId}.",
+                    dto.LanguageId,
+                    dto.EnglishResourceContentVersionId,
+                    existingDraftResourceContentVersion?.Id ?? existingPublishedResourceContentVersion!.Id);
+
+                return null;
+            }
+        }
+        // Case 1: No data exists. Create entities for translation.
+        else
+        {
+            _logger.LogInformation(
+                "Creating ResourceContent item and ResourceContentVersion for Language ID {LanguageId} and English Resource Content Version ID {EnglishResourceContentVersionId}.",
+                dto.LanguageId,
+                dto.EnglishResourceContentVersionId);
+
+            // The ResourceContentVersion and ResourceContent item created here should closely mirror what is created by the
+            // CreateTranslation endpoint, though for this flow no user will be assigned.
+            var newResourceContentVersion = new ResourceContentVersionEntity
+            {
+                Content = englishResourceContentVersionToTranslate.Content,
+                ContentSize = englishResourceContentVersionToTranslate.ContentSize,
+                DisplayName = englishResourceContentVersionToTranslate.DisplayName,
+                IsPublished = false,
+                IsDraft = true,
+                ReviewLevel = ResourceContentVersionReviewLevel.Ai,
+                SourceWordCount = englishResourceContentVersionToTranslate.WordCount,
+                Version = 1,
+                WordCount = englishResourceContentVersionToTranslate.WordCount,
+            };
+
+            var newResourceContent = new ResourceContentEntity
+            {
+                ExternalVersion = englishResourceContentVersionToTranslate.ResourceContent.ExternalVersion,
+                LanguageId = dto.LanguageId,
+                MediaType = englishResourceContentVersionToTranslate.ResourceContent.MediaType,
+                ResourceId = englishResourceContentVersionToTranslate.ResourceContent.ResourceId,
+                Status = ResourceContentStatus.TranslationAwaitingAiDraft,
+                Trusted = true,
+                Versions = [newResourceContentVersion]
+            };
+
+            _dbContext.ResourceContents.Add(newResourceContent);
+
+            await _resourceHistoryService.AddStatusHistoryAsync(
+                newResourceContentVersion,
+                newResourceContent.Status,
+                dto.StartedByUserId,
+                activityContext.CancellationToken
+            );
+
+            await _resourceHistoryService.AddSnapshotHistoryAsync(
+                newResourceContentVersion,
+                dto.StartedByUserId,
+                ResourceContentStatus.New,
+                ct);
+
+            // save to the DB before translation so that there are realized PK IDs for the new entities
+            await _dbContext.SaveChangesAsync(activityContext.CancellationToken);
+
+            resourceContentVersionToTranslate = newResourceContentVersion;
+
+            _logger.LogInformation(
+                "Created Resource Content Version {ResourceContentVersionId} and ResourceContent {ResourceContentId}.",
+                resourceContentVersionToTranslate.ResourceContentId,
+                resourceContentVersionToTranslate.Id);
+        }
+
+        return resourceContentVersionToTranslate.ResourceContentId;
+    }
+
+    /// <summary>
     ///     Note: Callers are responsible for performing resource assignments and creating original resource content snapshots.
     ///     This method will perform the actual translation, create machine translations,
     ///     update the existing draft resource version with translated content, create a new snapshot for the translation,
     ///     and change the resource content status.
     /// </summary>
-    private async Task TranslateResourceCoreAsync(int resourceContentId,
+    private async Task TranslateResourceCoreAsync(
+        int resourceContentId,
         int startedByUserId,
         bool shouldForceRetranslation,
         TranslationOrigin translationOrigin,
@@ -489,7 +824,38 @@ public sealed class TranslationMessageSubscriber(
             }
         }
 
+        // Language translations are fully automated. Thus, if a language translation was requested then the status needs to be updated
+        // (again) to Complete now that translation has completed and the ResourceContentVersion needs to be published.
+        if (translationOrigin == TranslationOrigin.Language)
+        {
+            // Publish the ResourceContentVersion. This code should closely mirror the Publish endpoint.
+            resourceContentVersion.IsDraft = false;
+            resourceContentVersion.IsPublished = true;
+            resourceContentVersion.Content = SanitizeTiptapContent(resourceContentVersion.Content);
+
+            // mark the ResourceContent item as Complete
+            resourceContentVersion.ResourceContent.Status = ResourceContentStatus.Complete;
+            await _resourceHistoryService.AddStatusHistoryAsync(
+                resourceContentVersion,
+                resourceContentVersion.ResourceContent.Status,
+                startedByUserId,
+                ct);
+        }
+
         await _dbContext.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "Successfully finished translation. Resource Content ID: {ResourceContentId}; Resource Content Version ID: {ResourceContentVersionId}; Language Code: {LanguageCode}.",
+            resourceContentId,
+            resourceContentVersion.Id,
+            resourceContentLanguage.ISO6393Code);
+    }
+
+    private static string SanitizeTiptapContent(string content)
+    {
+        // Remove inline comments or anything else that needs to be sanitized.
+        var deserializedContent = TiptapConverter.DeserializeForPublish(content);
+        return JsonUtilities.DefaultSerialize(deserializedContent);
     }
 
     public sealed record OrchestrateProjectResourcesTranslationDto(
@@ -499,10 +865,26 @@ public sealed class TranslationMessageSubscriber(
         string PoisonQueueName,
         string OriginalQueueMessageText);
 
-    public sealed record TranslateProjectResourceActivityDto(int ResourceContentId, int StartedByUserId);
+    public sealed record TranslateResourceActivityDto(
+        int ResourceContentId,
+        int StartedByUserId,
+        TranslationOrigin TranslationOrigin);
 
     public sealed record UpdateProjectPostTranslationActivityDto(
         int ProjectId,
         int StartedByUserId,
         IReadOnlyList<int> TranslatedProjectResourceContentIds);
+
+    public sealed record OrchestrateLanguageResourcesTranslationDto(
+        int LanguageId,
+        int ParentResourceId,
+        int StartedByUserId,
+        IReadOnlyList<int> EnglishResourceContentVersionIds,
+        string PoisonQueueName,
+        string OriginalQueueMessageText);
+
+    public sealed record CreateLanguageResourceContentActivityDto(
+        int LanguageId,
+        int EnglishResourceContentVersionId,
+        int StartedByUserId);
 }

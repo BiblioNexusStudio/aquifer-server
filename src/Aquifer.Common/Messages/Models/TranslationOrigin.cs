@@ -51,4 +51,12 @@ public enum TranslationOrigin
     /// message handler. It will be set to <see cref="ResourceContentStatus.AquiferizeAiDraftComplete"/> status after aquiferization.
     /// </summary>
     CreateAquiferization,
+
+    /// <summary>
+    /// Not triggered by a user flow; manually dev triggered only.
+    /// Translates all resources in a parent resource into a target language where those resources
+    /// don't yet have any resource contents in that target language.
+    /// Each translated ResourceContentVersion will be published and the ResourceContent will be marked as Complete.
+    /// </summary>
+    Language,
 }
