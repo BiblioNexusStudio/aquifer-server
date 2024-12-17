@@ -138,8 +138,8 @@ public sealed class TranslationMessageSubscriber(
         try
         {
             var translateResourceTasks = dto.ProjectResourceContentIds.Select(resourceContentId =>
-                    context.CallActivityAsync<int>(nameof(TranslateProjectResourceActivity),
-                        new TranslateProjectResourceActivityDto(resourceContentId, dto.StartedByUserId),
+                    context.CallActivityAsync<int>(nameof(TranslateResourceActivity),
+                        new TranslateResourceActivityDto(resourceContentId, dto.StartedByUserId, TranslationOrigin.Project),
                         s_durableFunctionTaskOptions))
                 .ToList();
 
@@ -179,14 +179,17 @@ public sealed class TranslationMessageSubscriber(
         }
     }
 
-    [Function(nameof(TranslateProjectResourceActivity))]
-    public async Task<int> TranslateProjectResourceActivity([ActivityTrigger] TranslateProjectResourceActivityDto dto,
+    /// <summary>
+    /// Returns the ResourceContentId that was successfully translated (or gracefully skipped).
+    /// </summary>
+    [Function(nameof(TranslateResourceActivity))]
+    public async Task<int> TranslateResourceActivity([ActivityTrigger] TranslateResourceActivityDto dto,
         FunctionContext activityContext)
     {
         await TranslateResourceCoreAsync(dto.ResourceContentId,
             dto.StartedByUserId,
             false,
-            TranslationOrigin.Project,
+            dto.TranslationOrigin,
             activityContext.CancellationToken);
 
         return dto.ResourceContentId;
@@ -335,10 +338,22 @@ public sealed class TranslationMessageSubscriber(
     {
         try
         {
-            var translateResourceTasks = dto.EnglishResourceContentVersionIds
-                .Select(rcvid => context.CallActivityAsync(
-                    nameof(TranslateLanguageResourceActivity),
-                    new TranslateLanguageResourceActivityDto(dto.LanguageId, rcvid, dto.StartedByUserId),
+            var createLanguageResourceContentTasks = dto.EnglishResourceContentVersionIds
+                .Select(rcvid => context.CallActivityAsync<int?>(
+                    nameof(CreateLanguageResourceContentActivity),
+                    new CreateLanguageResourceContentActivityDto(dto.LanguageId, rcvid, dto.StartedByUserId),
+                    s_durableFunctionTaskOptions))
+                .ToList();
+
+            var resourceContentIdsToTranslate = (await Task.WhenAll(createLanguageResourceContentTasks))
+                .Where(x => x.HasValue)
+                .Select(x => x!.Value)
+                .ToList();
+
+            var translateResourceTasks = resourceContentIdsToTranslate
+                .Select(resourceContentId => context.CallActivityAsync<int>(
+                    nameof(TranslateResourceActivity),
+                    new TranslateResourceActivityDto(resourceContentId, dto.StartedByUserId, TranslationOrigin.Project),
                     s_durableFunctionTaskOptions))
                 .ToList();
 
@@ -379,9 +394,12 @@ public sealed class TranslationMessageSubscriber(
         }
     }
 
-    [Function(nameof(TranslateLanguageResourceActivity))]
-    public async Task TranslateLanguageResourceActivity(
-        [ActivityTrigger] TranslateLanguageResourceActivityDto dto,
+    /// <summary>
+    /// Returns the ResourceContentId to translate or <c>null</c> if there is no translation needed.
+    /// </summary>
+    [Function(nameof(CreateLanguageResourceContentActivity))]
+    public async Task<int?> CreateLanguageResourceContentActivity(
+        [ActivityTrigger] CreateLanguageResourceContentActivityDto dto,
         FunctionContext activityContext)
     {
         var ct = activityContext.CancellationToken;
@@ -397,6 +415,7 @@ public sealed class TranslationMessageSubscriber(
             ?? throw new InvalidOperationException(
                 $"Published English Resource Content Version not found for ID {dto.EnglishResourceContentVersionId}.");
 
+        // find resource contents to translate
         var existingResourceContentVersionForLanguage = await _dbContext.ResourceContentVersions
             .Where(rcv =>
                 rcv.IsDraft &&
@@ -404,6 +423,7 @@ public sealed class TranslationMessageSubscriber(
                 rcv.ResourceContent.MediaType == ResourceContentMediaType.Text &&
                 rcv.ResourceContent.Resource.ResourceContents.Any(rc => rc.Id == englishResourceContentVersionToTranslate.ResourceContentId))
             .Include(x => x.ResourceContent)
+            .ThenInclude(x => x.ProjectResourceContents)
             .SingleOrDefaultAsync(ct);
 
         ResourceContentVersionEntity resourceContentVersionToTranslate;
@@ -413,18 +433,20 @@ public sealed class TranslationMessageSubscriber(
         // and we need to create them here.
         // 2. Edge case: This job failed between creating the Resource Content and Resource Content Version entities and performing
         // the translation (there are two separate DB saves). For that scenario we can skip the creation of the entities and
-        // jump right to translation.
+        // jump right to translation. Note: The Resource Content must not be in any project.
         // 3. Edge case: This job already executed successfully but somehow got run again, in which case we can gracefully
         // skip doing any work for this method.
-        // 4. Edge case: Data is not as expected, in which case we can gracefully skip doing any work for this method because
-        // we run this processing for all resource contents so it's expected that some might be in a manual (human) translation flow.
+        // 4. Expected case: A manually created translation is in progress or data is not as expected, in which case we can gracefully skip
+        // doing any work for this method because we run this processing for all resource contents so it's expected that some might be
+        // in a manual (human) translation flow.
         //
-        // Handle edge cases first:
+        // Handle existing data first:
         if (existingResourceContentVersionForLanguage != null)
         {
-            // Case 2: Skip entity creation.
+            // Case 2: Entities were created already but no translation yet. Skip entity creation and go straight to translation.
             if (existingResourceContentVersionForLanguage.ResourceContent.Status == ResourceContentStatus.TranslationAwaitingAiDraft &&
-                existingResourceContentVersionForLanguage.IsDraft)
+                existingResourceContentVersionForLanguage.IsDraft &&
+                existingResourceContentVersionForLanguage.ResourceContent.ProjectResourceContents.Count == 0)
             {
                 _logger.LogInformation(
                     "Gracefully skipping creation of Resource Content item and Resource Content Version for Language ID {LanguageId} and English Resource Content Version ID {EnglishResourceContentVersionId} because entities already exist. Resource Content Version ID: {ResourceContentVersionId}.",
@@ -434,19 +456,20 @@ public sealed class TranslationMessageSubscriber(
 
                 resourceContentVersionToTranslate = existingResourceContentVersionForLanguage;
             }
-            // Case 3: Skip translation.
+            // Case 3: Translation completed already so skip everything.
             else if (existingResourceContentVersionForLanguage.ResourceContent.Status == ResourceContentStatus.Complete &&
-                existingResourceContentVersionForLanguage.IsPublished)
+                existingResourceContentVersionForLanguage.IsPublished &&
+                existingResourceContentVersionForLanguage.ResourceContent.ProjectResourceContents.Count == 0)
             {
                 _logger.LogInformation(
-                    "Gracefully skipping translation for Language ID {LanguageId} and English Resource Content Version ID {EnglishResourceContentVersionId} because a translation already exists. Resource Content Version ID: {ResourceContentVersionId}.",
+                    "Gracefully skipping translation for Language ID {LanguageId} and English Resource Content Version ID {EnglishResourceContentVersionId} because a translation was already completed (probably by this job). Resource Content Version ID: {ResourceContentVersionId}.",
                     dto.LanguageId,
                     dto.EnglishResourceContentVersionId,
                     existingResourceContentVersionForLanguage.Id);
 
-                return;
+                return null;
             }
-            // Case 4: Skip translation.
+            // Case 4: Data isn't in a state that can be handled by this job so skip everything.
             else
             {
                 _logger.LogInformation(
@@ -455,10 +478,10 @@ public sealed class TranslationMessageSubscriber(
                     dto.EnglishResourceContentVersionId,
                     existingResourceContentVersionForLanguage.Id);
 
-                return;
+                return null;
             }
         }
-        // Case 1: Create entities.
+        // Case 1: No data exists. Create entities for translation.
         else
         {
             _logger.LogInformation(
@@ -511,19 +534,14 @@ public sealed class TranslationMessageSubscriber(
             await _dbContext.SaveChangesAsync(activityContext.CancellationToken);
 
             resourceContentVersionToTranslate = newResourceContentVersion;
+
+            _logger.LogInformation(
+                "Created Resource Content Version {ResourceContentVersionId} and ResourceContent {ResourceContentId}.",
+                resourceContentVersionToTranslate.ResourceContentId,
+                resourceContentVersionToTranslate.Id);
         }
 
-        await TranslateResourceCoreAsync(
-            resourceContentVersionToTranslate.ResourceContentId,
-            dto.StartedByUserId,
-            shouldForceRetranslation: false,
-            TranslationOrigin.Language,
-            ct);
-
-        _logger.LogInformation(
-            "Published Resource Content Version {ResourceContentVersionId} and marked ResourceContent {ResourceContentId} as Complete.",
-            resourceContentVersionToTranslate.ResourceContentId,
-            resourceContentVersionToTranslate.Id);
+        return resourceContentVersionToTranslate.ResourceContentId;
     }
 
     /// <summary>
@@ -819,7 +837,10 @@ public sealed class TranslationMessageSubscriber(
         string PoisonQueueName,
         string OriginalQueueMessageText);
 
-    public sealed record TranslateProjectResourceActivityDto(int ResourceContentId, int StartedByUserId);
+    public sealed record TranslateResourceActivityDto(
+        int ResourceContentId,
+        int StartedByUserId,
+        TranslationOrigin TranslationOrigin);
 
     public sealed record UpdateProjectPostTranslationActivityDto(
         int ProjectId,
@@ -834,7 +855,7 @@ public sealed class TranslationMessageSubscriber(
         string PoisonQueueName,
         string OriginalQueueMessageText);
 
-    public sealed record TranslateLanguageResourceActivityDto(
+    public sealed record CreateLanguageResourceContentActivityDto(
         int LanguageId,
         int EnglishResourceContentVersionId,
         int StartedByUserId);
