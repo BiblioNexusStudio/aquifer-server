@@ -188,6 +188,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         {
             var commentThreads = await dbContext.ResourceContentVersionCommentThreads.Include(x => x.CommentThread)
                 .ThenInclude(x => x.Comments)
+                .ThenInclude(x => x.User)
                 .Where(x => x.ResourceContentVersionId == relevantContentVersion.Id)
                 .ToListAsync(ct);
             resourceContent.CommentThreads = new CommentThreadsResponse
