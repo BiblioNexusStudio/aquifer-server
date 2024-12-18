@@ -44,8 +44,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 MediaType = rc.MediaType,
                 ContentTranslations = rc.Resource.ResourceContents
                     .Where(orc => orc.MediaType == rc.MediaType &&
-                                  orc.Status != ResourceContentStatus.TranslationNotApplicable &&
-                                  orc.Status != ResourceContentStatus.CompleteNotApplicable)
+                        orc.Status != ResourceContentStatus.TranslationNotApplicable &&
+                        orc.Status != ResourceContentStatus.CompleteNotApplicable)
                     .Select(orc => new TranslationResponse
                     {
                         ContentId = orc.Id,
@@ -96,13 +96,21 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             .ToListAsync(ct);
 
         var relevantContentVersion = await dbContext.ResourceContentVersions.Where(rcv => rcv.ResourceContentId == request.Id)
-            .Include(rcv => rcv.CommentThreads)
-            .ThenInclude(cth => cth.CommentThread.Comments)
-            .ThenInclude(c => c.User)
-            .Include(rcv => rcv.CommentThreads)
-            .ThenInclude(cth => cth.CommentThread.ResolvedByUser)
-            .Include(rcv => rcv.AssignedUser)
-            .Include(rcv => rcv.MachineTranslations)
+            .Select(x => new
+            {
+                x.Id,
+                x.ResourceContentId,
+                x.IsDraft,
+                x.IsPublished,
+                x.Version,
+                x.AssignedUserId,
+                x.AssignedUser,
+                x.Content,
+                x.ContentSize,
+                x.DisplayName,
+                x.WordCount,
+                x.ReviewLevel
+            })
             .OrderBy(rcv => rcv.IsDraft ? 0 : rcv.IsPublished ? 1 : 2)
             .ThenByDescending(rcv => rcv.Version)
             .FirstOrDefaultAsync(ct);
@@ -118,12 +126,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             Constants.ReviewPendingStatuses.Contains(resourceContent.Status))
         {
             resourceContent.CanPullBackToCompanyReview = resourceContent.ProjectEntity?.CompanyLeadUserId == self.Id ||
-                                                         await dbContext.ResourceContentVersionAssignedUserHistory
-                                                             .Where(h => h.ResourceContentVersionId == relevantContentVersion.Id &&
-                                                                         h.AssignedUserId != null)
-                                                             .OrderByDescending(h => h.Created)
-                                                             .Select(h => h.AssignedUserId == self.Id)
-                                                             .FirstOrDefaultAsync(ct);
+                await dbContext.ResourceContentVersionAssignedUserHistory
+                    .Where(h => h.ResourceContentVersionId == relevantContentVersion.Id && h.AssignedUserId != null)
+                    .OrderByDescending(h => h.Created)
+                    .Select(h => h.AssignedUserId == self.Id)
+                    .FirstOrDefaultAsync(ct);
         }
 
         var snapshots = await dbContext.ResourceContentVersionSnapshots
@@ -150,19 +157,22 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             })
             .ToListAsync(ct);
 
-        resourceContent.MachineTranslations = relevantContentVersion.MachineTranslations.Select(mt => new MachineTranslationResponse
-        {
-            Id = mt.Id,
-            ContentIndex = mt.ContentIndex,
-            UserId = mt.UserId,
-            UserRating = mt.UserRating,
-            ImproveClarity = mt.ImproveClarity,
-            ImproveConsistency = mt.ImproveConsistency,
-            ImproveTone = mt.ImproveTone,
-            HadRetranslation = mt.RetranslationReason != null,
-            Created = mt.Created
-        })
-            .ToList();
+        // Can this move into the IsDraft check below?
+        resourceContent.MachineTranslations = await dbContext.ResourceContentVersionMachineTranslations
+            .Where(x => x.ResourceContentVersionId == relevantContentVersion.Id)
+            .Select(mt => new MachineTranslationResponse
+            {
+                Id = mt.Id,
+                ContentIndex = mt.ContentIndex,
+                UserId = mt.UserId,
+                UserRating = mt.UserRating,
+                ImproveClarity = mt.ImproveClarity,
+                ImproveConsistency = mt.ImproveConsistency,
+                ImproveTone = mt.ImproveTone,
+                HadRetranslation = mt.RetranslationReason != null,
+                Created = mt.Created
+            })
+            .ToListAsync(ct);
 
         resourceContent.IsDraft = relevantContentVersion.IsDraft;
         resourceContent.ResourceContentVersionId = relevantContentVersion.Id;
@@ -176,22 +186,26 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         if (resourceContent.IsDraft)
         {
+            var commentThreads = await dbContext.ResourceContentVersionCommentThreads.Include(x => x.CommentThread)
+                .ThenInclude(x => x.Comments)
+                .Where(x => x.ResourceContentVersionId == relevantContentVersion.Id)
+                .ToListAsync(ct);
             resourceContent.CommentThreads = new CommentThreadsResponse
             {
                 ThreadTypeId = relevantContentVersion.Id,
-                Threads = relevantContentVersion.CommentThreads.Select(x => new ThreadResponse
-                {
-                    Id = x.CommentThreadId,
-                    Resolved = x.CommentThread.Resolved,
-                    Comments = x.CommentThread.Comments.Select(c => new CommentResponse
+                Threads = commentThreads.Select(x => new ThreadResponse
                     {
-                        Id = c.Id,
-                        Comment = c.Comment,
-                        User = UserDto.FromUserEntity(c.User)!,
-                        DateTime = c.Updated
-                    })
+                        Id = x.CommentThreadId,
+                        Resolved = x.CommentThread.Resolved,
+                        Comments = x.CommentThread.Comments.Select(c => new CommentResponse
+                            {
+                                Id = c.Id,
+                                Comment = c.Comment,
+                                User = UserDto.FromUserEntity(c.User)!,
+                                DateTime = c.Updated
+                            })
                             .ToList()
-                })
+                    })
                     .ToList()
             };
 
