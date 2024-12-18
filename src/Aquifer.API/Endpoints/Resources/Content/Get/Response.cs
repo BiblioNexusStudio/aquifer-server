@@ -8,7 +8,7 @@ namespace Aquifer.API.Endpoints.Resources.Content.Get;
 public class Response
 {
     public required string ParentResourceName { get; set; }
-    public required object? ParentResourceLicenseInfo { get; set; }
+    public required ResourceLicenseInfo ParentResourceLicenseInfo { get; set; }
     public required string EnglishLabel { get; set; }
     public IEnumerable<VerseReferenceResponse> VerseReferences { get; set; } = null!;
     public IEnumerable<PassageReferenceResponse> PassageReferences { get; set; } = null!;

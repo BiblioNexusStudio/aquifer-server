@@ -14,10 +14,8 @@ public class Response
     public required int ResourceCountForLanguage { get; set; }
 
     [JsonIgnore]
-    public string? LicenseInfoValue { get; set; }
-
-    public object? LicenseInfo =>
-        LicenseInfoValue != null ? JsonUtilities.DefaultDeserialize(LicenseInfoValue) : null;
+    public required string LicenseInfoValue { get; set; }
+    public ResourceLicenseInfo LicenseInfo => JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(LicenseInfoValue);
 
     public required ResourceTypeComplexityLevel ComplexityLevel { get; set; }
     public required ResourceType ResourceType { get; set; }

@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-using Aquifer.Common.Utilities;
 using Aquifer.Data.Entities;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Collections.Get;
@@ -10,10 +8,7 @@ public sealed class Response
     public required string DisplayName { get; init; }
     public required string ShortName { get; init; }
     public required ResourceType ResourceType { get; init; }
-
-    [JsonConverter(typeof(JsonUtilities.RawJsonConverter))]
-    public required object? LicenseInfo { get; init; }
-
+    public required ResourceLicenseInfo LicenseInfo { get; init; }
     public required IReadOnlyList<AvailableLanguageResponse> AvailableLanguages { get; init; }
 }
 

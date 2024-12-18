@@ -27,10 +27,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             {
                 EnglishLabel = rc.Resource.EnglishLabel,
                 ParentResourceName = rc.Resource.ParentResource.DisplayName,
-                ParentResourceLicenseInfo =
-                    rc.Resource.ParentResource.LicenseInfo == null
-                        ? null
-                        : JsonUtilities.DefaultDeserialize(rc.Resource.ParentResource.LicenseInfo),
+                ParentResourceLicenseInfo = JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(rc.Resource.ParentResource.LicenseInfo),
                 ResourceContentId = rc.Id,
                 ResourceId = rc.ResourceId,
                 Language = new LanguageResponse
