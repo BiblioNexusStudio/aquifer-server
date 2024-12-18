@@ -16,13 +16,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override void Configure()
     {
         Get("/resources/content/{Id}");
-        // Permissions(PermissionName.ReadResources);
-        AllowAnonymous();
+        Permissions(PermissionName.ReadResources);
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        // var self = await userService.GetUserFromJwtAsync(ct);
+        var self = await userService.GetUserFromJwtAsync(ct);
         var resourceContent = await dbContext.ResourceContents.Where(x => x.Id == request.Id)
             .Select(rc => new Response
             {
@@ -122,15 +121,15 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         }
 
         if (relevantContentVersion.IsDraft &&
-            relevantContentVersion.AssignedUserId != 1 &&
+            relevantContentVersion.AssignedUserId != self.Id &&
             userService.HasPermission(PermissionName.SendReviewContent) &&
             Constants.ReviewPendingStatuses.Contains(resourceContent.Status))
         {
-            resourceContent.CanPullBackToCompanyReview = resourceContent.ProjectEntity?.CompanyLeadUserId == 1 ||
+            resourceContent.CanPullBackToCompanyReview = resourceContent.ProjectEntity?.CompanyLeadUserId == self.Id ||
                 await dbContext.ResourceContentVersionAssignedUserHistory
                     .Where(h => h.ResourceContentVersionId == relevantContentVersion.Id && h.AssignedUserId != null)
                     .OrderByDescending(h => h.Created)
-                    .Select(h => h.AssignedUserId == 1)
+                    .Select(h => h.AssignedUserId == self.Id)
                     .FirstOrDefaultAsync(ct);
         }
 
