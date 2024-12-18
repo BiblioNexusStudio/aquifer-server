@@ -1,4 +1,5 @@
 ﻿using Aquifer.Common.Tiptap;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -37,7 +38,7 @@ public static class ResourceHelper
                     Name = x.ResourceContent.Resource.ParentResource.DisplayName,
                     Type = x.ResourceContent.Resource.ParentResource.ResourceType,
                     MediaTypeValue = x.ResourceContent.MediaType,
-                    LicenseInfo = x.ResourceContent.Resource.ParentResource.LicenseInfo
+                    LicenseInfo = JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(x.ResourceContent.Resource.ParentResource.LicenseInfo),
                 }
             })
             .ToListAsync(ct);
