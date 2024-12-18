@@ -16,12 +16,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override void Configure()
     {
         Get("/resources/content/{Id}");
-        Permissions(PermissionName.ReadResources);
+        // Permissions(PermissionName.ReadResources);
+        AllowAnonymous();
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var self = await userService.GetUserFromJwtAsync(ct);
+        // var self = await userService.GetUserFromJwtAsync(ct);
         var resourceContent = await dbContext.ResourceContents.Where(x => x.Id == request.Id)
             .Select(rc => new Response
             {
@@ -121,15 +122,15 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         }
 
         if (relevantContentVersion.IsDraft &&
-            relevantContentVersion.AssignedUserId != self.Id &&
+            relevantContentVersion.AssignedUserId != 1 &&
             userService.HasPermission(PermissionName.SendReviewContent) &&
             Constants.ReviewPendingStatuses.Contains(resourceContent.Status))
         {
-            resourceContent.CanPullBackToCompanyReview = resourceContent.ProjectEntity?.CompanyLeadUserId == self.Id ||
+            resourceContent.CanPullBackToCompanyReview = resourceContent.ProjectEntity?.CompanyLeadUserId == 1 ||
                 await dbContext.ResourceContentVersionAssignedUserHistory
                     .Where(h => h.ResourceContentVersionId == relevantContentVersion.Id && h.AssignedUserId != null)
                     .OrderByDescending(h => h.Created)
-                    .Select(h => h.AssignedUserId == self.Id)
+                    .Select(h => h.AssignedUserId == 1)
                     .FirstOrDefaultAsync(ct);
         }
 
@@ -188,6 +189,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         {
             var commentThreads = await dbContext.ResourceContentVersionCommentThreads.Include(x => x.CommentThread)
                 .ThenInclude(x => x.Comments)
+                .ThenInclude(x => x.User)
                 .Where(x => x.ResourceContentVersionId == relevantContentVersion.Id)
                 .ToListAsync(ct);
             resourceContent.CommentThreads = new CommentThreadsResponse
