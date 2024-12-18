@@ -14,8 +14,9 @@ public class VersificationMappingEntity : IHasUpdatedTimestamp
     public BibleEntity Bible { get; set; } = null!;
     public VerseEntity BibleVerse { get; set; } = null!;
     public VerseEntity BaseVerse { get; set; } = null!;
-    public char? VerseIdPart { get; set; }
+    public char? BibleVerseIdPart { get; set; }
     public char? BaseVerseIdPart { get; set; }
+
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
