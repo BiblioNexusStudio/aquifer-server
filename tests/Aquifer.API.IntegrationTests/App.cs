@@ -7,13 +7,13 @@ using Microsoft.Extensions.Hosting;
 namespace Aquifer.API.IntegrationTests;
 
 /// <summary>
-/// This is a FastEndpoints <see cref="AppFixture"/> that sits on top of a <see cref="WebApplicationFactory{TEntryPoint}"/>
+/// This is a FastEndpoints <see cref="App"/> that sits on top of a <see cref="WebApplicationFactory{TEntryPoint}"/>
 /// which allows for in-memory web requests to be sent and received without actual network traffic.
 /// Details:
 /// * https://fast-endpoints.com/docs/integration-unit-testing
 /// * https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests
 /// </summary>
-public sealed class AppFixture : AppFixture<Program>
+public sealed class App : AppFixture<Program>
 {
     /// <summary>
     /// The app is configured in <see cref="Program"/> before this method is called.
