@@ -1,7 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using Aquifer.Common.Utilities;
-
-namespace Aquifer.Public.API.Endpoints.Bibles.List;
+﻿namespace Aquifer.Public.API.Endpoints.Bibles.List;
 
 public record Response
 {
@@ -12,10 +9,5 @@ public record Response
     public required bool IsLanguageDefault { get; init; }
     public required bool HasAudio { get; init; }
     public required bool HasGreekAlignment { get; init; }
-
-    public object? LicenseInfo =>
-        SerializedLicenseInfo == null ? null : JsonUtilities.DefaultDeserialize(SerializedLicenseInfo);
-
-    [JsonIgnore]
-    public string? SerializedLicenseInfo { get; init; }
+    public required BibleLicenseInfo LicenseInfo { get; init; }
 }

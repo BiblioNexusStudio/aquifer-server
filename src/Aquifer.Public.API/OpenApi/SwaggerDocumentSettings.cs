@@ -6,9 +6,11 @@ namespace Aquifer.Public.API.OpenApi;
 
 public static class SwaggerDocumentSettings
 {
-    public static IServiceCollection AddSwaggerDocumentSettings(this IServiceCollection service)
+    public const string DocumentName = "v1";
+
+    public static IServiceCollection AddSwaggerDocumentSettings(this IServiceCollection services)
     {
-        return service.SwaggerDocument(sd =>
+        return services.SwaggerDocument(sd =>
         {
             // turn off auto-grouping (but now must manually tag each endpoint using `WithTags()`)
             sd.AutoTagPathSegmentIndex = 0;
@@ -18,6 +20,7 @@ public static class SwaggerDocumentSettings
             sd.EndpointFilter = ep => ep.EndpointTags?.Contains(EndpointHelpers.EndpointTags.ExcludeFromSwaggerDocument) != true;
             sd.DocumentSettings = ds =>
             {
+                ds.DocumentName = DocumentName;
                 ds.Title = "Aquifer API Documentation";
                 ds.Description = """
                                  All endpoints require an API key in the `api-key` header.<br><br>
@@ -29,6 +32,8 @@ public static class SwaggerDocumentSettings
                                  <a href="https://cdn.aquifer.bible/training/aquifer-api-postman.mp4" target="_blank">Making requests with Postman</a>
 
                                  <a href="https://cdn.aquifer.bible/training/aquifer-api-files-demo-csharp.mp4" target="_blank">Downloading resources to the file system with C#</a>
+
+                                 <a href="https://cdn.aquifer.bible/training/api-and-flat-files.mp4" target="_blank">Why use a web API instead of flat files?</a>
 
                                  <br><br>
                                  Example applications using the Aquifer API can be found in the <a href="https://github.com/BiblioNexusStudio/aquifer-api-samples" target="_blank">samples repository on GitHub</a>.
@@ -61,6 +66,7 @@ public static class SwaggerDocumentSettings
                 td["Resources/Types"] = "Endpoints for retrieving the different types of resource collections and resources.";
                 td["Languages"] = "Endpoints for pulling data specific to languages.";
                 td["Bibles"] = "Endpoints for discovering available Bibles and pulling down Bible text and audio information.";
+                td["Clients"] = "Endpoints for downloading generated client source code for calling this API.";
             };
         });
     }

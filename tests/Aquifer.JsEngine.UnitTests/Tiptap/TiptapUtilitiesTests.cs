@@ -1,6 +1,6 @@
 ﻿using Aquifer.JsEngine.Tiptap;
 
-namespace Aquifer.JsEngine.UnitTests;
+namespace Aquifer.JsEngine.UnitTests.Tiptap;
 
 public sealed class TiptapUtilitiesTests
 {

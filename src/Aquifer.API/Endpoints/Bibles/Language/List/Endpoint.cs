@@ -23,7 +23,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             {
                 Name = bible.Name,
                 Abbreviation = bible.Abbreviation,
-                SerializedLicenseInfo = bible.LicenseInfo,
+                LicenseInfo = JsonUtilities.DefaultDeserialize<BibleLicenseInfo>(bible.LicenseInfo),
                 Id = bible.Id,
                 LanguageId = bible.LanguageId,
                 RestrictedLicense = bible.RestrictedLicense,

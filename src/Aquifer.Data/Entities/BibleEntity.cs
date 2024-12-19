@@ -11,7 +11,7 @@ public class BibleEntity : IHasUpdatedTimestamp
     public int LanguageId { get; set; }
     public string Name { get; set; } = null!;
     public string Abbreviation { get; set; } = null!;
-    public string? LicenseInfo { get; set; }
+    public string LicenseInfo { get; set; } = null!;
     public bool Enabled { get; set; }
     public bool LanguageDefault { get; set; }
     public bool RestrictedLicense { get; set; }

@@ -3,13 +3,26 @@
     "logging": {
         "logLevel": {
             "default": "Information",
-            "Azure.Core": "Error"
+            // log everything from our code
+            "Function": "Trace",
             // suppress noisy SDK warnings
+            "Azure.Core": "Error",
+            // opt in to DurableTask logging
+            "DurableTask.AzureStorage": "Warning",
+            "DurableTask.Core": "Warning",
+            // additional logging
+            "Host.Triggers.DurableTask": "Information",
+            "Host.Aggregator": "Trace",
+            "Host.Results": "Error"
         },
         "ApplicationInsights": {
             "LogLevel": {
                 "Default": "Information"
-            }
+            },
+            "samplingSettings": {
+                "isEnabled": true
+            },
+            "enableLiveMetrics": true
         }
     },
     // Let Azure handle concurrency.

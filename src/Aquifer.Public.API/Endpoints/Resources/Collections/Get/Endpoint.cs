@@ -1,5 +1,6 @@
 using System.Data.Common;
 using Aquifer.Common.Services.Caching;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Public.API.Helpers;
@@ -68,7 +69,7 @@ public sealed class Endpoint(AquiferDbContext _dbContext, ICachingLanguageServic
             DisplayName = parentResource.DisplayName,
             ShortName = parentResource.ShortName,
             ResourceType = parentResource.ResourceType,
-            LicenseInfo = parentResource.LicenseInfo,
+            LicenseInfo = JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(parentResource.LicenseInfo),
             AvailableLanguages = localizations
                 .Select(l => new AvailableLanguageResponse
                 {
@@ -187,8 +188,10 @@ public sealed class Endpoint(AquiferDbContext _dbContext, ICachingLanguageServic
             parameters,
             cancellationToken: ct);
 
+#pragma warning disable VSTHRD103 // using the non-async Read() method is correct because I/O was already awaited above in QueryMultipleAsync()
         var parentResourceLocalizations = reader.Read<ParentResourceLocalization>().ToList();
         var resourceContentCounts = reader.Read<ResourceContentCount>().ToList();
+#pragma warning restore VSTHRD103
 
         // Note that there may be more ParentResourceLocalization entries than counts because we translate the parent resource names
         // before resource contents begin translation.  If this happens, then due to the Join() call here all

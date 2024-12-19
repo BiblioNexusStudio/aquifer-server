@@ -1,0 +1,13 @@
+<Project>
+
+    <!-- This implements the equivalent of running `dotnet build /warnaserror -warnNotAsError:NU1608` from the command line.
+         If https://github.com/dotnet/msbuild/issues/10871 is fixed then we can probably delete this file because these settings
+         will be inherited from the `Directory.Build.Props`'s `TreatWarningsAsErrors` and `WarningsNotAsErrors` properties.
+         For now only the warning codes that still error with the above command despite being in `WarningsNotAsErrors`
+         need to be duplicated here. -->
+    <PropertyGroup>
+        <MSBuildTreatWarningsAsErrors>true</MSBuildTreatWarningsAsErrors>
+        <MSBuildWarningsNotAsErrors>NU1608;MSB3245</MSBuildWarningsNotAsErrors>
+    </PropertyGroup>
+
+</Project>

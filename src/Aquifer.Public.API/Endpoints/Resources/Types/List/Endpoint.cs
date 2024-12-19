@@ -41,7 +41,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
                 {
                     Code = x.Code,
                     Title = x.DisplayName,
-                    LicenseInformation = x.LicenseInfo != null ? JsonUtilities.DefaultDeserialize(x.LicenseInfo) : null
+                    LicenseInformation = JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(x.LicenseInfo),
                 }).ToList()
             });
         }

@@ -108,6 +108,7 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("LicenseInfo")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -1018,6 +1019,7 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("LicenseInfo")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ResourceType")
@@ -1963,6 +1965,9 @@ namespace Aquifer.Data.Migrations
                     b.Property<int>("BibleVerseId")
                         .HasColumnType("int");
 
+                    b.Property<string>("BibleVerseIdPart")
+                        .HasColumnType("nvarchar(1)");
+
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -1972,9 +1977,6 @@ namespace Aquifer.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("getutcdate()");
-
-                    b.Property<string>("VerseIdPart")
-                        .HasColumnType("nvarchar(1)");
 
                     b.HasKey("Id");
 

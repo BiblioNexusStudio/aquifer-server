@@ -1,4 +1,5 @@
-﻿using Aquifer.Data;
+﻿using Aquifer.Common.Utilities;
+using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,7 +37,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IReadOnlyL
                 Name = bible.Name,
                 Abbreviation = bible.Abbreviation,
                 Id = bible.Id,
-                SerializedLicenseInfo = bible.LicenseInfo,
+                LicenseInfo = JsonUtilities.DefaultDeserialize<BibleLicenseInfo>(bible.LicenseInfo),
                 LanguageId = bible.LanguageId,
                 IsLanguageDefault = bible.LanguageDefault,
                 HasAudio = bible.BibleBookContents.Any(bbc => bbc.AudioUrls != null),

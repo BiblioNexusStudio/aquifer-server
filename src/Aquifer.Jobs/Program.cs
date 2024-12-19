@@ -9,6 +9,7 @@ using Aquifer.Data.Services;
 using Aquifer.Jobs.Clients;
 using Aquifer.Jobs.Configuration;
 using Aquifer.Jobs.Services;
+using Aquifer.Jobs.Services.TranslationProcessors;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -47,7 +48,7 @@ var host = new HostBuilder()
         services.AddAzureClient(isDevelopment);
 
         services.AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount);
-        services.AddTranslationPostProcessingServices();
+        services.AddTranslationProcessingServices();
 
         services.AddSingleton<IAquiferAppInsightsClient, AquiferAppInsightsClient>();
         services.AddSingleton<IAquiferApiManagementClient, AquiferApiManagementClient>();
@@ -61,15 +62,26 @@ var host = new HostBuilder()
         services.AddSingleton<ITranslationService, OpenAiTranslationService>();
         services.AddSingleton<IEmailService, SendGridEmailService>();
     })
-    .ConfigureLogging(logging => logging.Services.Configure<LoggerFilterOptions>(options =>
+    .ConfigureLogging((hostingContext, logging) =>
     {
-        const string applicationInsightsProviderName = "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider";
-        var defaultRule = options.Rules.FirstOrDefault(rule => rule.ProviderName == applicationInsightsProviderName);
-        if (defaultRule is not null)
+        logging.Services.Configure<LoggerFilterOptions>(options =>
         {
-            options.Rules.Remove(defaultRule);
-        }
-    }))
+            const string applicationInsightsProviderName =
+                "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider";
+            var defaultRule = options.Rules.FirstOrDefault(rule => rule.ProviderName == applicationInsightsProviderName);
+            if (defaultRule is not null)
+            {
+                options.Rules.Remove(defaultRule);
+            }
+        });
+
+        logging.AddApplicationInsights(console =>
+        {
+            console.IncludeScopes = true;
+        });
+
+        logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+    })
     .Build();
 
 StaticLoggerFactory.LoggerFactory = host.Services.GetRequiredService<ILoggerFactory>();

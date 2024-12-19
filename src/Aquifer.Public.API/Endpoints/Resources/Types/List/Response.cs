@@ -10,5 +10,5 @@ public class AvailableResourceCollection
 {
     public required string Code { get; set; }
     public required string Title { get; set; }
-    public object? LicenseInformation { get; set; }
+    public required ResourceLicenseInfo LicenseInformation { get; init; }
 }

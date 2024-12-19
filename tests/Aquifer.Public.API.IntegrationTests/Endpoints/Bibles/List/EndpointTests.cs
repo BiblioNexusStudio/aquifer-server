@@ -3,14 +3,14 @@ using Aquifer.Public.API.Endpoints.Bibles.List;
 using FastEndpoints.Testing;
 using FastEndpoints;
 
-namespace Aquifer.Public.API.IntegrationTests;
+namespace Aquifer.Public.API.IntegrationTests.Endpoints.Bibles.List;
 
-public sealed class BiblesListTestFixture(AppFixture _appFixture) : TestBase<AppFixture>
+public sealed class EndpointTests(App _app) : TestBase<App>
 {
     [Fact]
     public async Task ValidRequest_ShouldReturnSuccess()
     {
-        var (response, result) = await _appFixture.Client.GETAsync<Endpoint, Request, IReadOnlyList<Response>>(
+        var (response, result) = await _app.Client.GETAsync<Endpoint, Request, IReadOnlyList<Response>>(
             new Request
             {
                 IsLanguageDefault = true,
