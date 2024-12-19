@@ -1,11 +1,8 @@
-using Microsoft.EntityFrameworkCore;
-
 namespace Aquifer.Data.Entities;
 
-[PrimaryKey(nameof(BaseVersionId),
-        nameof(ComparedVersionId))]
 public class ResourceContentVersionSimilarityScore
 {
+    public int Id { get; set; }
     public int BaseVersionId { get; set; }
     public ResourceContentVersionTypes BaseVersionType { get; set; }
     public int ComparedVersionId { get; set; }
