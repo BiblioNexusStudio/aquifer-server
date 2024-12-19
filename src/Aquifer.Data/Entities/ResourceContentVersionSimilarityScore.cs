@@ -15,7 +15,8 @@ public class ResourceContentVersionSimilarityScore
 
 public enum ResourceContentVersionTypes
 {
-    Base,
-    MachineTranslation,
-    Snapshot,
+    None = 0,
+    Base = 1,
+    MachineTranslation = 2,
+    Snapshot = 3,
 }
