@@ -1621,6 +1621,36 @@ namespace Aquifer.Data.Migrations
                     b.ToTable("ResourceContentVersionMachineTranslations");
                 });
 
+            modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionSimilarityScore", b =>
+                {
+                    b.Property<int>("BaseVersionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ComparedVersionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BaseVersionType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ComparedVersionType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Created")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.Property<double>("SimilarityScore")
+                        .HasColumnType("float");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("BaseVersionId", "ComparedVersionId");
+
+                    b.ToTable("ResourceContentVersionSimilarityScores");
+                });
+
             modelBuilder.Entity("Aquifer.Data.Entities.ResourceContentVersionSnapshotEntity", b =>
                 {
                     b.Property<int>("Id")
