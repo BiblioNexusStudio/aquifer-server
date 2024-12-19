@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    [Migration("20241219150601_AddResourceContentVersionSimilarityScoreTable")]
+    [Migration("20241219202536_AddResourceContentVersionSimilarityScoreTable")]
     partial class AddResourceContentVersionSimilarityScoreTable
     {
         /// <inheritdoc />
@@ -1651,9 +1651,6 @@ namespace Aquifer.Data.Migrations
 
                     b.Property<double>("SimilarityScore")
                         .HasColumnType("float");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

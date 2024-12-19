@@ -1649,9 +1649,6 @@ namespace Aquifer.Data.Migrations
                     b.Property<double>("SimilarityScore")
                         .HasColumnType("float");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.ToTable("ResourceContentVersionSimilarityScores");
