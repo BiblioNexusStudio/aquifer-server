@@ -37,28 +37,24 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
                 await ScoreMachineTranslationToResourceContentVersionSimilarityAsync(
                     message.BaseVersionId,
                     message.CompareVersionId,
-                    message.Status,
                     ct);
                 break;
             case ResourceContentVersionSimilarityComparisonTypes.MachineTranslationToSnapshot:
                 await ScoreMachineTranslationToSnapshotSimilarityAsync(
                     message.BaseVersionId,
                     message.CompareVersionId,
-                    message.Status,
                     ct);
                 break;
             case ResourceContentVersionSimilarityComparisonTypes.ResourceContentVersionToSnapshot:
                 await ScoreResourceContentVersionToSnapshotSimilarityAsync(
                     message.BaseVersionId,
                     message.CompareVersionId,
-                    message.Status,
                     ct);
                 break;
             case ResourceContentVersionSimilarityComparisonTypes.SnapshotToSnapshot:
                 await ScoreSnapshotToSnapshotSimilarityAsync(
                     message.BaseVersionId,
                     message.CompareVersionId,
-                    message.Status,
                     ct);
                 break;
             default:
@@ -68,8 +64,7 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
 
     private async Task ScoreMachineTranslationToResourceContentVersionSimilarityAsync(
         int machineId, 
-        int contentVersionId, 
-        ScoreResourceContentVersionSimilarityStatus status,
+        int contentVersionId,
         CancellationToken ct)
     {
         var machineContentResource = await _dbContext
@@ -95,17 +90,16 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
                 machineText,
                 compText
             );
-        _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}, status: {status}");
+        _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}");
         
-        // todo: success, store results, job success
+        // todo: success, store results, job success | store status
         // store results on Machintrx table? or make new table with foreign keys and other info we care about
         // await _dbContext.SaveChangesAsync(ct);
     }
 
     private async Task ScoreMachineTranslationToSnapshotSimilarityAsync(
         int machineId, 
-        int compareSnapshotId, 
-        ScoreResourceContentVersionSimilarityStatus status,
+        int compareSnapshotId,
         CancellationToken ct)
     {
         var machineContentResource = await _dbContext
@@ -131,17 +125,16 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
                 machineText,
                 compText
             );
-        _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}, status: {status}");
+        _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}");
         
-        // todo: success, store results, job success
+        // todo: success, store results, job success | store status
         // store results on Machintrx table? or make new table with foreign keys and other info we care about
         // await _dbContext.SaveChangesAsync(ct);
     }
     
     private async Task ScoreResourceContentVersionToSnapshotSimilarityAsync(
         int baseContentVersionId, 
-        int compareSnapshotId, 
-        ScoreResourceContentVersionSimilarityStatus status,
+        int compareSnapshotId,
         CancellationToken ct)
     {
         var baseContentResource = await _dbContext
@@ -169,17 +162,16 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
                 baseText,
                 compText
             );
-        _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}, status: {status}");
+        _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}");
         
-        // todo: success, store results, job success
+        // todo: success, store results, job success | store status
         // store results on Machintrx table? or make new table with foreign keys and other info we care about
         // await _dbContext.SaveChangesAsync(ct);
     }
     
     private async Task ScoreSnapshotToSnapshotSimilarityAsync(
         int baseSnapshotId, 
-        int compareSnapshotId, 
-        ScoreResourceContentVersionSimilarityStatus status,
+        int compareSnapshotId,
         CancellationToken ct)
     {
         var baseSnapshotResource = await _dbContext
@@ -207,9 +199,9 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
                 baseText,
                 compText
             );
-        _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}, status: {status}");
+        _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}");
         
-        // todo: success, store results, job success
+        // todo: success, store results, job success | store status
         // store results on Machintrx table? or make new table with foreign keys and other info we care about
         // await _dbContext.SaveChangesAsync(ct);
     }
