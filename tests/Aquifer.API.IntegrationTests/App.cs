@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Aquifer.Public.API.IntegrationTests;
+namespace Aquifer.API.IntegrationTests;
 
 /// <summary>
 /// This is a FastEndpoints <see cref="App"/> that sits on top of a <see cref="WebApplicationFactory{TEntryPoint}"/>
@@ -40,8 +40,9 @@ public sealed class App : AppFixture<Program>
     /// <summary>
     /// Configure Clients here.
     /// The default Client is anonymous and has no API Key header value.
-    /// This is sufficient for Public API tests because all routes are anonymous and no actual web requests are sent via this fixture.
+    /// This is sufficient for anonymous Internal API tests because no actual web requests are sent via this fixture.
     /// The API key is enforced by Azure API Management when proxying requests, and thus it is not needed locally.
+    /// Various authenticated client with different roles/permissions are also needed.
     /// </summary>
     /// <remarks>
     /// Example of adding a default header to the existing client:
