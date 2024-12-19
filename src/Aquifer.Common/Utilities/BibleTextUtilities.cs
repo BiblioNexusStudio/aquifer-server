@@ -16,10 +16,9 @@ public static class BibleTextUtilities
         try
         {
             var verses = await dbContext.Verses.Where(v => v.Id >= startVerseId && v.Id <= endVerseId).Select(v => v.Id).ToListAsync(ct);
-            var fromBibleToBaseMapping = await versificationService.GetVersificationsByBibleIdAsync(fromBibleId, ct);
-            var toBibleToBaseMapping = await versificationService.GetVersificationsByBibleIdAsync(toBibleId, ct);
 
-            var fromBibleToBibleMapping = GetMergedMappingsOnBaseId(fromBibleToBaseMapping, toBibleToBaseMapping);
+            var fromBibleToBibleMapping =
+                await VersificationUtilities.GetFromBibleToBibleVersificationMap(fromBibleId, toBibleId, versificationService, ct);
 
             await GetMappedBibleTexts(toBibleId, dbContext, verses, fromBibleToBibleMapping, bibleTexts, ct);
 
@@ -65,7 +64,7 @@ public static class BibleTextUtilities
     }
 
     public static async Task GetMappedBibleTexts(int toBibleId, AquiferDbContext dbContext, List<int> verses,
-        Dictionary<(int, char?), (int, char?)> fromBibleToBibleMapping, List<FlatBibleText> bibleTexts, CancellationToken ct)
+        ReadOnlyDictionary<(int, char?), (int, char?)> fromBibleToBibleMapping, List<FlatBibleText> bibleTexts, CancellationToken ct)
     {
         foreach (var verse in verses)
         {
@@ -97,20 +96,6 @@ public static class BibleTextUtilities
                 });
             }
         }
-    }
-
-    public static Dictionary<(int, char?), (int, char?)> GetMergedMappingsOnBaseId(
-        ReadOnlyDictionary<(int bibleVerseId, char? bibleVersePart), (int baseVerseId, char? baseVersePart)> fromDictionary,
-        ReadOnlyDictionary<(int bibleVerseId, char? bibleVersePart), (int baseVerseId, char? baseVersePart)> toDictionary)
-    {
-        var merged = new Dictionary<(int, char?), (int, char?)>();
-        foreach (var englishMapping in fromDictionary)
-        {
-            var mappedBibleVerse = toDictionary.FirstOrDefault(x => x.Value == englishMapping.Value).Key;
-            merged[englishMapping.Key] = mappedBibleVerse;
-        }
-
-        return merged;
     }
 }
 
