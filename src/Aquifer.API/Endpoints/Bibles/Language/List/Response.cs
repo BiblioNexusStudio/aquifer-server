@@ -1,6 +1,3 @@
-using System.Text.Json.Serialization;
-using Aquifer.Common.Utilities;
-
 namespace Aquifer.API.Endpoints.Bibles.Language.List;
 
 public record Response
@@ -10,13 +7,7 @@ public record Response
     public required string Abbreviation { get; set; }
     public required int LanguageId { get; set; }
     public required bool RestrictedLicense { get; set; }
-
-    public object? LicenseInfo =>
-        SerializedLicenseInfo == null ? null : JsonUtilities.DefaultDeserialize(SerializedLicenseInfo);
-
-    [JsonIgnore]
-    public string? SerializedLicenseInfo { get; init; }
-
+    public required BibleLicenseInfo LicenseInfo { get; init; }
     public required IEnumerable<BibleBookMetadataResponse> Books { get; set; }
 }
 

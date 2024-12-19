@@ -1,5 +1,6 @@
 using System.Data.Common;
 using Aquifer.Common.Services.Caching;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Public.API.Helpers;
@@ -68,7 +69,7 @@ public sealed class Endpoint(AquiferDbContext _dbContext, ICachingLanguageServic
             DisplayName = parentResource.DisplayName,
             ShortName = parentResource.ShortName,
             ResourceType = parentResource.ResourceType,
-            LicenseInfo = parentResource.LicenseInfo,
+            LicenseInfo = JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(parentResource.LicenseInfo),
             AvailableLanguages = localizations
                 .Select(l => new AvailableLanguageResponse
                 {
