@@ -4,6 +4,7 @@ using Aquifer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    partial class AquiferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241219202536_AddResourceContentVersionSimilarityScoreTable")]
+    partial class AddResourceContentVersionSimilarityScoreTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -108,7 +111,6 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("LicenseInfo")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -1019,7 +1021,6 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("LicenseInfo")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ResourceType")
@@ -1965,9 +1966,6 @@ namespace Aquifer.Data.Migrations
                     b.Property<int>("BibleVerseId")
                         .HasColumnType("int");
 
-                    b.Property<string>("BibleVerseIdPart")
-                        .HasColumnType("nvarchar(1)");
-
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -1977,6 +1975,9 @@ namespace Aquifer.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("getutcdate()");
+
+                    b.Property<string>("VerseIdPart")
+                        .HasColumnType("nvarchar(1)");
 
                     b.HasKey("Id");
 
