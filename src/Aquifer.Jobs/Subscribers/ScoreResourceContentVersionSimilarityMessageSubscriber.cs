@@ -3,6 +3,7 @@ using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Tiptap;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using Azure.Storage.Queues.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
@@ -69,6 +70,7 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
     {
         var machineContentResource = await _dbContext
             .ResourceContentVersionMachineTranslations
+            .AsTracking()
             .SingleOrDefaultAsync(x => x.Id == machineId, ct) 
                 ?? throw new InvalidOperationException($"Machine translation with id {machineId} not found");
         
@@ -77,6 +79,7 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
         
         var compResource = await _dbContext
             .ResourceContentVersions
+            .AsTracking()
             .SingleOrDefaultAsync(x => x.Id == contentVersionId, ct)
                 ?? throw new InvalidOperationException($"Content version with id {contentVersionId} not found");
         
@@ -92,9 +95,16 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
             );
         _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}");
         
-        // todo: success, store results, job success | store status
-        // store results on Machintrx table? or make new table with foreign keys and other info we care about
-        // await _dbContext.SaveChangesAsync(ct);
+        var similarityScore = new ResourceContentVersionSimilarityScore()
+        {
+            SimilarityScore = similarity,
+            BaseVersionId = machineId,
+            BaseVersionType = ResourceContentVersionTypes.MachineTranslation,
+            ComparedVersionId = contentVersionId,
+            ComparedVersionType = ResourceContentVersionTypes.Base,
+        };
+        await _dbContext.ResourceContentVersionSimilarityScores.AddAsync(similarityScore, ct);
+        await _dbContext.SaveChangesAsync(ct);
     }
 
     private async Task ScoreMachineTranslationToSnapshotSimilarityAsync(
@@ -104,6 +114,7 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
     {
         var machineContentResource = await _dbContext
                                          .ResourceContentVersionMachineTranslations
+                                         .AsTracking()
                                          .SingleOrDefaultAsync(x => x.Id == machineId, ct) 
                                      ?? throw new InvalidOperationException($"Machine translation with id {machineId} not found");
         
@@ -112,6 +123,7 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
         
         var compSnapshotResource = await _dbContext
                                        .ResourceContentVersionSnapshots
+                                       .AsTracking()
                                        .SingleOrDefaultAsync(x => x.Id == compareSnapshotId, ct)
                                    ?? throw new InvalidOperationException($"Snapshot version with id {compareSnapshotId} not found");
         
@@ -127,9 +139,16 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
             );
         _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}");
         
-        // todo: success, store results, job success | store status
-        // store results on Machintrx table? or make new table with foreign keys and other info we care about
-        // await _dbContext.SaveChangesAsync(ct);
+        var similarityScore = new ResourceContentVersionSimilarityScore()
+        {
+            SimilarityScore = similarity,
+            BaseVersionId = machineId,
+            BaseVersionType = ResourceContentVersionTypes.MachineTranslation,
+            ComparedVersionId = compareSnapshotId,
+            ComparedVersionType = ResourceContentVersionTypes.Snapshot,
+        };
+        await _dbContext.ResourceContentVersionSimilarityScores.AddAsync(similarityScore, ct);
+        await _dbContext.SaveChangesAsync(ct);
     }
     
     private async Task ScoreResourceContentVersionToSnapshotSimilarityAsync(
@@ -139,6 +158,7 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
     {
         var baseContentResource = await _dbContext
                                        .ResourceContentVersions
+                                       .AsTracking()
                                        .SingleOrDefaultAsync(x => x.Id == baseContentVersionId, ct) 
                                   ?? throw new InvalidOperationException($"Resource Content Version with id {baseContentVersionId} not found");
         
@@ -149,6 +169,7 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
         
         var compSnapshotResource = await _dbContext
                                        .ResourceContentVersionSnapshots
+                                       .AsTracking()
                                        .SingleOrDefaultAsync(x => x.Id == compareSnapshotId, ct)
                                    ?? throw new InvalidOperationException($"Snapshot version with id {compareSnapshotId} not found");
         
@@ -164,9 +185,16 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
             );
         _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}");
         
-        // todo: success, store results, job success | store status
-        // store results on Machintrx table? or make new table with foreign keys and other info we care about
-        // await _dbContext.SaveChangesAsync(ct);
+        var similarityScore = new ResourceContentVersionSimilarityScore()
+        {
+            SimilarityScore = similarity,
+            BaseVersionId = baseContentVersionId,
+            BaseVersionType = ResourceContentVersionTypes.Base,
+            ComparedVersionId = compareSnapshotId,
+            ComparedVersionType = ResourceContentVersionTypes.Snapshot,
+        };
+        await _dbContext.ResourceContentVersionSimilarityScores.AddAsync(similarityScore, ct);
+        await _dbContext.SaveChangesAsync(ct);
     }
     
     private async Task ScoreSnapshotToSnapshotSimilarityAsync(
@@ -176,6 +204,7 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
     {
         var baseSnapshotResource = await _dbContext
                                          .ResourceContentVersionSnapshots
+                                         .AsTracking()
                                          .SingleOrDefaultAsync(x => x.Id == baseSnapshotId, ct) 
                                      ?? throw new InvalidOperationException($"Snapshot with id {baseSnapshotId} not found");
         
@@ -186,6 +215,7 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
         
         var compSnapshotResource = await _dbContext
                                        .ResourceContentVersionSnapshots
+                                       .AsTracking()
                                        .SingleOrDefaultAsync(x => x.Id == compareSnapshotId, ct)
                                    ?? throw new InvalidOperationException($"Snapshot version with id {compareSnapshotId} not found");
         
@@ -201,9 +231,16 @@ public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
             );
         _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}");
         
-        // todo: success, store results, job success | store status
-        // store results on Machintrx table? or make new table with foreign keys and other info we care about
-        // await _dbContext.SaveChangesAsync(ct);
+        var similarityScore = new ResourceContentVersionSimilarityScore()
+        {
+            SimilarityScore = similarity,
+            BaseVersionId = baseSnapshotId,
+            BaseVersionType = ResourceContentVersionTypes.Snapshot,
+            ComparedVersionId = compareSnapshotId,
+            ComparedVersionType = ResourceContentVersionTypes.Snapshot,
+        };
+        await _dbContext.ResourceContentVersionSimilarityScores.AddAsync(similarityScore, ct);
+        await _dbContext.SaveChangesAsync(ct);
     }
 }
 
