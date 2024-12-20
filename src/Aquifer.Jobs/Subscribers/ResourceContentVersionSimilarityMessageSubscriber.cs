@@ -94,7 +94,6 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
         
         var machineText = HtmlUtilities.GetPlainText(machineContentResource.Content);
         
-        
         var compResource = await _dbContext
             .ResourceContentVersions
             .AsTracking()
@@ -136,7 +135,6 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                                      ?? throw new InvalidOperationException($"Machine translation with id {machineId} not found");
         
         var machineText = HtmlUtilities.GetPlainText(machineContentResource.Content);
-        
         
         var compSnapshotResource = await _dbContext
                                        .ResourceContentVersionSnapshots
