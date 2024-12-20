@@ -30,29 +30,47 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
 
     private async Task ProcessAsync(QueueMessage queueMessage, ScoreResourceContentVersionSimilarityMessage message, CancellationToken ct)
     {
-        _logger.LogInformation("Scoring machine translation...");
-
         switch (message.ComparisonType)
         {
             case ResourceContentVersionSimilarityComparisonTypes.MachineTranslationToResourceContentVersion:
+                _logger.LogInformation(
+                    "Scoring machine translation {BaseVersionId} vs published resource content version {CompareVersionId}...",
+                    message.BaseVersionId,
+                    message.CompareVersionId);
+
                 await ScoreMachineTranslationToResourceContentVersionSimilarityAsync(
                     message.BaseVersionId,
                     message.CompareVersionId,
                     ct);
                 break;
             case ResourceContentVersionSimilarityComparisonTypes.MachineTranslationToSnapshot:
+                _logger.LogInformation(
+                    "Scoring resource content version {BaseVersionId} vs snapshot version {CompareVersionId}...",
+                    message.BaseVersionId,
+                    message.CompareVersionId);
+
                 await ScoreMachineTranslationToSnapshotSimilarityAsync(
                     message.BaseVersionId,
                     message.CompareVersionId,
                     ct);
                 break;
             case ResourceContentVersionSimilarityComparisonTypes.ResourceContentVersionToSnapshot:
+                _logger.LogInformation(
+                    "Scoring resource content version {BaseVersionId} vs snapshot version {CompareVersionId}...",
+                    message.BaseVersionId,
+                    message.CompareVersionId);
+
                 await ScoreResourceContentVersionToSnapshotSimilarityAsync(
                     message.BaseVersionId,
                     message.CompareVersionId,
                     ct);
                 break;
             case ResourceContentVersionSimilarityComparisonTypes.SnapshotToSnapshot:
+                _logger.LogInformation(
+                    "Scoring snapshot version {BaseVersionId} vs snapshot version {CompareVersionId}...",
+                    message.BaseVersionId,
+                    message.CompareVersionId);
+
                 await ScoreSnapshotToSnapshotSimilarityAsync(
                     message.BaseVersionId,
                     message.CompareVersionId,
@@ -88,12 +106,11 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
             string.Join(string.Empty, compHtmlItems)
         );
         
-        var (similarity, executionTime) = StringSimilarityUtilities
+        var similarity = StringSimilarityUtilities
             .ComputeLevenshteinSimilarity(
                 machineText,
                 compText
             );
-        _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}");
         
         var similarityScore = new ResourceContentVersionSimilarityScore()
         {
@@ -132,12 +149,11 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
             string.Join(string.Empty, compHtmlItems)
         );
         
-        var (similarity, executionTime) = StringSimilarityUtilities
+        var similarity = StringSimilarityUtilities
             .ComputeLevenshteinSimilarity(
                 machineText,
                 compText
             );
-        _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}");
         
         var similarityScore = new ResourceContentVersionSimilarityScore()
         {
@@ -178,12 +194,11 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
             string.Join(string.Empty, compHtmlItems)
         );
         
-        var (similarity, executionTime) = StringSimilarityUtilities
+        var similarity = StringSimilarityUtilities
             .ComputeLevenshteinSimilarity(
                 baseText,
                 compText
             );
-        _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}");
         
         var similarityScore = new ResourceContentVersionSimilarityScore()
         {
@@ -224,12 +239,11 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
             string.Join(string.Empty, compHtmlItems)
         );
         
-        var (similarity, executionTime) = StringSimilarityUtilities
+        var similarity = StringSimilarityUtilities
             .ComputeLevenshteinSimilarity(
                 baseText,
                 compText
             );
-        _logger.LogInformation($"Similarity: {similarity}, execution time: {executionTime}");
         
         var similarityScore = new ResourceContentVersionSimilarityScore()
         {
