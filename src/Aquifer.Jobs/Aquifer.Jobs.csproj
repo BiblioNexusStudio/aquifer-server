@@ -47,4 +47,16 @@
     <ItemGroup>
         <Using Include="System.Threading.ExecutionContext" Alias="ExecutionContext" />
     </ItemGroup>
+
+    <!-- Workaround for https://github.com/microsoft/durabletask-dotnet/issues/148 to get Jobs working on Arm64 for Mac OS X. -->
+    <ItemGroup>
+        <PackageReference Include="Contrib.Grpc.Core.M1" />
+    </ItemGroup>
+    <Target Name="CopyGrpcNativeAssetsToOutDir" AfterTargets="Build">
+        <ItemGroup>
+            <NativeAssetToCopy Condition="$([MSBuild]::IsOSPlatform('OSX'))" Include="$(OutDir)runtimes/osx-arm64/native/*" />
+        </ItemGroup>
+        <Copy SourceFiles="@(NativeAssetToCopy)" DestinationFolder="$(OutDir).azurefunctions/runtimes/osx-arm64/native" />
+    </Target>
+    <!-- End workaround. -->
 </Project>
