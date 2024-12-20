@@ -1,23 +1,14 @@
-using System.Diagnostics;
-
 namespace Aquifer.Common.Utilities;
 
 public static class StringSimilarityUtilities
 {
-    public static (double similarity, double executionTime) ComputeLevenshteinSimilarity(string textA, string textB, int limit = 15000)
+    public static double ComputeLevenshteinSimilarity(string textA, string textB, int limit = 15000)
     {
-        var stopwatch = Stopwatch.StartNew();
-
         var textASubstrings = GetSubstrings(textA, limit);
         var textBSubstrings = GetSubstrings(textB, limit);
         var distance = ComputeTotalStringDistance(textASubstrings, textBSubstrings);
 
-        var similarity = 1 - ((double)distance / Math.Max(textA.Length, textB.Length));
-
-        stopwatch.Stop();
-        var executionTime = stopwatch.Elapsed.TotalMilliseconds;
-        
-        return (similarity, executionTime);
+        return 1 - ((double)distance / Math.Max(textA.Length, textB.Length));
     }
     
     public static int LevenshteinDistance(string textA, string textB)

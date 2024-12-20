@@ -39,7 +39,7 @@ public sealed class StringSimilarityUtilitiesTests
     public void StringSimilarity_ShouldReturnCorrectSimilarityAndExecutionTimeMs(
         StringPair strings, IComparable<double> expectedSimilarity)
     {
-        var (similarity, _) = StringSimilarityUtilities.ComputeLevenshteinSimilarity(
+        var similarity = StringSimilarityUtilities.ComputeLevenshteinSimilarity(
             strings.First, 
             strings.Second, 
             strings.Limit);
