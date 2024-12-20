@@ -1,6 +1,6 @@
 using Aquifer.Common.Utilities;
 
-namespace Aquifer.Common.UnitTests;
+namespace Aquifer.Common.UnitTests.Utilities;
 
 public sealed class StringSimilarityUtilitiesTests
 {
