@@ -29,7 +29,6 @@ public static class BibleTextUtilities
                 Verses = bt.Select(x => new Verse
                 {
                     MappedVerseNumber = x.MappedVerseNumber,
-                    MappedVersePart = x.MappedVersePart,
                     VerseNumber = x.VerseNumber,
                     Text = x.Text
                 }).ToList()
@@ -64,12 +63,12 @@ public static class BibleTextUtilities
     }
 
     public static async Task GetMappedBibleTexts(int toBibleId, AquiferDbContext dbContext, List<int> verses,
-        ReadOnlyDictionary<(int, char?), (int, char?)> fromBibleToBibleMapping, List<FlatBibleText> bibleTexts, CancellationToken ct)
+        ReadOnlyDictionary<int, int> fromBibleToBibleMapping, List<FlatBibleText> bibleTexts, CancellationToken ct)
     {
         foreach (var verse in verses)
         {
-            var (mappedVerseId, mappedVersePart) =
-                fromBibleToBibleMapping.GetValueOrDefault((verse, null)); // not sure how to handle part from the request right now
+            var mappedVerseId =
+                fromBibleToBibleMapping.GetValueOrDefault(verse);
             if (mappedVerseId.Equals(default))
             {
                 mappedVerseId = verse;
@@ -91,8 +90,7 @@ public static class BibleTextUtilities
                     ChapterNumber = tChapter,
                     VerseNumber = tVerse,
                     MappedChapterNumber = mappedChapter,
-                    MappedVerseNumber = mappedVerseNumber,
-                    MappedVersePart = mappedVersePart
+                    MappedVerseNumber = mappedVerseNumber
                 });
             }
         }
@@ -105,7 +103,6 @@ public class FlatBibleText
     public int VerseNumber { get; set; }
     public int MappedChapterNumber { get; set; }
     public int MappedVerseNumber { get; set; }
-    public char? MappedVersePart { get; set; }
     public required string Text { get; set; }
 }
 
@@ -120,6 +117,5 @@ public class Verse
 {
     public int VerseNumber { get; set; }
     public int MappedVerseNumber { get; set; }
-    public char? MappedVersePart { get; set; }
     public required string Text { get; set; }
 }

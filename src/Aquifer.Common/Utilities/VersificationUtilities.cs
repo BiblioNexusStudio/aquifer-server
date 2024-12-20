@@ -5,14 +5,14 @@ namespace Aquifer.Common.Utilities;
 
 public static class VersificationUtilities
 {
-    public static async Task<ReadOnlyDictionary<(int, char?), (int, char?)>> GetFromBibleToBibleVersificationMap(int fromBibleId,
+    public static async Task<ReadOnlyDictionary<int, int>> GetFromBibleToBibleVersificationMap(int fromBibleId,
         int toBibleId,
         ICachingVersificationService versificationService, CancellationToken ct)
     {
         var fromBibleToBaseMapping = await versificationService.GetVersificationsByBibleIdAsync(fromBibleId, ct);
         var toBibleToBaseMapping = await versificationService.GetVersificationsByBibleIdAsync(toBibleId, ct);
 
-        var merged = new Dictionary<(int, char?), (int, char?)>();
+        var merged = new Dictionary<int, int>();
         foreach (var englishMapping in fromBibleToBaseMapping)
         {
             var mappedBibleVerse = toBibleToBaseMapping.FirstOrDefault(x => x.Value == englishMapping.Value).Key;

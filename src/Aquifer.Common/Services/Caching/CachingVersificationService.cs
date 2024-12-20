@@ -7,7 +7,7 @@ namespace Aquifer.Common.Services.Caching;
 
 public interface ICachingVersificationService
 {
-    Task<ReadOnlyDictionary<(int bibleVerseId, char? bibleVersePart), (int baseVerseId, char? baseVersePart)>>
+    Task<ReadOnlyDictionary<int, int>>
         GetVersificationsByBibleIdAsync(
         int bibleId, CancellationToken cancellationToken);
 }
@@ -17,17 +17,19 @@ public class CachingVersificationService(AquiferDbContext _dbContext, IMemoryCac
     private const string VersificationDictionariesCacheKey = $"{nameof(CachingVersificationService)}:VersificationDictionaries";
     private static readonly TimeSpan s_cacheLifetime = TimeSpan.FromMinutes(30);
 
-    public async Task<ReadOnlyDictionary<(int bibleVerseId, char? bibleVersePart), (int baseVerseId, char? baseVersePart)>>
+    public async Task<ReadOnlyDictionary<int, int>>
         GetVersificationsByBibleIdAsync(int bibleId, CancellationToken cancellationToken)
     {
         var dictionaries = await GetDictionariesFromCacheAsync(cancellationToken);
 
-        var versificationDictionary = dictionaries?.GetValueOrDefault(bibleId) ?? throw new KeyNotFoundException();
+        var versificationDictionary = dictionaries?.GetValueOrDefault(bibleId) ??
+                                      new Dictionary<int, int>()
+                                          .AsReadOnly();
         return versificationDictionary;
     }
 
     private async Task<ReadOnlyDictionary<int,
-            ReadOnlyDictionary<(int bibleVerseId, char? bibleVersePart), (int baseVerseId, char? baseVersePart)>>?>
+            ReadOnlyDictionary<int, int>>?>
         GetDictionariesFromCacheAsync(CancellationToken ct)
     {
         return await _memoryCache.GetOrCreateAsync(VersificationDictionariesCacheKey,
@@ -37,7 +39,7 @@ public class CachingVersificationService(AquiferDbContext _dbContext, IMemoryCac
 
                 var versifications = await _dbContext.VersificationMappings.GroupBy(x => x.BibleId)
                     .ToDictionaryAsync(x => x.Key,
-                        x => x.ToDictionary(g => (g.BibleVerseId, g.BibleVerseIdPart), g => (g.BaseVerseId, g.BaseVerseIdPart))
+                        x => x.ToDictionary(g => g.BibleVerseId, g => g.BaseVerseId)
                             .AsReadOnly(), ct);
 
                 return versifications.AsReadOnly();
