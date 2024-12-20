@@ -17,6 +17,8 @@ public static class Queues
     public const string TranslateLanguageResources = "translate-language-resources";
     public const string TranslateProjectResources = "translate-project-resources";
     public const string TranslateResource = "translate-resource";
+    
+    public const string GenerateResourceContentSimilarityScore = "generate-resource-content-similarity-score";
 
     public static string GetPoisonQueueName(string queueName)
     {
