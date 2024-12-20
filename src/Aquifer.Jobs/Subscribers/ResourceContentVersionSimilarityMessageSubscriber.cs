@@ -11,19 +11,19 @@ using Microsoft.Extensions.Logging;
 
 namespace Aquifer.Jobs.Subscribers;
 
-public sealed class ScoreResourceContentVersionSimilarityMessageSubscriber(
+public sealed class ResourceContentVersionSimilarityMessageSubscriber(
     AquiferDbContext _dbContext,
-    ILogger<ScoreResourceContentVersionSimilarityMessageSubscriber> _logger)
+    ILogger<ResourceContentVersionSimilarityMessageSubscriber> _logger)
 {
-    [Function(nameof(ScoreResourceContentVersionSimilarity))]
-    public async Task ScoreResourceContentVersionSimilarity(
+    [Function(nameof(ScoreResourceContentVersionSimilarityMessageSubscriber))]
+    public async Task ScoreResourceContentVersionSimilarityMessageSubscriber(
         [QueueTrigger(Queues.GenerateResourceContentSimilarityScore)]
         QueueMessage queueMessage,
         CancellationToken ct)
     {
-        await queueMessage.ProcessAsync<ScoreResourceContentVersionSimilarityMessage, ScoreResourceContentVersionSimilarityMessageSubscriber>(
+        await queueMessage.ProcessAsync<ScoreResourceContentVersionSimilarityMessage, ResourceContentVersionSimilarityMessageSubscriber>(
             _logger,
-            nameof(ScoreResourceContentVersionSimilarity),
+            nameof(ScoreResourceContentVersionSimilarityMessageSubscriber),
             ProcessAsync,
             ct);
     }

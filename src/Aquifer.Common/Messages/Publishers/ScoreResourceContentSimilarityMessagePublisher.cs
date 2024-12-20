@@ -2,13 +2,13 @@ using Aquifer.Common.Messages.Models;
 
 namespace Aquifer.Common.Messages.Publishers;
 
-public interface IScoreResourceContentVersionSimilarityMessagePublisher
+public interface IResourceContentVersionSimilarityMessagePublisher
 {
     Task PublishScoreResourceContentVersionSimilarityMessageAsync(ScoreResourceContentVersionSimilarityMessage message, CancellationToken ct);
 }
 
-public sealed class ScoreResourceContentVersionSimilarityMessagePublisher(
-    IQueueClientFactory _queueClientFactory) : IScoreResourceContentVersionSimilarityMessagePublisher
+public sealed class ResourceContentVersionSimilarityMessagePublisher(
+    IQueueClientFactory _queueClientFactory) : IResourceContentVersionSimilarityMessagePublisher
 {
     public async Task PublishScoreResourceContentVersionSimilarityMessageAsync(ScoreResourceContentVersionSimilarityMessage message,
         CancellationToken ct)

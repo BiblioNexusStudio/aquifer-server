@@ -15,7 +15,7 @@ public class Endpoint(
     IUserService userService, 
     ITranslationMessagePublisher translationMessagePublisher, 
     IResourceHistoryService historyService,
-    IScoreResourceContentVersionSimilarityMessagePublisher scoreResourceContentVersionSimilarityMessagePublisher,
+    IResourceContentVersionSimilarityMessagePublisher resourceContentVersionSimilarityMessagePublisher,
     ILogger<Endpoint> logger) : Endpoint<Request>
 {
     public override void Configure()
@@ -119,8 +119,8 @@ public class Endpoint(
 
         foreach (var similarityScoreMessage in similarityScoreMessages)
         {
-            await scoreResourceContentVersionSimilarityMessagePublisher
-                    .PublishScoreResourceContentVersionSimilarityMessageAsync(similarityScoreMessage, ct);
+            await resourceContentVersionSimilarityMessagePublisher
+                    .PublishScoreResourceContentVersionSimilarityMessageAsync(similarityScoreMessage, CancellationToken.None);
         }
         
         await SendNoContentAsync(ct);
