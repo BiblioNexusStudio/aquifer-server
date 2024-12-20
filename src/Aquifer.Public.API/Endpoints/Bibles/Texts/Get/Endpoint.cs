@@ -1,4 +1,4 @@
-﻿using Aquifer.Common.Services.Caching;
+﻿using Aquifer.Common.Services;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -8,7 +8,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Bibles.Texts.Get;
 
-public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService versificationService) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext, IBibleTextService bibleTextService)
+    : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -47,10 +48,9 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
 
         var bookCode = (int)BibleBookCodeUtilities.IdFromCode(request.BookCode);
 
-        var bibleTexts = await BibleTextUtilities.GetVersificationForBibleId(request.BibleId,
+        var bibleTexts = await bibleTextService.GetVersificationForBibleId(request.BibleId,
             BibleUtilities.GetVerseId(bookCode, request.StartChapter, request.StartVerse),
-            BibleUtilities.GetVerseId(bookCode, request.EndChapter, request.EndVerse), versificationService,
-            dbContext, ct);
+            BibleUtilities.GetVerseId(bookCode, request.EndChapter, request.EndVerse), ct);
 
         var response = bookData is null
             ? null
