@@ -110,9 +110,6 @@ public sealed class BibleTextService(AquiferDbContext dbContext, ICachingVersifi
         public required string Text { get; set; }
     }
 }
-
-
-
 public class BibleText
 {
     public int ChapterNumber { get; set; }
