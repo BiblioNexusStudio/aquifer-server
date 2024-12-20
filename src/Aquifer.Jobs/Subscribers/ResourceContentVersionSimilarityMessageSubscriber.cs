@@ -82,15 +82,15 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
     }
 
     private async Task ScoreMachineTranslationToResourceContentVersionSimilarityAsync(
-        int machineId, 
+        int machineTranslationId, 
         int contentVersionId,
         CancellationToken ct)
     {
         var machineContentResource = await _dbContext
             .ResourceContentVersionMachineTranslations
             .AsTracking()
-            .SingleOrDefaultAsync(x => x.Id == machineId, ct) 
-                ?? throw new InvalidOperationException($"Machine translation with id {machineId} not found");
+            .SingleOrDefaultAsync(x => x.Id == machineTranslationId, ct) 
+                ?? throw new InvalidOperationException($"Machine translation with id {machineTranslationId} not found");
         
         var machineText = HtmlUtilities.GetPlainText(machineContentResource.Content);
         
@@ -114,7 +114,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
         var similarityScore = new ResourceContentVersionSimilarityScore()
         {
             SimilarityScore = similarity,
-            BaseVersionId = machineId,
+            BaseVersionId = machineTranslationId,
             BaseVersionType = ResourceContentVersionTypes.MachineTranslation,
             ComparedVersionId = contentVersionId,
             ComparedVersionType = ResourceContentVersionTypes.Base,
@@ -124,15 +124,15 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
     }
 
     private async Task ScoreMachineTranslationToSnapshotSimilarityAsync(
-        int machineId, 
+        int machineTranslationId, 
         int compareSnapshotId,
         CancellationToken ct)
     {
         var machineContentResource = await _dbContext
                                          .ResourceContentVersionMachineTranslations
                                          .AsTracking()
-                                         .SingleOrDefaultAsync(x => x.Id == machineId, ct) 
-                                     ?? throw new InvalidOperationException($"Machine translation with id {machineId} not found");
+                                         .SingleOrDefaultAsync(x => x.Id == machineTranslationId, ct) 
+                                     ?? throw new InvalidOperationException($"Machine translation with id {machineTranslationId} not found");
         
         var machineText = HtmlUtilities.GetPlainText(machineContentResource.Content);
         
@@ -156,7 +156,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
         var similarityScore = new ResourceContentVersionSimilarityScore()
         {
             SimilarityScore = similarity,
-            BaseVersionId = machineId,
+            BaseVersionId = machineTranslationId,
             BaseVersionType = ResourceContentVersionTypes.MachineTranslation,
             ComparedVersionId = compareSnapshotId,
             ComparedVersionType = ResourceContentVersionTypes.Snapshot,
