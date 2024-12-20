@@ -111,7 +111,7 @@ public class Endpoint(
             }
             else
             {
-                logger.LogInformation($"No machine translation found for published content version {mostRecentContentVersion.Id}.");
+                logger.LogInformation($"No machine translation found for published content version {mostRecentContentVersion.Id}. Skipping similarity scoring.");
             }
         }
 
