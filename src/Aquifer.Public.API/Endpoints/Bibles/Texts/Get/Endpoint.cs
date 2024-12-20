@@ -48,7 +48,7 @@ public class Endpoint(AquiferDbContext dbContext, IBibleTextService bibleTextSer
 
         var bookCode = (int)BibleBookCodeUtilities.IdFromCode(request.BookCode);
 
-        var bibleTexts = await bibleTextService.GetVersificationForBibleId(request.BibleId,
+        var bibleTexts = await bibleTextService.GetBibleTextsForBibleId(request.BibleId,
             BibleUtilities.GetVerseId(bookCode, request.StartChapter, request.StartVerse),
             BibleUtilities.GetVerseId(bookCode, request.EndChapter, request.EndVerse), ct);
 

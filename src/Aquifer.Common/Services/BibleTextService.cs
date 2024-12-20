@@ -8,13 +8,13 @@ namespace Aquifer.Common.Services;
 
 public interface IBibleTextService
 {
-    Task<List<BibleText>> GetVersificationForBibleId(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct);
+    Task<List<BibleText>> GetBibleTextsForBibleId(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct);
 }
 
 public sealed class BibleTextService(AquiferDbContext dbContext, ICachingVersificationService versificationService) : IBibleTextService
 {
 
-    public async Task<List<BibleText>> GetVersificationForBibleId(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct)
+    public async Task<List<BibleText>> GetBibleTextsForBibleId(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct)
     {
         const int fromBibleId = 1;
             var verses = await dbContext.Verses.Where(v => v.Id >= startVerseId && v.Id <= endVerseId).Select(v => v.Id).ToListAsync(ct);
