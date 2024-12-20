@@ -106,7 +106,7 @@ public class Endpoint(
                     new ScoreResourceContentVersionSimilarityMessage(
                         machineTranslation.Id,
                         mostRecentContentVersion.Id,
-                        ResourceContentVersionSimilarityComparisonTypes.MachineTranslationToResourceContentVersion)
+                        ResourceContentVersionSimilarityComparisonType.MachineTranslationToResourceContentVersion)
                 );
             }
             else

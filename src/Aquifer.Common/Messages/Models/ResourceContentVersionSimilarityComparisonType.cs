@@ -1,6 +1,6 @@
 namespace Aquifer.Common.Messages.Models;
 
-public enum ResourceContentVersionSimilarityComparisonTypes
+public enum ResourceContentVersionSimilarityComparisonType
 {
     MachineTranslationToResourceContentVersion,
     MachineTranslationToSnapshot,

@@ -32,7 +32,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
     {
         switch (message.ComparisonType)
         {
-            case ResourceContentVersionSimilarityComparisonTypes.MachineTranslationToResourceContentVersion:
+            case ResourceContentVersionSimilarityComparisonType.MachineTranslationToResourceContentVersion:
                 _logger.LogInformation(
                     "Scoring machine translation {BaseVersionId} vs published resource content version {CompareVersionId}...",
                     message.BaseVersionId,
@@ -43,7 +43,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                     message.CompareVersionId,
                     ct);
                 break;
-            case ResourceContentVersionSimilarityComparisonTypes.MachineTranslationToSnapshot:
+            case ResourceContentVersionSimilarityComparisonType.MachineTranslationToSnapshot:
                 _logger.LogInformation(
                     "Scoring resource content version {BaseVersionId} vs snapshot version {CompareVersionId}...",
                     message.BaseVersionId,
@@ -54,7 +54,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                     message.CompareVersionId,
                     ct);
                 break;
-            case ResourceContentVersionSimilarityComparisonTypes.ResourceContentVersionToSnapshot:
+            case ResourceContentVersionSimilarityComparisonType.ResourceContentVersionToSnapshot:
                 _logger.LogInformation(
                     "Scoring resource content version {BaseVersionId} vs snapshot version {CompareVersionId}...",
                     message.BaseVersionId,
@@ -65,7 +65,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                     message.CompareVersionId,
                     ct);
                 break;
-            case ResourceContentVersionSimilarityComparisonTypes.SnapshotToSnapshot:
+            case ResourceContentVersionSimilarityComparisonType.SnapshotToSnapshot:
                 _logger.LogInformation(
                     "Scoring snapshot version {BaseVersionId} vs snapshot version {CompareVersionId}...",
                     message.BaseVersionId,
