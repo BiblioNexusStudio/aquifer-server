@@ -1,5 +1,6 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
+using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Messages.Publishers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -9,7 +10,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.Publish;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService, ITranslationMessagePublisher translationMessagePublisher, IResourceHistoryService historyService) : Endpoint<Request>
+public class Endpoint(
+    AquiferDbContext dbContext, 
+    IUserService userService, 
+    ITranslationMessagePublisher translationMessagePublisher, 
+    IResourceHistoryService historyService,
+    IScoreResourceContentVersionSimilarityMessagePublisher scoreResourceContentVersionSimilarityMessagePublisher,
+    ILogger<Endpoint> logger) : Endpoint<Request>
 {
     public override void Configure()
     {
@@ -24,6 +31,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, ITra
             ThrowError(Helpers.InvalidUserIdResponse);
         }
 
+        List<ScoreResourceContentVersionSimilarityMessage> similarityScoreMessages = [];
         var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
 
         foreach (var contentId in contentIds)
@@ -86,10 +94,35 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, ITra
 
                 await historyService.AddStatusHistoryAsync(mostRecentContentVersion, ResourceContentStatus.Complete, user.Id, ct);
             }
+            
+            var machineTranslation = await dbContext
+                .ResourceContentVersionMachineTranslations
+                .AsTracking()
+                .FirstOrDefaultAsync(x => x.Id == mostRecentContentVersion.Id, ct);
+
+            if (machineTranslation is not null)
+            {
+                similarityScoreMessages.Add(
+                    new ScoreResourceContentVersionSimilarityMessage(
+                        machineTranslation.Id,
+                        mostRecentContentVersion.Id,
+                        ResourceContentVersionSimilarityComparisonTypes.MachineTranslationToResourceContentVersion)
+                );
+            }
+            else
+            {
+                logger.LogInformation($"No machine translation found for published content version {mostRecentContentVersion.Id}.");
+            }
         }
 
         await dbContext.SaveChangesAsync(ct);
 
+        foreach (var similarityScoreMessage in similarityScoreMessages)
+        {
+            await scoreResourceContentVersionSimilarityMessagePublisher
+                    .PublishScoreResourceContentVersionSimilarityMessageAsync(similarityScoreMessage, ct);
+        }
+        
         await SendNoContentAsync(ct);
     }
 }
