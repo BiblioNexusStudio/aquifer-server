@@ -16,38 +16,47 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var existingMt = await dbContext.ResourceContentVersionMachineTranslations.AsTracking()
+        var existingRcv = await dbContext
+            .ResourceContentVersionMachineTranslations
+            .AsTracking()
+            .Join(
+                dbContext.ResourceContentVersionAssignedUserHistory,
+                mt => mt.ResourceContentVersionId,
+                rah => rah.ResourceContentVersionId,
+                (mt, rah) => new{ mt, rah })
             .FirstOrDefaultAsync(x =>
-                    x.Id == req.Id &&
-                    x.ResourceContentVersion.AssignedUserId == user.Id &&
-                    x.ResourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview,
+                    x.mt.Id == req.Id &&
+                    (
+                        (x.mt.ResourceContentVersion.AssignedUserId == user.Id && 
+                         x.mt.ResourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview)
+                     || x.rah.AssignedUserId == user.Id),
                 ct);
 
-        if (existingMt is null)
+        if (existingRcv!.mt is null)
         {
             ThrowError(x => x.Id, "No machine translation exists for user");
         }
 
-        existingMt.UserId = user.Id;
+        existingRcv.mt.UserId = user.Id;
 
         if (req.UserRating.HasValue)
         {
-            existingMt.UserRating = req.UserRating.Value;
+            existingRcv.mt.UserRating = req.UserRating.Value;
         }
 
         if (req.ImproveClarity.HasValue)
         {
-            existingMt.ImproveClarity = req.ImproveClarity.Value;
+            existingRcv.mt.ImproveClarity = req.ImproveClarity.Value;
         }
 
         if (req.ImproveConsistency.HasValue)
         {
-            existingMt.ImproveConsistency = req.ImproveConsistency.Value;
+            existingRcv.mt.ImproveConsistency = req.ImproveConsistency.Value;
         }
 
         if (req.ImproveTone.HasValue)
         {
-            existingMt.ImproveTone = req.ImproveTone.Value;
+            existingRcv.mt.ImproveTone = req.ImproveTone.Value;
         }
 
         await dbContext.SaveChangesAsync(ct);
