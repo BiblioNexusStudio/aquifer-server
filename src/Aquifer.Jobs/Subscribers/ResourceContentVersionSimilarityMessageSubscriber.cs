@@ -30,6 +30,37 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
 
     private async Task ProcessAsync(QueueMessage queueMessage, ScoreResourceContentVersionSimilarityMessage message, CancellationToken ct)
     {
+        var similarityScore = new ResourceContentVersionSimilarityScore()
+        {
+            BaseVersionId = message.BaseVersionId,
+            ComparedVersionId = message.CompareVersionId,
+        };
+        
+        (similarityScore.BaseVersionType, similarityScore.ComparedVersionType) = GetComparisonTypes(message);
+        
+        var baseVersionText = await GetResourceContentVersionText(
+            message.BaseVersionId,
+            similarityScore.BaseVersionType,
+            _dbContext,
+            ct);
+        
+        var compareVersionText = await GetResourceContentVersionText(
+            message.CompareVersionId, 
+            similarityScore.ComparedVersionType,
+            _dbContext,
+            ct);
+        
+        similarityScore.SimilarityScore = StringSimilarityUtilities.ComputeLevenshteinSimilarity(baseVersionText, compareVersionText);
+        
+        await _dbContext.ResourceContentVersionSimilarityScores.AddAsync(similarityScore, ct);
+        await _dbContext.SaveChangesAsync(ct);
+    }
+    
+    private (
+        ResourceContentVersionTypes baseVersionType, 
+        ResourceContentVersionTypes comparedVersionType
+        ) GetComparisonTypes(ScoreResourceContentVersionSimilarityMessage message)
+    {
         switch (message.ComparisonType)
         {
             case ResourceContentVersionSimilarityComparisonType.MachineTranslationToResourceContentVersion:
@@ -38,221 +69,96 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                     message.BaseVersionId,
                     message.CompareVersionId);
 
-                await ScoreMachineTranslationToResourceContentVersionSimilarityAsync(
-                    message.BaseVersionId,
-                    message.CompareVersionId,
-                    ct);
-                break;
+                return (ResourceContentVersionTypes.MachineTranslation, ResourceContentVersionTypes.Base);
             case ResourceContentVersionSimilarityComparisonType.MachineTranslationToSnapshot:
                 _logger.LogInformation(
-                    "Scoring resource content version {BaseVersionId} vs snapshot version {CompareVersionId}...",
+                    "Scoring machine translation {BaseVersionId} vs snapshot version {CompareVersionId}...",
                     message.BaseVersionId,
                     message.CompareVersionId);
 
-                await ScoreMachineTranslationToSnapshotSimilarityAsync(
-                    message.BaseVersionId,
-                    message.CompareVersionId,
-                    ct);
-                break;
+                return (ResourceContentVersionTypes.MachineTranslation, ResourceContentVersionTypes.Snapshot);
             case ResourceContentVersionSimilarityComparisonType.ResourceContentVersionToSnapshot:
                 _logger.LogInformation(
                     "Scoring resource content version {BaseVersionId} vs snapshot version {CompareVersionId}...",
                     message.BaseVersionId,
                     message.CompareVersionId);
 
-                await ScoreResourceContentVersionToSnapshotSimilarityAsync(
-                    message.BaseVersionId,
-                    message.CompareVersionId,
-                    ct);
-                break;
+                return (ResourceContentVersionTypes.Base, ResourceContentVersionTypes.Snapshot);
             case ResourceContentVersionSimilarityComparisonType.SnapshotToSnapshot:
                 _logger.LogInformation(
                     "Scoring snapshot version {BaseVersionId} vs snapshot version {CompareVersionId}...",
                     message.BaseVersionId,
                     message.CompareVersionId);
 
-                await ScoreSnapshotToSnapshotSimilarityAsync(
-                    message.BaseVersionId,
-                    message.CompareVersionId,
-                    ct);
-                break;
+                return (ResourceContentVersionTypes.Snapshot, ResourceContentVersionTypes.Snapshot);
             default:
                 throw new InvalidOperationException($"Unknown similarity comparison type: {message.ComparisonType}");
         }
     }
-
-    private async Task ScoreMachineTranslationToResourceContentVersionSimilarityAsync(
-        int machineTranslationId, 
-        int contentVersionId,
+    
+    private static async Task<string> GetResourceContentVersionText(
+        int versionId, 
+        ResourceContentVersionTypes resourceType,
+        AquiferDbContext dbContext,
         CancellationToken ct)
     {
-        var machineContentResource = await _dbContext
-            .ResourceContentVersionMachineTranslations
-            .AsTracking()
-            .SingleOrDefaultAsync(x => x.Id == machineTranslationId, ct) 
-                ?? throw new InvalidOperationException($"Machine translation with id {machineTranslationId} not found");
-        
-        var machineText = HtmlUtilities.GetPlainText(machineContentResource.Content);
-        
-        var compResource = await _dbContext
-            .ResourceContentVersions
-            .AsTracking()
-            .SingleOrDefaultAsync(x => x.Id == contentVersionId, ct)
-                ?? throw new InvalidOperationException($"Content version with id {contentVersionId} not found");
-        
-        var compHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(compResource.Content);
-        var compText = HtmlUtilities.GetPlainText(
-            string.Join(string.Empty, compHtmlItems)
-        );
-        
-        var similarity = StringSimilarityUtilities
-            .ComputeLevenshteinSimilarity(
-                machineText,
-                compText
-            );
-        
-        var similarityScore = new ResourceContentVersionSimilarityScore()
+        return resourceType switch
         {
-            SimilarityScore = similarity,
-            BaseVersionId = machineTranslationId,
-            BaseVersionType = ResourceContentVersionTypes.MachineTranslation,
-            ComparedVersionId = contentVersionId,
-            ComparedVersionType = ResourceContentVersionTypes.Base,
+            ResourceContentVersionTypes.Base => await GetBaseVersionContentText(versionId, dbContext, ct),
+            ResourceContentVersionTypes.Snapshot => await GetSnapshotVersionText(versionId, dbContext, ct),
+            ResourceContentVersionTypes.MachineTranslation => await GetMachineTranslationVersionText(versionId, dbContext, ct),
+            ResourceContentVersionTypes.None => throw new InvalidOperationException($"Invalid similarity comparison type: {resourceType}"),
+            _ => throw new InvalidOperationException($"Invalid similarity comparison type: {resourceType}"),
         };
-        await _dbContext.ResourceContentVersionSimilarityScores.AddAsync(similarityScore, ct);
-        await _dbContext.SaveChangesAsync(ct);
+    }
+    
+    private static async Task<string> GetBaseVersionContentText(
+        int resourceContentVersionId,
+        AquiferDbContext dbContext,
+        CancellationToken ct)
+    {
+        var resource = await dbContext
+                           .ResourceContentVersions
+                           .AsTracking()
+                           .SingleOrDefaultAsync(x => x.Id == resourceContentVersionId, ct)
+                       ?? throw new InvalidOperationException($"Content version with id {resourceContentVersionId} not found");
+        
+        var resourceContentHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(resource.Content);
+        
+        return HtmlUtilities.GetPlainText(
+            string.Join(string.Empty, resourceContentHtmlItems)
+        );
     }
 
-    private async Task ScoreMachineTranslationToSnapshotSimilarityAsync(
-        int machineTranslationId, 
-        int compareSnapshotId,
+    private static async Task<string> GetMachineTranslationVersionText(
+        int machineTranslationId,
+        AquiferDbContext dbContext,
         CancellationToken ct)
     {
-        var machineContentResource = await _dbContext
+        var machineTranslationResource = await dbContext
                                          .ResourceContentVersionMachineTranslations
                                          .AsTracking()
                                          .SingleOrDefaultAsync(x => x.Id == machineTranslationId, ct) 
                                      ?? throw new InvalidOperationException($"Machine translation with id {machineTranslationId} not found");
         
-        var machineText = HtmlUtilities.GetPlainText(machineContentResource.Content);
-        
-        var compSnapshotResource = await _dbContext
-                                       .ResourceContentVersionSnapshots
-                                       .AsTracking()
-                                       .SingleOrDefaultAsync(x => x.Id == compareSnapshotId, ct)
-                                   ?? throw new InvalidOperationException($"Snapshot version with id {compareSnapshotId} not found");
-        
-        var compHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(compSnapshotResource.Content);
-        var compText = HtmlUtilities.GetPlainText(
-            string.Join(string.Empty, compHtmlItems)
-        );
-        
-        var similarity = StringSimilarityUtilities
-            .ComputeLevenshteinSimilarity(
-                machineText,
-                compText
-            );
-        
-        var similarityScore = new ResourceContentVersionSimilarityScore()
-        {
-            SimilarityScore = similarity,
-            BaseVersionId = machineTranslationId,
-            BaseVersionType = ResourceContentVersionTypes.MachineTranslation,
-            ComparedVersionId = compareSnapshotId,
-            ComparedVersionType = ResourceContentVersionTypes.Snapshot,
-        };
-        await _dbContext.ResourceContentVersionSimilarityScores.AddAsync(similarityScore, ct);
-        await _dbContext.SaveChangesAsync(ct);
+        return HtmlUtilities.GetPlainText(machineTranslationResource.Content);
     }
-    
-    private async Task ScoreResourceContentVersionToSnapshotSimilarityAsync(
-        int baseContentVersionId, 
-        int compareSnapshotId,
+
+    private static async Task<string> GetSnapshotVersionText(
+        int snapshotVersionId,
+        AquiferDbContext dbContext,
         CancellationToken ct)
     {
-        var baseContentResource = await _dbContext
-                                       .ResourceContentVersions
-                                       .AsTracking()
-                                       .SingleOrDefaultAsync(x => x.Id == baseContentVersionId, ct) 
-                                  ?? throw new InvalidOperationException($"Resource Content Version with id {baseContentVersionId} not found");
+        var snapshotResource = await dbContext
+                                   .ResourceContentVersionSnapshots
+                                   .AsTracking()
+                                   .SingleOrDefaultAsync(x => x.Id == snapshotVersionId, ct)
+                               ?? throw new InvalidOperationException($"Snapshot version with id {snapshotVersionId} not found");
         
-        var baseContentHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(baseContentResource.Content);
-        var baseText = HtmlUtilities.GetPlainText(
-            string.Join(string.Empty, baseContentHtmlItems)    
+        var snapshotContentHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(snapshotResource.Content);
+        
+        return HtmlUtilities.GetPlainText(
+            string.Join(string.Empty, snapshotContentHtmlItems)
         );
-        
-        var compSnapshotResource = await _dbContext
-                                       .ResourceContentVersionSnapshots
-                                       .AsTracking()
-                                       .SingleOrDefaultAsync(x => x.Id == compareSnapshotId, ct)
-                                   ?? throw new InvalidOperationException($"Snapshot version with id {compareSnapshotId} not found");
-        
-        var compHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(compSnapshotResource.Content);
-        var compText = HtmlUtilities.GetPlainText(
-            string.Join(string.Empty, compHtmlItems)
-        );
-        
-        var similarity = StringSimilarityUtilities
-            .ComputeLevenshteinSimilarity(
-                baseText,
-                compText
-            );
-        
-        var similarityScore = new ResourceContentVersionSimilarityScore()
-        {
-            SimilarityScore = similarity,
-            BaseVersionId = baseContentVersionId,
-            BaseVersionType = ResourceContentVersionTypes.Base,
-            ComparedVersionId = compareSnapshotId,
-            ComparedVersionType = ResourceContentVersionTypes.Snapshot,
-        };
-        await _dbContext.ResourceContentVersionSimilarityScores.AddAsync(similarityScore, ct);
-        await _dbContext.SaveChangesAsync(ct);
-    }
-    
-    private async Task ScoreSnapshotToSnapshotSimilarityAsync(
-        int baseSnapshotId, 
-        int compareSnapshotId,
-        CancellationToken ct)
-    {
-        var baseSnapshotResource = await _dbContext
-                                         .ResourceContentVersionSnapshots
-                                         .AsTracking()
-                                         .SingleOrDefaultAsync(x => x.Id == baseSnapshotId, ct) 
-                                     ?? throw new InvalidOperationException($"Snapshot with id {baseSnapshotId} not found");
-        
-        var baseSnapshotHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(baseSnapshotResource.Content);
-        var baseText = HtmlUtilities.GetPlainText(
-            string.Join(string.Empty, baseSnapshotHtmlItems)    
-        );
-        
-        var compSnapshotResource = await _dbContext
-                                       .ResourceContentVersionSnapshots
-                                       .AsTracking()
-                                       .SingleOrDefaultAsync(x => x.Id == compareSnapshotId, ct)
-                                   ?? throw new InvalidOperationException($"Snapshot version with id {compareSnapshotId} not found");
-        
-        var compHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(compSnapshotResource.Content);
-        var compText = HtmlUtilities.GetPlainText(
-            string.Join(string.Empty, compHtmlItems)
-        );
-        
-        var similarity = StringSimilarityUtilities
-            .ComputeLevenshteinSimilarity(
-                baseText,
-                compText
-            );
-        
-        var similarityScore = new ResourceContentVersionSimilarityScore()
-        {
-            SimilarityScore = similarity,
-            BaseVersionId = baseSnapshotId,
-            BaseVersionType = ResourceContentVersionTypes.Snapshot,
-            ComparedVersionId = compareSnapshotId,
-            ComparedVersionType = ResourceContentVersionTypes.Snapshot,
-        };
-        await _dbContext.ResourceContentVersionSimilarityScores.AddAsync(similarityScore, ct);
-        await _dbContext.SaveChangesAsync(ct);
     }
 }
-
