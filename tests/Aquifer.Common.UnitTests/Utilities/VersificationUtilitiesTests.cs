@@ -10,12 +10,16 @@ public class VersificationUtilitiesTests
     [InlineData(1, 9, 1001003001, 1001003003, "Verse from Bible 1 has a different versification in Bible 9")]
     [InlineData(1, 9, 1001002029, 1001002029, "Verse from Bible 1 does not have a versification at all, so should be itself")]
     [InlineData(1, 8, 1001002029, 1001002029,
-        "Verses should be the same because there are no versification mappings at all from target Bible")]
+        "Verses should be the same because there are no versification mappings at all from English to target Bible")]
     [InlineData(1, 9, 1001003004, 1001003005,
         "Mapped verse should be base verse if there is no versification from the foreign Bible to Base")]
+    [InlineData(2, 10, 1001003004, 1001003004,
+        "Mapped verse from and To Bibles should be the same when both Bibles that are not found in versification")]
     public async Task GetVersificationStartAndEnd(int fromBible, int toBible, int verse, int expected, string because)
     {
+
         var result = await VersificationUtilities.GetVersificationAsync(verse,
+
             fromBible, toBible, new MockCachingVersificationService(), CancellationToken.None);
 
         result.Should().Be(expected, because);
