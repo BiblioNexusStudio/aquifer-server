@@ -8,11 +8,6 @@
 
         // The below settings are optional and only for local development (disabling jobs can help reduce noise).
 
-        // analytics jobs
-        "AzureWebJobs.SyncApiRequestStatsToStorageTableManager.Disabled": false,
-        "AzureWebJobs.SyncCustomEventsToStorageTableManager.Disabled": false,
-        "AzureWebJobs.SyncPageViewsToStorageTableManager.Disabled": false,
-
         // email jobs (suggest leaving disabled unless doing email testing)
         "AzureWebJobs.SendEmailMessageSubscriber.Disabled": true,
         "AzureWebJobs.SendTemplatedEmailMessageSubscriber.Disabled": true,
