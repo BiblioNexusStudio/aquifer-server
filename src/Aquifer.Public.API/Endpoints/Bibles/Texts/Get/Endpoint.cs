@@ -1,5 +1,4 @@
-﻿using Aquifer.Common.Services;
-using Aquifer.Common.Utilities;
+﻿using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
@@ -8,8 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Bibles.Texts.Get;
 
-public class Endpoint(AquiferDbContext dbContext, IBibleTextService bibleTextService)
-    : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -46,11 +44,28 @@ public class Endpoint(AquiferDbContext dbContext, IBibleTextService bibleTextSer
             })
             .FirstOrDefaultAsync(ct);
 
-        var bookCode = (int)BibleBookCodeUtilities.IdFromCode(request.BookCode);
-
-        var bibleTexts = await bibleTextService.GetBibleTextsForBibleId(request.BibleId,
-            BibleUtilities.GetVerseId(bookCode, request.StartChapter, request.StartVerse),
-            BibleUtilities.GetVerseId(bookCode, request.EndChapter, request.EndVerse), ct);
+        if (bookData is not null)
+        {
+            bookData.Chapters = await dbContext.BibleTexts
+                .Where(bt => bt.BibleId == bookData.BibleId && bt.BookId == bookData.BookId &&
+                             bt.ChapterNumber >= request.StartChapter && bt.ChapterNumber <= request.EndChapter &&
+                             (bt.ChapterNumber != request.StartChapter || bt.VerseNumber >= request.StartVerse) &&
+                             (bt.ChapterNumber != request.EndChapter || bt.VerseNumber <= request.EndVerse))
+                .OrderBy(bt => bt.ChapterNumber)
+                .GroupBy(bt => bt.ChapterNumber)
+                .Select(bt => new IntermediateChapter
+                {
+                    Number = bt.Key,
+                    Verses = bt
+                        .OrderBy(bti => bti.VerseNumber)
+                        .Select(bti => new IntermediateChapterVerse
+                        {
+                            Number = bti.VerseNumber,
+                            Text = bti.Text
+                        }).ToList()
+                })
+                .ToListAsync(ct);
+        }
 
         var response = bookData is null
             ? null
@@ -61,24 +76,30 @@ public class Endpoint(AquiferDbContext dbContext, IBibleTextService bibleTextSer
                 BibleAbbreviation = bookData.BibleAbbreviation,
                 BookCode = bookData.BookCode,
                 BookName = bookData.BookName,
-                Chapters = bibleTexts.Select(bt =>
-                {
-                    var chapterAudio = !request.ShouldReturnAudioData
-                        ? null
-                        : DeserializeAudioUrls(bookData.AudioUrls)?.Chapters?.FirstOrDefault(c => c.Number == bt.ChapterNumber.ToString());
-                    return new ResponseChapter
+                Chapters = bookData.Chapters!
+                    .Select(ch =>
                     {
-                        Number = bt.ChapterNumber,
-                        Audio = MapToResponseChapterAudio(chapterAudio),
-                        Verses = bt.Verses.Select(v => new ResponseChapterVerse
+                        var chapterAudio = !request.ShouldReturnAudioData
+                            ? null
+                            : DeserializeAudioUrls(bookData.AudioUrls)?.Chapters?.FirstOrDefault(c => c.Number == ch.Number.ToString());
+
+                        return new ResponseChapter
                         {
-                            Number = v.VerseNumber,
-                            AudioTimestamp = MapToResponseAudioTimestamp(
-                                chapterAudio?.AudioTimestamps?.FirstOrDefault(at => at.VerseNumber == v.VerseNumber.ToString())),
-                            Text = v.Text
-                        }).ToList()
-                    };
-                }).ToList()
+                            Number = ch.Number,
+                            Audio = MapToResponseChapterAudio(chapterAudio),
+                            Verses = ch.Verses
+                                .Select(v => new ResponseChapterVerse
+                                {
+                                    Number = v.Number,
+                                    AudioTimestamp =
+                                        MapToResponseAudioTimestamp(
+                                            chapterAudio?.AudioTimestamps?.FirstOrDefault(at => at.VerseNumber == v.Number.ToString())),
+                                    Text = v.Text
+                                })
+                                .ToList()
+                        };
+                    })
+                    .ToList()
             };
 
         await (response is null ? SendNotFoundAsync(ct) : SendOkAsync(response, ct));
