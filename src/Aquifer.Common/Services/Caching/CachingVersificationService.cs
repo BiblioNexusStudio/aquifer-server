@@ -8,23 +8,31 @@ namespace Aquifer.Common.Services.Caching;
 public interface ICachingVersificationService
 {
     Task<ReadOnlyDictionary<int, int>>
-        GetVersificationsByBibleIdAsync(
+        GetBaseVerseIdByBibleVerseIdMapAsync(
         int bibleId, CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<int>>
+    Task<ReadOnlyDictionary<int, int>>
+        GetBibleVerseIdByBaseVerseIdMapAsync(
+            int bibleId, CancellationToken cancellationToken);
+
+    Task<ReadOnlySet<int>>
         GetExclusionsByBibleIdAsync(int bibleId, CancellationToken cancellationToken);
 }
 
 public class CachingVersificationService(AquiferDbContext _dbContext, IMemoryCache _memoryCache) : ICachingVersificationService
 {
-    private const string VersificationDictionariesCacheKey = $"{nameof(CachingVersificationService)}:VersificationDictionaries";
+    private const string BaseVerseIdByBibleVerseIdMapsCacheKey =
+        $"{nameof(CachingVersificationService)}:{nameof(BaseVerseIdByBibleVerseIdMapsCacheKey)}";
+
+    private const string BibleVerseIdByBaseVerseIdMapsCacheKey =
+        $"{nameof(CachingVersificationService)}:{nameof(BibleVerseIdByBaseVerseIdMapsCacheKey)}";
     private const string ExclusionDictionariesCacheKey = $"{nameof(CachingVersificationService)}:ExclusionDictionaries";
     private static readonly TimeSpan s_cacheLifetime = TimeSpan.FromMinutes(30);
 
     public async Task<ReadOnlyDictionary<int, int>>
-        GetVersificationsByBibleIdAsync(int bibleId, CancellationToken cancellationToken)
+        GetBaseVerseIdByBibleVerseIdMapAsync(int bibleId, CancellationToken cancellationToken)
     {
-        var dictionaries = await GetVersificationDictionariesFromCacheAsync(cancellationToken);
+        var dictionaries = await GetBaseVerseIdByBibleVerseIdMapsAsync(cancellationToken);
 
         var versificationDictionary = dictionaries?.GetValueOrDefault(bibleId) ??
                                       new Dictionary<int, int>()
@@ -32,21 +40,29 @@ public class CachingVersificationService(AquiferDbContext _dbContext, IMemoryCac
         return versificationDictionary;
     }
 
-    public async Task<IReadOnlyList<int>> GetExclusionsByBibleIdAsync(int bibleId, CancellationToken cancellationToken)
+    public async Task<ReadOnlyDictionary<int, int>> GetBibleVerseIdByBaseVerseIdMapAsync(int bibleId, CancellationToken cancellationToken)
     {
-        var dictionaries = await GetExclusionDictionariesFromCacheAsync(cancellationToken);
-        var exclusionsDictionary = dictionaries?.GetValueOrDefault(bibleId) ??
-        [
-        ];
+        var dictionaries = await GetBibleVerseIdByBaseVerseIdMapsAsync(cancellationToken);
 
-        return exclusionsDictionary;
+        var versificationDictionary = dictionaries?.GetValueOrDefault(bibleId) ??
+                                      new Dictionary<int, int>()
+                                          .AsReadOnly();
+        return versificationDictionary;
+    }
+
+    public async Task<ReadOnlySet<int>> GetExclusionsByBibleIdAsync(int bibleId, CancellationToken cancellationToken)
+    {
+        var dictionaries = await GetExclusionListsFromCacheAsync(cancellationToken);
+        var exclusions = dictionaries?.GetValueOrDefault(bibleId) ?? new ReadOnlySet<int>(new HashSet<int>());
+
+        return exclusions;
     }
 
     private async Task<ReadOnlyDictionary<int,
             ReadOnlyDictionary<int, int>>?>
-        GetVersificationDictionariesFromCacheAsync(CancellationToken ct)
+        GetBaseVerseIdByBibleVerseIdMapsAsync(CancellationToken ct)
     {
-        return await _memoryCache.GetOrCreateAsync(VersificationDictionariesCacheKey,
+        return await _memoryCache.GetOrCreateAsync(BaseVerseIdByBibleVerseIdMapsCacheKey,
             async cacheEntry =>
             {
                 cacheEntry.SlidingExpiration = s_cacheLifetime;
@@ -60,7 +76,23 @@ public class CachingVersificationService(AquiferDbContext _dbContext, IMemoryCac
             });
     }
 
-    private async Task<ReadOnlyDictionary<int, List<int>>?> GetExclusionDictionariesFromCacheAsync(CancellationToken ct)
+    private async Task<ReadOnlyDictionary<int, ReadOnlyDictionary<int, int>>?> GetBibleVerseIdByBaseVerseIdMapsAsync(CancellationToken ct)
+    {
+        return await _memoryCache.GetOrCreateAsync(BibleVerseIdByBaseVerseIdMapsCacheKey,
+            async cacheEntry =>
+            {
+                cacheEntry.SlidingExpiration = s_cacheLifetime;
+
+                var baseVerseByBibleIdDictionaries = await GetBaseVerseIdByBibleVerseIdMapsAsync(ct);
+
+                var inverted = baseVerseByBibleIdDictionaries?.ToDictionary(x => x.Key, x
+                    => x.Value.ToDictionary(y => y.Value, y => y.Key).AsReadOnly());
+
+                return inverted?.AsReadOnly();
+            });
+    }
+
+    private async Task<ReadOnlyDictionary<int, ReadOnlySet<int>>?> GetExclusionListsFromCacheAsync(CancellationToken ct)
     {
         return await _memoryCache.GetOrCreateAsync(ExclusionDictionariesCacheKey,
             async cacheEntry =>
@@ -69,7 +101,7 @@ public class CachingVersificationService(AquiferDbContext _dbContext, IMemoryCac
 
                 var exclusions = await _dbContext.VersificationExclusions.GroupBy(x => x.BibleId)
                     .ToDictionaryAsync(x => x.Key,
-                        x => x.Select(v => v.BibleVerseId).ToList(), ct);
+                        x => new ReadOnlySet<int>(x.Select(v => v.BibleVerseId).ToHashSet()), ct);
 
                 return exclusions.AsReadOnly();
             });
