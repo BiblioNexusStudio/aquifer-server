@@ -27,7 +27,6 @@ builder.Services
     .AddCachingServices()
     .AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount)
     .AddSingleton<IResourceContentRequestTrackingMessagePublisher, ResourceContentRequestTrackingMessagePublisher>()
-    .AddScoped<IBibleTextService, BibleTextService>()
     .AddAzureClient(builder.Environment.IsDevelopment())
     .AddSwaggerDocumentSettings()
     .AddOutputCache()

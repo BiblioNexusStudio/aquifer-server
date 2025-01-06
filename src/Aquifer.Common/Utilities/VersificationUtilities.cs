@@ -10,12 +10,12 @@ public static class VersificationUtilities
         ICachingVersificationService versificationService, CancellationToken ct)
     {
         var fromBibleToBaseMapping = await versificationService.GetVersificationsByBibleIdAsync(fromBibleId, ct);
-        var toBibleToBaseMapping = await versificationService.GetVersificationsByBibleIdAsync(targetBibleId, ct);
+        var targetBibleToBaseMapping = await versificationService.GetVersificationsByBibleIdAsync(targetBibleId, ct);
 
         var merged = new Dictionary<int, int>();
         foreach (var fromMapping in fromBibleToBaseMapping)
         {
-            var mappedBibleVerse = toBibleToBaseMapping.FirstOrDefault(x => x.Value == fromMapping.Value).Key;
+            var mappedBibleVerse = targetBibleToBaseMapping.FirstOrDefault(x => x.Value == fromMapping.Value).Key;
             merged[fromMapping.Key] = mappedBibleVerse;
         }
 
