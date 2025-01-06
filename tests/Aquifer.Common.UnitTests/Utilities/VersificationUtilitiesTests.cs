@@ -7,22 +7,18 @@ namespace Aquifer.Common.UnitTests.Utilities;
 public class VersificationUtilitiesTests
 {
     [Theory]
-    [InlineData(1, 9, 1001003001, 1001003003, 1001003003,
-        1001003005)]
-    [InlineData(1, 9, 1001002029, 1001003003, 1001002029,
-        1001003005)]
-    [InlineData(1, 9, 1001002029, 1001002032, 1001002029,
-        1001002032)]
-    [InlineData(1, 8, 1001002029, 1001002032, 1001002029,
-        1001002032)]
-    public async Task GetVersificationStartAndEnd(int fromBible, int toBible, int inputStartVerse, int inputEndVerse,
-        int expectedStart, int expectedEnd)
+    [InlineData(1, 9, 1001003001, 1001003003, "Verse from Bible 1 has a different versification in Bible 9")]
+    [InlineData(1, 9, 1001002029, 1001002029, "Verse from Bible 1 does not have a versification at all, so should be itself")]
+    [InlineData(1, 8, 1001002029, 1001002029,
+        "Verses should be the same because there are no versification mappings at all from target Bible")]
+    [InlineData(1, 9, 1001003004, 1001003005,
+        "Mapped verse should be base verse if there is no versification from the foreign Bible to Base")]
+    public async Task GetVersificationStartAndEnd(int fromBible, int toBible, int verse, int expected, string because)
     {
-        var (startVerse, endVerse) = await VersificationUtilities.GetVersificationsForStartAndEndVerses(inputStartVerse, inputEndVerse,
+        var result = await VersificationUtilities.GetVersificationAsync(verse,
             fromBible, toBible, new MockCachingVersificationService(), CancellationToken.None);
 
-        Assert.Equal(expectedStart, startVerse);
-        Assert.Equal(expectedEnd, endVerse);
+        result.Should().Be(expected, because);
     }
 }
 
@@ -42,6 +38,9 @@ public class MockCachingVersificationService : ICachingVersificationService
                     },
                     {
                         1001003003, 1001003004
+                    },
+                    {
+                        1001003004, 1001003005
                     }
                 }
             },

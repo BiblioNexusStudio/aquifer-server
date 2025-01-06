@@ -7,15 +7,18 @@ namespace Aquifer.Common.Services;
 
 public interface IBibleTextService
 {
-    Task<List<BibleText>> GetBibleTextsForBibleId(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct);
+    Task<List<BibleText>> GetBibleTextsForBibleIdAsync(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct);
 }
 
 public sealed class BibleTextService(AquiferDbContext dbContext, ICachingVersificationService versificationService) : IBibleTextService
 {
-    public async Task<List<BibleText>> GetBibleTextsForBibleId(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct)
+    public async Task<List<BibleText>> GetBibleTextsForBibleIdAsync(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct)
     {
         const int fromBibleId = 1;
-        var (mappedStartVerseId, mappedEndVerseId) = await VersificationUtilities.GetVersificationsForStartAndEndVerses(startVerseId, endVerseId, fromBibleId, toBibleId, versificationService, ct);
+        var mappedStartVerseId =
+            await VersificationUtilities.GetVersificationAsync(startVerseId, fromBibleId, toBibleId, versificationService, ct);
+        var mappedEndVerseId =
+            await VersificationUtilities.GetVersificationAsync(endVerseId, fromBibleId, toBibleId, versificationService, ct);
 
         var (bookId, startChapter, startVerse) = BibleUtilities.TranslateVerseId(mappedStartVerseId);
         var (_, endChapter, endVerse) = BibleUtilities.TranslateVerseId(mappedEndVerseId);
