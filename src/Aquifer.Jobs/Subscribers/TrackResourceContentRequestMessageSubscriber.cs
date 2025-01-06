@@ -72,7 +72,7 @@ public class TrackResourceContentRequestMessageSubscriber(
                 await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
 
                 var ipDataRecord = await dbContext.Database
-                    .SqlQuery<IpAddressData>($"""
+                    .SqlQuery<IpAddressDataEntity>($"""
                         SELECT
                             IpAddress,
                             City,
@@ -88,7 +88,7 @@ public class TrackResourceContentRequestMessageSubscriber(
                 {
                     var ipData = await ipAddressClient.LookupIpAddressAsync(trackingMetadata.IpAddress, ct);
 
-                    var newRecord = new IpAddressData
+                    var newRecord = new IpAddressDataEntity
                     {
                         IpAddress = trackingMetadata.IpAddress,
                         City = ipData.City,
