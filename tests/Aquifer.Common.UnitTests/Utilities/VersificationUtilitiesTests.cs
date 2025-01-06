@@ -6,34 +6,6 @@ namespace Aquifer.Common.UnitTests.Utilities;
 
 public class VersificationUtilitiesTests
 {
-    public static TheoryData<int, int, Dictionary<int, int>> GetVersificationMappingData => new()
-    {
-        {
-            1, 9, new Dictionary<int, int>
-            {
-                {
-                    1001003001, 1001003003
-                },
-                {
-                    1001003002, 1001003004
-                },
-                {
-                    1001003003, 1001003005
-                }
-            }
-        }
-    };
-
-    [Theory]
-    [MemberData(nameof(GetVersificationMappingData))]
-    public async Task GetVersificationFromBibleToBible_Success(int fromBibleId, int toBibleId, Dictionary<int, int> expectedMapping)
-    {
-        var mapping = await VersificationUtilities.GetFromBibleToBibleVersificationMap(fromBibleId, toBibleId,
-            new MockCachingVersificationService(), CancellationToken.None);
-
-        Assert.Equal(expectedMapping, mapping);
-    }
-
     [Theory]
     [InlineData(1, 9, 1001003001, 1001003003, 1001003003,
         1001003005)]
@@ -57,7 +29,7 @@ public class VersificationUtilitiesTests
 public class MockCachingVersificationService : ICachingVersificationService
 {
     private static readonly Dictionary<int, Dictionary<int, int>>
-        versificationMappings = new()
+        baseVerseByBibleIdMappings = new()
         {
             {
                 1, new Dictionary<int, int>
@@ -89,33 +61,42 @@ public class MockCachingVersificationService : ICachingVersificationService
             }
         };
 
-    private static readonly Dictionary<int, List<int>>
+    private static readonly Dictionary<int, ReadOnlySet<int>>
         exclusionMappings = new()
         {
             {
-                1, [
-                    1001004001,
-                    1001004002
-                ]
+                1, new ReadOnlySet<int>(
+                    new HashSet<int>([
+                        1001004001,
+                        1001004002
+                    ])
+                )
             },
             {
-                9, [
-                    1001004001,
-                    1001004002
-                ]
+                9, new ReadOnlySet<int>(
+                    new HashSet<int>([
+                        1001004001,
+                        1001004002
+                    ]))
             }
         };
 
     public Task<ReadOnlyDictionary<int, int>>
-        GetVersificationsByBibleIdAsync(int bibleId, CancellationToken cancellationToken)
+        GetBaseVerseIdByBibleVerseIdMapAsync(int bibleId, CancellationToken cancellationToken)
     {
-        return Task.FromResult(versificationMappings.GetValueOrDefault(bibleId)?.AsReadOnly() ?? new Dictionary<int, int>().AsReadOnly());
+        return Task.FromResult(baseVerseByBibleIdMappings.GetValueOrDefault(bibleId)?.AsReadOnly() ??
+                               new Dictionary<int, int>().AsReadOnly());
     }
 
-    public Task<IReadOnlyList<int>> GetExclusionsByBibleIdAsync(int bibleId, CancellationToken cancellationToken)
+    public async Task<ReadOnlyDictionary<int, int>> GetBibleVerseIdByBaseVerseIdMapAsync(int bibleId, CancellationToken cancellationToken)
     {
-        return Task.FromResult<IReadOnlyList<int>>(exclusionMappings.GetValueOrDefault(bibleId) ??
-        [
-        ]);
+        var map = await GetBaseVerseIdByBibleVerseIdMapAsync(bibleId, cancellationToken);
+        var invertedMap = map.ToDictionary(x => x.Value, x => x.Key).AsReadOnly();
+        return invertedMap;
+    }
+
+    Task<ReadOnlySet<int>> ICachingVersificationService.GetExclusionsByBibleIdAsync(int bibleId, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(exclusionMappings.GetValueOrDefault(bibleId, new ReadOnlySet<int>(new HashSet<int>())));
     }
 }

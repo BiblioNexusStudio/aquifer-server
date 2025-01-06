@@ -8,7 +8,6 @@ public static class VersificationUtilities
     {
         var baseVerseIdByBibleVerseIdMapping = await versificationService.GetBaseVerseIdByBibleVerseIdMapAsync(fromBibleId, ct);
         var targetBibleVerseIdByBaseVerseIdMapping = await versificationService.GetBibleVerseIdByBaseVerseIdMapAsync(targetBibleId, ct);
-        var exclusions = await versificationService.GetExclusionsByBibleIdAsync(targetBibleId, ct);
 
         var mappedStartVerse =
             targetBibleVerseIdByBaseVerseIdMapping.GetValueOrDefault(
