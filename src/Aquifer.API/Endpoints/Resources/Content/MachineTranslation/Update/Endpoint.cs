@@ -22,8 +22,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                         .ResourceContentVersionAssignedUserHistories
                         .Any(h => h.AssignedUserId == user.Id),
                 ct);
-
-         
         
         if (existingMt is null)
         {
