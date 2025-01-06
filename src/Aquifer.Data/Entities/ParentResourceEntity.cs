@@ -9,7 +9,7 @@ public class ParentResourceEntity : IHasUpdatedTimestamp
     public string ShortName { get; set; } = null!;
     public string Code { get; set; } = null!;
     public string DisplayName { get; set; } = null!;
-    public string? LicenseInfo { get; set; }
+    public string LicenseInfo { get; set; } = null!;
     public ResourceTypeComplexityLevel ComplexityLevel { get; set; }
     public ResourceType ResourceType { get; set; }
     public bool Enabled { get; set; }

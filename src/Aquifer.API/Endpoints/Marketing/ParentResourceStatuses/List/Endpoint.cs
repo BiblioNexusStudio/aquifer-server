@@ -28,7 +28,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
                                                                                    COUNT(RC.Id) AS TotalResources,
                                                                                    OtherLanguage.Total AS TotalLanguageResources,
                                                                                    OtherLanguage.LastPublished AS LastPublished,
-                                                                                   PR.LicenseInfo AS LicenseInfoValue,
+                                                                                   PR.LicenseInfo,
                                                                                    PR.ResourceType AS ResourceType
                                                                             FROM ResourceContents RC
                                                                                      INNER JOIN Resources R ON R.Id = RC.ResourceId
@@ -51,7 +51,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
                 ResourceId = null,
                 ResourceType = "Bible(s)",
                 Title = b.Name,
-                LicenseInfo = b.LicenseInfo != null ? JsonUtilities.DefaultDeserialize<object>(b.LicenseInfo) : null,
+                LicenseInfo = JsonUtilities.DefaultDeserialize<Response.MarketingLicenseInfo>(b.LicenseInfo),
                 Status = ParentResourceStatus.Complete
             })
             .ToListAsync(ct);
@@ -73,7 +73,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
             ResourceId = x.ResourceId,
             ResourceType = x.ResourceType.GetDisplayName(),
             Title = x.Title,
-            LicenseInfo = x.LicenseInfoValue is not null ? JsonUtilities.DefaultDeserialize<object>(x.LicenseInfoValue) : null,
+            LicenseInfo = JsonUtilities.DefaultDeserialize<Response.MarketingLicenseInfo>(x.LicenseInfo),
             Status = ParentResourceStatusHelpers.GetStatus(x.TotalResources, x.TotalLanguageResources, x.LastPublished)
         });
 
@@ -86,7 +86,7 @@ internal class ParentAndLanguageRow
     public ResourceType ResourceType { get; set; }
     public string Title { get; set; } = null!;
     public int ResourceId { get; set; }
-    public string? LicenseInfoValue { get; set; }
+    public required string LicenseInfo { get; set; }
     public int TotalResources { get; set; }
     public int TotalLanguageResources { get; set; }
     public DateTime? LastPublished { get; set; }

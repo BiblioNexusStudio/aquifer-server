@@ -1,4 +1,5 @@
 using Aquifer.Common.Extensions;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Public.API.Helpers;
@@ -40,7 +41,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
                 {
                     Code = x.Code,
                     Title = x.DisplayName,
-                    LicenseInformation = x.LicenseInfo,
+                    LicenseInformation = JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(x.LicenseInfo),
                 }).ToList()
             });
         }
