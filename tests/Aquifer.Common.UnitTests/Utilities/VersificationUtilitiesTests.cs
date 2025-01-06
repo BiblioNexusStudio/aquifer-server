@@ -26,7 +26,7 @@ public class VersificationUtilitiesTests
 
     [Theory]
     [MemberData(nameof(GetVersificationMappingData))]
-    public async Task GetVersification_Success(int fromBibleId, int toBibleId, Dictionary<int, int> expectedMapping)
+    public async Task GetVersificationFromBibleToBible_Success(int fromBibleId, int toBibleId, Dictionary<int, int> expectedMapping)
     {
         var mapping = await VersificationUtilities.GetFromBibleToBibleVersificationMap(fromBibleId, toBibleId,
             new MockCachingVersificationService(), CancellationToken.None);
@@ -74,5 +74,10 @@ public class MockCachingVersificationService : ICachingVersificationService
         GetVersificationsByBibleIdAsync(int bibleId, CancellationToken cancellationToken)
     {
         return Task.FromResult(mappings.GetValueOrDefault(bibleId)?.AsReadOnly() ?? throw new KeyNotFoundException());
+    }
+
+    public Task<IReadOnlyList<int>> GetExclusionsByBibleIdAsync(int bibleId, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
     }
 }
