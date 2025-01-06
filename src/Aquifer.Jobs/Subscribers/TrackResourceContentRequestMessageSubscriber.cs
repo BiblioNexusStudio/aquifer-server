@@ -1,3 +1,4 @@
+using System.Data;
 using Aquifer.Common.Clients.Http.IpAddressLookup;
 using Aquifer.Common.Messages;
 using Aquifer.Common.Messages.Models;
@@ -61,15 +62,33 @@ public class TrackResourceContentRequestMessageSubscriber(
                 return;
             }
 
-            var ipDataRecord = await dbContext.IpAddressData
-                .AsTracking()
-                .SingleOrDefaultAsync(x => x.IpAddress == trackingMetadata.IpAddress, ct);
-            if (ipDataRecord is null)
+            // Use a serializable transaction with UPDLOCK on SELECT to exclusive lock on row reads (including empty range).
+            // This locks other threads from SELECTing a null value in the DB for the given IP and thus prevents duplicate calls to the
+            // IP service for the same IP address at the same time.
+            // Using a transaction requires explicitly defining an execution strategy so that EF knows exactly what to replay in the event
+            // of a transient failure.
+            await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
             {
-                var ipData = await ipAddressClient.LookupIpAddressAsync(trackingMetadata.IpAddress, ct);
-                if (ipData.City is not null && ipData.Country is not null && ipData.Region is not null)
+                await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+
+                var ipDataRecord = await dbContext.Database
+                    .SqlQuery<IpAddressDataEntity>($"""
+                        SELECT
+                            IpAddress,
+                            City,
+                            Region,
+                            Country,
+                            Created
+                        FROM IpAddressData WITH (UPDLOCK)
+                        WHERE IpAddress = {trackingMetadata.IpAddress}
+                        """)
+                    .SingleOrDefaultAsync(ct);
+
+                if (ipDataRecord is null)
                 {
-                    var newRecord = new IpAddressData
+                    var ipData = await ipAddressClient.LookupIpAddressAsync(trackingMetadata.IpAddress, ct);
+
+                    var newRecord = new IpAddressDataEntity
                     {
                         IpAddress = trackingMetadata.IpAddress,
                         City = ipData.City,
@@ -77,19 +96,11 @@ public class TrackResourceContentRequestMessageSubscriber(
                         Country = ipData.Country
                     };
 
-                    try
-                    {
-                        await dbContext.IpAddressData.AddAsync(newRecord, ct);
-                        await dbContext.SaveChangesAsync(ct);
-                    }
-                    catch (DbUpdateException)
-                    {
-                        // Don't care about this since it's a concurrency issue. Need to remove it though or the next Save
-                        // will pick it up and blow up.
-                        dbContext.IpAddressData.Remove(newRecord);
-                    }
+                    await dbContext.IpAddressData.AddAsync(newRecord, ct);
+                    await dbContext.SaveChangesAsync(ct);
+                    await transaction.CommitAsync(ct);
                 }
-            }
+            });
         }
         catch (Exception e)
         {

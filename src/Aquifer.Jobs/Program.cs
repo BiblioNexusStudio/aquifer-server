@@ -1,3 +1,4 @@
+using System.Net;
 using Aquifer.AI;
 using Aquifer.Common.Clients;
 using Aquifer.Common.Clients.Http.IpAddressLookup;
@@ -54,7 +55,8 @@ var host = new HostBuilder()
         services.AddSingleton<IAquiferApiManagementClient, AquiferApiManagementClient>();
         services.AddHttpClient<IIpAddressLookupHttpClient, IpAddressLookupHttpClient>()
             .AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
-                .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(0.5), 2)));
+                .OrResult(res => res.StatusCode == HttpStatusCode.TooManyRequests)
+                .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(5), 2)));
         services.AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>();
         services.AddScoped<IResourceHistoryService, ResourceHistoryService>();
         services.AddSingleton<IEmailMessagePublisher, EmailMessagePublisher>();
