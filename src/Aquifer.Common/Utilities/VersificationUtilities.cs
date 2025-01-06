@@ -32,5 +32,4 @@ public static class VersificationUtilities
 
         return (mappedStartVerse, mappedEndVerse);
     }
-
 }

@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using Aquifer.Common.Services.Caching;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
@@ -13,7 +12,6 @@ public interface IBibleTextService
 
 public sealed class BibleTextService(AquiferDbContext dbContext, ICachingVersificationService versificationService) : IBibleTextService
 {
-
     public async Task<List<BibleText>> GetBibleTextsForBibleId(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct)
     {
         const int fromBibleId = 1;
@@ -42,8 +40,8 @@ public sealed class BibleTextService(AquiferDbContext dbContext, ICachingVersifi
             })
             .ToListAsync(ct);
     }
-
 }
+
 public class BibleText
 {
     public int ChapterNumber { get; set; }
