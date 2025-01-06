@@ -1,6 +1,5 @@
 ﻿using Aquifer.API.Services;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,10 +18,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var existingMt = await dbContext.ResourceContentVersionMachineTranslations.AsTracking()
             .FirstOrDefaultAsync(x =>
                     x.Id == req.Id &&
-                    x.ResourceContentVersion.AssignedUserId == user.Id &&
-                    x.ResourceContentVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview,
+                    x.ResourceContentVersion
+                        .ResourceContentVersionAssignedUserHistories
+                        .Any(h => h.AssignedUserId == user.Id),
                 ct);
-
+        
         if (existingMt is null)
         {
             ThrowError(x => x.Id, "No machine translation exists for user");
