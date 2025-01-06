@@ -8,13 +8,13 @@ public class IpAddressData
     public string IpAddress { get; set; } = null!;
 
     [MaxLength(256)]
-    public string City { get; set; } = null!;
+    public string? City { get; set; }
 
     [MaxLength(256)]
-    public string Region { get; set; } = null!;
+    public string? Region { get; set; }
 
     [MaxLength(256)]
-    public string Country { get; set; } = null!;
+    public string? Country { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
