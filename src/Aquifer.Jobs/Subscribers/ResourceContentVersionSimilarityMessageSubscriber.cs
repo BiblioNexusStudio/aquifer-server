@@ -30,7 +30,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
 
     private async Task ProcessAsync(QueueMessage queueMessage, ScoreResourceContentVersionSimilarityMessage message, CancellationToken ct)
     {
-        var similarityScore = new ResourceContentVersionSimilarityScore()
+        var similarityScore = new ResourceContentVersionSimilarityScoreEntity()
         {
             BaseVersionId = message.BaseVersionId,
             ComparedVersionId = message.CompareVersionId,
