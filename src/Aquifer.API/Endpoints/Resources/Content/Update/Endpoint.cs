@@ -71,7 +71,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         await SendNoContentAsync(ct);
     }
 
-    private bool ChangesMade(Request request, ResourceContentVersionEntity currentVersion)
+    private static bool ChangesMade(Request request, ResourceContentVersionEntity currentVersion)
     {
         if (request.DisplayName != currentVersion.DisplayName)
         {
