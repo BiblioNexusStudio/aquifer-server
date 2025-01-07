@@ -727,8 +727,32 @@ public sealed class TranslationMessageSubscriber(
             for (var contentIndex = 0; contentIndex < contentHtmlItems.Count; contentIndex++)
             {
                 var contentHtmlItem = contentHtmlItems[contentIndex];
+
+                // validate source HTML and log if there are any issues
+                var sourceHtmlValidationErrors = HtmlUtilities.GetHtmlValidationErrors(contentHtmlItem);
+                if (sourceHtmlValidationErrors.Count > 0)
+                {
+                    _logger.LogError(
+                        "HTML validation errors found in source content for Resource Content ID {ResourceContentId} and Resource Content Version ID {ResourceContentVersionId} during translation. Source HTML Validation errors: {HtmlValidationErrors}.",
+                        resourceContentId,
+                        resourceContentVersion.Id,
+                        sourceHtmlValidationErrors);
+                }
+
                 var translatedContentHtmlItem =
                     await _translationService.TranslateHtmlAsync(contentHtmlItem, destinationLanguage, translationPairs, ct);
+
+                // validate translated HTML and log if there are any issues
+                var translatedHtmlValidationErrors = HtmlUtilities.GetHtmlValidationErrors(contentHtmlItem);
+                if (translatedHtmlValidationErrors.Count > 0)
+                {
+                    _logger.LogError(
+                        "HTML validation errors found in translated content for Resource Content ID {ResourceContentId} and Resource Content Version ID {ResourceContentVersionId} during translation. Source HTML also had errors: {IsSourceInvalid}. Translated HTML validation errors: {HtmlValidationErrors}.",
+                        resourceContentId,
+                        resourceContentVersion.Id,
+                        sourceHtmlValidationErrors.Count > 0,
+                        translatedHtmlValidationErrors);
+                }
 
                 // each step gets its own machine translation record
                 _dbContext.ResourceContentVersionMachineTranslations.Add(new ResourceContentVersionMachineTranslationEntity
