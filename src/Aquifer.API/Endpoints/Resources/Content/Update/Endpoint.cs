@@ -89,14 +89,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             return currentVersion.Content != requestContentString;
         }
 
-        var currentHtml = TiptapConverter.ConvertJsonToHtmlItems(currentVersion.Content);
-        var newHtml = TiptapConverter.ConvertJsonToHtmlItems(requestContentString);
+        var currentHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(currentVersion.Content);
+        var newHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(requestContentString);
 
-        if (currentHtml is IEnumerable<string> currentHtmlStrings && newHtml is IEnumerable<string> newHtmlStrings)
-        {
-            return !currentHtmlStrings.SequenceEqual(newHtmlStrings);
-        }
-
-        return currentHtml != newHtml;
+        return !currentHtmlItems.SequenceEqual(newHtmlItems);
     }
 }
