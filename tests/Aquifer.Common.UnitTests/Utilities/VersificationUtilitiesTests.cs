@@ -17,9 +17,7 @@ public class VersificationUtilitiesTests
         "Mapped verse from and To Bibles should be the same when both Bibles that are not found in versification")]
     public async Task GetVersificationStartAndEnd(int fromBible, int toBible, int verse, int expected, string because)
     {
-
         var result = await VersificationUtilities.GetVersificationAsync(verse,
-
             fromBible, toBible, new MockCachingVersificationService(), CancellationToken.None);
 
         result.Should().Be(expected, because);
