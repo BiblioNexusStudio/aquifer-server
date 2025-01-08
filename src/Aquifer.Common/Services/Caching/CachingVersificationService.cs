@@ -7,16 +7,11 @@ namespace Aquifer.Common.Services.Caching;
 
 public interface ICachingVersificationService
 {
-    Task<ReadOnlyDictionary<int, int>>
-        GetBaseVerseIdByBibleVerseIdMapAsync(
-        int bibleId, CancellationToken cancellationToken);
+    Task<ReadOnlyDictionary<int, int>> GetBaseVerseIdByBibleVerseIdMapAsync(int bibleId, CancellationToken cancellationToken);
 
-    Task<ReadOnlyDictionary<int, int>>
-        GetBibleVerseIdByBaseVerseIdMapAsync(
-            int bibleId, CancellationToken cancellationToken);
+    Task<ReadOnlyDictionary<int, int>> GetBibleVerseIdByBaseVerseIdMapAsync(int bibleId, CancellationToken cancellationToken);
 
-    Task<ReadOnlySet<int>>
-        GetExclusionsByBibleIdAsync(int bibleId, CancellationToken cancellationToken);
+    Task<ReadOnlySet<int>> GetExclusionsByBibleIdAsync(int bibleId, CancellationToken cancellationToken);
 }
 
 public class CachingVersificationService(AquiferDbContext _dbContext, IMemoryCache _memoryCache) : ICachingVersificationService
