@@ -7,12 +7,12 @@ namespace Aquifer.Common.Services;
 
 public interface IBibleTextService
 {
-    Task<List<BibleText>> GetBibleTextsForBibleIdAsync(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct);
+    Task<List<BibleTextChapter>> GetBibleTextsForBibleIdAsync(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct);
 }
 
 public sealed class BibleTextService(AquiferDbContext dbContext, ICachingVersificationService versificationService) : IBibleTextService
 {
-    public async Task<List<BibleText>> GetBibleTextsForBibleIdAsync(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct)
+    public async Task<List<BibleTextChapter>> GetBibleTextsForBibleIdAsync(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct)
     {
         const int fromBibleId = 1;
         var skipMapping = toBibleId == fromBibleId;
@@ -34,12 +34,12 @@ public sealed class BibleTextService(AquiferDbContext dbContext, ICachingVersifi
                          (bt.ChapterNumber != endChapter || bt.VerseNumber <= endVerse))
             .OrderBy(bt => bt.ChapterNumber)
             .GroupBy(bt => bt.ChapterNumber)
-            .Select(bt => new BibleText
+            .Select(bt => new BibleTextChapter
             {
                 ChapterNumber = bt.Key,
                 Verses = bt
                     .OrderBy(bti => bti.VerseNumber)
-                    .Select(bti => new Verse
+                    .Select(bti => new BibleTextVerse
                     {
                         VerseNumber = bti.VerseNumber,
                         Text = bti.Text
@@ -49,13 +49,13 @@ public sealed class BibleTextService(AquiferDbContext dbContext, ICachingVersifi
     }
 }
 
-public class BibleText
+public class BibleTextChapter
 {
     public int ChapterNumber { get; set; }
-    public required IEnumerable<Verse> Verses { get; set; }
+    public required IEnumerable<BibleTextVerse> Verses { get; set; }
 }
 
-public class Verse
+public class BibleTextVerse
 {
     public int VerseNumber { get; set; }
     public required string Text { get; set; }
