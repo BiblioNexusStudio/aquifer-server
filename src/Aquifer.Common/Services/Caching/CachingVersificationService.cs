@@ -96,8 +96,10 @@ public class CachingVersificationService(AquiferDbContext _dbContext, IMemoryCac
             {
                 cacheEntry.SlidingExpiration = s_cacheLifetime;
 
-                var exclusions = await _dbContext.VersificationExclusions.GroupBy(x => x.BibleId)
-                    .ToDictionaryAsync(x => x.Key,
+                var exclusions = await _dbContext.VersificationExclusions
+                    .GroupBy(x => x.BibleId)
+                    .ToDictionaryAsync(
+                        x => x.Key,
                         x => new ReadOnlySet<int>(x.Select(v => v.BibleVerseId).ToHashSet()), ct);
 
                 return exclusions.AsReadOnly();
