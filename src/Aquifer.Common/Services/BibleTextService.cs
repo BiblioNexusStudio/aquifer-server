@@ -16,8 +16,13 @@ public sealed class BibleTextService(AquiferDbContext dbContext, ICachingVersifi
     {
         var fromBibleId = 1;
         var skipMapping = toBibleId == fromBibleId;
-        var mappedStartVerseId = skipMapping ? startVerseId : await VersificationUtilities.GetVersificationAsync(startVerseId, fromBibleId, toBibleId, versificationService, ct);
-        var mappedEndVerseId = skipMapping ? endVerseId : await VersificationUtilities.GetVersificationAsync(endVerseId, fromBibleId, toBibleId, versificationService, ct);
+
+        var mappedStartVerseId = skipMapping
+            ? startVerseId
+            : await VersificationUtilities.GetVersificationAsync(startVerseId, fromBibleId, toBibleId, versificationService, ct);
+        var mappedEndVerseId = skipMapping
+            ? endVerseId
+            : await VersificationUtilities.GetVersificationAsync(endVerseId, fromBibleId, toBibleId, versificationService, ct);
 
         var (bookId, startChapter, startVerse) = BibleUtilities.TranslateVerseId(mappedStartVerseId);
         var (_, endChapter, endVerse) = BibleUtilities.TranslateVerseId(mappedEndVerseId);
