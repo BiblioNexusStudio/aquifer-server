@@ -81,8 +81,9 @@ public class CachingVersificationService(AquiferDbContext _dbContext, IMemoryCac
 
                 var baseVerseByBibleIdDictionaries = await GetBaseVerseIdByBibleVerseIdMapsAsync(ct);
 
-                var inverted = baseVerseByBibleIdDictionaries?.ToDictionary(x => x.Key, x
-                    => x.Value.ToDictionary(y => y.Value, y => y.Key).AsReadOnly());
+                var inverted = baseVerseByBibleIdDictionaries?.ToDictionary(
+                    x => x.Key,
+                    x => x.Value.ToDictionary(y => y.Value, y => y.Key).AsReadOnly());
 
                 return inverted?.AsReadOnly();
             });
