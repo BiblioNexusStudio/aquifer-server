@@ -14,8 +14,8 @@ public sealed class BibleTextService(AquiferDbContext dbContext, ICachingVersifi
 {
     public async Task<List<BibleText>> GetBibleTextsForBibleIdAsync(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct)
     {
-        const int fromBibleId = 1;
-        bool skipMapping = toBibleId == fromBibleId;
+        var fromBibleId = 1;
+        var skipMapping = toBibleId == fromBibleId;
         var mappedStartVerseId = skipMapping ? startVerseId : await VersificationUtilities.GetVersificationAsync(startVerseId, fromBibleId, toBibleId, versificationService, ct);
         var mappedEndVerseId = skipMapping ? endVerseId : await VersificationUtilities.GetVersificationAsync(endVerseId, fromBibleId, toBibleId, versificationService, ct);
 
