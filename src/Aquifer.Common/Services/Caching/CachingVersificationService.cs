@@ -61,10 +61,12 @@ public class CachingVersificationService(AquiferDbContext _dbContext, IMemoryCac
             {
                 cacheEntry.SlidingExpiration = s_cacheLifetime;
 
-                var versifications = await _dbContext.VersificationMappings.GroupBy(x => x.BibleId)
-                    .ToDictionaryAsync(x => x.Key,
-                        x => x.ToDictionary(g => g.BibleVerseId, g => g.BaseVerseId)
-                            .AsReadOnly(), ct);
+                var versifications = await _dbContext.VersificationMappings
+                    .GroupBy(x => x.BibleId)
+                    .ToDictionaryAsync(
+                        x => x.Key,
+                        x => x.ToDictionary(g => g.BibleVerseId, g
+                            => g.BaseVerseId).AsReadOnly(), ct);
 
                 return versifications.AsReadOnly();
             });
