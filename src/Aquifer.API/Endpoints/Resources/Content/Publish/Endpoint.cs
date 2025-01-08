@@ -15,8 +15,7 @@ public class Endpoint(
     IUserService userService, 
     ITranslationMessagePublisher translationMessagePublisher, 
     IResourceHistoryService historyService,
-    IResourceContentVersionSimilarityMessagePublisher resourceContentVersionSimilarityMessagePublisher,
-    ILogger<Endpoint> logger) : Endpoint<Request>
+    IResourceContentVersionSimilarityMessagePublisher resourceContentVersionSimilarityMessagePublisher) : Endpoint<Request>
 {
     public override void Configure()
     {
@@ -94,27 +93,12 @@ public class Endpoint(
 
                 await historyService.AddStatusHistoryAsync(mostRecentContentVersion, ResourceContentStatus.Complete, user.Id, ct);
             }
-            
-            var machineTranslation = await dbContext
-                .ResourceContentVersionMachineTranslations
-                .AsTracking()
-                .FirstOrDefaultAsync(x => x.Id == mostRecentContentVersion.Id, ct);
 
-            if (machineTranslation is not null)
-            {
-                similarityScoreMessages.Add(
-                    new ScoreResourceContentVersionSimilarityMessage(
-                        machineTranslation.Id,
-                        mostRecentContentVersion.Id,
-                        ResourceContentVersionSimilarityComparisonType.MachineTranslationToResourceContentVersion)
-                );
-            }
-            else
-            {
-                logger.LogInformation(
-                    "No machine translation found for published content version {mostRecentContentVersionId}. Skipping similarity scoring.",
-                    mostRecentContentVersion.Id);
-            }
+            similarityScoreMessages.Add(
+                new ScoreResourceContentVersionSimilarityMessage(
+                    ResourceContentVersionSimilarityComparisonType.MachineTranslationToResourceContentVersion,
+                    mostRecentContentVersion.Id)
+            );
         }
 
         await dbContext.SaveChangesAsync(ct);
