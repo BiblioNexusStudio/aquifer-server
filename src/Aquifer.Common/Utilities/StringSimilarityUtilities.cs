@@ -11,7 +11,7 @@ public static class StringSimilarityUtilities
         return 1 - ((double)distance / Math.Max(textA.Length, textB.Length));
     }
     
-    public static int LevenshteinDistance(string textA, string textB)
+    private static int LevenshteinDistance(string textA, string textB)
     {
         var aLength = textA.Length;
         var bLength = textB.Length;
@@ -44,7 +44,7 @@ public static class StringSimilarityUtilities
         return matrix[bLength];
     }
     
-    public static List<string> GetSubstrings(string text, int limit)
+    private static List<string> GetSubstrings(string text, int limit)
     {
         var result = new List<string>();
         
@@ -70,7 +70,7 @@ public static class StringSimilarityUtilities
         return result;
     }
 
-    public static int ComputeTotalStringDistance(List<string> listA, List<string> listB)
+    private static int ComputeTotalStringDistance(List<string> listA, List<string> listB)
     {
         var totalDistance = 0;
         List<string> longestList;
