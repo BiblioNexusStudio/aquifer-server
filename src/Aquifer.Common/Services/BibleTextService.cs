@@ -1,34 +1,22 @@
-using Aquifer.Common.Services.Caching;
-using Aquifer.Common.Utilities;
 using Aquifer.Data;
+using Aquifer.Data.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Common.Services;
 
 public interface IBibleTextService
 {
-    Task<List<BibleTextChapter>> GetBibleTextsForBibleIdAsync(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct);
+    Task<List<BibleTextChapter>> GetBibleTextsForBibleIdAsync(int toBibleId, int bookNumber, int startChapter, int endChapter,
+        int startVerse, int endVerse, CancellationToken ct);
 }
 
-public sealed class BibleTextService(AquiferDbContext dbContext, ICachingVersificationService versificationService) : IBibleTextService
+public sealed class BibleTextService(AquiferDbContext dbContext) : IBibleTextService
 {
-    public async Task<List<BibleTextChapter>> GetBibleTextsForBibleIdAsync(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct)
+    public async Task<List<BibleTextChapter>> GetBibleTextsForBibleIdAsync(int toBibleId, int bookNumber, int startChapter, int endChapter,
+        int startVerse, int endVerse, CancellationToken ct)
     {
-        const int fromBibleId = 1;
-        var skipMapping = toBibleId == fromBibleId;
-
-        var mappedStartVerseId = skipMapping
-            ? startVerseId
-            : await VersificationUtilities.GetVersificationAsync(startVerseId, fromBibleId, toBibleId, versificationService, ct);
-        var mappedEndVerseId = skipMapping
-            ? endVerseId
-            : await VersificationUtilities.GetVersificationAsync(endVerseId, fromBibleId, toBibleId, versificationService, ct);
-
-        var (startBookId, startChapter, startVerse) = BibleUtilities.TranslateVerseId(mappedStartVerseId);
-        var (endBookId, endChapter, endVerse) = BibleUtilities.TranslateVerseId(mappedEndVerseId);
-
         return await dbContext.BibleTexts
-            .Where(bt => bt.BibleId == toBibleId && bt.BookId == startBookId &&
+            .Where(bt => bt.BibleId == toBibleId && bt.BookId == (BookId)bookNumber &&
                          bt.ChapterNumber >= startChapter && bt.ChapterNumber <= endChapter &&
                          (bt.ChapterNumber != startChapter || bt.VerseNumber >= startVerse) &&
                          (bt.ChapterNumber != endChapter || bt.VerseNumber <= endVerse))
