@@ -32,6 +32,26 @@ public static partial class HtmlUtilities
     }
 
     /// <summary>
+    /// Returns a list of any HTML parsing errors.  If there are no errors then the list will be empty.
+    /// Example error:
+    /// <example>
+    /// <code>
+    /// TagNotOpened (1:912): Start tag &lt;span),&gt; was not found. Source: &lt;span), but this time, israel could keep the spoils with god's permission (v&gt;&lt;/span),&gt;
+    /// </code>
+    /// </example>
+    /// </summary>
+    /// <param name="html">The HTML to parse and validate.</param>
+    /// <returns>Any HTML validation errors.</returns>
+    public static IReadOnlyList<string> GetHtmlValidationErrors(string html)
+    {
+        HtmlDocument doc = new();
+        doc.LoadHtml(html);
+        return doc.ParseErrors
+            .Select(e => $"{e.Code} ({e.Line}:{e.LinePosition}): {e.Reason}. Source: {e.SourceText}")
+            .ToList();
+    }
+
+    /// <summary>
     ///     Note: Returned plain text will not necessarily be formatted in a friendly human-readable way.
     /// </summary>
     public static string GetPlainText(string html)
