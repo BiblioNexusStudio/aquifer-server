@@ -53,8 +53,7 @@ public class CachingVersificationService(AquiferDbContext _dbContext, IMemoryCac
         return exclusions;
     }
 
-    private async Task<ReadOnlyDictionary<int,
-            ReadOnlyDictionary<int, int>>?>
+    private async Task<ReadOnlyDictionary<int, ReadOnlyDictionary<int, int>>?>
         GetBaseVerseIdByBibleVerseIdMapsAsync(CancellationToken ct)
     {
         return await _memoryCache.GetOrCreateAsync(BaseVerseIdByBibleVerseIdMapsCacheKey,
