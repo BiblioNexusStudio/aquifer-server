@@ -27,43 +27,29 @@ public class VersificationUtilitiesTests
 public class MockCachingVersificationService : ICachingVersificationService
 {
     private static readonly Dictionary<int, Dictionary<int, int>>
-        baseVerseByBibleIdMappings = new()
+        BaseVerseByBibleIdMappings = new()
         {
             {
                 1, new Dictionary<int, int>
                 {
-                    {
-                         1001003001, 1001003002
-                    },
-                    {
-                        1001003002, 1001003003
-                    },
-                    {
-                        1001003003, 1001003004
-                    },
-                    {
-                        1001003004, 1001003005
-                    }
+                    [1001003001] = 1001003002,
+                    [1001003002] = 1001003003,
+                    [1001003003] = 1001003004,
+                    [1001003004] = 1001003005,
                 }
             },
             {
                 9, new Dictionary<int, int>
                 {
-                    {
-                        1001003003, 1001003002
-                    },
-                    {
-                        1001003004, 1001003003
-                    },
-                    {
-                        1001003005, 1001003004
-                    }
+                    [1001003003] = 1001003002,
+                    [1001003004] = 1001003003,
+                    [1001003005] = 1001003004
                 }
             }
         };
 
     private static readonly Dictionary<int, ReadOnlySet<int>>
-        exclusionMappings = new()
+        ExclusionMappings = new()
         {
             {
                 1, new ReadOnlySet<int>(
@@ -85,7 +71,7 @@ public class MockCachingVersificationService : ICachingVersificationService
     public Task<ReadOnlyDictionary<int, int>>
         GetBaseVerseIdByBibleVerseIdMapAsync(int bibleId, CancellationToken cancellationToken)
     {
-        return Task.FromResult(baseVerseByBibleIdMappings.GetValueOrDefault(bibleId)?.AsReadOnly() ??
+        return Task.FromResult(BaseVerseByBibleIdMappings.GetValueOrDefault(bibleId)?.AsReadOnly() ??
                                new Dictionary<int, int>().AsReadOnly());
     }
 
@@ -98,6 +84,6 @@ public class MockCachingVersificationService : ICachingVersificationService
 
     Task<ReadOnlySet<int>> ICachingVersificationService.GetExclusionsByBibleIdAsync(int bibleId, CancellationToken cancellationToken)
     {
-        return Task.FromResult(exclusionMappings.GetValueOrDefault(bibleId, new ReadOnlySet<int>(new HashSet<int>())));
+        return Task.FromResult(ExclusionMappings.GetValueOrDefault(bibleId, new ReadOnlySet<int>(new HashSet<int>())));
     }
 }
