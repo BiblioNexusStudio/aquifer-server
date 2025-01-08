@@ -100,8 +100,8 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                 
                 _logger.LogInformation(
                     "Scoring machine translation {CompareVersionId} vs snapshot version {BaseVersionId}...",
-                    message.CompareVersionId,
-                    message.BaseVersionId);
+                    similarityScoreEntity.ComparedVersionId,
+                    similarityScoreEntity.BaseVersionId);
 
                 break;
             case ResourceContentVersionSimilarityComparisonType.ResourceContentVersionToSnapshot:
@@ -117,8 +117,8 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                 
                 _logger.LogInformation(
                     "Scoring resource content version {BaseVersionId} vs snapshot version {CompareVersionId}...",
-                    message.BaseVersionId,
-                    message.CompareVersionId);
+                    similarityScoreEntity.BaseVersionId,
+                    similarityScoreEntity.ComparedVersionId);
 
                 break;
             case ResourceContentVersionSimilarityComparisonType.SnapshotToSnapshot:
@@ -134,8 +134,8 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                 
                 _logger.LogInformation(
                     "Scoring snapshot version {BaseVersionId} vs snapshot version {CompareVersionId}...",
-                    message.BaseVersionId,
-                    message.CompareVersionId);
+                    similarityScoreEntity.BaseVersionId,
+                    similarityScoreEntity.ComparedVersionId);
 
                 break;
             default:
@@ -168,6 +168,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                    .ResourceContentVersionMachineTranslations
                    .AsTracking()
                    .Where(x => x.ResourceContentVersionId == versionId)
+                   .OrderBy(x => x.Id)
                    .LastOrDefaultAsync(ct) 
                ?? throw new InvalidOperationException( $"No Machine translation for ResourceContentVersion with id {versionId} found");
     }
@@ -188,6 +189,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                        )
                        .Where(joined => joined.rcvs.Id == versionId)
                        .Select(x => x.rcvmt)
+                       .OrderBy(x => x.Id)  
                        .LastOrDefaultAsync(ct) 
                    ?? throw new InvalidOperationException(
                        $"No Machine translation for ResourceContentVersionSnapshot with id {versionId} found"
