@@ -14,7 +14,7 @@ public sealed class BibleTextService(AquiferDbContext dbContext, ICachingVersifi
 {
     public async Task<List<BibleText>> GetBibleTextsForBibleIdAsync(int toBibleId, int startVerseId, int endVerseId, CancellationToken ct)
     {
-        var fromBibleId = 1;
+        const int fromBibleId = 1;
         var skipMapping = toBibleId == fromBibleId;
 
         var mappedStartVerseId = skipMapping
@@ -24,11 +24,11 @@ public sealed class BibleTextService(AquiferDbContext dbContext, ICachingVersifi
             ? endVerseId
             : await VersificationUtilities.GetVersificationAsync(endVerseId, fromBibleId, toBibleId, versificationService, ct);
 
-        var (bookId, startChapter, startVerse) = BibleUtilities.TranslateVerseId(mappedStartVerseId);
-        var (_, endChapter, endVerse) = BibleUtilities.TranslateVerseId(mappedEndVerseId);
+        var (startBookId, startChapter, startVerse) = BibleUtilities.TranslateVerseId(mappedStartVerseId);
+        var (endBookId, endChapter, endVerse) = BibleUtilities.TranslateVerseId(mappedEndVerseId);
 
         return await dbContext.BibleTexts
-            .Where(bt => bt.BibleId == toBibleId && bt.BookId == bookId &&
+            .Where(bt => bt.BibleId == toBibleId && bt.BookId == startBookId &&
                          bt.ChapterNumber >= startChapter && bt.ChapterNumber <= endChapter &&
                          (bt.ChapterNumber != startChapter || bt.VerseNumber >= startVerse) &&
                          (bt.ChapterNumber != endChapter || bt.VerseNumber <= endVerse))
