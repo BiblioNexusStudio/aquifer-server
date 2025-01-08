@@ -71,7 +71,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         await SendNoContentAsync(ct);
     }
 
-    private bool ChangesMade(Request request, ResourceContentVersionEntity currentVersion)
+    private static bool ChangesMade(Request request, ResourceContentVersionEntity currentVersion)
     {
         if (request.DisplayName != currentVersion.DisplayName)
         {
@@ -89,14 +89,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             return currentVersion.Content != requestContentString;
         }
 
-        var currentHtml = TiptapConverter.ConvertJsonToHtmlItems(currentVersion.Content);
-        var newHtml = TiptapConverter.ConvertJsonToHtmlItems(requestContentString);
+        var currentHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(currentVersion.Content);
+        var newHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(requestContentString);
 
-        if (currentHtml is IEnumerable<string> currentHtmlStrings && newHtml is IEnumerable<string> newHtmlStrings)
-        {
-            return !currentHtmlStrings.SequenceEqual(newHtmlStrings);
-        }
-
-        return currentHtml != newHtml;
+        return !currentHtmlItems.SequenceEqual(newHtmlItems);
     }
 }
