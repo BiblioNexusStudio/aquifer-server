@@ -101,6 +101,11 @@ public static class BibleUtilities
         return value.ToString().PadLeft(3, '0');
     }
 
+    public static int GetVerseId(BookId bookId, int chapterNumber, int verseNumber)
+    {
+        return GetVerseId((int)bookId, chapterNumber, verseNumber);
+    }
+
     public static int GetVerseId(int bookNumber, int chapterNumber, int verseNumber)
     {
         return int.Parse($"1{PadVerseId(bookNumber)}{PadVerseId(chapterNumber)}{PadVerseId(verseNumber)}");
