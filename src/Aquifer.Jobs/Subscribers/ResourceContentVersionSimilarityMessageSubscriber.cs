@@ -30,15 +30,14 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
 
     private async Task ProcessAsync(QueueMessage queueMessage, ScoreResourceContentVersionSimilarityMessage message, CancellationToken ct)
     {
-        var similarityScoreEntity = await GenerateResourceContentVersionSimilarityScoreEntity(message, _dbContext, ct);
+        var similarityScoreEntity = await GenerateResourceContentVersionSimilarityScoreAsync(message, ct);
         
         await _dbContext.ResourceContentVersionSimilarityScores.AddAsync(similarityScoreEntity, ct);
         await _dbContext.SaveChangesAsync(ct);
     }
     
-    private async Task<ResourceContentVersionSimilarityScoreEntity> GenerateResourceContentVersionSimilarityScoreEntity(
+    private async Task<ResourceContentVersionSimilarityScoreEntity> GenerateResourceContentVersionSimilarityScoreAsync(
         ScoreResourceContentVersionSimilarityMessage message,
-        AquiferDbContext dbContext,
         CancellationToken ct)
     {
         ResourceContentVersionMachineTranslationEntity machineTranslationEntity;
@@ -54,24 +53,20 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
 
                 if (message.CompareVersionId is null)
                 {
-                    machineTranslationEntity = await GetMachineTranslationForResourceContentVersion(
-                        message.BaseVersionId,
-                        dbContext,
-                        ct);
-                    
+                    machineTranslationEntity = await GetMachineTranslationForResourceContentVersion(message.BaseVersionId, ct);
                     similarityScoreEntity.ComparedVersionId = machineTranslationEntity.Id;
                 }
                 else
                 {
-                    similarityScoreEntity.ComparedVersionId = (int)message.CompareVersionId;
-                    machineTranslationEntity = await GetMachineTranslationById(similarityScoreEntity.ComparedVersionId, dbContext, ct);
+                    similarityScoreEntity.ComparedVersionId = message.CompareVersionId.Value;
+                    machineTranslationEntity = await GetMachineTranslationById(similarityScoreEntity.ComparedVersionId, ct);
                 }
                 
                 compareVersionText = GetMachineTranslationVersionText(machineTranslationEntity.Content);
-                baseVersionText = await GetBaseVersionContentText(similarityScoreEntity.BaseVersionId, dbContext, ct);
+                baseVersionText = await GetBaseVersionContentText(similarityScoreEntity.BaseVersionId, ct);
 
                 _logger.LogInformation(
-                    "Scoring machine translation {CompareVersionId} vs published resource content version {BaseVersionId}...",
+                    "Scoring machine translation {MachineTranslationId} vs published resource content version {ResourceContentVersionId}...",
                     similarityScoreEntity.ComparedVersionId,
                     similarityScoreEntity.BaseVersionId);
                 
@@ -82,21 +77,17 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
 
                 if (message.CompareVersionId is null)
                 {
-                    machineTranslationEntity = await GetMachineTranslationForSnapshot(
-                        message.BaseVersionId,
-                        dbContext,
-                        ct);
-                    
+                    machineTranslationEntity = await GetMachineTranslationForSnapshot(message.BaseVersionId, ct);
                     similarityScoreEntity.ComparedVersionId = machineTranslationEntity.Id;
                 }
                 else
                 {
-                    similarityScoreEntity.ComparedVersionId = (int)message.CompareVersionId;
-                    machineTranslationEntity = await GetMachineTranslationById(similarityScoreEntity.ComparedVersionId, dbContext, ct);
+                    similarityScoreEntity.ComparedVersionId = message.CompareVersionId.Value;
+                    machineTranslationEntity = await GetMachineTranslationById(similarityScoreEntity.ComparedVersionId, ct);
                 }
 
                 compareVersionText = GetMachineTranslationVersionText(machineTranslationEntity.Content);
-                baseVersionText = await GetSnapshotVersionText(similarityScoreEntity.BaseVersionId, dbContext, ct);
+                baseVersionText = await GetSnapshotVersionText(similarityScoreEntity.BaseVersionId, ct);
                 
                 _logger.LogInformation(
                     "Scoring machine translation {CompareVersionId} vs snapshot version {BaseVersionId}...",
@@ -112,8 +103,8 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                                                           ?? throw new InvalidOperationException(
                                                               $"Snapshot version {message.BaseVersionId} not found.");
                 
-                baseVersionText = await GetBaseVersionContentText(similarityScoreEntity.BaseVersionId, dbContext, ct);
-                compareVersionText = await GetSnapshotVersionText(similarityScoreEntity.ComparedVersionId, dbContext, ct);
+                baseVersionText = await GetBaseVersionContentText(similarityScoreEntity.BaseVersionId, ct);
+                compareVersionText = await GetSnapshotVersionText(similarityScoreEntity.ComparedVersionId, ct);
                 
                 _logger.LogInformation(
                     "Scoring resource content version {BaseVersionId} vs snapshot version {CompareVersionId}...",
@@ -126,11 +117,13 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                 similarityScoreEntity.ComparedVersionType = ResourceContentVersionTypes.Snapshot;
 
                 similarityScoreEntity.ComparedVersionId = message.CompareVersionId 
-                                                          ?? throw new InvalidOperationException(
-                                                              $"Snapshot version {message.CompareVersionId} not found.");
+                                                            ?? throw new InvalidOperationException(
+                                                                $"{nameof(message.CompareVersionId)} (snapshot ID) is required for {nameof(
+                                                                    ResourceContentVersionSimilarityComparisonType.SnapshotToSnapshot
+                                                                    )} similarity scoring.");
                 
-                baseVersionText = await GetSnapshotVersionText(similarityScoreEntity.BaseVersionId, dbContext, ct);
-                compareVersionText = await GetSnapshotVersionText(similarityScoreEntity.ComparedVersionId, dbContext, ct);
+                baseVersionText = await GetSnapshotVersionText(similarityScoreEntity.BaseVersionId, ct);
+                compareVersionText = await GetSnapshotVersionText(similarityScoreEntity.ComparedVersionId, ct);
                 
                 _logger.LogInformation(
                     "Scoring snapshot version {BaseVersionId} vs snapshot version {CompareVersionId}...",
@@ -147,63 +140,45 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
         return similarityScoreEntity;
     }
     
-    private static async Task<ResourceContentVersionMachineTranslationEntity> GetMachineTranslationById(
+    private async Task<ResourceContentVersionMachineTranslationEntity> GetMachineTranslationById(
         int machineTranslationId,
-        AquiferDbContext dbContext,
         CancellationToken ct)
     {
-        return await dbContext
+        return await _dbContext
                 .ResourceContentVersionMachineTranslations
-                .AsTracking()
                 .FirstOrDefaultAsync(m => m.Id == machineTranslationId, ct)
             ?? throw new InvalidOperationException($"Machine translation with id {machineTranslationId} not found");
     }
     
-    private static async Task<ResourceContentVersionMachineTranslationEntity> GetMachineTranslationForResourceContentVersion(
-        int versionId, 
-        AquiferDbContext dbContext,
+    private async Task<ResourceContentVersionMachineTranslationEntity> GetMachineTranslationForResourceContentVersion(
+        int resourceContentVersionId, 
         CancellationToken ct)
     {
-        return await dbContext
+        return await _dbContext
                    .ResourceContentVersionMachineTranslations
-                   .AsTracking()
-                   .Where(x => x.ResourceContentVersionId == versionId)
+                   .Where(x => x.ResourceContentVersionId == resourceContentVersionId)
                    .OrderBy(x => x.Id)
                    .LastOrDefaultAsync(ct) 
-               ?? throw new InvalidOperationException( $"No Machine translation for ResourceContentVersion with id {versionId} found");
+               ?? throw new InvalidOperationException($"No Machine translation for ResourceContentVersion with id {resourceContentVersionId} found");
     }
     
-    private static async Task<ResourceContentVersionMachineTranslationEntity> GetMachineTranslationForSnapshot(
-        int versionId, 
-        AquiferDbContext dbContext,
+    private async Task<ResourceContentVersionMachineTranslationEntity> GetMachineTranslationForSnapshot(
+        int resourceContentVersionId, 
         CancellationToken ct)
     {
-        return await dbContext
+        return await _dbContext
                        .ResourceContentVersionMachineTranslations
-                       .AsTracking()
-                       .Join(
-                           dbContext.ResourceContentVersionSnapshots,
-                           rcvmt => rcvmt.ResourceContentVersionId,
-                           rcvs => rcvs.ResourceContentVersionId,
-                           (rcvmt, rcvs) => new {rcvmt, rcvs}
-                       )
-                       .Where(joined => joined.rcvs.Id == versionId)
-                       .Select(x => x.rcvmt)
+     
                        .OrderBy(x => x.Id)  
                        .LastOrDefaultAsync(ct) 
                    ?? throw new InvalidOperationException(
-                       $"No Machine translation for ResourceContentVersionSnapshot with id {versionId} found"
-                   );
+                       $"No Machine translation for ResourceContentVersionSnapshot with id {resourceContentVersionId} found");
     }
     
-    private static async Task<string> GetBaseVersionContentText(
-        int resourceContentVersionId,
-        AquiferDbContext dbContext,
-        CancellationToken ct)
+    private async Task<string> GetBaseVersionContentText(int resourceContentVersionId, CancellationToken ct)
     {
-        var resource = await dbContext
+        var resource = await _dbContext
                            .ResourceContentVersions
-                           .AsTracking()
                            .SingleOrDefaultAsync(x => x.Id == resourceContentVersionId, ct)
                        ?? throw new InvalidOperationException($"Content version with id {resourceContentVersionId} not found");
         
@@ -214,14 +189,10 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
         );
     }
 
-    private static async Task<string> GetSnapshotVersionText(
-        int snapshotVersionId,
-        AquiferDbContext dbContext,
-        CancellationToken ct)
+    private async Task<string> GetSnapshotVersionText(int snapshotVersionId, CancellationToken ct)
     {
-        var resource = await dbContext
+        var resource = await _dbContext
                    .ResourceContentVersionSnapshots
-                   .AsTracking()
                    .SingleOrDefaultAsync(x => x.Id == snapshotVersionId, ct)
                ?? throw new InvalidOperationException($"Snapshot version with id {snapshotVersionId} not found");
         
