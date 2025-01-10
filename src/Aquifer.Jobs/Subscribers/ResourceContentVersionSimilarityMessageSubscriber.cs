@@ -163,24 +163,17 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
     }
     
     private async Task<ResourceContentVersionMachineTranslationEntity> GetMachineTranslationForSnapshot(
-        int resourceContentVersionId, 
+        int resourceContentVersionSnapshotId, 
         CancellationToken ct)
     {
         return await _dbContext
                        .ResourceContentVersionMachineTranslations
-                       .AsTracking()
-                       .Join(
-                           _dbContext.ResourceContentVersionSnapshots,
-                           rcvmt => rcvmt.ResourceContentVersionId,
-                           rcvs => rcvs.ResourceContentVersionId,
-                           (rcvmt, rcvs) => new {rcvmt, rcvs}
-                       )
-                       .Where(joined => joined.rcvs.Id == resourceContentVersionId)
-                       .Select(x => x.rcvmt)
+                       .Where(x => x.ResourceContentVersion.ResourceContentVersionSnapshots
+                                .Any(s => s.Id == resourceContentVersionSnapshotId))
                        .OrderBy(x => x.Id)  
                        .LastOrDefaultAsync(ct)
                    ?? throw new InvalidOperationException(
-                       $"No Machine translation for ResourceContentVersionSnapshot with id {resourceContentVersionId} found");
+                       $"No Machine translation for ResourceContentVersionSnapshot with id {resourceContentVersionSnapshotId} found");
     }
     
     private async Task<string> GetBaseVersionContentText(int resourceContentVersionId, CancellationToken ct)
