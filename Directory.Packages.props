@@ -12,7 +12,7 @@
     <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.7.0" />
     <PackageVersion Include="Azure.Storage.Queues" Version="12.21.0" />
     <PackageVersion Include="Contrib.Grpc.Core.M1" Version="2.41.0" />
-    <PackageVersion Include="coverlet.collector" Version="6.0.2" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.3" />
     <PackageVersion Include="Dapper" Version="2.1.35" />
     <PackageVersion Include="FastEndpoints" Version="5.32.0" />
     <PackageVersion Include="FastEndpoints.ClientGen.Kiota" Version="5.32.0" />
@@ -50,7 +50,7 @@
     <PackageVersion Include="SendGrid" Version="9.29.3" />
     <PackageVersion Include="SendGrid.Extensions.DependencyInjection" Version="1.0.1" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.1.0" />
-    <PackageVersion Include="xunit" Version="2.9.2" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.1" />
   </ItemGroup>
 </Project>

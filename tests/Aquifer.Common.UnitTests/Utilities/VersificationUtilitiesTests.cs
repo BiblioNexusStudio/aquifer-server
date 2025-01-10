@@ -11,47 +11,47 @@ public sealed class VersificationUtilitiesTests
 
     [Theory]
     [InlineData(1, 0, false,
-        "Invalid source verse ID.")]
+        "the source verse ID is invalid")]
     [InlineData(1, int.MaxValue, false,
-        "Invalid source verse ID.")]
+        "the source verse ID is invalid")]
     [InlineData(1, 1001004002, false,
-        "Source Bible does not have the given verse due to exclusion.")]
+        "the source Bible does not have the given verse due to exclusion")]
     [InlineData(1, 1072001001, false,
-        "Source Bible does not have the given book.")]
+        "the source Bible does not have the given book")]
     [InlineData(1, 1001006001, false,
-        "Source Bible does not have the given chapter (greater than max chapter in book).")]
+        "the source Bible does not have the given chapter (greater than max chapter in book)")]
     [InlineData(1, 1001001032, false,
-        "Source Bible does not have the given verse (greater than max verse in chapter).")]
+        "the source Bible does not have the given verse (greater than max verse in chapter)")]
     [InlineData(99, 1001001001, false,
-        "Source Bible ID doesn't exist.")]
+        "the source Bible ID doesn't exist.")]
     [InlineData(1, 1001001001, true,
-        "Source Bible contains the given verse.")]
+        "the source Bible contains the given verse.")]
     public async Task IsValidVerseId_ValidArguments_Success(
         int bibleId,
         int verseId,
         bool expected,
         string because)
     {
-        (await VersificationUtilities.IsValidVerseIdAsync(
-                bibleId,
-                verseId,
-                _versificationService,
-                CancellationToken.None))
-            .Should()
-            .Be(expected, because);
+        var result = await VersificationUtilities.IsValidVerseIdAsync(
+            bibleId,
+            verseId,
+            _versificationService,
+            CancellationToken.None);
+
+        result.Should().Be(expected, because);
     }
 
     [Theory]
     [InlineData(1, 1001001001, 1001001001, new[] { 1001001001},
-        "A range of a single verse should return that verse.")]
+        "a range of a single verse should return that verse")]
     [InlineData(1, 1001001001, 1001001003, new[] { 1001001001, 1001001002, 1001001003 },
-        "A simple range within a single chapter should be correctly returned.")]
+        "a simple range within a single chapter should be correctly returned")]
     [InlineData(1, 1002001002, 1002001004, new[] { 1002001002, 1002001004 },
-        "A range should not include excluded verse IDs for the given Bible.")]
+        "a range should not include excluded verse IDs for the given Bible")]
     [InlineData(1, 1001001030, 1001002001, new[] { 1001001030, 1001001031, 1001002001 },
-        "A range spanning two chapters should be correctly returned.")]
+        "a range spanning two chapters should be correctly returned")]
     [InlineData(1, 1001005032, 1002001002, new[] { 1001005032, 1002001001, 1002001002 },
-        "A range spanning two books should be correctly returned.")]
+        "a range spanning two books should be correctly returned")]
     public async Task ExpandVerseIdRangeAsync_ValidArguments_Success(
         int bibleId,
         int startVerseId,
@@ -59,19 +59,19 @@ public sealed class VersificationUtilitiesTests
         IReadOnlyList<int> expectedVerseIds,
         string because)
     {
-        (await VersificationUtilities.ExpandVerseIdRangeAsync(
-                bibleId,
-                startVerseId,
-                endVerseId,
-                _versificationService,
-                CancellationToken.None))
-            .Should()
-            .Equal(expectedVerseIds, because);
+        var result = await VersificationUtilities.ExpandVerseIdRangeAsync(
+            bibleId,
+            startVerseId,
+            endVerseId,
+            _versificationService,
+            CancellationToken.None);
+
+        result.Should().Equal(expectedVerseIds, because);
     }
 
     [Theory]
     [InlineData(1, 1001003005, 1001003002,
-        "Start verse ID must be less than end verse ID.")]
+        "the start verse ID must be less than end verse ID")]
     public async Task ExpandVerseIdRange_InvalidArguments_ThrowsArgumentException(
         int bibleId,
         int startVerseId,
@@ -91,21 +91,21 @@ public sealed class VersificationUtilitiesTests
 
     [Theory]
     [InlineData(1, 1, 1001003001, 1001003001,
-        "The source and target Bibles are the same (with versification mappings) so the source and target verse IDs should be the same.")]
+        "the source and target Bibles are the same (with versification mappings) so the source and target verse IDs should be the same")]
     [InlineData(3, 3, 1001003001, 1001003001,
-        "The source and target Bibles are the same (without versification mappings) so the source and target verse IDs should be the same.")]
+        "the source and target Bibles are the same (without versification mappings) so the source and target verse IDs should be the same")]
     [InlineData(1, 2, 1001003001, 1001003003,
-        "Source verse ID from Bible 1 has a different versification in Bible 2.")]
+        "the source verse ID from Bible 1 has a different versification in Bible 2.")]
     [InlineData(1, 2, 1001002029, 1001002029,
-        "Verse ID does not have an explicit versification map for either source or target and so should map to itself.")]
+        "the verse ID does not have an explicit versification map for either source or target and so should map to itself")]
     [InlineData(1, 3, 1001002029, 1001002029,
-        "Target verse ID should match source verse ID because there is no explicit versification mapping for the source verse ID and the target Bible doesn't have a versification map.")]
+        "the target verse ID should match source verse ID because there is no explicit versification mapping for the source verse ID and the target Bible doesn't have a versification map")]
     [InlineData(1, 2, 1001003004, 1001003005,
-        "Target verse ID should match the mapped base verse ID if there is no versification from the target Bible to Base.")]
+        "the target verse ID should match the mapped base verse ID if there is no versification from the target Bible to Base")]
     [InlineData(3, 4, 1001003004, 1001003004,
-        "Neither Bible has a versification map so target verse ID should match source verse ID.")]
+        "neither Bible has a versification map so the target verse ID should match the source verse ID")]
     [InlineData(1, 2, 1001004003, null,
-        "Target Bible does not have the given verse so the conversion is not possible.")]
+        "the target Bible does not have the given verse so the conversion is not possible")]
     public async Task ConvertVersification_ValidArguments_Success(
         int sourceBibleId,
         int targetBibleId,
@@ -125,9 +125,9 @@ public sealed class VersificationUtilitiesTests
 
     [Theory]
     [InlineData(1, 1001002001, 1001002001, 2, new[] { 1001002001 },
-        "Single verse ID conversion should be successful.")]
+        "a single verse ID conversion should be successful")]
     [InlineData(1, 1001003001, 1001003005, 2, new [] { 1001003003, 1001003004, 1001003005, 1001003005, 1001003005 },
-        "Range conversion should be successful.")]
+        "a range conversion should be successful")]
     public async Task ConvertVersificationRange_ValidArguments_Success(
         int sourceBibleId,
         int sourceStartVerseId,
