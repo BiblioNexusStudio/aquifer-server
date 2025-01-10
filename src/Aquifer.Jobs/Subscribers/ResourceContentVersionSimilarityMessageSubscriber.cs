@@ -168,9 +168,17 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
     {
         return await _dbContext
                        .ResourceContentVersionMachineTranslations
-     
+                       .AsTracking()
+                       .Join(
+                           _dbContext.ResourceContentVersionSnapshots,
+                           rcvmt => rcvmt.ResourceContentVersionId,
+                           rcvs => rcvs.ResourceContentVersionId,
+                           (rcvmt, rcvs) => new {rcvmt, rcvs}
+                       )
+                       .Where(joined => joined.rcvs.Id == resourceContentVersionId)
+                       .Select(x => x.rcvmt)
                        .OrderBy(x => x.Id)  
-                       .LastOrDefaultAsync(ct) 
+                       .LastOrDefaultAsync(ct)
                    ?? throw new InvalidOperationException(
                        $"No Machine translation for ResourceContentVersionSnapshot with id {resourceContentVersionId} found");
     }
