@@ -90,7 +90,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                 baseVersionText = await GetSnapshotVersionText(similarityScoreEntity.BaseVersionId, ct);
                 
                 _logger.LogInformation(
-                    "Scoring machine translation {CompareVersionId} vs snapshot version {BaseVersionId}...",
+                    "Scoring machine translation {MachineTranslationId} vs snapshot version {SnapShotVersionId}...",
                     similarityScoreEntity.ComparedVersionId,
                     similarityScoreEntity.BaseVersionId);
 
@@ -107,7 +107,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                 compareVersionText = await GetSnapshotVersionText(similarityScoreEntity.ComparedVersionId, ct);
                 
                 _logger.LogInformation(
-                    "Scoring resource content version {BaseVersionId} vs snapshot version {CompareVersionId}...",
+                    "Scoring resource content version {ResourceContentVersionId} vs snapshot version {SnapShotVersionId}...",
                     similarityScoreEntity.BaseVersionId,
                     similarityScoreEntity.ComparedVersionId);
 
@@ -126,7 +126,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                 compareVersionText = await GetSnapshotVersionText(similarityScoreEntity.ComparedVersionId, ct);
                 
                 _logger.LogInformation(
-                    "Scoring snapshot version {BaseVersionId} vs snapshot version {CompareVersionId}...",
+                    "Scoring snapshot version {BaseSnapShotVersionId} vs snapshot version {ComparedSnapShotVersionId}...",
                     similarityScoreEntity.BaseVersionId,
                     similarityScoreEntity.ComparedVersionId);
 
