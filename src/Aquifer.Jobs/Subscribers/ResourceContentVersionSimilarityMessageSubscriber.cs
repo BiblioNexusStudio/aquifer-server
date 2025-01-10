@@ -146,7 +146,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
     {
         return await _dbContext
                 .ResourceContentVersionMachineTranslations
-                .FirstOrDefaultAsync(m => m.Id == machineTranslationId, ct)
+                .SingleOrDefaultAsync(m => m.Id == machineTranslationId, ct)
             ?? throw new InvalidOperationException($"Machine translation with id {machineTranslationId} not found");
     }
     
