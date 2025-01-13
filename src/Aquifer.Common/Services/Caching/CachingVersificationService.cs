@@ -72,7 +72,7 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
                             {
                                 bc.BookId,
                                 bc.Number,
-                                bc.VerseCount,
+                                bc.MaxVerseNumber,
                             })
                             .ToListAsync(cancellationToken))
                         .GroupBy(x => x.BookId)
@@ -84,7 +84,7 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
                                 MaxVerseNumberByChapterNumberMap: grp
                                     .ToDictionary(
                                         x => x.Number,
-                                        x => x.VerseCount)
+                                        x => x.MaxVerseNumber)
                                     .AsReadOnly()
                             ))
                         .AsReadOnly();
