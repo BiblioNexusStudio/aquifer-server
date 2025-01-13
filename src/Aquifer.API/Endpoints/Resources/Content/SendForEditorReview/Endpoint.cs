@@ -40,7 +40,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ResourceStatusHelpers.ValidateAllowedToAssign<Request>(permissions,
                 draftVersion, user);
 
-            SetDraftVersionStatus(originalStatus, draftVersion);
+            SetDraftVersionStatus(originalStatus, draftVersion, request.SkipEditorStep);
 
             ResourceStatusHelpers.SetAssignedReviewerUserId(request.AssignedReviewerUserId, draftVersion);
 
@@ -54,15 +54,20 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
     private static void SetDraftVersionStatus(
         ResourceContentStatus originalStatus,
-        ResourceContentVersionEntity draftVersion)
+        ResourceContentVersionEntity draftVersion,
+        bool skipEditorStep)
     {
-        if (originalStatus == ResourceContentStatus.TranslationAiDraftComplete)
+        if(originalStatus == ResourceContentStatus.TranslationAiDraftComplete)
         {
-            draftVersion.ResourceContent.Status = ResourceContentStatus.TranslationEditorReview;
+            draftVersion.ResourceContent.Status = skipEditorStep
+                ? ResourceContentStatus.TranslationCompanyReview
+                : ResourceContentStatus.TranslationEditorReview;
         }
         else if (originalStatus is ResourceContentStatus.New or ResourceContentStatus.AquiferizeAiDraftComplete)
         {
-            draftVersion.ResourceContent.Status = ResourceContentStatus.AquiferizeEditorReview;
+            draftVersion.ResourceContent.Status = skipEditorStep
+                ? ResourceContentStatus.AquiferizeCompanyReview
+                : ResourceContentStatus.AquiferizeEditorReview;
         }
     }
 }
