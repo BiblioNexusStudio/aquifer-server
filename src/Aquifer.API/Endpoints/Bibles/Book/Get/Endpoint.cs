@@ -24,7 +24,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 AudioSize = bbc.AudioSize,
                 AudioUrls = bbc.AudioUrls != null ? JsonUtilities.DefaultDeserialize(bbc.AudioUrls) : null,
                 BookCode = BibleBookCodeUtilities.CodeFromId(bbc.BookId),
-                ChapterCount = bbc.Book.Chapters.Count,
+                ChapterCount = bbc.ChapterCount,
                 DisplayName = bbc.DisplayName,
                 TextSize = bbc.TextSize
             })

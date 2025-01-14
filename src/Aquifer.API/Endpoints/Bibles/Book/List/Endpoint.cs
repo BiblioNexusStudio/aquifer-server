@@ -23,7 +23,10 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                 Code = bbc.Book.Code,
                 Number = (int)bbc.BookId,
                 LocalizedName = bbc.DisplayName,
-                TotalChapters = bbc.Book.Chapters.Count,
+                TotalChapters = bbc.ChapterCount,
+
+                // TODO TotalVerses here should come from actual Bible data, not the standard BookChapters English versification data.
+                // After this usage of Book.Chapters is removed we should also delete that association altogether.
                 Chapters = bbc.Book.Chapters.OrderBy(c => c.Number).Select(c => new ResponseChapter
                 {
                     Number = c.Number,

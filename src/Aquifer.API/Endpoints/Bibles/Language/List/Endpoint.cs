@@ -27,15 +27,17 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                 Id = bible.Id,
                 LanguageId = bible.LanguageId,
                 RestrictedLicense = bible.RestrictedLicense,
-                Books = bible.BibleBookContents.OrderBy(book => book.BookId).Select(book =>
-                    new BibleBookMetadataResponse
+                Books = bible.BibleBookContents
+                    .OrderBy(bbc => bbc.BookId)
+                    .Select(bbc => new BibleBookMetadataResponse
                     {
-                        BookCode = BibleBookCodeUtilities.CodeFromId(book.BookId),
-                        DisplayName = book.DisplayName,
-                        TextSize = book.TextSize,
-                        AudioSize = book.AudioSize,
-                        ChapterCount = book.Book.Chapters.Count
+                        BookCode = BibleBookCodeUtilities.CodeFromId(bbc.BookId),
+                        DisplayName = bbc.DisplayName,
+                        TextSize = bbc.TextSize,
+                        AudioSize = bbc.AudioSize,
+                        ChapterCount = bbc.ChapterCount,
                     })
+                    .ToList(),
             }).ToListAsync(ct);
 
         await SendOkAsync(bibles, ct);
