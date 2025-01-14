@@ -1,0 +1,3 @@
+<Project>
+    <!-- Override the default Directory.Build.props with nothing because this project uses the JavaScript SDK. -->
+</Project>
