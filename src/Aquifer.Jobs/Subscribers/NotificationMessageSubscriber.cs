@@ -20,14 +20,16 @@ public sealed class NotificationMessageSubscriber(
     IEmailMessagePublisher _emailMessagePublisher,
     ILogger<NotificationMessageSubscriber> _logger)
 {
-    [Function(nameof(SendProjectStartedNotificationMessageSubscriber))]
-    public async Task SendProjectStartedNotificationMessageSubscriber(
+    private const string SendProjectStartedNotificationMessageSubscriberFunctionName = "SendProjectStartedNotificationMessageSubscriber";
+
+    [Function(SendProjectStartedNotificationMessageSubscriberFunctionName)]
+    public async Task SendProjectStartedNotificationAsync(
         [QueueTrigger(Queues.SendProjectStartedNotification)] QueueMessage queueMessage,
         CancellationToken ct)
     {
         await queueMessage.ProcessAsync<SendProjectStartedNotificationMessage, NotificationMessageSubscriber>(
             _logger,
-            nameof(SendProjectStartedNotificationMessageSubscriber),
+            SendProjectStartedNotificationMessageSubscriberFunctionName,
             ProcessAsync,
             ct);
     }
@@ -75,14 +77,17 @@ public sealed class NotificationMessageSubscriber(
         }
     }
 
-    [Function(nameof(SendResourceCommentCreatedNotificationMessageSubscriber))]
-    public async Task SendResourceCommentCreatedNotificationMessageSubscriber(
+    private const string SendResourceCommentCreatedNotificationMessageSubscriberFunctionName =
+        "SendResourceCommentCreatedNotificationMessageSubscriber";
+
+    [Function(SendResourceCommentCreatedNotificationMessageSubscriberFunctionName)]
+    public async Task SendResourceCommentCreatedNotificationAsync(
         [QueueTrigger(Queues.SendResourceCommentCreatedNotification)] QueueMessage queueMessage,
         CancellationToken ct)
     {
         await queueMessage.ProcessAsync<SendResourceCommentCreatedNotificationMessage, NotificationMessageSubscriber>(
             _logger,
-            nameof(SendResourceCommentCreatedNotificationMessageSubscriber),
+            SendResourceCommentCreatedNotificationMessageSubscriberFunctionName,
             ProcessAsync,
             ct);
     }

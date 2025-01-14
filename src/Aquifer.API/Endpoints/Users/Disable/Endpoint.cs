@@ -50,27 +50,27 @@ public class Endpoint(
 
     private async Task BlockAuth0UserAsync(UserEntity userToDisable, string token, CancellationToken ct)
     {
-        var blockUserResponse = await auth0HttpClient.BlockUser(userToDisable.ProviderId, token, ct);
+        var blockUserResponse = await auth0HttpClient.BlockUserAsync(userToDisable.ProviderId, token, ct);
         var blockUserResponseContent = await blockUserResponse.Content.ReadAsStringAsync(ct);
         if (!blockUserResponse.IsSuccessStatusCode)
         {
-            HandleErrorAsync(blockUserResponse, blockUserResponseContent, "Error blocking user on Auth0");
+            HandleError(blockUserResponse, blockUserResponseContent, "Error blocking user on Auth0");
         }
     }
 
     private async Task<string> GetAuth0TokenAsync(CancellationToken ct)
     {
-        var authTokenResponse = await auth0HttpClient.GetAuth0Token(ct);
+        var authTokenResponse = await auth0HttpClient.GetAuth0TokenAsync(ct);
         var authTokenResponseContent = await authTokenResponse.Content.ReadAsStringAsync(ct);
         if (!authTokenResponse.IsSuccessStatusCode)
         {
-            HandleErrorAsync(authTokenResponse, authTokenResponseContent, "Error getting Auth0 access token");
+            HandleError(authTokenResponse, authTokenResponseContent, "Error getting Auth0 access token");
         }
 
         return JsonUtilities.DefaultDeserialize<Auth0TokenResponse>(authTokenResponseContent).AccessToken;
     }
 
-    private void HandleErrorAsync(HttpResponseMessage responseMessage, string responseMessageContent, string error)
+    private void HandleError(HttpResponseMessage responseMessage, string responseMessageContent, string error)
     {
         logger.LogError("{error} - {statusCode} - {responseMessageContent}",
             error,

@@ -69,9 +69,12 @@ public sealed partial class OpenAiTranslationService : ITranslationService
     {
         _options = openAiTranslationOptions;
 
-        // TODO Inject a ChatClient instead of building one here. This will require changing how we fetch key vault secrets.
         const string openAiApiKeySecretName = "OpenAiApiKey";
+
+        // TODO Inject a ChatClient instead of building one here. This will require changing how we fetch key vault secrets.
+#pragma warning disable VSTHRD002
         var openApiKey = keyVaultClient.GetSecretAsync(openAiApiKeySecretName).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
 
         _chatClient = new ChatClient(
             openAiOptions.Model,
@@ -151,7 +154,7 @@ public sealed partial class OpenAiTranslationService : ITranslationService
 
             foreach (var paragraphTranslationTask in paragraphTranslationTasks)
             {
-                translatedHtml.Append(paragraphTranslationTask.Result);
+                translatedHtml.Append(await paragraphTranslationTask);
             }
         }
 

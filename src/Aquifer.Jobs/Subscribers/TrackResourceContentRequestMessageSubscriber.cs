@@ -16,14 +16,16 @@ public class TrackResourceContentRequestMessageSubscriber(
     AquiferDbContext dbContext,
     IIpAddressLookupHttpClient ipAddressClient)
 {
-    [Function(nameof(TrackResourceContentRequestMessageSubscriber))]
-    public async Task Run(
+    private const string TrackResourceContentRequestMessageSubscriberFunctionName = "TrackResourceContentRequestMessageSubscriber";
+
+    [Function(TrackResourceContentRequestMessageSubscriberFunctionName)]
+    public async Task RunAsync(
         [QueueTrigger(Queues.TrackResourceContentRequest)] QueueMessage queueMessage,
         CancellationToken ct)
     {
         await queueMessage.ProcessAsync<TrackResourceContentRequestMessage, TrackResourceContentRequestMessageSubscriber>(
             logger,
-            nameof(TrackResourceContentRequestMessageSubscriber),
+            TrackResourceContentRequestMessageSubscriberFunctionName,
             ProcessAsync,
             ct);
     }

@@ -19,7 +19,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var newProject = await BuildProjectFromRequest(request, ct);
+        var newProject = await BuildProjectFromRequestAsync(request, ct);
 
         await dbContext.Projects.AddAsync(newProject, ct);
 
@@ -28,7 +28,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         await SendOkAsync(new Response { Id = newProject.Id }, ct);
     }
 
-    private async Task<ProjectEntity> BuildProjectFromRequest(Request request, CancellationToken ct)
+    private async Task<ProjectEntity> BuildProjectFromRequestAsync(Request request, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
 
@@ -68,9 +68,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ThrowError(r => r.Title, "A project with this title already exists.");
         }
 
-        var companyLeadUser = await MaybeGetCompanyLeadUser(projectPlatform, request, ct);
+        var companyLeadUser = await MaybeGetCompanyLeadUserAsync(projectPlatform, request, ct);
 
-        var resourceContents = await CreateOrFindResourceContentFromResourceIds(language.Id, request, user, ct);
+        var resourceContents = await CreateOrFindResourceContentFromResourceIdsAsync(language.Id, request, user, ct);
 
         var wordCount = await dbContext.ResourceContentVersions
             .AsTracking()
@@ -95,7 +95,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         };
     }
 
-    private async Task<UserEntity?> MaybeGetCompanyLeadUser(ProjectPlatformEntity projectPlatform, Request request, CancellationToken ct)
+    private async Task<UserEntity?> MaybeGetCompanyLeadUserAsync(ProjectPlatformEntity projectPlatform, Request request, CancellationToken ct)
     {
         if (projectPlatform?.Name == "Aquifer")
         {
@@ -118,20 +118,20 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         return null;
     }
 
-    private async Task<List<ResourceContentEntity>> CreateOrFindResourceContentFromResourceIds(int languageId,
+    private async Task<List<ResourceContentEntity>> CreateOrFindResourceContentFromResourceIdsAsync(int languageId,
         Request request,
         UserEntity user,
         CancellationToken ct)
     {
         if (languageId == Constants.EnglishLanguageId)
         {
-            return await CreateOrFindAquiferizationResourceContent(languageId, request, ct);
+            return await CreateOrFindAquiferizationResourceContentAsync(languageId, request, ct);
         }
 
-        return await CreateOrFindTranslationResourceContent(languageId, request, user, ct);
+        return await CreateOrFindTranslationResourceContentAsync(languageId, request, user, ct);
     }
 
-    private async Task<List<ResourceContentEntity>> CreateOrFindAquiferizationResourceContent(int languageId,
+    private async Task<List<ResourceContentEntity>> CreateOrFindAquiferizationResourceContentAsync(int languageId,
         Request request,
         CancellationToken ct)
     {
@@ -186,7 +186,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         return resourceContents;
     }
 
-    private async Task<List<ResourceContentEntity>> CreateOrFindTranslationResourceContent(int languageId,
+    private async Task<List<ResourceContentEntity>> CreateOrFindTranslationResourceContentAsync(int languageId,
         Request request,
         UserEntity user,
         CancellationToken ct)

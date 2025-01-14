@@ -8,7 +8,7 @@ namespace Aquifer.API.Modules.Resources.ResourceContentItem;
 
 public static class ResourceContentItemEndpoints
 {
-    public static async Task<Results<RedirectHttpResult, NotFound>> GetResourceThumbnailById(int contentId,
+    public static async Task<Results<RedirectHttpResult, NotFound>> GetResourceThumbnailByIdAsync(int contentId,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {

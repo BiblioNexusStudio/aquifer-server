@@ -20,12 +20,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var user = await userService.GetUserFromJwtAsync(ct);
         var permissions = ResourceStatusHelpers.GetAssignmentPermissions(userService);
 
-        await ResourceStatusHelpers.ValidateReviewerAndAssignedUser<Request>(request.AssignedUserId, request.AssignedReviewerUserId,
+        await ResourceStatusHelpers.ValidateReviewerAndAssignedUserAsync<Request>(request.AssignedUserId, request.AssignedReviewerUserId,
             dbContext, user, permissions, ct);
 
         var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
 
-        var draftVersions = await ResourceStatusHelpers.GetDraftVersions<Request>(contentIds,
+        var draftVersions = await ResourceStatusHelpers.GetDraftVersionsAsync<Request>(contentIds,
         [
             ResourceContentStatus.TranslationEditorReview, ResourceContentStatus.TranslationAiDraftComplete,
             ResourceContentStatus.New, ResourceContentStatus.AquiferizeAiDraftComplete,
@@ -44,7 +44,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
             ResourceStatusHelpers.SetAssignedReviewerUserId(request.AssignedReviewerUserId, draftVersion);
 
-            await ResourceStatusHelpers.SaveHistory(request.AssignedUserId, historyService, draftVersion, originalStatus, user, ct);
+            await ResourceStatusHelpers.SaveHistoryAsync(request.AssignedUserId, historyService, draftVersion, originalStatus, user, ct);
         }
 
         await dbContext.SaveChangesAsync(ct);

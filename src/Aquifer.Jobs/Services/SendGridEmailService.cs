@@ -42,7 +42,12 @@ public class SendGridEmailService : IEmailService
     public SendGridEmailService(IAzureKeyVaultClient keyVaultClient)
     {
         const string apiKeySecretName = "SendGridMarketingApiKey";
+
+        // TODO Inject a SendGridClient instead of building one here. This will require changing how we fetch key vault secrets.
+#pragma warning disable VSTHRD002
         var apiToken = keyVaultClient.GetSecretAsync(apiKeySecretName).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
+
         _sendGridClient = new SendGridClient(
             new SendGridClientOptions
             {

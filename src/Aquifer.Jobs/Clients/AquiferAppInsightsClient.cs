@@ -9,7 +9,7 @@ namespace Aquifer.Jobs.Clients;
 
 public interface IAquiferAppInsightsClient
 {
-    public Task<Response<IReadOnlyList<T>>> QueryAsyncSinceTimestamp<T>(string query, DateTime? timestamp, CancellationToken ct);
+    public Task<Response<IReadOnlyList<T>>> QueryAsyncSinceTimestampAsync<T>(string query, DateTime? timestamp, CancellationToken ct);
 }
 
 public class AquiferAppInsightsClient(IAzureClientService _azureClientService, IOptions<ConfigurationOptions> _options)
@@ -28,7 +28,7 @@ public class AquiferAppInsightsClient(IAzureClientService _azureClientService, I
 
     private readonly LogsQueryClient _logsClient = new(_azureClientService.GetCredential(), s_logsQueryClientOptions);
 
-    public async Task<Response<IReadOnlyList<T>>> QueryAsyncSinceTimestamp<T>(string query, DateTime? timestamp, CancellationToken ct)
+    public async Task<Response<IReadOnlyList<T>>> QueryAsyncSinceTimestampAsync<T>(string query, DateTime? timestamp, CancellationToken ct)
     {
         var appInsightsResourceId = new ResourceIdentifier(_options.Value.Analytics.AppInsightsResourceId);
         var endTime = DateTime.UtcNow;
