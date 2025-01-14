@@ -9,8 +9,9 @@ public sealed class VersificationUtilitiesTests(App _app) : TestBase<App>
 
     private const int _engVersificationSchemeBibleId = 0;
     private const int _bsbBibleId = 1;
+    private const int _ls1910BibleId = 6;
     private const int _rsbBibleId = 9;
-    private const int _gltBibleId = 9;
+    private const int _gltBibleId = 10;
 
     [Theory]
     [InlineData(_bsbBibleId, 1001001001, true,
@@ -73,10 +74,22 @@ public sealed class VersificationUtilitiesTests(App _app) : TestBase<App>
         "the source and target Bibles are the same (with versification mappings) so the source and target verse IDs should be the same")]
     [InlineData(_engVersificationSchemeBibleId, _bsbBibleId, 1041017021, null,
         "the target (BSB) does not have the given verse")]
-    [InlineData(_bsbBibleId, _rsbBibleId, 1001003002, 1001003003,
+    [InlineData(_bsbBibleId, _rsbBibleId, 1001003001, 1001003003,
         "the RSB has a different versification than the BSB for the given verse")]
-    [InlineData(_rsbBibleId, _bsbBibleId, 1001003003, 1001003002,
+    [InlineData(_rsbBibleId, _bsbBibleId, 1001003003, 1001003001,
         "the RSB has a different versification than the BSB for the given verse")]
+    [InlineData(_bsbBibleId, _rsbBibleId, 1016007067, 1016007068,
+        "the RSB has a different versification than the BSB for the given verse with an ignored optional base verse part")]
+    [InlineData(_rsbBibleId, _bsbBibleId, 1016007068, 1016007067,
+        "the RSB has a different versification than the BSB for the given verse with a non-matching base verse part")]
+    [InlineData(_engVersificationSchemeBibleId, _ls1910BibleId, 1004026001, 1004026001,
+        "the ENG and LS1910 have the same versification with matching base verse parts")]
+    [InlineData(_ls1910BibleId, _engVersificationSchemeBibleId, 1004026001, 1004026001,
+        "the ENG and LS1910 have the same versification with matching base verse parts")]
+    [InlineData(_bsbBibleId, _engVersificationSchemeBibleId, 1004026001, 1004026001,
+        "the ENG has a different versification than the BSB, the Bible verse part of 'b' is not loaded, and the base verse part of 'b' is ignored which results in mapping back to the same verse ID")]
+    [InlineData(_engVersificationSchemeBibleId, _bsbBibleId, 1004026001, 1004026001,
+        "the ENG has a different versification than the BSB and the base verse part of 'b' is ignored which results in mapping to the same verse ID")]
     public async Task ConvertVersification_ValidArguments_Success(
         int sourceBibleId,
         int targetBibleId,

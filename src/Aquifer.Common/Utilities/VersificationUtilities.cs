@@ -166,14 +166,16 @@ public static class VersificationUtilities
                 nameof(sourceVerseId));
         }
 
-        var baseVerseIdBySourceBibleVerseIdMap = await versificationService.GetBaseVerseIdByBibleVerseIdMapAsync(sourceBibleId, ct);
-        var targetBibleVerseIdByBaseVerseIdMap = await versificationService.GetBibleVerseIdByBaseVerseIdMapAsync(targetBibleId, ct);
+        var baseVerseIdWithOptionalPartBySourceBibleVerseIdMap =
+            await versificationService.GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(sourceBibleId, ct);
+        var targetBibleVerseIdByBaseVerseIdWithOptionalPartMap =
+            await versificationService.GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(targetBibleId, ct);
         var targetBibleExcludedVerseIds = await versificationService.GetExcludedVerseIdsAsync(targetBibleId, ct);
 
         return ConvertVersificationCore(
             sourceVerseId,
-            baseVerseIdBySourceBibleVerseIdMap,
-            targetBibleVerseIdByBaseVerseIdMap,
+            baseVerseIdWithOptionalPartBySourceBibleVerseIdMap,
+            targetBibleVerseIdByBaseVerseIdWithOptionalPartMap,
             targetBibleExcludedVerseIds);
     }
 
@@ -183,14 +185,32 @@ public static class VersificationUtilities
     /// <returns>The converted verse ID or <c>null</c> if conversion is not possible.</returns>
     private static int? ConvertVersificationCore(
         int sourceVerseId,
-        ReadOnlyDictionary<int, int> baseVerseIdBySourceBibleVerseIdMap,
-        ReadOnlyDictionary<int, int> targetBibleVerseIdByBaseVerseIdMap,
+        ReadOnlyDictionary<int, string> baseVerseIdWithOptionalPartBySourceBibleVerseIdMap,
+        ReadOnlyDictionary<string, int> targetBibleVerseIdByBaseVerseIdWithOptionalPartMap,
         ReadOnlySet<int> targetBibleExcludedVerseIds)
     {
         // The dictionary only contains mappings where the key is different from the value.
         // If the key verse ID is not present in the mapping (and is not in the exclusions list) then the value matches the key.
-        var baseVerseId = baseVerseIdBySourceBibleVerseIdMap.GetValueOrDefault(sourceVerseId, sourceVerseId);
-        var targetVerseId = targetBibleVerseIdByBaseVerseIdMap.GetValueOrDefault(baseVerseId, baseVerseId);
+        var baseVerseIdWithOptionalPart = baseVerseIdWithOptionalPartBySourceBibleVerseIdMap.GetValueOrDefault(sourceVerseId)
+            ?? sourceVerseId.ToString();
+
+        // Base Verse Data includes a Verse ID with an optional verse part at the end (such as 'a', 'b', etc.).
+        var baseVerseId = baseVerseIdWithOptionalPart[..10];
+
+        // Rules when a part is present on base verse ID:
+        // 1. Use the base verse ID with part if present in the target inverse mapping (the direct map).
+        // 2. If not found, then try to map using the base verse ID without a part (in case the target mapping doesn't use parts).
+        // 3. Default to the base verse ID without a part (no explicit mapping).
+        // Rules when a part is not present on base verse ID:
+        // 1. Use the base verse ID without a part if present in the target inverse mapping (the direct map).
+        // 2. If not found, then try to map using the base verse ID with part 'a' (in case the target mapping uses parts).
+        // 3. Default to the base verse ID without a part (no explicit mapping).
+        var targetVerseId = targetBibleVerseIdByBaseVerseIdWithOptionalPartMap.GetValueOrNull(baseVerseIdWithOptionalPart)
+               ?? targetBibleVerseIdByBaseVerseIdWithOptionalPartMap.GetValueOrNull(
+                   baseVerseIdWithOptionalPart.Length > 10
+                       ? baseVerseId
+                       : $"{baseVerseId}a")
+               ?? int.Parse(baseVerseId);
 
         return targetBibleExcludedVerseIds.Contains(targetVerseId)
             ? null
@@ -219,8 +239,10 @@ public static class VersificationUtilities
             versificationService,
             ct);
 
-        var baseVerseIdBySourceBibleVerseIdMap = await versificationService.GetBaseVerseIdByBibleVerseIdMapAsync(sourceBibleId, ct);
-        var targetBibleVerseIdByBaseVerseIdMap = await versificationService.GetBibleVerseIdByBaseVerseIdMapAsync(targetBibleId, ct);
+        var baseVerseIdWithOptionalPartBySourceBibleVerseIdMap =
+            await versificationService.GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(sourceBibleId, ct);
+        var targetBibleVerseIdByBaseVerseIdWithOptionalPartMap =
+            await versificationService.GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(targetBibleId, ct);
         var targetBibleExcludedVerseIds = await versificationService.GetExcludedVerseIdsAsync(targetBibleId, ct);
 
         return expandedSourceVerseIds
@@ -228,8 +250,8 @@ public static class VersificationUtilities
                 sourceVerseId => sourceVerseId,
                 sourceVerseId => ConvertVersificationCore(
                     sourceVerseId,
-                    baseVerseIdBySourceBibleVerseIdMap,
-                    targetBibleVerseIdByBaseVerseIdMap,
+                    baseVerseIdWithOptionalPartBySourceBibleVerseIdMap,
+                    targetBibleVerseIdByBaseVerseIdWithOptionalPartMap,
                     targetBibleExcludedVerseIds))
             .AsReadOnly();
     }
