@@ -5,12 +5,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Content Include="appsettings.json">
+        <None Update="appsettings.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="appsettings.Development.json">
+        </None>
+        <None Update="appsettings.Development.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
+        </None>
         <None Update="appsettings.example.json">
             <CopyToOutputDirectory>Never</CopyToOutputDirectory>
         </None>
