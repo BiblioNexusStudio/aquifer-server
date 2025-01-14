@@ -43,18 +43,20 @@ public sealed class TranslationMessageSubscriber(
     private static readonly TaskOptions s_durableFunctionTaskOptions =
         TaskOptions.FromRetryPolicy(new RetryPolicy(5, TimeSpan.FromSeconds(1)));
 
+    private const string TranslateResourceFunctionName = "TranslateResourceMessageSubscriber";
+
     /// <summary>
     ///     Translates a single resource content item.
     ///     Only used by individual resource translation flows. Not used by project translation.
     ///     All resource content items to translate must have a draft resource content version with English content
     ///     which will be overwritten by the translated content.
     /// </summary>
-    [Function(nameof(TranslateResourceMessageSubscriber))]
-    public async Task TranslateResourceMessageSubscriber([QueueTrigger(Queues.TranslateResource)] QueueMessage queueMessage,
+    [Function(TranslateResourceFunctionName)]
+    public async Task TranslateResourceAsync([QueueTrigger(Queues.TranslateResource)] QueueMessage queueMessage,
         CancellationToken ct)
     {
         await queueMessage.ProcessAsync<TranslateResourceMessage, TranslationMessageSubscriber>(_logger,
-            nameof(TranslateResourceMessageSubscriber),
+            TranslateResourceFunctionName,
             ProcessAsync,
             ct);
     }
@@ -64,7 +66,7 @@ public sealed class TranslationMessageSubscriber(
         if (!s_allowedTranslationOriginsForIndividualResourceContentTranslation.Contains(message.TranslationOrigin))
         {
             throw new InvalidOperationException(
-                $"Invalid {nameof(TranslationOrigin)} for the {nameof(TranslateResourceMessageSubscriber)} flow: \"{message.TranslationOrigin}\".");
+                $"Invalid {nameof(TranslationOrigin)} for the {TranslateResourceFunctionName} flow: \"{message.TranslationOrigin}\".");
         }
 
         await TranslateResourceCoreAsync(message.ResourceContentId,
@@ -73,6 +75,8 @@ public sealed class TranslationMessageSubscriber(
             message.TranslationOrigin,
             ct);
     }
+
+    private const string TranslateProjectResourcesFunctionName = "TranslateProjectResourcesMessageSubscriber";
 
     /// <summary>
     ///     Translates a project's resource content items and then takes a final action on the project itself.
@@ -84,13 +88,13 @@ public sealed class TranslationMessageSubscriber(
     ///     which requires using durable functions to maintain state.
     ///     (see https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-bindings#durableTaskClient-usage).
     /// </summary>
-    [Function(nameof(TranslateProjectResourcesMessageSubscriber))]
-    public async Task TranslateProjectResourcesMessageSubscriber([QueueTrigger(Queues.TranslateProjectResources)] QueueMessage queueMessage,
+    [Function(TranslateProjectResourcesFunctionName)]
+    public async Task TranslateProjectResourcesAsync([QueueTrigger(Queues.TranslateProjectResources)] QueueMessage queueMessage,
         [DurableClient] DurableTaskClient durableTaskClient,
         CancellationToken cancellationToken)
     {
         await queueMessage.ProcessAsync<TranslateProjectResourcesMessage, TranslationMessageSubscriber>(_logger,
-            nameof(TranslateProjectResourcesMessageSubscriber),
+            TranslateProjectResourcesFunctionName,
             (qm, m, ct) => ProcessAsync(qm, m, durableTaskClient, ct),
             cancellationToken);
     }
@@ -111,7 +115,8 @@ public sealed class TranslationMessageSubscriber(
 
         // Kick off the durable function orchestration.
         // If it fails it will put a message on the poison queue.
-        var orchestrationInstanceId = await durableTaskClient.ScheduleNewOrchestrationInstanceAsync(nameof(OrchestrateProjectResourcesTranslation),
+        var orchestrationInstanceId = await durableTaskClient.ScheduleNewOrchestrationInstanceAsync(
+            OrchestrateProjectResourcesTranslationFunctionName,
             new OrchestrateProjectResourcesTranslationDto(message.ProjectId,
                 message.StartedByUserId,
                 projectResourceContentIds,
@@ -120,24 +125,26 @@ public sealed class TranslationMessageSubscriber(
             ct);
 
         _logger.LogInformation("Kicked off {FunctionName} (Orchestration Instance ID: {OrchestrationInstanceId}) for Project ID {ProjectId}.",
-            nameof(OrchestrateProjectResourcesTranslation),
+            OrchestrateProjectResourcesTranslationFunctionName,
             orchestrationInstanceId,
             message.ProjectId);
     }
+
+    private const string OrchestrateProjectResourcesTranslationFunctionName = "OrchestrateProjectResourcesTranslation";
 
     /// <summary>
     ///     Durable orchestration function.
     ///     This function is single-threaded and thus should not do any DB operations or any substantial processing.
     ///     It should only orchestrate activities.
     /// </summary>
-    [Function(nameof(OrchestrateProjectResourcesTranslation))]
-    public async Task OrchestrateProjectResourcesTranslation([OrchestrationTrigger] TaskOrchestrationContext context,
+    [Function(OrchestrateProjectResourcesTranslationFunctionName)]
+    public async Task OrchestrateProjectResourcesTranslationAsync([OrchestrationTrigger] TaskOrchestrationContext context,
         OrchestrateProjectResourcesTranslationDto dto)
     {
         try
         {
             var translateResourceTasks = dto.ProjectResourceContentIds.Select(resourceContentId =>
-                    context.CallActivityAsync<int>(nameof(TranslateResourceActivity),
+                    context.CallActivityAsync<int>(TranslateResourceActivityFunctionName,
                         new TranslateResourceActivityDto(resourceContentId, dto.StartedByUserId, TranslationOrigin.Project),
                         s_durableFunctionTaskOptions))
                 .ToList();
@@ -146,7 +153,7 @@ public sealed class TranslationMessageSubscriber(
 
             var translatedResourceContentIds = translateResourceTasks.Select(trt => trt.Result).ToList();
 
-            await context.CallActivityAsync(nameof(UpdateProjectPostTranslationActivity),
+            await context.CallActivityAsync(UpdateProjectPostTranslationActivityFunctionName,
                 new UpdateProjectPostTranslationActivityDto(dto.ProjectId, dto.StartedByUserId, translatedResourceContentIds),
                 s_durableFunctionTaskOptions);
         }
@@ -178,11 +185,13 @@ public sealed class TranslationMessageSubscriber(
         }
     }
 
+    private const string TranslateResourceActivityFunctionName = "TranslateResourceActivity";
+
     /// <summary>
     /// Returns the ResourceContentId that was successfully translated (or gracefully skipped).
     /// </summary>
-    [Function(nameof(TranslateResourceActivity))]
-    public async Task<int> TranslateResourceActivity([ActivityTrigger] TranslateResourceActivityDto dto,
+    [Function(TranslateResourceActivityFunctionName)]
+    public async Task<int> TranslateResourceAsync([ActivityTrigger] TranslateResourceActivityDto dto,
         FunctionContext activityContext)
     {
         await TranslateResourceCoreAsync(dto.ResourceContentId,
@@ -194,8 +203,10 @@ public sealed class TranslationMessageSubscriber(
         return dto.ResourceContentId;
     }
 
-    [Function(nameof(UpdateProjectPostTranslationActivity))]
-    public async Task UpdateProjectPostTranslationActivity([ActivityTrigger] UpdateProjectPostTranslationActivityDto dto,
+    private const string UpdateProjectPostTranslationActivityFunctionName = "UpdateProjectPostTranslationActivity";
+
+    [Function(UpdateProjectPostTranslationActivityFunctionName)]
+    public async Task UpdateProjectPostTranslationAsync([ActivityTrigger] UpdateProjectPostTranslationActivityDto dto,
         FunctionContext activityContext)
     {
         _logger.LogInformation("Beginning post-translation project updates for Project ID {ProjectId}.", dto.ProjectId);
@@ -247,6 +258,8 @@ public sealed class TranslationMessageSubscriber(
             activityContext.CancellationToken);
     }
 
+    private const string TranslateLanguageResourcesMessageSubscriberFunctionName = "TranslateLanguageResourcesMessageSubscriber";
+
     /// <summary>
     ///     Translates all resources under a parent resource that have not yet been translated to a target language and do not yet
     ///     have a resource content item or resource content version for that language.
@@ -258,15 +271,15 @@ public sealed class TranslationMessageSubscriber(
     ///     which requires using durable functions to maintain state.
     ///     (see https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-bindings#durableTaskClient-usage).
     /// </summary>
-    [Function(nameof(TranslateLanguageResourcesMessageSubscriber))]
-    public async Task TranslateLanguageResourcesMessageSubscriber(
+    [Function(TranslateLanguageResourcesMessageSubscriberFunctionName)]
+    public async Task TranslateLanguageResourcesAsync(
         [QueueTrigger(Queues.TranslateLanguageResources)] QueueMessage queueMessage,
         [DurableClient] DurableTaskClient durableTaskClient,
         CancellationToken cancellationToken)
     {
         await queueMessage.ProcessAsync<TranslateLanguageResourcesMessage, TranslationMessageSubscriber>(
             _logger,
-            nameof(TranslateLanguageResourcesMessageSubscriber),
+            TranslateLanguageResourcesMessageSubscriberFunctionName,
             (qm, m, ct) => ProcessAsync(qm, m, durableTaskClient, ct),
             cancellationToken);
     }
@@ -308,7 +321,7 @@ public sealed class TranslationMessageSubscriber(
         // Kick off the durable function orchestration.
         // If it fails it will put a message on the poison queue.
         var orchestrationInstanceId = await durableTaskClient.ScheduleNewOrchestrationInstanceAsync(
-            nameof(OrchestrateLanguageResourcesTranslation),
+            OrchestrateLanguageResourcesTranslationFunctionName,
             new OrchestrateLanguageResourcesTranslationDto(
                 message.LanguageId,
                 message.ParentResourceId,
@@ -319,19 +332,21 @@ public sealed class TranslationMessageSubscriber(
             ct);
 
         _logger.LogInformation("Kicked off {FunctionName} (Orchestration Instance ID: {OrchestrationInstanceId}) for Language ID {LanguageId} and Parent Resource ID {ParentResourceId}.",
-            nameof(OrchestrateLanguageResourcesTranslation),
+            OrchestrateLanguageResourcesTranslationFunctionName,
             orchestrationInstanceId,
             message.LanguageId,
             message.ParentResourceId);
     }
+
+    private const string OrchestrateLanguageResourcesTranslationFunctionName = "OrchestrateLanguageResourcesTranslation";
 
     /// <summary>
     ///     Durable orchestration function.
     ///     This function is single-threaded and thus should not do any DB operations or any substantial processing.
     ///     It should only orchestrate activities.
     /// </summary>
-    [Function(nameof(OrchestrateLanguageResourcesTranslation))]
-    public async Task OrchestrateLanguageResourcesTranslation(
+    [Function(OrchestrateLanguageResourcesTranslationFunctionName)]
+    public async Task OrchestrateLanguageResourcesTranslationAsync(
         [OrchestrationTrigger] TaskOrchestrationContext context,
         OrchestrateLanguageResourcesTranslationDto dto)
     {
@@ -341,7 +356,7 @@ public sealed class TranslationMessageSubscriber(
                 .Select(async englishResourceContentVersionId =>
                 {
                     var resourceContentIdToTranslate = await context.CallActivityAsync<int?>(
-                        nameof(CreateLanguageResourceContentActivity),
+                        CreateLanguageResourceContentActivityFunctionName,
                         new CreateLanguageResourceContentActivityDto(
                             dto.LanguageId,
                             englishResourceContentVersionId,
@@ -351,7 +366,7 @@ public sealed class TranslationMessageSubscriber(
                     if (resourceContentIdToTranslate != null)
                     {
                         return await context.CallActivityAsync<int>(
-                            nameof(TranslateResourceActivity),
+                            TranslateResourceActivityFunctionName,
                             new TranslateResourceActivityDto(
                                 resourceContentIdToTranslate.Value,
                                 dto.StartedByUserId,
@@ -414,11 +429,13 @@ public sealed class TranslationMessageSubscriber(
         }
     }
 
+    private const string CreateLanguageResourceContentActivityFunctionName = "CreateLanguageResourceContentActivity";
+
     /// <summary>
     /// Returns the ResourceContentId to translate or <c>null</c> if there is no translation needed.
     /// </summary>
-    [Function(nameof(CreateLanguageResourceContentActivity))]
-    public async Task<int?> CreateLanguageResourceContentActivity(
+    [Function(CreateLanguageResourceContentActivityFunctionName)]
+    public async Task<int?> CreateLanguageResourceContentAsync(
         [ActivityTrigger] CreateLanguageResourceContentActivityDto dto,
         FunctionContext activityContext)
     {

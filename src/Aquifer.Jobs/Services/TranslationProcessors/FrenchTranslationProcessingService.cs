@@ -39,7 +39,7 @@ public sealed partial class FrenchTranslationProcessingService : ILanguageSpecif
             async text =>
             {
                 text = await SetNarrowNonBreakingSpacesAsync(text);
-                text = await SetCorrectBibleBookAbbreviation(text);
+                text = await SetCorrectBibleBookAbbreviationAsync(text);
 
                 return text;
             });
@@ -62,7 +62,7 @@ public sealed partial class FrenchTranslationProcessingService : ILanguageSpecif
         return Task.FromResult(text);
     }
 
-    private static Task<string> SetCorrectBibleBookAbbreviation(string text)
+    private static Task<string> SetCorrectBibleBookAbbreviationAsync(string text)
     {
         text = BibleBookRegex()
             .Replace(text,

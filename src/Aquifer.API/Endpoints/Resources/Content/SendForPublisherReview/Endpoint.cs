@@ -22,13 +22,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var contentIds = request.ContentId is not null ? [request.ContentId.Value] : request.ContentIds!;
-        var draftVersions = await GetDraftVersions(contentIds, ct);
+        var draftVersions = await GetDraftVersionsAsync(contentIds, ct);
 
         var user = await userService.GetUserFromJwtAsync(ct);
         var isPublisher = user.Role == UserRole.Publisher;
         foreach (var draftVersion in draftVersions)
         {
-            await ValidateAssignedUser(user, request.AssignedUserId, draftVersion, ct);
+            await ValidateAssignedUserAsync(user, request.AssignedUserId, draftVersion, ct);
 
             var newStatus = GetNewStatus(isPublisher, draftVersion.ResourceContent.Status);
 
@@ -38,7 +38,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 ct);
 
             draftVersion.ResourceContent.Status = newStatus;
-            await AssignUserToContent(newStatus, request.AssignedUserId, draftVersion, user, ct);
+            await AssignUserToContentAsync(newStatus, request.AssignedUserId, draftVersion, user, ct);
 
             if (newStatus != draftVersion.ResourceContent.Status)
             {
@@ -53,7 +53,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         Response.ChangedByPublisher = isPublisher;
     }
 
-    private async Task<List<ResourceContentVersionEntity>> GetDraftVersions(List<int> contentIds, CancellationToken ct)
+    private async Task<List<ResourceContentVersionEntity>> GetDraftVersionsAsync(List<int> contentIds, CancellationToken ct)
     {
         List<ResourceContentStatus> allowedStatuses =
         [
@@ -75,7 +75,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         return draftVersions;
     }
 
-    private async Task AssignUserToContent(ResourceContentStatus newStatus, int? assignedUserId, ResourceContentVersionEntity draftVersion,
+    private async Task AssignUserToContentAsync(ResourceContentStatus newStatus, int? assignedUserId, ResourceContentVersionEntity draftVersion,
         UserEntity user, CancellationToken ct)
     {
         // there shouldn't be an assigned user if it's going into review pending
@@ -98,7 +98,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
     }
 
-    private async Task ValidateAssignedUser(UserEntity user, int? assignedUserId, ResourceContentVersionEntity draftVersion,
+    private async Task ValidateAssignedUserAsync(UserEntity user, int? assignedUserId, ResourceContentVersionEntity draftVersion,
         CancellationToken ct)
     {
         if (user.Id != draftVersion.AssignedUserId && Constants.CompanyReviewStatuses.Contains(draftVersion.ResourceContent.Status))

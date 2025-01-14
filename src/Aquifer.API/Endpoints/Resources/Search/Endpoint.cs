@@ -17,12 +17,12 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var resources = await GetResources(request, ct);
+        var resources = await GetResourcesAsync(request, ct);
 
         await SendOkAsync(resources, ct);
     }
 
-    private async Task<List<Response>> GetResources(Request req, CancellationToken ct)
+    private async Task<List<Response>> GetResourcesAsync(Request req, CancellationToken ct)
     {
         var (startVerseId, endVerseId) = req.BookCode is null
             ? ((int?)null, (int?)null)

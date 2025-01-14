@@ -17,8 +17,15 @@ public class AquiferDbContext : DbContext
         // Note the issue here. I don't want to seal the class because there are situations where we want to put
         // a wrapper around it. https://www.jetbrains.com/help/resharper/VirtualMemberCallInConstructor.html
         // It's likely irrelevant anyway, because the events are additive.
+        // ReSharper disable once VirtualMemberCallInConstructor
         ChangeTracker.StateChanged += OnStateChange;
-        SavedChanges += async (s, e) => await OnSavedChanges(s, e);
+
+        // Using an async lambda for a void returning method could crash the process if there are any exceptions in this event.
+        // If a crash occurs then we should look into changing this based on https://stackoverflow.com/a/43187621.
+#pragma warning disable VSTHRD101
+        SavedChanges += async (s, e) => await OnSavedChangesAsync(s, e);
+#pragma warning restore VSTHRD101
+
         SavingChanges += OnSavingChanges;
     }
 
@@ -101,7 +108,7 @@ public class AquiferDbContext : DbContext
         UpdatedTimestampHandler.Handle(e.Entry);
     }
 
-    private async Task OnSavedChanges(object? sender, SavedChangesEventArgs e)
+    private async Task OnSavedChangesAsync(object? sender, SavedChangesEventArgs e)
     {
         var entries = ChangeTracker.Entries();
         await ResourceStatusChangeHandler.HandleAsync(_options, entries);

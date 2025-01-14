@@ -28,7 +28,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
             return;
         }
 
-        await ValidateRequest(project, request, ct);
+        await ValidateRequestAsync(project, request, ct);
         UpdateProject(request, project);
 
         await dbContext.SaveChangesAsync(ct);
@@ -68,7 +68,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
         }
     }
 
-    private async Task ValidateRequest(ProjectEntity project, Request request, CancellationToken ct)
+    private async Task ValidateRequestAsync(ProjectEntity project, Request request, CancellationToken ct)
     {
         if (project.Started is not null &&
             ((request.QuotedCost.HasValue && project.QuotedCost != request.QuotedCost) ||

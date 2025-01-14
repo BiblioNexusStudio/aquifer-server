@@ -24,24 +24,24 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var user = await userService.GetUserFromJwtAsync(ct);
         var permissions = ResourceStatusHelpers.GetAssignmentPermissions(userService);
 
-        await ResourceStatusHelpers.ValidateReviewerAndAssignedUser<Request>(request.AssignedUserId, null,
+        await ResourceStatusHelpers.ValidateReviewerAndAssignedUserAsync<Request>(request.AssignedUserId, null,
             dbContext, user, permissions, ct);
 
         var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
 
-        var draftVersions = await ResourceStatusHelpers.GetDraftVersions<Request>(contentIds,
+        var draftVersions = await ResourceStatusHelpers.GetDraftVersionsAsync<Request>(contentIds,
             [ResourceContentStatus.AquiferizeReviewPending, ResourceContentStatus.TranslationReviewPending], dbContext, ct);
 
         foreach (var draftVersion in draftVersions)
         {
             var originalStatus = draftVersion.ResourceContent.Status;
 
-            await ValidateAllowedToAssign(permissions,
+            await ValidateAllowedToAssignAsync(permissions,
                 draftVersion, user, ct);
 
             SetDraftVersionStatus(originalStatus, draftVersion);
 
-            await ResourceStatusHelpers.SaveHistory(request.AssignedUserId, historyService, draftVersion, originalStatus, user, ct);
+            await ResourceStatusHelpers.SaveHistoryAsync(request.AssignedUserId, historyService, draftVersion, originalStatus, user, ct);
         }
 
         await dbContext.SaveChangesAsync(ct);
@@ -49,7 +49,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         await SendNoContentAsync(ct);
     }
 
-    private async Task ValidateAllowedToAssign(ResourceStatusHelpers.AssignmentPermissions permissions,
+    private async Task ValidateAllowedToAssignAsync(ResourceStatusHelpers.AssignmentPermissions permissions,
         ResourceContentVersionEntity draftVersion,
         UserEntity user,
         CancellationToken ct)
@@ -58,7 +58,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var currentUserIsAssigned = draftVersion.AssignedUserId == user.Id;
         var isTakingBackFromReviewPending = permissions.HasSendReviewContentPermission && !currentUserIsAssigned &&
                                             Constants.ReviewPendingStatuses.Contains(originalStatus) &&
-                                            await WasLastAssignedToSelfOrIsCompanyLead(draftVersion, user.Id, ct);
+                                            await WasLastAssignedToSelfOrIsCompanyLeadAsync(draftVersion, user.Id, ct);
         if (!isTakingBackFromReviewPending)
         {
             ThrowError(
@@ -66,7 +66,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
     }
 
-    private async Task<bool> WasLastAssignedToSelfOrIsCompanyLead(ResourceContentVersionEntity version, int userId, CancellationToken ct)
+    private async Task<bool> WasLastAssignedToSelfOrIsCompanyLeadAsync(ResourceContentVersionEntity version, int userId, CancellationToken ct)
     {
         var wasLastAssignedToSelf = await dbContext.ResourceContentVersionAssignedUserHistory
             .AsTracking()

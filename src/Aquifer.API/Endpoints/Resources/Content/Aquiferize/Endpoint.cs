@@ -23,7 +23,7 @@ public class Endpoint(AquiferDbContext dbContext, ITranslationMessagePublisher t
         }
 
         var (mostRecentContentVersion, _, currentDraftVersion) =
-            await Helpers.GetResourceContentVersions(request.ContentId,
+            await Helpers.GetResourceContentVersionsAsync(request.ContentId,
                 dbContext,
                 ct);
 
@@ -37,7 +37,7 @@ public class Endpoint(AquiferDbContext dbContext, ITranslationMessagePublisher t
             ThrowError(Helpers.DraftAlreadyExistsResponse);
         }
 
-        await Helpers.CreateNewDraft(dbContext,
+        await Helpers.CreateNewDraftAsync(dbContext,
             translationMessagePublisher,
             request.ContentId,
             request.AssignedUserId,

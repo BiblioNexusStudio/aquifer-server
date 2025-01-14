@@ -18,7 +18,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var (mostRecentResourceContentVersion, currentlyPublishedVersion, currentDraftVersion) =
-            await Helpers.GetResourceContentVersions(request.ContentId,
+            await Helpers.GetResourceContentVersionsAsync(request.ContentId,
                 dbContext,
                 ct);
 

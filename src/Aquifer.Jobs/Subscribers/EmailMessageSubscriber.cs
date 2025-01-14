@@ -16,15 +16,17 @@ public sealed class EmailMessageSubscriber(
     IOptions<ConfigurationOptions> _configurationOptions,
     ILogger<EmailMessageSubscriber> _logger)
 {
-    [Function(nameof(SendEmailMessageSubscriber))]
-    public async Task SendEmailMessageSubscriber(
+    private const string SendEmailFunctionName = "SendEmailMessageSubscriber";
+
+    [Function(SendEmailFunctionName)]
+    public async Task SendEmailAsync(
         [QueueTrigger(Queues.SendEmail)]
         QueueMessage queueMessage,
         CancellationToken ct)
     {
         await queueMessage.ProcessAsync<SendEmailMessage, EmailMessageSubscriber>(
             _logger,
-            nameof(SendEmailMessageSubscriber),
+            SendEmailFunctionName,
             ProcessAsync,
             ct);
     }
@@ -38,15 +40,17 @@ public sealed class EmailMessageSubscriber(
         _logger.LogInformation("Email sent: {SendEmailMessage}", queueMessage.MessageText);
     }
 
-    [Function(nameof(SendTemplatedEmailMessageSubscriber))]
-    public async Task SendTemplatedEmailMessageSubscriber(
+    private const string SendTemplatedEmailFunctionName = "SendTemplatedEmailMessageSubscriber";
+
+    [Function(SendTemplatedEmailFunctionName)]
+    public async Task SendTemplatedEmailAsync(
         [QueueTrigger(Queues.SendTemplatedEmail)]
         QueueMessage queueMessage,
         CancellationToken ct)
     {
         await queueMessage.ProcessAsync<SendTemplatedEmailMessage, EmailMessageSubscriber>(
             _logger,
-            nameof(SendTemplatedEmailMessageSubscriber),
+            SendTemplatedEmailFunctionName,
             ProcessAsync,
             ct);
     }

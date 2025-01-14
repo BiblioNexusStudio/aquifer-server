@@ -29,7 +29,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, ITra
         foreach (var contentId in contentIds)
         {
             var (mostRecentContentVersion, currentlyPublishedVersion, currentDraftVersion) =
-                await Helpers.GetResourceContentVersions(contentId, dbContext, ct);
+                await Helpers.GetResourceContentVersionsAsync(contentId, dbContext, ct);
 
             if (mostRecentContentVersion is null)
             {
@@ -65,7 +65,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, ITra
             if (request.CreateDraft)
             {
                 // create draft of published version
-                await Helpers.CreateNewDraft(dbContext,
+                await Helpers.CreateNewDraftAsync(dbContext,
                     translationMessagePublisher,
                     contentId,
                     request.AssignedUserId,

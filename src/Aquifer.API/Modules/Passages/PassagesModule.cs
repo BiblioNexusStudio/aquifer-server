@@ -11,11 +11,11 @@ public class PassagesModule : IModule
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("passages").WithTags("Passages");
-        group.MapGet("language/{languageId:int}/resource/{parentResourceId:int}", GetPassagesByLanguageAndResource);
+        group.MapGet("language/{languageId:int}/resource/{parentResourceId:int}", GetPassagesByLanguageAndResourceAsync);
         return endpoints;
     }
 
-    private async Task<Results<Ok<List<PassagesByBookResponse>>, NotFound>> GetPassagesByLanguageAndResource(
+    private async Task<Results<Ok<List<PassagesByBookResponse>>, NotFound>> GetPassagesByLanguageAndResourceAsync(
         int languageId,
         int parentResourceId,
         AquiferDbContext dbContext,
