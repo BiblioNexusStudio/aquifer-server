@@ -30,7 +30,7 @@ var host = new HostBuilder()
     .ConfigureServices((context, services) =>
     {
         // This requires setting env var name AZURE_FUNCTIONS_ENVIRONMENT in Dev/QA and Prod
-        var isDevelopment = context.HostingEnvironment.EnvironmentName == "Development";
+        var isDevelopment = context.HostingEnvironment.EnvironmentName == Environments.Development;
 
         services.AddOptions<ConfigurationOptions>().Bind(context.Configuration);
         services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.OpenAi);

@@ -56,6 +56,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Jobs.UnitTests", "t
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.API.IntegrationTests", "tests\Aquifer.API.IntegrationTests\Aquifer.API.IntegrationTests.csproj", "{EFCB9F65-BC0A-4AB6-9A42-19A0BD15ED30}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Common.IntegrationTests", "tests\Aquifer.Common.IntegrationTests\Aquifer.Common.IntegrationTests.csproj", "{73F5F966-C27E-47AB-8B02-7A4B48C374EC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -124,6 +126,10 @@ Global
 		{EFCB9F65-BC0A-4AB6-9A42-19A0BD15ED30}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EFCB9F65-BC0A-4AB6-9A42-19A0BD15ED30}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EFCB9F65-BC0A-4AB6-9A42-19A0BD15ED30}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73F5F966-C27E-47AB-8B02-7A4B48C374EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73F5F966-C27E-47AB-8B02-7A4B48C374EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73F5F966-C27E-47AB-8B02-7A4B48C374EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73F5F966-C27E-47AB-8B02-7A4B48C374EC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -145,6 +151,7 @@ Global
 		{0CF81CD4-6257-4A36-BF67-C1C581E93951} = {51DD9DE3-DA20-4C0B-82D6-029445F6BD42}
 		{5205B15E-7521-40A7-8C66-19C231839E4F} = {51DD9DE3-DA20-4C0B-82D6-029445F6BD42}
 		{EFCB9F65-BC0A-4AB6-9A42-19A0BD15ED30} = {51DD9DE3-DA20-4C0B-82D6-029445F6BD42}
+		{73F5F966-C27E-47AB-8B02-7A4B48C374EC} = {51DD9DE3-DA20-4C0B-82D6-029445F6BD42}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8E32492B-EA66-40E4-A7A8-67E4ABA14A53}
