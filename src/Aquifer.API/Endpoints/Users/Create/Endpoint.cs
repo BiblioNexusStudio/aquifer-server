@@ -55,7 +55,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
 
     private async Task<string> GetAccessTokenAsync(CancellationToken ct)
     {
-        var response = await authProviderService.GetAuth0Token(ct);
+        var response = await authProviderService.GetAuth0TokenAsync(ct);
         var responseContent = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
         {
@@ -68,7 +68,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
 
     private async Task<string> GetRoleIdAsync(Request req, string accessToken, CancellationToken ct)
     {
-        var response = await authProviderService.GetUserRoles(accessToken, ct);
+        var response = await authProviderService.GetUserRolesAsync(accessToken, ct);
         var responseContent = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
         {
@@ -89,7 +89,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
 
     private async Task<string> CreateAuth0UserAsync(Request req, string accessToken, CancellationToken ct)
     {
-        var response = await authProviderService.CreateUser($"{req.FirstName} {req.LastName}", req.Email, accessToken, ct);
+        var response = await authProviderService.CreateUserAsync($"{req.FirstName} {req.LastName}", req.Email, accessToken, ct);
         var responseContent = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
         {
@@ -102,7 +102,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
 
     private async Task AssignAuth0RoleAsync(string accessToken, string userId, string roleId, CancellationToken ct)
     {
-        var response = await authProviderService.AssignUserToRole(roleId, userId, accessToken, ct);
+        var response = await authProviderService.AssignUserToRoleAsync(roleId, userId, accessToken, ct);
 
         var responseContent = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)
@@ -126,7 +126,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         // as part of creating their account, and then immediately send them the reset email
         // which will act as a creation / set password flow.
 
-        var response = await authProviderService.ResetPassword(email, accessToken, ct);
+        var response = await authProviderService.ResetPasswordAsync(email, accessToken, ct);
 
         var responseContent = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)

@@ -12,7 +12,7 @@ namespace Aquifer.API.Modules.Resources.LanguageResources;
 public static class LanguageResourcesEndpoints
 {
     public static async Task<Results<Ok<ResourceItemsByChapterResponse>, NotFound, BadRequest<string>>>
-        GetBookByLanguage(
+        GetBookByLanguageAsync(
             int languageId,
             string bookCode,
             AquiferDbContext dbContext,

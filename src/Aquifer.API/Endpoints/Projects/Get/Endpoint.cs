@@ -17,7 +17,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        if (!userService.HasPermission(PermissionName.ReadProject) && !await HasSameCompanyAsProject(req.ProjectId, ct))
+        if (!userService.HasPermission(PermissionName.ReadProject) && !await HasSameCompanyAsProjectAsync(req.ProjectId, ct))
         {
             await SendForbiddenAsync(ct);
             return;
@@ -30,7 +30,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             return;
         }
 
-        var items = await GetProjectItems(req.ProjectId, ct);
+        var items = await GetProjectItemsAsync(req.ProjectId, ct);
 
         project.Items = items.OrderBy(x => x.SortOrder).ThenBy(x => x.EnglishLabel);
         await SendOkAsync(project, ct);
@@ -83,13 +83,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         }).SingleOrDefaultAsync(ct);
     }
 
-    private async Task<bool> HasSameCompanyAsProject(int projectId, CancellationToken ct)
+    private async Task<bool> HasSameCompanyAsProjectAsync(int projectId, CancellationToken ct)
     {
         var self = await userService.GetUserWithCompanyFromJwtAsync(ct);
         return dbContext.Projects.Any(x => x.Id == projectId && self.CompanyId == x.CompanyId);
     }
 
-    private async Task<List<ProjectResourceItem>> GetProjectItems(int projectId, CancellationToken ct)
+    private async Task<List<ProjectResourceItem>> GetProjectItemsAsync(int projectId, CancellationToken ct)
     {
         const string query = """
                              SELECT

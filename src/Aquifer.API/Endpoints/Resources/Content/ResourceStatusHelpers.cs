@@ -10,8 +10,7 @@ namespace Aquifer.API.Endpoints.Resources.Content;
 
 public static class ResourceStatusHelpers
 {
-
-    public static async Task SaveHistory(int assignedUserId, IResourceHistoryService historyService,
+    public static async Task SaveHistoryAsync(int assignedUserId, IResourceHistoryService historyService,
         ResourceContentVersionEntity draftVersion, ResourceContentStatus originalStatus,
         UserEntity user, CancellationToken ct)
     {
@@ -57,7 +56,7 @@ public static class ResourceStatusHelpers
         }
     }
 
-    public static async Task<List<ResourceContentVersionEntity>> GetDraftVersions<TRequest>(int[] contentIds,
+    public static async Task<List<ResourceContentVersionEntity>> GetDraftVersionsAsync<TRequest>(int[] contentIds,
         List<ResourceContentStatus> allowedStatuses, AquiferDbContext dbContext,
         CancellationToken ct)
     {
@@ -76,7 +75,7 @@ public static class ResourceStatusHelpers
         return draftVersions;
     }
 
-    public static async Task ValidateReviewerAndAssignedUser<TRequest>(int assignedUserId, int? assignedReviewerUserId,
+    public static async Task ValidateReviewerAndAssignedUserAsync<TRequest>(int assignedUserId, int? assignedReviewerUserId,
         AquiferDbContext dbContext, UserEntity user, AssignmentPermissions permissions,
         CancellationToken ct,
         UserEntity? userToAssign = null)

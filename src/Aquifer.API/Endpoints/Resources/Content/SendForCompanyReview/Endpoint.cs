@@ -61,7 +61,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 : ResourceContentStatus.AquiferizeCompanyReview;
 
             draftVersion.ResourceContent.Status = reviewPendingStatus;
-            await SetAssignedUserId(user,
+            await SetAssignedUserIdAsync(user,
                 draftVersion.ResourceContent.ProjectResourceContents.FirstOrDefault(x => x.Project.ActualPublishDate == null)?.Project,
                 managerIds,
                 draftVersion);
@@ -80,7 +80,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             .ToList();
     }
 
-    private async Task SetAssignedUserId(UserEntity user,
+    private async Task SetAssignedUserIdAsync(UserEntity user,
         ProjectEntity? project,
         List<int> managers,
         ResourceContentVersionEntity draftVersion)

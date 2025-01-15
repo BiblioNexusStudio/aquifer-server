@@ -11,12 +11,12 @@ namespace Aquifer.API.Clients.Http.Auth0;
 
 public interface IAuth0HttpClient
 {
-    Task<HttpResponseMessage> CreateUser(string name, string email, string authToken, CancellationToken cancellationToken);
-    Task<HttpResponseMessage> GetAuth0Token(CancellationToken cancellationToken);
-    Task<HttpResponseMessage> GetUserRoles(string auth0Token, CancellationToken cancellationToken);
-    Task<HttpResponseMessage> AssignUserToRole(string roleId, string userId, string auth0Token, CancellationToken cancellationToken);
-    Task<HttpResponseMessage> ResetPassword(string email, string authToken, CancellationToken cancellationToken);
-    Task<HttpResponseMessage> BlockUser(string auth0Id, string authToken, CancellationToken cancellationToken);
+    Task<HttpResponseMessage> CreateUserAsync(string name, string email, string authToken, CancellationToken cancellationToken);
+    Task<HttpResponseMessage> GetAuth0TokenAsync(CancellationToken cancellationToken);
+    Task<HttpResponseMessage> GetUserRolesAsync(string auth0Token, CancellationToken cancellationToken);
+    Task<HttpResponseMessage> AssignUserToRoleAsync(string roleId, string userId, string auth0Token, CancellationToken cancellationToken);
+    Task<HttpResponseMessage> ResetPasswordAsync(string email, string authToken, CancellationToken cancellationToken);
+    Task<HttpResponseMessage> BlockUserAsync(string auth0Id, string authToken, CancellationToken cancellationToken);
 }
 
 public class Auth0HttpClient : IAuth0HttpClient
@@ -35,14 +35,14 @@ public class Auth0HttpClient : IAuth0HttpClient
         _httpClient.BaseAddress = new Uri(_authSettings.BaseUri);
     }
 
-    public async Task<HttpResponseMessage> GetUserRoles(string auth0Token, CancellationToken cancellationToken)
+    public async Task<HttpResponseMessage> GetUserRolesAsync(string auth0Token, CancellationToken cancellationToken)
     {
         SetAuthHeader(auth0Token);
 
         return await _httpClient.GetAsync("/api/v2/roles", cancellationToken);
     }
 
-    public async Task<HttpResponseMessage> GetAuth0Token(CancellationToken cancellationToken)
+    public async Task<HttpResponseMessage> GetAuth0TokenAsync(CancellationToken cancellationToken)
     {
         var tokenRequest = new Auth0TokenRequest
         {
@@ -57,7 +57,7 @@ public class Auth0HttpClient : IAuth0HttpClient
         return await _httpClient.PostAsync("/oauth/token", request, cancellationToken);
     }
 
-    public async Task<HttpResponseMessage> AssignUserToRole(string roleId,
+    public async Task<HttpResponseMessage> AssignUserToRoleAsync(string roleId,
         string userId,
         string auth0Token,
         CancellationToken cancellationToken)
@@ -72,7 +72,7 @@ public class Auth0HttpClient : IAuth0HttpClient
         return await _httpClient.PostAsync(postUri, request, cancellationToken);
     }
 
-    public async Task<HttpResponseMessage> CreateUser(string name, string email, string authToken, CancellationToken cancellationToken)
+    public async Task<HttpResponseMessage> CreateUserAsync(string name, string email, string authToken, CancellationToken cancellationToken)
     {
         SetAuthHeader(authToken);
 
@@ -89,7 +89,7 @@ public class Auth0HttpClient : IAuth0HttpClient
         return await _httpClient.PostAsync("/api/v2/users", request, cancellationToken);
     }
 
-    public async Task<HttpResponseMessage> ResetPassword(string email, string authToken, CancellationToken cancellationToken)
+    public async Task<HttpResponseMessage> ResetPasswordAsync(string email, string authToken, CancellationToken cancellationToken)
     {
         const string endpointPath = "/dbconnections/change_password";
         SetAuthHeader(authToken);
@@ -104,7 +104,7 @@ public class Auth0HttpClient : IAuth0HttpClient
         return await _httpClient.PostAsync(endpointPath, request, cancellationToken);
     }
 
-    public async Task<HttpResponseMessage> BlockUser(string auth0Id, string authToken, CancellationToken cancellationToken)
+    public async Task<HttpResponseMessage> BlockUserAsync(string auth0Id, string authToken, CancellationToken cancellationToken)
     {
         var endpointPath = $"/api/v2/users/{auth0Id}";
         SetAuthHeader(authToken);

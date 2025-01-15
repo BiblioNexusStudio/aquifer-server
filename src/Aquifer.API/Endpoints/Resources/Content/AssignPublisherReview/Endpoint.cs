@@ -20,7 +20,7 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        await ValidateAssignedUser(request, ct);
+        await ValidateAssignedUserAsync(request, ct);
         var user = await userService.GetUserFromJwtAsync(ct);
 
         var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
@@ -69,7 +69,7 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
         await SendNoContentAsync(ct);
     }
 
-    private async Task ValidateAssignedUser(Request request, CancellationToken ct)
+    private async Task ValidateAssignedUserAsync(Request request, CancellationToken ct)
     {
         var assignedUser = await dbContext.Users
             .AsTracking()

@@ -71,7 +71,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             var item = new List<object?>();
             for (var i = 0; i < reader.FieldCount; i++)
             {
-                item.Add(reader.IsDBNull(i) ? null : reader[i]);
+                item.Add(await reader.IsDBNullAsync(i ,ct) ? null : reader[i]);
             }
 
             items.Add(item);

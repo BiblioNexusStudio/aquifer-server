@@ -24,7 +24,7 @@ public static class Helpers
 
     public static async
         Task<(ResourceContentVersionEntity? latestVersion, ResourceContentVersionEntity? publishedVersion, ResourceContentVersionEntity?
-            draftVersion)> GetResourceContentVersions(int contentId, AquiferDbContext dbContext, CancellationToken cancellationToken)
+            draftVersion)> GetResourceContentVersionsAsync(int contentId, AquiferDbContext dbContext, CancellationToken cancellationToken)
     {
         var resourceContentVersions = await dbContext.ResourceContentVersions
             .AsTracking()
@@ -36,7 +36,7 @@ public static class Helpers
             resourceContentVersions.SingleOrDefault(x => x.IsDraft));
     }
 
-    public static async Task CreateNewDraft(
+    public static async Task CreateNewDraftAsync(
         AquiferDbContext dbContext,
         ITranslationMessagePublisher translationMessagePublisher,
         int contentId,
