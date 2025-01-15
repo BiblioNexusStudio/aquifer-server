@@ -52,7 +52,7 @@ public sealed class TranslationMessageSubscriber(
     ///     which will be overwritten by the translated content.
     /// </summary>
     [Function(TranslateResourceFunctionName)]
-    public async Task TranslateResourceAsync([QueueTrigger(Queues.TranslateResource)] QueueMessage queueMessage,
+    public async Task TranslateResourceViaMessageSubscriberAsync([QueueTrigger(Queues.TranslateResource)] QueueMessage queueMessage,
         CancellationToken ct)
     {
         await queueMessage.ProcessAsync<TranslateResourceMessage, TranslationMessageSubscriber>(_logger,
@@ -191,7 +191,7 @@ public sealed class TranslationMessageSubscriber(
     /// Returns the ResourceContentId that was successfully translated (or gracefully skipped).
     /// </summary>
     [Function(TranslateResourceActivityFunctionName)]
-    public async Task<int> TranslateResourceAsync([ActivityTrigger] TranslateResourceActivityDto dto,
+    public async Task<int> TranslateResourceViaActivityAsync([ActivityTrigger] TranslateResourceActivityDto dto,
         FunctionContext activityContext)
     {
         await TranslateResourceCoreAsync(dto.ResourceContentId,
