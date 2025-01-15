@@ -15,15 +15,17 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
     AquiferDbContext _dbContext,
     ILogger<ResourceContentVersionSimilarityMessageSubscriber> _logger)
 {
-    [Function(nameof(ScoreResourceContentVersionSimilarityMessageSubscriber))]
-    public async Task ScoreResourceContentVersionSimilarityMessageSubscriber(
+    private const string ScoreResourceContentVersionSimilarityMessageSubscriberFunctionName = "ScoreResourceContentVersionSimilarityMessageSubscriber";
+    
+    [Function(ScoreResourceContentVersionSimilarityMessageSubscriberFunctionName)]
+    public async Task RunAsync(
         [QueueTrigger(Queues.GenerateResourceContentSimilarityScore)]
         QueueMessage queueMessage,
         CancellationToken ct)
     {
         await queueMessage.ProcessAsync<ScoreResourceContentVersionSimilarityMessage, ResourceContentVersionSimilarityMessageSubscriber>(
             _logger,
-            nameof(ScoreResourceContentVersionSimilarityMessageSubscriber),
+            ScoreResourceContentVersionSimilarityMessageSubscriberFunctionName,
             ProcessAsync,
             ct);
     }
@@ -55,12 +57,12 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                 similarityScoreEntity.BaseVersionType = ResourceContentVersionTypes.Base;
                 similarityScoreEntity.ComparedVersionType = ResourceContentVersionTypes.MachineTranslation;
                 
-                resourceContentVersion = await GetBaseResourceContentVersion(similarityScoreEntity.BaseVersionId, ct);
+                resourceContentVersion = await GetBaseResourceContentVersionAsync(similarityScoreEntity.BaseVersionId, ct);
                 resourceContentHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(resourceContentVersion.Content);
         
                 baseVersionText = HtmlUtilities.GetPlainText(string.Join(string.Empty, resourceContentHtmlItems));
                 
-                (similarityScoreEntity.ComparedVersionId, compareVersionText) = await GetMachineTranslationIdAndTextForResourceContentVersion(
+                (similarityScoreEntity.ComparedVersionId, compareVersionText) = await GetMachineTranslationIdAndTextForResourceContentVersionAsync(
                     similarityScoreEntity.BaseVersionId,
                     message.CompareVersionId,
                     ct);
@@ -76,12 +78,12 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                 similarityScoreEntity.BaseVersionType = ResourceContentVersionTypes.Snapshot;
                 similarityScoreEntity.ComparedVersionType = ResourceContentVersionTypes.MachineTranslation;
                 
-                rcvSnapshot = await GetSnapshotVersion(similarityScoreEntity.BaseVersionId, ct);
+                rcvSnapshot = await GetSnapshotVersionAsync(similarityScoreEntity.BaseVersionId, ct);
                 rcvSnapshotHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(rcvSnapshot.Content);
                 
                 baseVersionText = HtmlUtilities.GetPlainText(string.Join(string.Empty, rcvSnapshotHtmlItems));
 
-                (similarityScoreEntity.ComparedVersionId, compareVersionText) = await GetMachineTranslationTextAndIdForSnapshot(
+                (similarityScoreEntity.ComparedVersionId, compareVersionText) = await GetMachineTranslationTextAndIdForSnapshotAsync(
                     similarityScoreEntity.BaseVersionId,
                     message.CompareVersionId,
                     ct);
@@ -103,12 +105,12 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                                                                   ResourceContentVersionSimilarityComparisonType.ResourceContentVersionToSnapshot
                                                               )} similarity scoring.");
                 
-                resourceContentVersion = await GetBaseResourceContentVersion(similarityScoreEntity.BaseVersionId, ct);
+                resourceContentVersion = await GetBaseResourceContentVersionAsync(similarityScoreEntity.BaseVersionId, ct);
                 resourceContentHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(resourceContentVersion.Content);
         
                 baseVersionText = HtmlUtilities.GetPlainText(string.Join(string.Empty, resourceContentHtmlItems));
                 
-                rcvSnapshot = await GetSnapshotVersion(similarityScoreEntity.ComparedVersionId, ct);
+                rcvSnapshot = await GetSnapshotVersionAsync(similarityScoreEntity.ComparedVersionId, ct);
                 rcvSnapshotHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(rcvSnapshot.Content);
         
                 compareVersionText = HtmlUtilities.GetPlainText(string.Join(string.Empty, rcvSnapshotHtmlItems));
@@ -130,12 +132,12 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                                                                     ResourceContentVersionSimilarityComparisonType.SnapshotToSnapshot
                                                                     )} similarity scoring.");
                 
-                rcvSnapshot = await GetSnapshotVersion(similarityScoreEntity.BaseVersionId, ct);
+                rcvSnapshot = await GetSnapshotVersionAsync(similarityScoreEntity.BaseVersionId, ct);
                 rcvSnapshotHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(rcvSnapshot.Content);
                 
                 baseVersionText = HtmlUtilities.GetPlainText(string.Join(string.Empty, rcvSnapshotHtmlItems));
                 
-                var compareSnapshot = await GetSnapshotVersion(similarityScoreEntity.ComparedVersionId, ct);
+                var compareSnapshot = await GetSnapshotVersionAsync(similarityScoreEntity.ComparedVersionId, ct);
                 var compareSnapshotHtmlItems = TiptapConverter.ConvertJsonToHtmlItems(compareSnapshot.Content);
                 
                 compareVersionText = HtmlUtilities.GetPlainText(string.Join(string.Empty, compareSnapshotHtmlItems));
@@ -155,7 +157,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
         return similarityScoreEntity;
     }
     
-    private async Task<ResourceContentVersionEntity> GetBaseResourceContentVersion(int resourceContentVersionId, CancellationToken ct)
+    private async Task<ResourceContentVersionEntity> GetBaseResourceContentVersionAsync(int resourceContentVersionId, CancellationToken ct)
     {
         return await _dbContext
                    .ResourceContentVersions
@@ -163,7 +165,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                ?? throw new InvalidOperationException($"Resource Content version with id {resourceContentVersionId} not found");
     }
 
-    private async Task<ResourceContentVersionSnapshotEntity> GetSnapshotVersion(int snapshotVersionId, CancellationToken ct)
+    private async Task<ResourceContentVersionSnapshotEntity> GetSnapshotVersionAsync(int snapshotVersionId, CancellationToken ct)
     {
         return await _dbContext
                    .ResourceContentVersionSnapshots
@@ -171,7 +173,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                ?? throw new InvalidOperationException($"Snapshot version with id {snapshotVersionId} not found");
     }
     
-    private async Task<(int, string)> GetMachineTranslationIdAndTextForResourceContentVersion(
+    private async Task<(int, string)> GetMachineTranslationIdAndTextForResourceContentVersionAsync(
         int resourceContentVersionId,
         int? machineTranslationId,
         CancellationToken ct)
@@ -197,7 +199,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
         return GetMachineTranslationIdAndText(machineTranslations, machineTranslationId);
     }
     
-    private async Task<(int, string)> GetMachineTranslationTextAndIdForSnapshot(
+    private async Task<(int, string)> GetMachineTranslationTextAndIdForSnapshotAsync(
         int resourceContentVersionSnapshotId,
         int? machineTranslationId,
         CancellationToken ct)
