@@ -6,7 +6,6 @@ using Aquifer.API.Services;
 using Aquifer.API.Telemetry;
 using Aquifer.Common.Clients;
 using Aquifer.Common.Messages;
-using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Middleware;
 using Aquifer.Common.Services;
 using Aquifer.Data;
@@ -44,9 +43,7 @@ builder.Services.AddAuth(configuration.JwtSettings)
     .AddScoped<IUserService, UserService>()
     .AddScoped<IResourceHistoryService, ResourceHistoryService>()
     .AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>()
-    .AddSingleton<IResourceContentRequestTrackingMessagePublisher, ResourceContentRequestTrackingMessagePublisher>()
-    .AddSingleton<INotificationMessagePublisher, NotificationMessagePublisher>()
-    .AddSingleton<ITranslationMessagePublisher, TranslationMessagePublisher>()
+    .AddQueueMessagePublisherServices()
     .AddAzureClient(builder.Environment.IsDevelopment())
     .AddFastEndpoints()
     .AddResponseCaching()

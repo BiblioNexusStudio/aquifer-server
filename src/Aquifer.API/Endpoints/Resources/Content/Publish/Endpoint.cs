@@ -1,5 +1,6 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
+using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Messages.Publishers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -9,7 +10,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.Publish;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService, ITranslationMessagePublisher translationMessagePublisher, IResourceHistoryService historyService) : Endpoint<Request>
+public class Endpoint(
+    AquiferDbContext dbContext, 
+    IUserService userService, 
+    ITranslationMessagePublisher translationMessagePublisher, 
+    IResourceHistoryService historyService,
+    IResourceContentVersionSimilarityMessagePublisher resourceContentVersionSimilarityMessagePublisher) : Endpoint<Request>
 {
     public override void Configure()
     {
@@ -24,6 +30,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, ITra
             ThrowError(Helpers.InvalidUserIdResponse);
         }
 
+        List<ScoreResourceContentVersionSimilarityMessage> similarityScoreMessages = [];
         var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
 
         foreach (var contentId in contentIds)
@@ -86,10 +93,22 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, ITra
 
                 await historyService.AddStatusHistoryAsync(mostRecentContentVersion, ResourceContentStatus.Complete, user.Id, ct);
             }
+
+            similarityScoreMessages.Add(
+                new ScoreResourceContentVersionSimilarityMessage(
+                    ResourceContentVersionSimilarityComparisonType.MachineTranslationToResourceContentVersion,
+                    mostRecentContentVersion.Id)
+            );
         }
 
         await dbContext.SaveChangesAsync(ct);
 
+        foreach (var similarityScoreMessage in similarityScoreMessages)
+        {
+            await resourceContentVersionSimilarityMessagePublisher
+                    .PublishScoreResourceContentVersionSimilarityMessageAsync(similarityScoreMessage, CancellationToken.None);
+        }
+        
         await SendNoContentAsync(ct);
     }
 }

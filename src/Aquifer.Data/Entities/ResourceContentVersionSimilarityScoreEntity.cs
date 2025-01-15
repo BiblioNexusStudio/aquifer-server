@@ -1,6 +1,6 @@
 namespace Aquifer.Data.Entities;
 
-public class ResourceContentVersionSimilarityScore
+public class ResourceContentVersionSimilarityScoreEntity
 {
     public int Id { get; set; }
     public int BaseVersionId { get; set; }
