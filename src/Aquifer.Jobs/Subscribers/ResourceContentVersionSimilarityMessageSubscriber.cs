@@ -33,12 +33,17 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
     private async Task ProcessAsync(QueueMessage queueMessage, ScoreResourceContentVersionSimilarityMessage message, CancellationToken ct)
     {
         var similarityScoreEntity = await GenerateResourceContentVersionSimilarityScoreAsync(message, ct);
-        
+
+        if (similarityScoreEntity is null)
+        {
+            return;
+        }
+
         await _dbContext.ResourceContentVersionSimilarityScores.AddAsync(similarityScoreEntity, ct);
         await _dbContext.SaveChangesAsync(ct);
     }
     
-    private async Task<ResourceContentVersionSimilarityScoreEntity> GenerateResourceContentVersionSimilarityScoreAsync(
+    private async Task<ResourceContentVersionSimilarityScoreEntity?> GenerateResourceContentVersionSimilarityScoreAsync(
         ScoreResourceContentVersionSimilarityMessage message,
         CancellationToken ct)
     {
@@ -67,6 +72,11 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                     message.CompareVersionId,
                     ct);
 
+                if (similarityScoreEntity.ComparedVersionId == -1)
+                {
+                    return null;
+                }
+
                 _logger.LogInformation(
                     "Scoring machine translation {MachineTranslationId} vs published resource content version {ResourceContentVersionId}...",
                     similarityScoreEntity.ComparedVersionId,
@@ -87,6 +97,11 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                     similarityScoreEntity.BaseVersionId,
                     message.CompareVersionId,
                     ct);
+
+                if (similarityScoreEntity.ComparedVersionId == -1)
+                {
+                    return null;
+                }
                 
                 _logger.LogInformation(
                     "Scoring machine translation {MachineTranslationId} vs snapshot version {SnapShotVersionId}...",
@@ -186,8 +201,11 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
 
         if (machineTranslations.Count == 0)
         {
-            throw new InvalidOperationException(
-                $"No Machine translation for ResourceContentVersion with id {resourceContentVersionId} found");
+            _logger.LogWarning(
+                "No Machine translation for ResourceContentVersion with id {ResourceContentVersionId} found. Skipping similarity score generation.",
+                resourceContentVersionId);
+            
+            return (-1, string.Empty);
         }
 
         if (machineTranslationId is not null && !machineTranslations.Any(m => m.Id != machineTranslationId))
@@ -213,8 +231,11 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
 
         if (machineTranslations.Count == 0)
         {
-            throw new InvalidOperationException(
-                $"No Machine translation for Snapshot with id {resourceContentVersionSnapshotId} found");
+            _logger.LogWarning(
+                "No Machine translation for Snapshot with id {ResourceContentVersionSnapshotId} found. Skipping similarity score generation.",
+                resourceContentVersionSnapshotId);
+            
+            return (-1, string.Empty);
         }
 
         if (machineTranslationId is not null && !machineTranslations.Any(m => m.Id != machineTranslationId))
