@@ -43,7 +43,8 @@ public class Response
                 IsComplete = ProjectEntity.ActualPublishDate is not null
             };
 
-    public CommentThreadsResponse CommentThreads { get; set; } = null!;
+    public bool HasUnresolvedCommentThreads => CommentThreads?.Threads.Any(t => !t.Resolved) ?? false;
+    public CommentThreadsResponse? CommentThreads { get; set; }
 
     [JsonIgnore]
     public string ContentValue { get; set; } = null!;

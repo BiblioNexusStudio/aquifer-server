@@ -11,5 +11,7 @@ public record Request
     public int? StartChapter { get; set; }
     public int? EndChapter { get; set; }
     public bool? IsPublished { get; set; }
+    public bool? HasAudio { get; set; }
+    public bool? HasUnresolvedCommentThreads { get; set; }
     public string? SearchQuery { get; set; }
 }
