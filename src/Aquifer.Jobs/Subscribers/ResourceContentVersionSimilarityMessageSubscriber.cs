@@ -50,6 +50,8 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
         var similarityScoreEntity = new ResourceContentVersionSimilarityScoreEntity { BaseVersionId = message.BaseVersionId };
         string baseVersionText;
         string compareVersionText;
+        int? machineTranslationId;
+        string? machineTranslationText;
         IReadOnlyList<string> resourceContentHtmlItems;
         IReadOnlyList<string> rcvSnapshotHtmlItems;
         ResourceContentVersionEntity resourceContentVersion;
@@ -67,15 +69,18 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
         
                 baseVersionText = HtmlUtilities.GetPlainText(string.Join(string.Empty, resourceContentHtmlItems));
                 
-                (similarityScoreEntity.ComparedVersionId, compareVersionText) = await GetMachineTranslationIdAndTextForResourceContentVersionAsync(
+                (machineTranslationId, machineTranslationText) = await GetMachineTranslationIdAndTextForResourceContentVersionAsync(
                     similarityScoreEntity.BaseVersionId,
                     message.CompareVersionId,
                     ct);
 
-                if (similarityScoreEntity.ComparedVersionId == -1)
+                if (machineTranslationId is null || machineTranslationText is null)
                 {
                     return null;
                 }
+
+                similarityScoreEntity.ComparedVersionId = machineTranslationId.Value; 
+                compareVersionText = machineTranslationText;
 
                 _logger.LogInformation(
                     "Scoring machine translation {MachineTranslationId} vs published resource content version {ResourceContentVersionId}...",
@@ -93,15 +98,18 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                 
                 baseVersionText = HtmlUtilities.GetPlainText(string.Join(string.Empty, rcvSnapshotHtmlItems));
 
-                (similarityScoreEntity.ComparedVersionId, compareVersionText) = await GetMachineTranslationTextAndIdForSnapshotAsync(
+                (machineTranslationId, machineTranslationText) = await GetMachineTranslationTextAndIdForSnapshotAsync(
                     similarityScoreEntity.BaseVersionId,
                     message.CompareVersionId,
                     ct);
 
-                if (similarityScoreEntity.ComparedVersionId == -1)
+                if (machineTranslationId is null || machineTranslationText is null)
                 {
                     return null;
                 }
+
+                similarityScoreEntity.ComparedVersionId = machineTranslationId.Value; 
+                compareVersionText = machineTranslationText;
                 
                 _logger.LogInformation(
                     "Scoring machine translation {MachineTranslationId} vs snapshot version {SnapShotVersionId}...",
@@ -188,7 +196,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                ?? throw new InvalidOperationException($"Snapshot version with id {snapshotVersionId} not found");
     }
     
-    private async Task<(int, string)> GetMachineTranslationIdAndTextForResourceContentVersionAsync(
+    private async Task<(int?, string?)> GetMachineTranslationIdAndTextForResourceContentVersionAsync(
         int resourceContentVersionId,
         int? machineTranslationId,
         CancellationToken ct)
@@ -205,7 +213,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                 "No Machine translation for ResourceContentVersion with id {ResourceContentVersionId} found. Skipping similarity score generation.",
                 resourceContentVersionId);
             
-            return (-1, string.Empty);
+            return (null, null);
         }
 
         if (machineTranslationId is not null && !machineTranslations.Any(m => m.Id != machineTranslationId))
@@ -217,7 +225,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
         return GetMachineTranslationIdAndText(machineTranslations, machineTranslationId);
     }
     
-    private async Task<(int, string)> GetMachineTranslationTextAndIdForSnapshotAsync(
+    private async Task<(int?, string?)> GetMachineTranslationTextAndIdForSnapshotAsync(
         int resourceContentVersionSnapshotId,
         int? machineTranslationId,
         CancellationToken ct)
@@ -235,7 +243,7 @@ public sealed class ResourceContentVersionSimilarityMessageSubscriber(
                 "No Machine translation for Snapshot with id {ResourceContentVersionSnapshotId} found. Skipping similarity score generation.",
                 resourceContentVersionSnapshotId);
             
-            return (-1, string.Empty);
+            return (null, null);
         }
 
         if (machineTranslationId is not null && !machineTranslations.Any(m => m.Id != machineTranslationId))
