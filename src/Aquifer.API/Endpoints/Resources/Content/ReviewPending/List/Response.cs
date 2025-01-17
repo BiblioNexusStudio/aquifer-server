@@ -20,4 +20,6 @@ public class Response
 
     [JsonIgnore]
     public DateTime LastStatusUpdate { get; set; }
+
+    // public required bool isResolved { get; set; }
 }

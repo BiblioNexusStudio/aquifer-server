@@ -19,4 +19,5 @@ public class Response
 
     [JsonIgnore]
     public DateOnly? ProjectProjectedDeliveryDate { get; set; }
+    // public required bool isResolved { get; set; }
 }

@@ -19,4 +19,6 @@ public record Response
     public required int? DaysUntilProjectDeadline { get; set; }
     public required int? DaysSinceContentUpdated { get; set; }
     public required UserDto? LastAssignedUser { get; set; }
+
+    // public required bool isResolved { get; set; }
 }
