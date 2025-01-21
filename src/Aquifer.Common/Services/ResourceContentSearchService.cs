@@ -25,7 +25,9 @@ public sealed class ResourceContentSearchFilter
     public IReadOnlyList<ResourceContentStatus>? ExcludeContentStatuses { get; set; }
     public IReadOnlyList<ResourceContentStatus>? IncludeContentStatuses { get; set; }
     public int? AssignedUserId { get; set; }
+    public int? AssignedUserCompanyId { get; set; }
     public bool? IsPublished { get; set; }
+    public bool? IsDraft { get; set; }
     public int? StartVerseId { get; set; }
     public int? EndVerseId { get; set; }
     public bool? HasAudio { get; set; }
@@ -42,8 +44,10 @@ public sealed class DbResourceContentSummary
     public required int LanguageId { get; init; }
     public required ResourceContentStatus Status { get; init; }
     public required bool IsPublished { get; init; }
+    public required bool IsDraft { get; init; }
     public required bool HasAudio { get; init; }
     public required bool HasUnresolvedCommentThreads { get; init; }
+    public required int? AssignedUserId { get; init; }
 }
 
 public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : IResourceContentSearchService
@@ -62,6 +66,34 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         if (limit <= 0)
         {
             throw new ArgumentException($"\"{nameof(limit)}\" must be greater than 0.", nameof(limit));
+        }
+
+        if (filter is { IsDraft: not null, IsPublished: not null })
+        {
+            throw new ArgumentException(
+                $"\"{nameof(filter.IsDraft)}\" and \"{nameof(filter.IsPublished)}\" cannot both be passed.",
+                nameof(filter));
+        }
+
+        if (filter is { AssignedUserId: not null, IsDraft: not true })
+        {
+            throw new ArgumentException(
+                $"Filtering on \"{nameof(filter.AssignedUserId)}\" requires also passing \"{nameof(filter.IsDraft)}\" as true.",
+                nameof(filter));
+        }
+
+        if (filter is { AssignedUserCompanyId: not null, IsDraft: not true })
+        {
+            throw new ArgumentException(
+                $"Filtering on \"{nameof(filter.AssignedUserCompanyId)}\" requires also passing \"{nameof(filter.IsDraft)}\" as true.",
+                nameof(filter));
+        }
+
+        if (filter is { HasUnresolvedCommentThreads: not null, IsDraft: not true })
+        {
+            throw new ArgumentException(
+                $"Filtering on \"{nameof(filter.HasUnresolvedCommentThreads)}\" requires also passing \"{nameof(filter.IsDraft)}\" as true.",
+                nameof(filter));
         }
 
         if (filter is { StartVerseId: not null, EndVerseId: null } or { StartVerseId: null, EndVerseId: not null })
@@ -92,8 +124,20 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 nameof(filter));
         }
 
-        const string selectCountSql = "SELECT COUNT(DISTINCT(rc.Id)) AS Count";
+        const string selectCountSql = "SELECT COUNT(rc.Id) AS Count";
 
+        // Facts that help improve search performance:
+        // 1. If a ResourceContentVersion is in the Draft status then it must be the most recent (by Id) for a Resource Content.
+        // 2. If a ResourceContentVersion has an AssignedUserId then it must also be in the Draft status.
+        // 3. For unresolved comment threads, only comment threads on a ResourceContentVersion in the Draft status are considered.
+        //    Older ResourceContentVersions that have unresolved comment threads are ignored.
+        // 4. Only one ResourceContentVersion can be in the Published status for a ResourceContent.
+        // 5. Only one ResourceContentVersion can be in the Draft status for a ResourceContent.
+        //
+        // Thus, if the IsPublished filter is true then we can ignore the AssignedUserId/AssignedUserCompanyId filters and don't need
+        // to calculate the HasUnresolvedCommentThreads property.
+        // Therefore, we can fetch one row of summary data about all ResourceContentVersions for a ResourceContent (labeled rcvd below)
+        // which allows avoiding grouping in the main query.
         var selectPropertiesSql = $"""
             SELECT
                 rc.Id AS {nameof(DbResourceContentSummary.Id)},
@@ -101,23 +145,20 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 pr.DisplayName AS {nameof(DbResourceContentSummary.ParentResourceEnglishDisplayName)},
                 rc.LanguageId AS {nameof(DbResourceContentSummary.LanguageId)},
                 rc.Status AS {nameof(DbResourceContentSummary.Status)},
-                IIF(MAX(CAST(rcv.IsPublished AS INT)) = 1, 1, 0) AS {nameof(DbResourceContentSummary.IsPublished)},
-                IIF(MIN(CAST(ct.Resolved AS INT)) = 0, 1, 0) AS {nameof(DbResourceContentSummary.HasUnresolvedCommentThreads)},
-                IIF(rc.MediaType = {(int)ResourceContentMediaType.Audio} OR COUNT(rcAudio.Id) > 0, 1, 0) AS {nameof(DbResourceContentSummary.HasAudio)}
-            """;
-
-        var fromSql = $"""
-            FROM ResourceContents rc
-                JOIN Resources r ON r.Id = rc.ResourceId
-                JOIN ParentResources pr ON pr.id = r.ParentResourceId
-                JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = rc.Id
-                LEFT JOIN ResourceContentVersionCommentThreads rcvct ON rcvct.ResourceContentVersionId = rcv.Id
-                LEFT JOIN CommentThreads ct ON rcvct.CommentThreadId = ct.Id
-                LEFT JOIN ResourceContents rcAudio ON
-                    rcAudio.ResourceId = r.Id AND
-                    rcAudio.LanguageId = rc.LanguageId AND
-                    rcAudio.Id <> rc.Id AND
-                    rcAudio.MediaType = {(int)ResourceContentMediaType.Audio}
+                rcvd.IsPublished AS {nameof(DbResourceContentSummary.IsPublished)},
+                rcvd.IsDraft AS {nameof(DbResourceContentSummary.IsDraft)},
+                IIF(rcvd.IsDraft = 1, rcvd.AssignedUserId, NULL) AS {nameof(DbResourceContentSummary.AssignedUserId)},
+                IIF(ISNULL(a.AudioCount, 0) > 0, 1, 0) AS {nameof(DbResourceContentSummary.HasAudio)},
+                {(filter.IsPublished.HasValue && filter.IsPublished.Value
+                    ? $"""
+                           NULL AS {nameof(DbResourceContentSummary.AssignedUserId)},
+                           0 AS {nameof(DbResourceContentSummary.HasUnresolvedCommentThreads)}
+                       """
+                    : $"""
+                           rcvd.AssignedUserId AS {nameof(DbResourceContentSummary.AssignedUserId)},
+                           ISNULL(c.HasUnresolvedCommentThreads, 0) AS {nameof(DbResourceContentSummary.HasUnresolvedCommentThreads)}
+                       """
+                )}
             """;
 
         var coreParameters = new DynamicParameters();
@@ -207,20 +248,14 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             whereClausesSql.Add($"rc.Status IN @{includeContentStatusesParamName}");
         }
 
-        if (filter.AssignedUserId.HasValue)
+        if (filter.HasUnresolvedCommentThreads.HasValue)
         {
-            const string assignedUserIdParamName = "assignedUserId";
-
-            coreParameters.Add(assignedUserIdParamName, filter.AssignedUserId.Value);
-            whereClausesSql.Add($"rcv.AssignedUserId = @{assignedUserIdParamName}");
+            whereClausesSql.Add($"ISNULL(c.HasUnresolvedCommentThreads, 0) = {(filter.HasUnresolvedCommentThreads.Value ? "1" : "0")}");
         }
 
-        // Ensure we only join with a single ResourceContentVersion in order to avoid the need to do a grouping
-        // (only one ResourceContentVersion may be in IsDraft or in IsPublished for a given ResourceContent).
-        if (filter.IsPublished.HasValue)
+        if (filter.HasAudio.HasValue)
         {
-            // the opposite of IsPublished is *not* IsDraft but current filtering expect this
-            whereClausesSql.Add(filter.IsPublished.Value ? "rcv.IsPublished = 1" : "rcv.IsDraft = 1");
+            whereClausesSql.Add($"ISNULL(a.AudioCount, 0) {(filter.HasAudio.Value ? ">" : "=")} 0");
         }
 
         if (filter is { StartVerseId: not null, EndVerseId: not null })
@@ -257,28 +292,91 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             """);
         }
 
-        if (filter.HasUnresolvedCommentThreads.HasValue && filter.HasUnresolvedCommentThreads.Value)
+        if (filter.AssignedUserId.HasValue)
         {
-            whereClausesSql.Add("ct.Resolved = 0");
+            const string assignedUserIdParamName = "assignedUserId";
+
+            coreParameters.Add(assignedUserIdParamName, filter.AssignedUserId.Value);
+            whereClausesSql.Add($"rcvd.AssignedUserId = @{assignedUserIdParamName}");
         }
 
-        if (filter.HasAudio.HasValue)
+        if (filter.AssignedUserCompanyId.HasValue)
         {
-            whereClausesSql.Add($"rcAudio.Id IS {(filter.HasAudio.Value ? "NOT " : "")}NULL");
+            const string assignedUserCompanyIdParamName = "assignedUserCompanyId";
+
+            coreParameters.Add(assignedUserCompanyIdParamName, filter.AssignedUserCompanyId.Value);
+            whereClausesSql.Add($"u.CompanyId = @{assignedUserCompanyIdParamName}");
         }
 
-        // The only actual grouping property is the ResourceContent.Id but the rest are required for the select.
-        const string groupBySql = """
-            GROUP BY
-                rc.Id,
-                rc.MediaType,
-                rc.ResourceId,
-                r.EnglishLabel,
-                r.ParentResourceId,
-                pr.DisplayName,
-                rc.LanguageId,
-                rc.Status,
-                r.SortOrder
+        if (filter.IsPublished.HasValue)
+        {
+            if (filter.IsPublished.Value)
+            {
+                whereClausesSql.Add("rcvd.IsPublished = 1");
+            }
+            else
+            {
+                // supporting this search will add complexity and should only be added if needed
+                throw new NotImplementedException($"A \"{nameof(filter.IsPublished)}\" value of false is not yet supported.");
+            }
+        }
+
+        if (filter.IsDraft.HasValue)
+        {
+            if (filter.IsDraft.Value)
+            {
+                whereClausesSql.Add("rcvd.IsDraft = 1");
+            }
+            else
+            {
+                // supporting this search will add complexity and should only be added if needed
+                throw new NotImplementedException($"A \"{nameof(filter.IsDraft)}\" value of false is not yet supported.");
+            }
+        }
+
+        // Using CROSS APPLY and OUTER APPLY with inner groupings significantly improves performance over using JOINs with a main grouping.
+        var fromAndWhereSql = $"""
+            FROM ResourceContents rc
+                JOIN Resources r ON r.Id = rc.ResourceId
+                JOIN ParentResources pr ON pr.id = r.ParentResourceId
+                CROSS APPLY
+                (
+                    SELECT
+                        MAX(rcv.Id) AS MaxRcvId,
+                        MAX(rcv.AssignedUserId) AS AssignedUserId,
+                        IIF(MAX(CAST(rcv.IsPublished AS INT)) = 1, 1, 0) AS IsPublished,
+                        IIF(MAX(CAST(rcv.IsDraft AS INT)) = 1, 1, 0) AS IsDraft
+                    FROM ResourceContentVersions rcv
+                    WHERE rcv.ResourceContentId = rc.Id
+                    GROUP BY rcv.ResourceContentId
+                ) rcvd
+                {(filter.AssignedUserCompanyId.HasValue ? "    LEFT JOIN Users u ON rcvd.AssignedUserId = u.Id" : "")}
+                OUTER APPLY
+                (
+                    SELECT COUNT(rcAudio.Id) AS AudioCount
+                    FROM ResourceContents rcAudio
+                    WHERE
+                        rcAudio.ResourceId = r.Id AND
+                        rcAudio.LanguageId = rc.LanguageId AND
+                        rcAudio.Id <> rc.Id AND
+                        rcAudio.MediaType = {(int)ResourceContentMediaType.Audio}
+                    GROUP BY rcAudio.ResourceId
+                ) a
+                {(filter.IsPublished.HasValue && filter.IsPublished.Value
+                    ? ""
+                    : """
+                        OUTER APPLY
+                        (
+                            SELECT IIF(MIN(CAST(ct.Resolved AS INT)) = 0, 1, 0) AS HasUnresolvedCommentThreads
+                            FROM ResourceContentVersionCommentThreads rcvct
+                                JOIN CommentThreads ct ON rcvct.CommentThreadId = ct.Id
+                            WHERE rcvd.IsDraft = 1 AND rcvct.ResourceContentVersionId = rcvd.MaxRcvId
+                            GROUP BY rcvct.ResourceContentVersionId
+                        ) c
+                    """)}
+            {(whereClausesSql.Count > 0
+                ? $"WHERE{Environment.NewLine}    {string.Join($" AND{Environment.NewLine}    ", whereClausesSql)}"
+                : "")}
             """;
 
         const string offsetLiteralName = "offset";
@@ -292,17 +390,9 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             OFFSET {={{offsetLiteralName}}} ROWS FETCH NEXT {={{limitLiteralName}}} ROWS ONLY
             """;
 
-        var coreSql = $"""
-            {fromSql}
-            {(whereClausesSql.Count > 0
-                ? $"WHERE{Environment.NewLine}    {string.Join($" AND{Environment.NewLine}    ", whereClausesSql)}"
-                : "")}
-            """;
-
         var dataSql = $"""
             {selectPropertiesSql}
-            {coreSql}
-            {groupBySql}
+            {fromAndWhereSql}
             {pagingSql}
             """;
 
@@ -315,7 +405,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             .ToList()
             .AsReadOnly();
 
-        // if there is only one page (a common case) we can determine the total without another query
+        // if there is only one page (a common case) then we can determine the total without another query
         int total;
         if (offset == 0 && limit > resourceContentSummaries.Count)
         {
@@ -325,7 +415,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         {
             var totalSql = $"""
                 {selectCountSql}
-                {coreSql}
+                {fromAndWhereSql}
                 """;
 
             total = await dbContext.Database.GetDbConnection()

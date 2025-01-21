@@ -22,6 +22,8 @@ public class Endpoint(AquiferDbContext _dbContext, IResourceContentSearchService
     {
         var verseRange = BibleUtilities.VerseRangeForBookAndChapters(req.BookCode, req.StartChapter, req.EndChapter);
 
+        // The opposite of IsPublished == true is not IsDraft == true (because the most recent ResourceContentVersion for a ResourceContent
+        // can be neither of those statuses) but that logic is used here because consumers expect it.
         var (total, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
             new ResourceContentSearchFilter
             {
@@ -30,7 +32,8 @@ public class Endpoint(AquiferDbContext _dbContext, IResourceContentSearchService
                 LanguageId = req.LanguageId,
                 ExcludeContentMediaTypes = [ResourceContentMediaType.Audio],
                 ExcludeContentStatuses = [ResourceContentStatus.TranslationNotApplicable, ResourceContentStatus.CompleteNotApplicable],
-                IsPublished = req.IsPublished,
+                IsPublished = req.IsPublished.HasValue && req.IsPublished.Value ? true : null,
+                IsDraft = req.IsPublished.HasValue && !req.IsPublished.Value ? true : null,
                 StartVerseId = verseRange?.startVerseId,
                 EndVerseId = verseRange?.endVerseId,
                 HasAudio = req.HasAudio,
