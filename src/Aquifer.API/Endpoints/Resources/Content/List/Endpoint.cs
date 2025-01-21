@@ -29,7 +29,7 @@ public class Endpoint(AquiferDbContext _dbContext, IResourceContentSearchService
                 ResourceEnglishLabelQuery = req.SearchQuery,
                 LanguageId = req.LanguageId,
                 ExcludeContentMediaTypes = [ResourceContentMediaType.Audio],
-                ExcludeContentStatuses = [ResourceContentStatus.CompleteNotApplicable, ResourceContentStatus.TranslationNotApplicable],
+                ExcludeContentStatuses = [ResourceContentStatus.TranslationNotApplicable, ResourceContentStatus.CompleteNotApplicable],
                 IsPublished = req.IsPublished,
                 StartVerseId = verseRange?.startVerseId,
                 EndVerseId = verseRange?.endVerseId,
@@ -44,14 +44,16 @@ public class Endpoint(AquiferDbContext _dbContext, IResourceContentSearchService
             .Select(rcs => rcs.LanguageId)
             .ToHashSet();
 
-        var languageEnglishDisplayById = await _dbContext.Languages
-            .Where(l => languageIds.Contains(l.Id))
-            .Select(l => new
-            {
-                l.Id,
-                l.EnglishDisplay,
-            })
-            .ToDictionaryAsync(l => l.Id, l => l.EnglishDisplay, ct);
+        var languageEnglishDisplayById = languageIds.Count == 0
+            ? []
+            : await _dbContext.Languages
+                .Where(l => languageIds.Contains(l.Id))
+                .Select(l => new
+                {
+                    l.Id,
+                    l.EnglishDisplay,
+                })
+                .ToDictionaryAsync(l => l.Id, l => l.EnglishDisplay, ct);
 
         var response = new Response
         {
@@ -61,7 +63,7 @@ public class Endpoint(AquiferDbContext _dbContext, IResourceContentSearchService
                     Id = rcs.Id,
                     EnglishLabel = rcs.ResourceEnglishLabel,
                     ParentResourceName = rcs.ParentResourceEnglishDisplayName,
-                    LanguageEnglishDisplay = languageEnglishDisplayById[rcs.Id],
+                    LanguageEnglishDisplay = languageEnglishDisplayById[rcs.LanguageId],
                     Status = rcs.Status.GetDisplayName(),
                     IsPublished = rcs.IsPublished,
                     HasAudio = rcs.HasAudio,

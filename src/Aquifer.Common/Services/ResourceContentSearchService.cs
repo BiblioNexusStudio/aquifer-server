@@ -111,8 +111,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 JOIN Resources r ON r.Id = rc.ResourceId
                 JOIN ParentResources pr ON pr.id = r.ParentResourceId
                 JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = rc.Id
-                JOIN ResourceContentVersionCommentThreads rcvct ON rcvct.ResourceContentVersionId = rcv.Id
-                JOIN CommentThreads ct ON rcvct.CommentThreadId = ct.Id
+                LEFT JOIN ResourceContentVersionCommentThreads rcvct ON rcvct.ResourceContentVersionId = rcv.Id
+                LEFT JOIN CommentThreads ct ON rcvct.CommentThreadId = ct.Id
                 LEFT JOIN ResourceContents rcAudio ON
                     rcAudio.ResourceId = r.Id AND
                     rcAudio.LanguageId = rc.LanguageId AND
@@ -155,7 +155,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             else
             {
                 coreParameters.Add(queryParamName, queryTrimmed);
-                whereClausesSql.Add($"r.EnglishLabel LIKE N'%@{queryParamName}%'");
+                whereClausesSql.Add($"r.EnglishLabel LIKE N'%' + @{queryParamName} + N'%'");
             }
         }
 
@@ -245,7 +245,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                         SELECT NULL
                         FROM PassageResources AS psr
                             JOIN Passages p ON psr.PassageId = p.Id
-                        WHERE r.Id = psr.ResourceId AND
+                        WHERE
+                            r.Id = psr.ResourceId AND
                             (
                                 p.StartVerseId BETWEEN @{startVerseIdParamName} AND @{endVerseIdParamName} OR
                                 p.EndVerseId BETWEEN @{startVerseIdParamName} AND @{endVerseIdParamName} OR
@@ -253,7 +254,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                             )
                     )
                 )
-                """);
+            """);
         }
 
         if (filter.HasUnresolvedCommentThreads.HasValue && filter.HasUnresolvedCommentThreads.Value)
@@ -267,26 +268,41 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         }
 
         // The only actual grouping property is the ResourceContent.Id but the rest are required for the select.
-        const string groupBySql =
-            "GROUP BY rc.Id, rc.ResourceId, r.EnglishLabel, r.ParentResourceId, pr.DisplayName, l.LanguageId, rc.Status, r.SortOrder";
-
-        var coreSql = $"""
-            {fromSql}
-            {(whereClausesSql.Count > 0 ? $"WHERE {string.Join($" AND{Environment.NewLine}\t", whereClausesSql)}" : "")}
-            {groupBySql}
+        const string groupBySql = """
+            GROUP BY
+                rc.Id,
+                rc.MediaType,
+                rc.ResourceId,
+                r.EnglishLabel,
+                r.ParentResourceId,
+                pr.DisplayName,
+                rc.LanguageId,
+                rc.Status,
+                r.SortOrder
             """;
 
         const string offsetLiteralName = "offset";
         const string limitLiteralName = "limit";
 
         const string pagingSql = $$"""
-            ORDER BY pr.DisplayName, r.SortOrder, r.EnglishLabel
+            ORDER BY
+                pr.DisplayName,
+                r.SortOrder,
+                r.EnglishLabel
             OFFSET {={{offsetLiteralName}}} ROWS FETCH NEXT {={{limitLiteralName}}} ROWS ONLY
+            """;
+
+        var coreSql = $"""
+            {fromSql}
+            {(whereClausesSql.Count > 0
+                ? $"WHERE{Environment.NewLine}    {string.Join($" AND{Environment.NewLine}    ", whereClausesSql)}"
+                : "")}
             """;
 
         var dataSql = $"""
             {selectPropertiesSql}
             {coreSql}
+            {groupBySql}
             {pagingSql}
             """;
 
@@ -294,10 +310,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         pagingParameters.Add(offsetLiteralName, offset);
         pagingParameters.Add(limitLiteralName, limit);
 
-        await using var connection = dbContext.Database.GetDbConnection();
-
-        var resourceContentSummaries =
-            (await connection.QueryWithRetriesAsync<DbResourceContentSummary>(dataSql, pagingParameters, cancellationToken: ct))
+        var resourceContentSummaries = (await dbContext.Database.GetDbConnection()
+                .QueryWithRetriesAsync<DbResourceContentSummary>(dataSql, pagingParameters, cancellationToken: ct))
             .ToList()
             .AsReadOnly();
 
@@ -314,7 +328,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 {coreSql}
                 """;
 
-            total = await connection.ExecuteScalarWithRetriesAsync<int>(totalSql, coreParameters, cancellationToken: ct);
+            total = await dbContext.Database.GetDbConnection()
+                .ExecuteScalarWithRetriesAsync<int>(totalSql, coreParameters, cancellationToken: ct);
         }
 
         return (total, resourceContentSummaries);
