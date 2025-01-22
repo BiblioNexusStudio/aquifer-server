@@ -7,6 +7,7 @@ using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
+using Aquifer.API.Common.Dtos;
 
 namespace Aquifer.API.Endpoints.Resources.Content.AssignedToSelf.List;
 
@@ -30,29 +31,50 @@ public class Endpoint(
         var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
             new ResourceContentSearchFilter
             {
+                IsDraft = true,
                 AssignedUserId = user.Id,
                 ExcludeContentStatuses = [ResourceContentStatus.TranslationAiDraftComplete, ResourceContentStatus.AquiferizeAiDraftComplete],
             },
             offset: 0,
-            limit: int.MaxValue,
+            limit: null,
+            shouldSortByName: false,
             ct);
 
         var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);
 
         var projectByIdMap = await _dbContext.Projects
             .Where(p => resourceContentSummaries.Select(rcs => rcs.ProjectId).Distinct().Contains(p.Id))
+            .Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.ProjectedDeliveryDate,
+            })
             .ToDictionaryAsync(p => p.Id, ct);
 
-        var latestResourceContentVersionByIdMap = await _dbContext.ResourceContentVersions
+        var sourceWordCountByResourceContentVersionIdMap = await _dbContext.ResourceContentVersions
             .Where(rcv => resourceContentSummaries.Select(rcs => rcs.LatestResourceContentVersionId).Contains(rcv.Id))
-            .ToDictionaryAsync(rcv => rcv.Id, ct);
+            .Select(rcv => new { rcv.Id, rcv.SourceWordCount })
+            .ToDictionaryAsync(x => x.Id, x => x.SourceWordCount, ct);
 
         var lastUserAssignmentsByResourceContentVersionIdMap =
             await Helpers.GetLastUserAssignmentsByResourceContentVersionIdMapAsync(
-                latestResourceContentVersionByIdMap.Keys,
+                sourceWordCountByResourceContentVersionIdMap.Keys,
                 numberOfAssignments: 2,
                 _dbContext,
                 ct);
+
+        // get previously assigned user IDs.
+        var userIdsToFetch = lastUserAssignmentsByResourceContentVersionIdMap.Values
+            .Select(x => x.Count > 1 ? x[1].UserId : null)
+            .OfType<int>()
+            .Distinct()
+            .ToList();
+
+        var userDtoByIdMap = await _dbContext.Users
+            .Where(u => userIdsToFetch.Contains(u.Id))
+            .Select(u => new UserDto(u.Id, u.FirstName, u.LastName))
+            .ToDictionaryAsync(u => u.Id, ct);
 
         Response = resourceContentSummaries
             .Select(rcs =>
@@ -62,18 +84,19 @@ public class Endpoint(
 
                 // Because we filtered by AssignedUserId we can assume that the LatestResourceContentVersionId is the Draft version
                 // (the only version that allows user assignments).
-                var draftResourceContentVersion = latestResourceContentVersionByIdMap[rcs.LatestResourceContentVersionId];
+                var sourceWordCount = sourceWordCountByResourceContentVersionIdMap[rcs.LatestResourceContentVersionId];
 
                 // The most recent user assignment history should be to assign to the current user.
-                var lastTwoUserAssignments = lastUserAssignmentsByResourceContentVersionIdMap[draftResourceContentVersion.Id];
+                var lastTwoUserAssignments =
+                    lastUserAssignmentsByResourceContentVersionIdMap[rcs.LatestResourceContentVersionId];
                 var currentUserAssignment = lastTwoUserAssignments[0];
-                if (currentUserAssignment.User?.Id != user.Id)
+                if (currentUserAssignment.UserId != user.Id)
                 {
                     throw new InvalidOperationException(
-                        $"Expected the currently assigned user to be the last assigned user, but the current user ID is \"{user.Id}\" and the last assigned user is \"{currentUserAssignment.User?.Id}\".");
+                        $"Expected the currently assigned user to be the last assigned user, but the current user ID is \"{user.Id}\" and the last assigned user is \"{currentUserAssignment.UserId}\".");
                 }
 
-                var previouslyAssignedUser = lastTwoUserAssignments.Count > 1 ? lastTwoUserAssignments[1].User : null;
+                var previouslyAssignedUserId = lastTwoUserAssignments.Count > 1 ? lastTwoUserAssignments[1].UserId : null;
 
                 return new Response
                 {
@@ -81,7 +104,7 @@ public class Endpoint(
                     EnglishLabel = rcs.ResourceEnglishLabel,
                     ParentResourceName = rcs.ParentResourceEnglishDisplayName,
                     LanguageEnglishDisplay = languageEntityByIdMap[rcs.LanguageId].EnglishDisplay,
-                    WordCount = draftResourceContentVersion.SourceWordCount,
+                    WordCount = sourceWordCount,
                     StatusValue = rcs.Status,
                     SortOrder = rcs.ResourceSortOrder,
                     ProjectName = project?.Name,
@@ -92,7 +115,9 @@ public class Endpoint(
                         ? null
                         : (project.ProjectedDeliveryDate.Value.ToDateTime(new TimeOnly(23, 59)) - DateTime.UtcNow).Days,
                     DaysSinceContentUpdated = rcs.ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)rcs.ContentUpdated).Days,
-                    LastAssignedUser = previouslyAssignedUser,
+                    LastAssignedUser = previouslyAssignedUserId.HasValue
+                        ? userDtoByIdMap[previouslyAssignedUserId.Value]
+                        : null,
                     HasAudio = rcs.HasAudio,
                     HasUnresolvedCommentThreads = rcs.HasUnresolvedCommentThreads,
                 };

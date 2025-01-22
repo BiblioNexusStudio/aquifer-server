@@ -35,18 +35,26 @@ public class Endpoint(
                 IncludeContentStatuses = [ResourceContentStatus.New, ResourceContentStatus.TranslationAiDraftComplete, ResourceContentStatus.AquiferizeAiDraftComplete],
             },
             offset: 0,
-            limit: int.MaxValue,
+            limit: null,
+            shouldSortByName: false,
             ct);
 
         var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);
 
          var projectByIdMap = await _dbContext.Projects
             .Where(p => resourceContentSummaries.Select(rcs => rcs.ProjectId).Distinct().Contains(p.Id))
+            .Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.ProjectedDeliveryDate,
+            })
             .ToDictionaryAsync(p => p.Id, ct);
 
-        var latestResourceContentVersionByIdMap = await _dbContext.ResourceContentVersions
+        var sourceWordCountByResourceContentVersionIdMap = await _dbContext.ResourceContentVersions
              .Where(rcv => resourceContentSummaries.Select(rcs => rcs.LatestResourceContentVersionId).Contains(rcv.Id))
-             .ToDictionaryAsync(rcv => rcv.Id, ct);
+             .Select(rcv => new { rcv.Id, rcv.SourceWordCount })
+             .ToDictionaryAsync(x => x.Id, x => x.SourceWordCount, ct);
 
         var resources = resourceContentSummaries
             .Select(rcs =>
@@ -55,7 +63,7 @@ public class Endpoint(
                 var project = projectByIdMap[rcs.ProjectId!.Value];
 
                 // Because we filtered to InDraft = true, we can assume that the LatestResourceContentVersionId is the Draft version.
-                var draftResourceContentVersion = latestResourceContentVersionByIdMap[rcs.LatestResourceContentVersionId];
+                var sourceWordCount = sourceWordCountByResourceContentVersionIdMap[rcs.LatestResourceContentVersionId];
 
                 return new Response
                 {
@@ -63,7 +71,7 @@ public class Endpoint(
                     EnglishLabel = rcs.ResourceEnglishLabel,
                     ParentResourceName = rcs.ParentResourceEnglishDisplayName,
                     LanguageEnglishDisplay = languageEntityByIdMap[rcs.LanguageId].EnglishDisplay,
-                    WordCount = draftResourceContentVersion.SourceWordCount,
+                    WordCount = sourceWordCount,
                     ProjectName = project.Name,
                     ProjectProjectedDeliveryDate = project.ProjectedDeliveryDate,
                     SortOrder = rcs.ResourceSortOrder,

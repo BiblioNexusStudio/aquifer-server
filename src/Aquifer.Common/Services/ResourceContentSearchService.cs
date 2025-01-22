@@ -10,7 +10,8 @@ public interface IResourceContentSearchService
     Task<(int Total, IReadOnlyList<DbResourceContentSummary> ResourceContentSummaries)> SearchAsync(
         ResourceContentSearchFilter filter,
         int offset,
-        int limit,
+        int? limit,
+        bool shouldSortByName,
         CancellationToken ct);
 }
 
@@ -75,7 +76,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
     public async Task<(int Total, IReadOnlyList<DbResourceContentSummary> ResourceContentSummaries)> SearchAsync(
         ResourceContentSearchFilter filter,
         int offset,
-        int limit,
+        int? limit,
+        bool shouldSortByName,
         CancellationToken ct)
     {
         if (offset < 0)
@@ -83,9 +85,14 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             throw new ArgumentException($"\"{nameof(offset)}\" must be greater than or equal to 0.", nameof(offset));
         }
 
-        if (limit <= 0)
+        if (limit is <= 0)
         {
             throw new ArgumentException($"\"{nameof(limit)}\" must be greater than 0.", nameof(limit));
+        }
+
+        if (limit is null && offset > 0)
+        {
+            throw new ArgumentException($"\"{nameof(limit)}\" must be passed if \"{nameof(offset)}\" is greater than 0.", nameof(limit));
         }
 
         if (filter is { IsDraft: not null, IsPublished: not null })
@@ -410,27 +417,37 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             ? $"WHERE{Environment.NewLine}    {string.Join($" AND{Environment.NewLine}    ", whereClausesSql)}"
             : "";
 
+        var hasPaging = offset != 0 || limit != null;
+
         const string offsetLiteralName = "offset";
         const string limitLiteralName = "limit";
-
         const string pagingSql = $$"""
+           OFFSET {={{offsetLiteralName}}} ROWS FETCH NEXT {={{limitLiteralName}}} ROWS ONLY
+           """;
+
+        var pagingParameters = new DynamicParameters(coreParameters);
+        if (hasPaging)
+        {
+            pagingParameters.Add(offsetLiteralName, offset);
+            pagingParameters.Add(limitLiteralName, limit);
+        }
+
+        var sortSql = shouldSortByName
+            ? """
             ORDER BY
                 pr.DisplayName,
                 r.SortOrder,
                 r.EnglishLabel
-            OFFSET {={{offsetLiteralName}}} ROWS FETCH NEXT {={{limitLiteralName}}} ROWS ONLY
-            """;
+            """
+            : "ORDER BY rc.Id";
 
         var dataSql = $"""
             {selectPropertiesSql}
             {fromSql}
             {whereSql}
-            {pagingSql}
+            {sortSql}
+            {(hasPaging ? pagingSql : "")}
             """;
-
-        var pagingParameters = new DynamicParameters(coreParameters);
-        pagingParameters.Add(offsetLiteralName, offset);
-        pagingParameters.Add(limitLiteralName, limit);
 
         var resourceContentSummaries = (await dbContext.Database.GetDbConnection()
                 .QueryWithRetriesAsync<DbResourceContentSummary>(dataSql, pagingParameters, cancellationToken: ct))
