@@ -1,4 +1,7 @@
-﻿using Aquifer.Data;
+﻿using System.Collections.ObjectModel;
+using Aquifer.Common.Utilities;
+using Aquifer.Data;
+using Aquifer.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -6,10 +9,12 @@ namespace Aquifer.Common.Services.Caching;
 
 public interface ICachingLanguageService
 {
+    Task<LanguageEntity?> GetLanguageEntityAsync(int languageId, CancellationToken ct);
+    Task<ReadOnlyDictionary<int, LanguageEntity>> GetLanguageEntityByIdMapAsync(CancellationToken ct);
     Task<string?> GetLanguageCodeAsync(int languageId, CancellationToken ct);
-    Task<IReadOnlyDictionary<int, string>> GetLanguageCodeByIdMapAsync(CancellationToken ct);
+    Task<ReadOnlyDictionary<int, string>> GetLanguageCodeByIdMapAsync(CancellationToken ct);
     Task<int?> GetLanguageIdAsync(string languageCode, CancellationToken ct);
-    Task<IReadOnlyDictionary<string, int>> GetLanguageIdByCodeMapAsync(CancellationToken ct);
+    Task<ReadOnlyDictionary<string, int>> GetLanguageIdByCodeMapAsync(CancellationToken ct);
 
     Task<(bool IsValidLanguageId, bool IsValidLanguageCode, int? ValidLanguageId)>
         ValidateLanguageIdOrCodeAsync(int? languageId, string? languageCode, bool shouldRequireInput, CancellationToken ct);
@@ -30,15 +35,25 @@ public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryC
     private const string LanguageDictionariesCacheKey = $"{nameof(CachingLanguageService)}:LanguageDictionaries";
     private static readonly TimeSpan s_cacheLifetime = TimeSpan.FromMinutes(30);
 
+    public async Task<LanguageEntity?> GetLanguageEntityAsync(int languageId, CancellationToken ct)
+    {
+        return (await GetLanguageEntityByIdMapAsync(ct))
+            .GetValueOrDefault(languageId);
+    }
+
+    public async Task<ReadOnlyDictionary<int, LanguageEntity>> GetLanguageEntityByIdMapAsync(CancellationToken ct)
+    {
+        return (await GetDictionariesFromCacheAsync(ct))
+            .LanguageEntityByIdMap;
+    }
+
     public async Task<string?> GetLanguageCodeAsync(int languageId, CancellationToken ct)
     {
         return (await GetLanguageCodeByIdMapAsync(ct))
-            .TryGetValue(languageId, out var languageCode)
-                ? languageCode
-                : null;
+            .GetValueOrDefault(languageId);
     }
 
-    public async Task<IReadOnlyDictionary<int, string>> GetLanguageCodeByIdMapAsync(CancellationToken ct)
+    public async Task<ReadOnlyDictionary<int, string>> GetLanguageCodeByIdMapAsync(CancellationToken ct)
     {
         return (await GetDictionariesFromCacheAsync(ct))
             .LanguageCodeByIdMap;
@@ -49,18 +64,19 @@ public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryC
         ArgumentNullException.ThrowIfNull(languageCode);
 
         return (await GetLanguageIdByCodeMapAsync(ct))
-            .TryGetValue(languageCode, out var languageId)
-                ? languageId
-                : null;
+            .GetValueOrNull(languageCode);
     }
 
-    public async Task<IReadOnlyDictionary<string, int>> GetLanguageIdByCodeMapAsync(CancellationToken ct)
+    public async Task<ReadOnlyDictionary<string, int>> GetLanguageIdByCodeMapAsync(CancellationToken ct)
     {
         return (await GetDictionariesFromCacheAsync(ct))
             .LanguageIdByCodeMap;
     }
 
-    private async Task<(IReadOnlyDictionary<int, string> LanguageCodeByIdMap, IReadOnlyDictionary<string, int> LanguageIdByCodeMap)>
+    private async Task<(
+            ReadOnlyDictionary<int, LanguageEntity> LanguageEntityByIdMap,
+            ReadOnlyDictionary<int, string> LanguageCodeByIdMap,
+            ReadOnlyDictionary<string, int> LanguageIdByCodeMap)>
         GetDictionariesFromCacheAsync(CancellationToken ct)
     {
         return await _memoryCache.GetOrCreateAsync(
@@ -69,13 +85,19 @@ public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryC
             {
                 cacheEntry.SlidingExpiration = s_cacheLifetime;
 
-                var LanguageCodeById = await _dbContext.Languages
-                    .Select(l => new { l.Id, l.ISO6393Code })
-                    .ToDictionaryAsync(l => l.Id, l => l.ISO6393Code, ct);
+                var languageEntityByIdMap = (await _dbContext.Languages
+                        .ToDictionaryAsync(l => l.Id, l => l, ct))
+                    .AsReadOnly();
 
-                return
-                    (LanguageCodeById,
-                    LanguageIdByCode: LanguageCodeById.ToDictionary(li => li.Value, li => li.Key, StringComparer.OrdinalIgnoreCase));
+                var languageCodeByIdMap = languageEntityByIdMap
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ISO6393Code)
+                    .AsReadOnly();
+
+                var languageIdByCodeMap = languageCodeByIdMap
+                    .ToDictionary(kvp => kvp.Value, kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
+                    .AsReadOnly();
+
+                return (languageEntityByIdMap, languageCodeByIdMap, languageIdByCodeMap);
             });
     }
 

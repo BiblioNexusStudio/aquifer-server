@@ -1,15 +1,14 @@
 using Aquifer.API.Common;
 using Aquifer.Common.Extensions;
 using Aquifer.Common.Services;
+using Aquifer.Common.Services.Caching;
 using Aquifer.Common.Utilities;
-using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
-using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.List;
 
-public class Endpoint(AquiferDbContext _dbContext, IResourceContentSearchService _resourceContentSearchService)
+public class Endpoint(IResourceContentSearchService _resourceContentSearchService, ICachingLanguageService _cachingLanguageService)
     : Endpoint<Request, Response>
 {
     public override void Configure()
@@ -43,20 +42,7 @@ public class Endpoint(AquiferDbContext _dbContext, IResourceContentSearchService
             req.Limit,
             ct);
 
-        var languageIds = resourceContentSummaries
-            .Select(rcs => rcs.LanguageId)
-            .ToHashSet();
-
-        var languageEnglishDisplayById = languageIds.Count == 0
-            ? []
-            : await _dbContext.Languages
-                .Where(l => languageIds.Contains(l.Id))
-                .Select(l => new
-                {
-                    l.Id,
-                    l.EnglishDisplay,
-                })
-                .ToDictionaryAsync(l => l.Id, l => l.EnglishDisplay, ct);
+        var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);
 
         var response = new Response
         {
@@ -66,7 +52,7 @@ public class Endpoint(AquiferDbContext _dbContext, IResourceContentSearchService
                     Id = rcs.Id,
                     EnglishLabel = rcs.ResourceEnglishLabel,
                     ParentResourceName = rcs.ParentResourceEnglishDisplayName,
-                    LanguageEnglishDisplay = languageEnglishDisplayById[rcs.LanguageId],
+                    LanguageEnglishDisplay = languageEntityByIdMap[rcs.LanguageId].EnglishDisplay,
                     Status = rcs.Status.GetDisplayName(),
                     IsPublished = rcs.IsPublished,
                     HasAudio = rcs.HasAudio,
