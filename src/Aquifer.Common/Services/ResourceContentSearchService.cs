@@ -45,6 +45,7 @@ public sealed class DbResourceContentSummary
     public required string ParentResourceEnglishDisplayName { get; init; }
     public required int LanguageId { get; init; }
     public required ResourceContentStatus Status { get; init; }
+    public required DateTime? ContentUpdated { get; init; }
 
     /// <summary>
     /// Will not be <c>null</c> if <see cref="ResourceContentSearchFilter.IsInProject"/> is <c>true</c>.
@@ -165,6 +166,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 pr.DisplayName AS {nameof(DbResourceContentSummary.ParentResourceEnglishDisplayName)},
                 rc.LanguageId AS {nameof(DbResourceContentSummary.LanguageId)},
                 rc.Status AS {nameof(DbResourceContentSummary.Status)},
+                rc.ContentUpdated AS {nameof(DbResourceContentSummary.ContentUpdated)},
                 prc.ProjectId AS {nameof(DbResourceContentSummary.ProjectId)},
                 rcvd.IsPublished AS {nameof(DbResourceContentSummary.IsPublished)},
                 rcvd.IsDraft AS {nameof(DbResourceContentSummary.IsDraft)},
