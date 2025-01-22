@@ -29,6 +29,9 @@ public class Endpoint(
         var user = await _userService.GetUserFromJwtAsync(ct);
 
         var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
+            ResourceContentSearchIncludeFlags.Project |
+                ResourceContentSearchIncludeFlags.HasAudioForLanguage |
+                ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
             new ResourceContentSearchFilter
             {
                 IsDraft = true,

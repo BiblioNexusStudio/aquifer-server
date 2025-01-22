@@ -24,6 +24,9 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
         // The opposite of IsPublished == true is not IsDraft == true (because the most recent ResourceContentVersion for a ResourceContent
         // can be neither of those statuses) but that logic is used here because consumers expect it.
         var (total, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
+            ResourceContentSearchIncludeFlags.ResourceContentVersions |
+                ResourceContentSearchIncludeFlags.HasAudioForLanguage |
+                ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
             new ResourceContentSearchFilter
             {
                 ParentResourceId = req.ParentResourceId,

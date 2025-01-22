@@ -29,6 +29,9 @@ public class Endpoint(
         var user = await _userService.GetUserFromJwtAsync(ct);
 
         var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
+            ResourceContentSearchIncludeFlags.Project |
+                ResourceContentSearchIncludeFlags.HasAudioForLanguage |
+                ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
             new ResourceContentSearchFilter
             {
                 IsDraft = true,
@@ -51,21 +54,6 @@ public class Endpoint(
             ct);
 
         var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);
-
-        var projectByIdMap = await _dbContext.Projects
-            .Where(p => resourceContentSummaries.Select(rcs => rcs.ProjectId).Distinct().Contains(p.Id))
-            .Select(p => new
-            {
-                p.Id,
-                p.Name,
-                p.ProjectedDeliveryDate,
-            })
-            .ToDictionaryAsync(p => p.Id, ct);
-
-        var sourceWordCountByResourceContentVersionIdMap = await _dbContext.ResourceContentVersions
-            .Where(rcv => resourceContentSummaries.Select(rcs => rcs.LatestResourceContentVersionId).Contains(rcv.Id))
-            .Select(rcv => new { rcv.Id, rcv.SourceWordCount })
-            .ToDictionaryAsync(x => x.Id, x => x.SourceWordCount, ct);
 
         var lastUserAssignmentsByResourceContentVersionIdMap =
             await Helpers.GetLastUserAssignmentsByResourceContentVersionIdMapAsync(
