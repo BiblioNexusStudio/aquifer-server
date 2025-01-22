@@ -117,10 +117,12 @@ public static class Helpers
         version.Content = JsonUtilities.DefaultSerialize(deserializedContent);
     }
 
-    public static async Task<List<(int resourceContentVersionId, UserDto? user)>> GetLastAssignmentsAsync(
-        IEnumerable<int> resourceContentVersionIds,
-        AquiferDbContext dbContext,
-        CancellationToken ct)
+    public static async Task<Dictionary<int, List<(UserDto? User, DateTime Created)>>>
+        GetLastUserAssignmentsByResourceContentVersionIdMapAsync(
+            IEnumerable<int> resourceContentVersionIds,
+            int numberOfAssignments,
+            AquiferDbContext dbContext,
+            CancellationToken ct)
     {
         var assignmentHistory = await dbContext.ResourceContentVersionAssignedUserHistory
             .AsTracking()
@@ -129,18 +131,14 @@ public static class Helpers
             .Include(x => x.AssignedUser)
             .ToListAsync(ct);
 
-        var groupedAssignmentsHistories = assignmentHistory.GroupBy(x => x.ResourceContentVersionId);
-
-        var lastAssignments = new List<(int resourceContentVersionId, UserDto? user)>();
-        foreach (var versionHistory in groupedAssignmentsHistories)
-        {
-            var lastAssignment = versionHistory.OrderByDescending(x => x.Id).Skip(1).Take(1).FirstOrDefault();
-            if (lastAssignment != null)
-            {
-                lastAssignments.Add((lastAssignment.ResourceContentVersionId, UserDto.FromUserEntity(lastAssignment.AssignedUser)));
-            }
-        }
-
-        return lastAssignments;
+        return assignmentHistory
+            .GroupBy(x => x.ResourceContentVersionId)
+            .ToDictionary(
+                grp => grp.Key,
+                grp => grp
+                    .OrderByDescending(x => x.Id)
+                    .Take(numberOfAssignments)
+                    .Select(rcvauh => (UserDto.FromUserEntity(rcvauh.AssignedUser), rcvauh.Created))
+                    .ToList());
     }
 }

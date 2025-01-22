@@ -41,7 +41,7 @@ public class Endpoint(
         var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);
 
          var projectByIdMap = await _dbContext.Projects
-            .Where(p => resourceContentSummaries.Select(rcs => rcs.ProjectId).Contains(p.Id))
+            .Where(p => resourceContentSummaries.Select(rcs => rcs.ProjectId).Distinct().Contains(p.Id))
             .ToDictionaryAsync(p => p.Id, ct);
 
         var latestResourceContentVersionByIdMap = await _dbContext.ResourceContentVersions
