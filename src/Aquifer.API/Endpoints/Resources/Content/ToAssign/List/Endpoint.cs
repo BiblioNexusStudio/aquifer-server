@@ -2,15 +2,12 @@
 using Aquifer.API.Services;
 using Aquifer.Common.Services;
 using Aquifer.Common.Services.Caching;
-using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
-using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.ToAssign.List;
 
 public class Endpoint(
-    AquiferDbContext _dbContext,
     IUserService _userService,
     IResourceContentSearchService _resourceContentSearchService,
     ICachingLanguageService _cachingLanguageService)
@@ -27,56 +24,47 @@ public class Endpoint(
         var user = await _userService.GetUserFromJwtAsync(ct);
 
         var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
+             ResourceContentSearchIncludeFlags.Project |
+                 ResourceContentSearchIncludeFlags.HasAudioForLanguage |
+                 ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
             new ResourceContentSearchFilter
             {
                 IsDraft = true,
                 IsInProject = true,
                 AssignedUserId = user.Id,
-                IncludeContentStatuses = [ResourceContentStatus.New, ResourceContentStatus.TranslationAiDraftComplete, ResourceContentStatus.AquiferizeAiDraftComplete],
+                IncludeContentStatuses =
+                [
+                    ResourceContentStatus.New,
+                    ResourceContentStatus.TranslationAiDraftComplete,
+                    ResourceContentStatus.AquiferizeAiDraftComplete,
+                ],
             },
+            ResourceContentSearchSortOrder.ResourceContentId,
             offset: 0,
             limit: null,
-            shouldSortByName: false,
             ct);
 
         var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);
 
-         var projectByIdMap = await _dbContext.Projects
-            .Where(p => resourceContentSummaries.Select(rcs => rcs.ProjectId).Distinct().Contains(p.Id))
-            .Select(p => new
-            {
-                p.Id,
-                p.Name,
-                p.ProjectedDeliveryDate,
-            })
-            .ToDictionaryAsync(p => p.Id, ct);
-
-        var sourceWordCountByResourceContentVersionIdMap = await _dbContext.ResourceContentVersions
-             .Where(rcv => resourceContentSummaries.Select(rcs => rcs.LatestResourceContentVersionId).Contains(rcv.Id))
-             .Select(rcv => new { rcv.Id, rcv.SourceWordCount })
-             .ToDictionaryAsync(x => x.Id, x => x.SourceWordCount, ct);
-
         var resources = resourceContentSummaries
             .Select(rcs =>
             {
-                // ProjectId should never be null because we filtered to IsInProject = true
-                var project = projectByIdMap[rcs.ProjectId!.Value];
-
-                // Because we filtered to InDraft = true, we can assume that the LatestResourceContentVersionId is the Draft version.
-                var sourceWordCount = sourceWordCountByResourceContentVersionIdMap[rcs.LatestResourceContentVersionId];
+                // Project should never be null because we filtered to IsInProject = true
+                var project = rcs.Project!;
+                var resourceContentVersion = rcs.ResourceContentVersion!;
 
                 return new Response
                 {
-                    Id = rcs.Id,
-                    EnglishLabel = rcs.ResourceEnglishLabel,
-                    ParentResourceName = rcs.ParentResourceEnglishDisplayName,
-                    LanguageEnglishDisplay = languageEntityByIdMap[rcs.LanguageId].EnglishDisplay,
-                    WordCount = sourceWordCount,
+                    Id = rcs.ResourceContent.Id,
+                    EnglishLabel = rcs.Resource.EnglishLabel,
+                    ParentResourceName = rcs.ParentResource.DisplayName,
+                    LanguageEnglishDisplay = languageEntityByIdMap[rcs.ResourceContent.LanguageId].EnglishDisplay,
+                    WordCount = resourceContentVersion.SourceWordCount,
                     ProjectName = project.Name,
                     ProjectProjectedDeliveryDate = project.ProjectedDeliveryDate,
-                    SortOrder = rcs.ResourceSortOrder,
-                    HasAudio = rcs.HasAudio,
-                    HasUnresolvedCommentThreads = rcs.HasUnresolvedCommentThreads,
+                    SortOrder = rcs.Resource.SortOrder,
+                    HasAudio = rcs.Resource.HasAudioForLanguage!.Value,
+                    HasUnresolvedCommentThreads = resourceContentVersion.HasUnresolvedCommentThreads!.Value,
                 };
             })
             .ToList();

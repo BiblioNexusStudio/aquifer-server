@@ -29,37 +29,30 @@ public class Endpoint(
         var user = await _userService.GetUserFromJwtAsync(ct);
 
         var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
+            ResourceContentSearchIncludeFlags.Project |
+                ResourceContentSearchIncludeFlags.HasAudioForLanguage |
+                ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
             new ResourceContentSearchFilter
             {
                 IsDraft = true,
                 AssignedUserId = user.Id,
-                ExcludeContentStatuses = [ResourceContentStatus.TranslationAiDraftComplete, ResourceContentStatus.AquiferizeAiDraftComplete],
+                ExcludeContentStatuses =
+                [
+                    ResourceContentStatus.TranslationAiDraftComplete,
+                    ResourceContentStatus.AquiferizeAiDraftComplete,
+                ],
             },
+            ResourceContentSearchSortOrder.ResourceContentId,
             offset: 0,
             limit: null,
-            shouldSortByName: false,
             ct);
 
         var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);
 
-        var projectByIdMap = await _dbContext.Projects
-            .Where(p => resourceContentSummaries.Select(rcs => rcs.ProjectId).Distinct().Contains(p.Id))
-            .Select(p => new
-            {
-                p.Id,
-                p.Name,
-                p.ProjectedDeliveryDate,
-            })
-            .ToDictionaryAsync(p => p.Id, ct);
-
-        var sourceWordCountByResourceContentVersionIdMap = await _dbContext.ResourceContentVersions
-            .Where(rcv => resourceContentSummaries.Select(rcs => rcs.LatestResourceContentVersionId).Contains(rcv.Id))
-            .Select(rcv => new { rcv.Id, rcv.SourceWordCount })
-            .ToDictionaryAsync(x => x.Id, x => x.SourceWordCount, ct);
-
+        // ResourceContentVersion is populated by default, and we didn't filter it out.
         var lastUserAssignmentsByResourceContentVersionIdMap =
             await Helpers.GetLastUserAssignmentsByResourceContentVersionIdMapAsync(
-                sourceWordCountByResourceContentVersionIdMap.Keys,
+                resourceContentSummaries.Select(rcs => rcs.ResourceContentVersion!.Id),
                 numberOfAssignments: 2,
                 _dbContext,
                 ct);
@@ -79,16 +72,13 @@ public class Endpoint(
         Response = resourceContentSummaries
             .Select(rcs =>
             {
-                // ProjectId may be null
-                var project = rcs.ProjectId.HasValue ? projectByIdMap[rcs.ProjectId.Value] : null;
-
-                // Because we filtered by AssignedUserId we can assume that the LatestResourceContentVersionId is the Draft version
-                // (the only version that allows user assignments).
-                var sourceWordCount = sourceWordCountByResourceContentVersionIdMap[rcs.LatestResourceContentVersionId];
+                // Project may be null
+                var project = rcs.Project;
+                var resourceContentVersion = rcs.ResourceContentVersion!;
 
                 // The most recent user assignment history should be to assign to the current user.
                 var lastTwoUserAssignments =
-                    lastUserAssignmentsByResourceContentVersionIdMap[rcs.LatestResourceContentVersionId];
+                    lastUserAssignmentsByResourceContentVersionIdMap[resourceContentVersion.Id];
                 var currentUserAssignment = lastTwoUserAssignments[0];
                 if (currentUserAssignment.UserId != user.Id)
                 {
@@ -100,30 +90,36 @@ public class Endpoint(
 
                 return new Response
                 {
-                    Id = rcs.Id,
-                    EnglishLabel = rcs.ResourceEnglishLabel,
-                    ParentResourceName = rcs.ParentResourceEnglishDisplayName,
-                    LanguageEnglishDisplay = languageEntityByIdMap[rcs.LanguageId].EnglishDisplay,
-                    WordCount = sourceWordCount,
-                    StatusValue = rcs.Status,
-                    SortOrder = rcs.ResourceSortOrder,
+                    Id = rcs.ResourceContent.Id,
+                    EnglishLabel = rcs.Resource.EnglishLabel,
+                    ParentResourceName = rcs.ParentResource.DisplayName,
+                    LanguageEnglishDisplay = languageEntityByIdMap[rcs.ResourceContent.LanguageId].EnglishDisplay,
+                    WordCount = resourceContentVersion.SourceWordCount,
+                    StatusValue = rcs.ResourceContent.Status,
+                    Status = rcs.ResourceContent.Status.GetDisplayName(),
+                    StatusDisplayName = rcs.ResourceContent.Status.GetDisplayName(),
+                    SortOrder = rcs.Resource.SortOrder,
                     ProjectName = project?.Name,
-                    Status = rcs.Status.GetDisplayName(),
-                    StatusDisplayName = rcs.Status.GetDisplayName(),
                     DaysSinceAssignment = (DateTime.UtcNow - currentUserAssignment.Created).Days,
                     DaysUntilProjectDeadline = project?.ProjectedDeliveryDate == null
                         ? null
                         : (project.ProjectedDeliveryDate.Value.ToDateTime(new TimeOnly(23, 59)) - DateTime.UtcNow).Days,
-                    DaysSinceContentUpdated = rcs.ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)rcs.ContentUpdated).Days,
+                    DaysSinceContentUpdated = rcs.ResourceContent.ContentUpdated == null
+                        ? null
+                        : (DateTime.UtcNow - (DateTime)rcs.ResourceContent.ContentUpdated).Days,
                     LastAssignedUser = previouslyAssignedUserId.HasValue
                         ? userDtoByIdMap[previouslyAssignedUserId.Value]
                         : null,
-                    HasAudio = rcs.HasAudio,
-                    HasUnresolvedCommentThreads = rcs.HasUnresolvedCommentThreads,
+                    HasAudio = rcs.Resource.HasAudioForLanguage!.Value,
+                    HasUnresolvedCommentThreads = resourceContentVersion.HasUnresolvedCommentThreads!.Value,
                 };
             })
+            // There's no support yet for sorting by days since assignment in the search service so we have to fetch everything and
+            // post-sort. Probably the closest thing would be to sort on the ResourceContent's Updated date.
             .OrderByDescending(x => x.DaysSinceAssignment)
             .ThenBy(x => x.ProjectName)
+            .ThenBy(x => x.ParentResourceName)
+            .ThenBy(x => x.SortOrder)
             .ThenBy(x => x.EnglishLabel)
             .ToList();
     }

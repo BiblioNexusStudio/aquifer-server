@@ -24,6 +24,9 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
         // The opposite of IsPublished == true is not IsDraft == true (because the most recent ResourceContentVersion for a ResourceContent
         // can be neither of those statuses) but that logic is used here because consumers expect it.
         var (total, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
+            ResourceContentSearchIncludeFlags.ResourceContentVersions |
+                ResourceContentSearchIncludeFlags.HasAudioForLanguage |
+                ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
             new ResourceContentSearchFilter
             {
                 ParentResourceId = req.ParentResourceId,
@@ -38,9 +41,9 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
                 HasAudio = req.HasAudio,
                 HasUnresolvedCommentThreads = req.HasUnresolvedCommentThreads,
             },
+            ResourceContentSearchSortOrder.ParentResourceAndResourceName,
             req.Offset,
             req.Limit,
-            shouldSortByName: true,
             ct);
 
         var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);
@@ -50,14 +53,14 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
             ResourceContents = resourceContentSummaries
                 .Select(rcs => new ResourceContentResponse
                 {
-                    Id = rcs.Id,
-                    EnglishLabel = rcs.ResourceEnglishLabel,
-                    ParentResourceName = rcs.ParentResourceEnglishDisplayName,
-                    LanguageEnglishDisplay = languageEntityByIdMap[rcs.LanguageId].EnglishDisplay,
-                    Status = rcs.Status.GetDisplayName(),
-                    IsPublished = rcs.IsPublished,
-                    HasAudio = rcs.HasAudio,
-                    HasUnresolvedCommentThreads = rcs.HasUnresolvedCommentThreads,
+                    Id = rcs.ResourceContent.Id,
+                    EnglishLabel = rcs.Resource.EnglishLabel,
+                    ParentResourceName = rcs.ParentResource.DisplayName,
+                    LanguageEnglishDisplay = languageEntityByIdMap[rcs.ResourceContent.LanguageId].EnglishDisplay,
+                    Status = rcs.ResourceContent.Status.GetDisplayName(),
+                    IsPublished = rcs.ResourceContentVersions!.AnyIsPublished,
+                    HasAudio = rcs.Resource.HasAudioForLanguage!.Value,
+                    HasUnresolvedCommentThreads = rcs.ResourceContentVersions!.HasUnresolvedCommentThreads!.Value,
                 })
                 .ToList(),
             Total = total,

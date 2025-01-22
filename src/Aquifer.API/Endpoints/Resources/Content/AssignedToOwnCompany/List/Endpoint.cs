@@ -29,6 +29,9 @@ public class Endpoint(
         var user = await _userService.GetUserFromJwtAsync(ct);
 
         var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
+            ResourceContentSearchIncludeFlags.Project |
+                ResourceContentSearchIncludeFlags.HasAudioForLanguage |
+                ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
             new ResourceContentSearchFilter
             {
                 IsDraft = true,
@@ -45,31 +48,17 @@ public class Endpoint(
                     ResourceContentStatus.TranslationEditorReview,
                 ],
             },
+            ResourceContentSearchSortOrder.ProjectProjectedDeliveryDate,
             offset: 0,
             limit: null,
-            shouldSortByName: false,
             ct);
 
         var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);
 
-        var projectByIdMap = await _dbContext.Projects
-            .Where(p => resourceContentSummaries.Select(rcs => rcs.ProjectId).Distinct().Contains(p.Id))
-            .Select(p => new
-            {
-                p.Id,
-                p.Name,
-                p.ProjectedDeliveryDate,
-            })
-            .ToDictionaryAsync(p => p.Id, ct);
-
-        var sourceWordCountByResourceContentVersionIdMap = await _dbContext.ResourceContentVersions
-            .Where(rcv => resourceContentSummaries.Select(rcs => rcs.LatestResourceContentVersionId).Contains(rcv.Id))
-            .Select(rcv => new { rcv.Id, rcv.SourceWordCount })
-            .ToDictionaryAsync(x => x.Id, x => x.SourceWordCount, ct);
-
+        // ResourceContentVersion is populated by default, and we didn't filter it out.
         var lastUserAssignmentsByResourceContentVersionIdMap =
             await Helpers.GetLastUserAssignmentsByResourceContentVersionIdMapAsync(
-                sourceWordCountByResourceContentVersionIdMap.Keys,
+                resourceContentSummaries.Select(rcs => rcs.ResourceContentVersion!.Id),
                 numberOfAssignments: 2,
                 _dbContext,
                 ct);
@@ -77,7 +66,7 @@ public class Endpoint(
         // AssignedUserId must be populated because we filtered on AssignedUserCompanyId.
         // Also get previously assigned user IDs.
         var userIdsToFetch = resourceContentSummaries
-            .Select(rcs => rcs.AssignedUserId!.Value)
+            .Select(rcs => rcs.ResourceContentVersion!.AssignedUserId!.Value)
             .Concat(lastUserAssignmentsByResourceContentVersionIdMap.Values
                 .Select(x => x.Count > 1 ? x[1].UserId : null)
                 .OfType<int>())
@@ -92,28 +81,28 @@ public class Endpoint(
         Response = resourceContentSummaries
             .Select(rcs =>
             {
-                // ProjectId should never be null because we filtered to IsInProject = true
-                var project = projectByIdMap[rcs.ProjectId!.Value];
+                // Project should never be null because we filtered to IsInProject = true
+                var project = rcs.Project!;
+                var resourceContentVersion = rcs.ResourceContentVersion!;
 
-                // Because we filtered by IsDraft we know that the LatestResourceContentVersionId is the Draft version.
-                var sourceWordCount = sourceWordCountByResourceContentVersionIdMap[rcs.LatestResourceContentVersionId];
-
-                var lastTwoUserAssignments = lastUserAssignmentsByResourceContentVersionIdMap[rcs.LatestResourceContentVersionId];
+                var lastTwoUserAssignments = lastUserAssignmentsByResourceContentVersionIdMap[resourceContentVersion.Id];
                 var previouslyAssignedUserId = lastTwoUserAssignments.Count > 1 ? lastTwoUserAssignments[1].UserId : null;
 
                 return new Response
                 {
-                    Id = rcs.Id,
-                    EnglishLabel = rcs.ResourceEnglishLabel,
-                    ParentResourceName = rcs.ParentResourceEnglishDisplayName,
-                    LanguageEnglishDisplay = languageEntityByIdMap[rcs.LanguageId].EnglishDisplay,
-                    WordCount = sourceWordCount,
-                    StatusValue = rcs.Status,
-                    StatusDisplayName = rcs.Status.GetDisplayName(),
-                    SortOrder = rcs.ResourceSortOrder,
+                    Id = rcs.ResourceContent.Id,
+                    EnglishLabel = rcs.Resource.EnglishLabel,
+                    ParentResourceName = rcs.ParentResource.DisplayName,
+                    LanguageEnglishDisplay = languageEntityByIdMap[rcs.ResourceContent.LanguageId].EnglishDisplay,
+                    WordCount = resourceContentVersion.SourceWordCount,
+                    StatusValue = rcs.ResourceContent.Status,
+                    StatusDisplayName = rcs.ResourceContent.Status.GetDisplayName(),
+                    SortOrder = rcs.Resource.SortOrder,
                     ProjectName = project.Name,
-                    AssignedUser = userDtoByIdMap[rcs.AssignedUserId!.Value],
-                    DaysSinceContentUpdated = rcs.ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)rcs.ContentUpdated).Days,
+                    AssignedUser = userDtoByIdMap[resourceContentVersion.AssignedUserId!.Value],
+                    DaysSinceContentUpdated = rcs.ResourceContent.ContentUpdated == null
+                        ? null
+                        : (DateTime.UtcNow - (DateTime)rcs.ResourceContent.ContentUpdated).Days,
                     DaysUntilProjectDeadline =
                         project.ProjectedDeliveryDate == null
                             ? null
@@ -121,15 +110,10 @@ public class Endpoint(
                     LastAssignedUser = previouslyAssignedUserId != null
                         ? userDtoByIdMap[previouslyAssignedUserId.Value]
                         : null,
-                    HasAudio = rcs.HasAudio,
-                    HasUnresolvedCommentThreads = rcs.HasUnresolvedCommentThreads,
+                    HasAudio = rcs.Resource.HasAudioForLanguage!.Value,
+                    HasUnresolvedCommentThreads = resourceContentVersion.HasUnresolvedCommentThreads!.Value,
                 };
             })
-            .OrderBy(x => x.DaysUntilProjectDeadline)
-            .ThenBy(x => x.ProjectName)
-            .ThenBy(x => x.ParentResourceName)
-            .ThenBy(x => x.SortOrder)
-            .ThenBy(x => x.EnglishLabel)
             .ToList();
     }
 }

@@ -2,16 +2,19 @@
 using Aquifer.Data.Entities;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
+using static Aquifer.Common.Services.ResourceContentSearchResult;
 
 namespace Aquifer.Common.Services;
 
 public interface IResourceContentSearchService
 {
-    Task<(int Total, IReadOnlyList<DbResourceContentSummary> ResourceContentSummaries)> SearchAsync(
+    // TODO add sort enum
+    Task<(int Total, IReadOnlyList<ResourceContentSearchResult> ResourceContentSummaries)> SearchAsync(
+        ResourceContentSearchIncludeFlags includeFlags,
         ResourceContentSearchFilter filter,
+        ResourceContentSearchSortOrder sortOrder,
         int offset,
         int? limit,
-        bool shouldSortByName,
         CancellationToken ct);
 }
 
@@ -36,48 +39,144 @@ public sealed class ResourceContentSearchFilter
     public bool? IsInProject { get; set; }
 }
 
-public sealed class DbResourceContentSummary
+/// <summary>
+/// These things are expensive so you have to specifically request them.
+/// </summary>
+[Flags]
+public enum ResourceContentSearchIncludeFlags
 {
-    public required int Id { get; init; }
-    public required int ResourceId { get; init; }
-    public required string ResourceEnglishLabel { get; init; }
-    public required int ResourceSortOrder { get; init; }
-    public required int ParentResourceId { get; init; }
-    public required string ParentResourceEnglishDisplayName { get; init; }
-    public required int LanguageId { get; init; }
-    public required ResourceContentStatus Status { get; init; }
-    public required DateTime? ContentUpdated { get; init; }
+    None = 0,
+
+    Project = 1,
+    ResourceContentVersions = 2,
+    HasAudioForLanguage = 4,
+    HasUnresolvedCommentThreads = 8,
+
+    All = Project | ResourceContentVersions | HasAudioForLanguage | HasUnresolvedCommentThreads,
+}
+
+public enum ResourceContentSearchSortOrder
+{
+    ResourceContentId = 0,
 
     /// <summary>
+    /// Sort: ParentResource.DisplayName, Resource.SortOrder, Resource.EnglishLabel
+    /// </summary>
+    ParentResourceAndResourceName = 1,
+
+    /// <summary>
+    /// Sort: Project.ProjectedDeliveryDate (soonest first), Project.Name, ParentResource.DisplayName, Resource.SortOrder, Resource.EnglishLabel
+    /// </summary>
+    ProjectProjectedDeliveryDate = 2,
+}
+
+public sealed class ResourceContentSearchResult
+{
+    /// <summary>
+    /// Always populated.
+    /// </summary>
+    public required ResourceContentSummary ResourceContent { get; init; }
+
+    /// <summary>
+    /// Always populated.
+    /// </summary>
+    public required ResourceSummary Resource { get; init; }
+
+    /// <summary>
+    /// Always populated.
+    /// </summary>
+    public required ParentResourceSummary ParentResource { get; init; }
+
+    /// <summary>
+    /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.Project"/> flag is specified.
+    /// Even if that flag is specified the result may still be <c>null</c> if the ResourceContent is not in a Project.
     /// Will not be <c>null</c> if <see cref="ResourceContentSearchFilter.IsInProject"/> is <c>true</c>.
     /// </summary>
-    public required int? ProjectId { get; init; }
+    public required ProjectSummary? Project { get; init; }
 
     /// <summary>
-    /// If <see cref="IsDraft"/> is <c>true</c> then this will be the ID of the ResourceContentVersion in the Draft status,
-    /// and it will always be the most recent ResourceContentVersion's ID for the ResourceContent.
+    /// Is populated by default, but will not be populated if the <see cref="ResourceContentSearchIncludeFlags.ResourceContentVersions"/> flag is specified.
     /// </summary>
-    public required int LatestResourceContentVersionId { get; init; }
-
-    public required bool IsPublished { get; init; }
-    public required bool IsDraft { get; init; }
-    public required bool HasAudio { get; init; }
-    public required bool HasUnresolvedCommentThreads { get; init; }
+    public required ResourceContentVersionSummary? ResourceContentVersion { get; init; }
 
     /// <summary>
-    /// Will not be <c>null</c> if either <see cref="ResourceContentSearchFilter.AssignedUserId"/> or
-    /// <see cref="ResourceContentSearchFilter.AssignedUserCompanyId"/> is not <c>null</c>.
+    /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.ResourceContentVersions"/> flag is specified.
     /// </summary>
-    public required int? AssignedUserId { get; init; }
+    public required ResourceContentVersionsSummary? ResourceContentVersions { get; init; }
+
+    public sealed class ResourceContentSummary
+    {
+        public required int Id { get; init; }
+        public required int LanguageId { get; init; }
+        public required ResourceContentStatus Status { get; init; }
+        public required DateTime? ContentUpdated { get; init; }
+        public required DateTime Updated { get; init; }
+    }
+
+    public sealed class ResourceSummary
+    {
+        public required int Id { get; init; }
+        public required string EnglishLabel { get; init; }
+        public required int SortOrder { get; init; }
+
+        /// <summary>
+        /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.HasAudioForLanguage"/> flag is specified.
+        /// </summary>
+        public required bool? HasAudioForLanguage { get; init; }
+    }
+
+    public sealed class ParentResourceSummary
+    {
+        public required int Id { get; init; }
+        public required string DisplayName { get; init; }
+    }
+
+    public sealed class ProjectSummary
+    {
+        public required int Id { get; init; }
+        public required string Name { get; init; }
+        public required DateOnly? ProjectedDeliveryDate { get; init; }
+        public required int? DaysUntilDeadline { get; init; }
+    }
+
+    public sealed class ResourceContentVersionSummary
+    {
+        public required int Id { get; init; }
+        public required int? AssignedUserId { get; init; }
+        public required int? SourceWordCount { get; init; }
+
+        /// <summary>
+        /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads"/> flag is specified.
+        /// </summary>
+        public required bool? HasUnresolvedCommentThreads { get; init; }
+    }
+
+    /// <summary>
+    /// A summary of all ResourceContentVersions for a ResourceContent.
+    /// </summary>
+    public sealed class ResourceContentVersionsSummary
+    {
+        public required int Id { get; init; }
+        public required int MaxVersion { get; init; }
+        public required bool AnyIsPublished { get; init; }
+        public required bool AnyIsDraft { get; init; }
+
+        /// <summary>
+        /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads"/> flag is specified
+        /// and <see cref="AnyIsDraft"/> is <c>true</c>.
+        /// </summary>
+        public required bool? HasUnresolvedCommentThreads { get; init; }
+    }
 }
 
 public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : IResourceContentSearchService
 {
-    public async Task<(int Total, IReadOnlyList<DbResourceContentSummary> ResourceContentSummaries)> SearchAsync(
+    public async Task<(int Total, IReadOnlyList<ResourceContentSearchResult> ResourceContentSummaries)> SearchAsync(
+        ResourceContentSearchIncludeFlags includeFlags,
         ResourceContentSearchFilter filter,
+        ResourceContentSearchSortOrder sortOrder,
         int offset,
         int? limit,
-        bool shouldSortByName,
         CancellationToken ct)
     {
         if (offset < 0)
@@ -95,10 +194,34 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             throw new ArgumentException($"\"{nameof(limit)}\" must be passed if \"{nameof(offset)}\" is greater than 0.", nameof(limit));
         }
 
-        if (filter is { IsDraft: not null, IsPublished: not null })
+        if (!includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions) &&
+            filter is { IsDraft: not null, IsPublished: not null })
         {
             throw new ArgumentException(
-                $"\"{nameof(filter.IsDraft)}\" and \"{nameof(filter.IsPublished)}\" cannot both be passed.",
+                $"\"{nameof(filter.IsDraft)}\" and \"{nameof(filter.IsPublished)}\" cannot both be passed when the \"{nameof(ResourceContentSearchIncludeFlags.ResourceContentVersions)}\" flag is not included.",
+                nameof(filter));
+        }
+
+        if (!includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions) &&
+            filter is { IsDraft: null, IsPublished: null })
+        {
+            throw new ArgumentException(
+                $"One of \"{nameof(filter.IsDraft)}\" or \"{nameof(filter.IsPublished)}\" must be passed when the \"{nameof(ResourceContentSearchIncludeFlags.ResourceContentVersions)}\" flag is not included.",
+                nameof(filter));
+        }
+
+        if (filter.IsInProject.HasValue && !includeFlags.HasFlag(ResourceContentSearchIncludeFlags.Project))
+        {
+            throw new ArgumentException(
+                $"Filtering on \"{nameof(filter.IsInProject)}\" requires also including the \"{nameof(ResourceContentSearchIncludeFlags.Project)}\" flag.",
+                nameof(filter));
+        }
+
+        if (sortOrder == ResourceContentSearchSortOrder.ProjectProjectedDeliveryDate &&
+            !includeFlags.HasFlag(ResourceContentSearchIncludeFlags.Project))
+        {
+            throw new ArgumentException(
+                $"Sorting on \"{nameof(ResourceContentSearchSortOrder.ProjectProjectedDeliveryDate)}\" requires also including the \"{nameof(ResourceContentSearchIncludeFlags.Project)}\" flag.",
                 nameof(filter));
         }
 
@@ -160,36 +283,52 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         //    Older ResourceContentVersions that have unresolved comment threads are ignored.
         // 4. Only one ResourceContentVersion can be in the Published status for a ResourceContent.
         // 5. Only one ResourceContentVersion can be in the Draft status for a ResourceContent.
-        //
-        // Thus, if the IsPublished filter is true then we can ignore the AssignedUserId/AssignedUserCompanyId filters and don't need
-        // to calculate the HasUnresolvedCommentThreads property.
-        // Therefore, we can fetch one row of summary data about all ResourceContentVersions for a ResourceContent (labeled rcvd below)
-        // which allows avoiding grouping in the main query.
         var selectPropertiesSql = $"""
             SELECT
-                rc.Id AS {nameof(DbResourceContentSummary.Id)},
-                r.EnglishLabel AS {nameof(DbResourceContentSummary.ResourceEnglishLabel)},
-                r.SortOrder AS {nameof(DbResourceContentSummary.ResourceSortOrder)},
-                pr.DisplayName AS {nameof(DbResourceContentSummary.ParentResourceEnglishDisplayName)},
-                rc.LanguageId AS {nameof(DbResourceContentSummary.LanguageId)},
-                rc.Status AS {nameof(DbResourceContentSummary.Status)},
-                rc.ContentUpdated AS {nameof(DbResourceContentSummary.ContentUpdated)},
-                prc.ProjectId AS {nameof(DbResourceContentSummary.ProjectId)},
-                rcvd.IsPublished AS {nameof(DbResourceContentSummary.IsPublished)},
-                rcvd.IsDraft AS {nameof(DbResourceContentSummary.IsDraft)},
-                rcvd.MaxRcvId AS {nameof(DbResourceContentSummary.LatestResourceContentVersionId)},
-                IIF(rcvd.IsDraft = 1, rcvd.AssignedUserId, NULL) AS {nameof(DbResourceContentSummary.AssignedUserId)},
-                IIF(ISNULL(a.AudioCount, 0) > 0, 1, 0) AS {nameof(DbResourceContentSummary.HasAudio)},
-                {(filter.IsPublished.HasValue && filter.IsPublished.Value
-                    ? $"""
-                           NULL AS {nameof(DbResourceContentSummary.AssignedUserId)},
-                           0 AS {nameof(DbResourceContentSummary.HasUnresolvedCommentThreads)}
-                       """
-                    : $"""
-                           rcvd.AssignedUserId AS {nameof(DbResourceContentSummary.AssignedUserId)},
-                           ISNULL(c.HasUnresolvedCommentThreads, 0) AS {nameof(DbResourceContentSummary.HasUnresolvedCommentThreads)}
-                       """
-                )}
+                rc.Id AS {nameof(ResourceContentSummary.Id)},
+                rc.LanguageId AS {nameof(ResourceContentSummary.LanguageId)},
+                rc.Status AS {nameof(ResourceContentSummary.Status)},
+                rc.ContentUpdated AS {nameof(ResourceContentSummary.ContentUpdated)},
+                rc.Updated AS {nameof(ResourceContentSummary.Updated)},
+
+                r.Id AS {nameof(ResourceSummary.Id)},
+                r.EnglishLabel AS {nameof(ResourceSummary.EnglishLabel)},
+                r.SortOrder AS {nameof(ResourceSummary.SortOrder)},
+            {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.HasAudioForLanguage)
+                ? $"    IIF(ISNULL(a.AudioCount, 0) > 0, 1, 0) AS {nameof(ResourceSummary.HasAudioForLanguage)},"
+                : $"    NULL AS {nameof(ResourceSummary.HasAudioForLanguage)},")}
+                pr.Id AS {nameof(ParentResourceSummary.Id)},
+                pr.DisplayName AS {nameof(ParentResourceSummary.DisplayName)},
+            {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.Project)
+                ?
+                $"""
+                    prc.ProjectId AS {nameof(ProjectSummary.Id)},
+                    p.Name AS {nameof(ProjectSummary.Name)},
+                    p.ProjectedDeliveryDate AS {nameof(ProjectSummary.ProjectedDeliveryDate)},
+                """
+                : $"    NULL AS {nameof(ProjectSummary.Id)},")}
+            {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions)
+                ?
+                $"""
+                    NULL AS {nameof(ResourceContentVersionSummary.Id)},
+                    rcvd.MaxRcvId AS {nameof(ResourceContentVersionsSummary.Id)},
+                    rcvd.MaxVersion AS {nameof(ResourceContentVersionsSummary.MaxVersion)},
+                    rcvd.AnyIsPublished AS {nameof(ResourceContentVersionsSummary.AnyIsPublished)},
+                    rcvd.AnyIsDraft AS {nameof(ResourceContentVersionsSummary.AnyIsDraft)},
+                    {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads)
+                        ? $"    ISNULL(c.CommentThreads, 0) AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)}"
+                        : $"    NULL AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)}")}
+                """
+                :
+                $"""
+                    NULL AS {nameof(ResourceContentVersionsSummary.Id)},
+                    rcv.Id AS {nameof(ResourceContentVersionSummary.Id)},
+                    rcv.AssignedUserId AS {nameof(ResourceContentVersionSummary.AssignedUserId)},
+                    rcv.SourceWordCount AS {nameof(ResourceContentVersionSummary.SourceWordCount)},
+                    {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads)
+                        ? $"    ISNULL(c.CommentThreads, 0) AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)}"
+                        : $"    NULL AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)}")}
+                """)}
             """;
 
         // Using CROSS APPLY and OUTER APPLY with inner groupings significantly improves performance over using JOINs with a main grouping.
@@ -197,42 +336,63 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             FROM ResourceContents rc
                 JOIN Resources r ON r.Id = rc.ResourceId
                 JOIN ParentResources pr ON pr.id = r.ParentResourceId
-                CROSS APPLY
-                (
-                    SELECT
-                        MAX(rcv.Id) AS MaxRcvId,
-                        MAX(rcv.AssignedUserId) AS AssignedUserId,
-                        IIF(MAX(CAST(rcv.IsPublished AS INT)) = 1, 1, 0) AS IsPublished,
-                        IIF(MAX(CAST(rcv.IsDraft AS INT)) = 1, 1, 0) AS IsDraft
-                    FROM ResourceContentVersions rcv
-                    WHERE rcv.ResourceContentId = rc.Id
-                    GROUP BY rcv.ResourceContentId
-                ) rcvd
-                LEFT JOIN ProjectResourceContents prc ON prc.ResourceContentId = rc.Id
-                {(filter.AssignedUserCompanyId.HasValue ? "    LEFT JOIN Users u ON rcvd.AssignedUserId = u.Id" : "")}
-                OUTER APPLY
-                (
-                    SELECT COUNT(rcAudio.Id) AS AudioCount
-                    FROM ResourceContents rcAudio
-                    WHERE
-                        rcAudio.ResourceId = r.Id AND
-                        rcAudio.LanguageId = rc.LanguageId AND
-                        rcAudio.Id <> rc.Id AND
-                        rcAudio.MediaType = {(int)ResourceContentMediaType.Audio}
-                    GROUP BY rcAudio.ResourceId
-                ) a
-                {(filter.IsPublished.HasValue && filter.IsPublished.Value
-                    ? ""
-                    : """
-                        OUTER APPLY
-                        (
-                            SELECT IIF(MIN(CAST(ct.Resolved AS INT)) = 0, 1, 0) AS HasUnresolvedCommentThreads
-                            FROM ResourceContentVersionCommentThreads rcvct
-                                JOIN CommentThreads ct ON rcvct.CommentThreadId = ct.Id
-                            WHERE rcvd.IsDraft = 1 AND rcvct.ResourceContentVersionId = rcvd.MaxRcvId
-                            GROUP BY rcvct.ResourceContentVersionId
-                        ) c
-                    """)}
+            {(!includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions)
+                ? "    JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = rc.Id"
+                :
+                """
+                    CROSS APPLY
+                    (
+                        SELECT
+                            MAX(rcv.Id) AS MaxRcvId,
+                            MAX(rcv.Version) AS MaxVersion,
+                            IIF(MAX(CAST(rcv.IsPublished AS INT)) = 1, 1, 0) AS AnyIsPublished,
+                            IIF(MAX(CAST(rcv.IsDraft AS INT)) = 1, 1, 0) AS AnyIsDraft
+                        FROM ResourceContentVersions rcv
+                        WHERE rcv.ResourceContentId = rc.Id
+                        GROUP BY rcv.ResourceContentId
+                    ) rcvd
+                """)}
+            {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.Project)
+                ?
+                """
+                    LEFT JOIN ProjectResourceContents prc ON prc.ResourceContentId = rc.Id
+                    LEFT JOIN Projects p ON p.Id = prc.ProjectId
+                """
+                : "")}
+            {(filter.AssignedUserCompanyId.HasValue
+                ? "    LEFT JOIN Users u ON rcv.AssignedUserId = u.Id"
+                : "")}
+            {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.HasAudioForLanguage)
+                ?
+                $"""
+                    OUTER APPLY
+                    (
+                        SELECT COUNT(rcAudio.Id) AS AudioCount
+                        FROM ResourceContents rcAudio
+                        WHERE
+                            rcAudio.ResourceId = r.Id AND
+                            rcAudio.LanguageId = rc.LanguageId AND
+                            rcAudio.Id <> rc.Id AND
+                            rcAudio.MediaType = {(int)ResourceContentMediaType.Audio}
+                        GROUP BY rcAudio.ResourceId
+                    ) a
+                """
+                : "")}
+            {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads)
+                ?
+                $"""
+                    OUTER APPLY
+                    (
+                        SELECT IIF(MIN(CAST(ct.Resolved AS INT)) = 0, 1, 0) AS CommentThreads
+                        FROM ResourceContentVersionCommentThreads rcvct
+                            JOIN CommentThreads ct ON rcvct.CommentThreadId = ct.Id
+                        {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions)
+                            ? "        WHERE rcvd.IsDraft = 1 AND rcvct.ResourceContentVersionId = rcvd.Id"
+                            : "        WHERE rcvct.ResourceContentVersionId = rcv.Id")}
+                        GROUP BY rcvct.ResourceContentVersionId
+                    ) c
+                """
+                : "")}
             """;
 
         var coreParameters = new DynamicParameters();
@@ -329,7 +489,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
 
         if (filter.HasUnresolvedCommentThreads.HasValue)
         {
-            whereClausesSql.Add($"ISNULL(c.HasUnresolvedCommentThreads, 0) = {(filter.HasUnresolvedCommentThreads.Value ? "1" : "0")}");
+            whereClausesSql.Add($"ISNULL(c.CommentThreads, 0) = {(filter.HasUnresolvedCommentThreads.Value ? "1" : "0")}");
         }
 
         if (filter.HasAudio.HasValue)
@@ -376,7 +536,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             const string assignedUserIdParamName = "assignedUserId";
 
             coreParameters.Add(assignedUserIdParamName, filter.AssignedUserId.Value);
-            whereClausesSql.Add($"rcvd.AssignedUserId = @{assignedUserIdParamName}");
+            whereClausesSql.Add($"rcv.AssignedUserId = @{assignedUserIdParamName}");
         }
 
         if (filter.AssignedUserCompanyId.HasValue)
@@ -391,7 +551,9 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         {
             if (filter.IsPublished.Value)
             {
-                whereClausesSql.Add("rcvd.IsPublished = 1");
+                whereClausesSql.Add(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions)
+                    ? "rcvd.AnyIsPublished = 1"
+                    : "rcv.IsPublished = 1");
             }
             else
             {
@@ -404,7 +566,9 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         {
             if (filter.IsDraft.Value)
             {
-                whereClausesSql.Add("rcvd.IsDraft = 1");
+                whereClausesSql.Add(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions)
+                    ? "rcvd.AnyIsDraft = 1"
+                    : "rcv.IsDraft = 1");
             }
             else
             {
@@ -432,14 +596,25 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             pagingParameters.Add(limitLiteralName, limit);
         }
 
-        var sortSql = shouldSortByName
-            ? """
-            ORDER BY
-                pr.DisplayName,
-                r.SortOrder,
-                r.EnglishLabel
-            """
-            : "ORDER BY rc.Id";
+        var sortSql = sortOrder switch
+        {
+            ResourceContentSearchSortOrder.ResourceContentId => "ORDER BY rc.Id",
+            ResourceContentSearchSortOrder.ParentResourceAndResourceName => """
+                ORDER BY
+                    pr.DisplayName,
+                    r.SortOrder,
+                    r.EnglishLabel
+                """,
+            ResourceContentSearchSortOrder.ProjectProjectedDeliveryDate => """
+                ORDER BY
+                    p.ProjectedDeliveryDate,
+                    p.Name,
+                    pr.DisplayName,
+                    r.SortOrder,
+                    r.EnglishLabel
+                """,
+            _ => throw new ArgumentOutOfRangeException(nameof(sortOrder), sortOrder, $"Unexpected \"{nameof(sortOrder)}\": \"{sortOrder}\"."),
+        };
 
         var dataSql = $"""
             {selectPropertiesSql}
@@ -449,16 +624,35 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             {(hasPaging ? pagingSql : "")}
             """;
 
-        var resourceContentSummaries = (await dbContext.Database.GetDbConnection()
-                .QueryWithRetriesAsync<DbResourceContentSummary>(dataSql, pagingParameters, cancellationToken: ct))
+        var resourceContentSearchResults = (await dbContext.Database.GetDbConnection()
+            .QueryAsync<
+                ResourceContentSummary,
+                ResourceSummary,
+                ParentResourceSummary,
+                ProjectSummary,
+                ResourceContentVersionsSummary,
+                ResourceContentVersionSummary,
+                ResourceContentSearchResult>(
+                    dataSql,
+                    (rc, r, pr, p, rcvd, rcv) => new ResourceContentSearchResult
+                    {
+                        ResourceContent = rc,
+                        Resource = r,
+                        ParentResource = pr,
+                        Project = p,
+                        ResourceContentVersions = rcvd,
+                        ResourceContentVersion = rcv,
+                    },
+                    pagingParameters,
+                    splitOn: "Id"))
             .ToList()
             .AsReadOnly();
 
         // if there is only one page (a common case) then we can determine the total without another query
         int total;
-        if (offset == 0 && limit > resourceContentSummaries.Count)
+        if (offset == 0 && (!limit.HasValue || limit.Value > resourceContentSearchResults.Count))
         {
-            total = resourceContentSummaries.Count;
+            total = resourceContentSearchResults.Count;
         }
         else
         {
@@ -472,6 +666,6 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 .ExecuteScalarWithRetriesAsync<int>(totalSql, coreParameters, cancellationToken: ct);
         }
 
-        return (total, resourceContentSummaries);
+        return (total, resourceContentSearchResults);
     }
 }
