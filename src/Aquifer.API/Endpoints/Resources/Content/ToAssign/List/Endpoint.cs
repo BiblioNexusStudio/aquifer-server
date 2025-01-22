@@ -1,5 +1,7 @@
 ﻿using Aquifer.API.Common;
 using Aquifer.API.Services;
+using Aquifer.Common.Services;
+using Aquifer.Common.Services.Caching;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -7,7 +9,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.ToAssign.List;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService) : EndpointWithoutRequest<List<Response>>
+public class Endpoint(
+    AquiferDbContext _dbContext,
+    IUserService _userService,
+    IResourceContentSearchService _resourceContentSearchService,
+    ICachingLanguageService _cachingLanguageService)
+    : EndpointWithoutRequest<IReadOnlyList<Response>>
 {
     public override void Configure()
     {
@@ -17,23 +24,54 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var user = await userService.GetUserFromJwtAsync(ct);
-        var query = $"""
-                     SELECT RCV.ResourceContentId AS Id, R.EnglishLabel, PR.DisplayName AS ParentResourceName,
-                            L.EnglishDisplay AS LanguageEnglishDisplay, RCV.SourceWordCount AS WordCount, P.Name AS ProjectName,
-                            P.ProjectedDeliveryDate AS ProjectProjectedDeliveryDate, R.SortOrder
-                     FROM ResourceContentVersions AS RCV
-                              INNER JOIN ResourceContents AS RC ON RCV.ResourceContentId = RC.Id
-                              INNER JOIN Resources AS R ON RC.ResourceId = R.Id
-                              INNER JOIN ParentResources AS PR ON R.ParentResourceId = PR.Id
-                              INNER JOIN Languages AS L ON RC.LanguageId = L.Id
-                              INNER JOIN ProjectResourceContents PRC ON PRC.ResourceContentId = RC.Id
-                              INNER JOIN Projects P ON P.Id = PRC.ProjectId
-                     WHERE RCV.IsDraft = 1 AND RCV.AssignedUserId = {user.Id}
-                       AND RC.Status IN ({(int)ResourceContentStatus.New}, {(int)ResourceContentStatus.AquiferizeAiDraftComplete}, {(int)ResourceContentStatus.TranslationAiDraftComplete})
-                     """;
+        var user = await _userService.GetUserFromJwtAsync(ct);
 
-        var resources = await dbContext.Database.SqlQueryRaw<Response>(query).ToListAsync(ct);
+        var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
+            new ResourceContentSearchFilter
+            {
+                IsDraft = true,
+                IsInProject = true,
+                AssignedUserId = user.Id,
+                IncludeContentStatuses = [ResourceContentStatus.New, ResourceContentStatus.TranslationAiDraftComplete, ResourceContentStatus.AquiferizeAiDraftComplete],
+            },
+            offset: 0,
+            limit: int.MaxValue,
+            ct);
+
+        var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);
+
+         var projectByIdMap = await _dbContext.Projects
+            .Where(p => resourceContentSummaries.Select(rcs => rcs.ProjectId).Contains(p.Id))
+            .ToDictionaryAsync(p => p.Id, ct);
+
+        var latestResourceContentVersionByIdMap = await _dbContext.ResourceContentVersions
+             .Where(rcv => resourceContentSummaries.Select(rcs => rcs.LatestResourceContentVersionId).Contains(rcv.Id))
+             .ToDictionaryAsync(rcv => rcv.Id, ct);
+
+        var resources = resourceContentSummaries
+            .Select(rcs =>
+            {
+                // ProjectId should never be null because we filtered to IsInProject = true
+                var project = projectByIdMap[rcs.ProjectId!.Value];
+
+                // Because we filtered to InDraft = true, we can assume that the LatestResourceContentVersionId is the Draft version.
+                var draftResourceContentVersion = latestResourceContentVersionByIdMap[rcs.LatestResourceContentVersionId];
+
+                return new Response
+                {
+                    Id = rcs.Id,
+                    EnglishLabel = rcs.ResourceEnglishLabel,
+                    ParentResourceName = rcs.ParentResourceEnglishDisplayName,
+                    LanguageEnglishDisplay = languageEntityByIdMap[rcs.LanguageId].EnglishDisplay,
+                    WordCount = draftResourceContentVersion.SourceWordCount,
+                    ProjectName = project.Name,
+                    ProjectProjectedDeliveryDate = project.ProjectedDeliveryDate,
+                    SortOrder = rcs.ResourceSortOrder,
+                    HasAudio = rcs.HasAudio,
+                    HasUnresolvedCommentThreads = rcs.HasUnresolvedCommentThreads,
+                };
+            })
+            .ToList();
 
         await SendOkAsync(resources, ct);
     }

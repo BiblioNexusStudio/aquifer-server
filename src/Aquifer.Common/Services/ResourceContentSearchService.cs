@@ -32,6 +32,7 @@ public sealed class ResourceContentSearchFilter
     public int? EndVerseId { get; set; }
     public bool? HasAudio { get; set; }
     public bool? HasUnresolvedCommentThreads { get; set; }
+    public bool? IsInProject { get; set; }
 }
 
 public sealed class DbResourceContentSummary
@@ -39,14 +40,32 @@ public sealed class DbResourceContentSummary
     public required int Id { get; init; }
     public required int ResourceId { get; init; }
     public required string ResourceEnglishLabel { get; init; }
+    public required int ResourceSortOrder { get; init; }
     public required int ParentResourceId { get; init; }
     public required string ParentResourceEnglishDisplayName { get; init; }
     public required int LanguageId { get; init; }
     public required ResourceContentStatus Status { get; init; }
+
+    /// <summary>
+    /// Will not be <c>null</c> if <see cref="ResourceContentSearchFilter.IsInProject"/> is <c>true</c>.
+    /// </summary>
+    public required int? ProjectId { get; init; }
+
+    /// <summary>
+    /// If <see cref="IsDraft"/> is <c>true</c> then this will be the ID of the ResourceContentVersion in the Draft status,
+    /// and it will always be the most recent ResourceContentVersion's ID for the ResourceContent.
+    /// </summary>
+    public required int LatestResourceContentVersionId { get; init; }
+
     public required bool IsPublished { get; init; }
     public required bool IsDraft { get; init; }
     public required bool HasAudio { get; init; }
     public required bool HasUnresolvedCommentThreads { get; init; }
+
+    /// <summary>
+    /// Will not be <c>null</c> if either <see cref="ResourceContentSearchFilter.AssignedUserId"/> or
+    /// <see cref="ResourceContentSearchFilter.AssignedUserCompanyId"/> is not <c>null</c>.
+    /// </summary>
     public required int? AssignedUserId { get; init; }
 }
 
@@ -142,11 +161,14 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             SELECT
                 rc.Id AS {nameof(DbResourceContentSummary.Id)},
                 r.EnglishLabel AS {nameof(DbResourceContentSummary.ResourceEnglishLabel)},
+                r.SortOrder AS {nameof(DbResourceContentSummary.ResourceSortOrder)},
                 pr.DisplayName AS {nameof(DbResourceContentSummary.ParentResourceEnglishDisplayName)},
                 rc.LanguageId AS {nameof(DbResourceContentSummary.LanguageId)},
                 rc.Status AS {nameof(DbResourceContentSummary.Status)},
+                prc.ProjectId AS {nameof(DbResourceContentSummary.ProjectId)},
                 rcvd.IsPublished AS {nameof(DbResourceContentSummary.IsPublished)},
                 rcvd.IsDraft AS {nameof(DbResourceContentSummary.IsDraft)},
+                rcvd.MaxRcvId AS {nameof(DbResourceContentSummary.LatestResourceContentVersionId)},
                 IIF(rcvd.IsDraft = 1, rcvd.AssignedUserId, NULL) AS {nameof(DbResourceContentSummary.AssignedUserId)},
                 IIF(ISNULL(a.AudioCount, 0) > 0, 1, 0) AS {nameof(DbResourceContentSummary.HasAudio)},
                 {(filter.IsPublished.HasValue && filter.IsPublished.Value
@@ -159,6 +181,49 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                            ISNULL(c.HasUnresolvedCommentThreads, 0) AS {nameof(DbResourceContentSummary.HasUnresolvedCommentThreads)}
                        """
                 )}
+            """;
+
+        // Using CROSS APPLY and OUTER APPLY with inner groupings significantly improves performance over using JOINs with a main grouping.
+        var fromSql = $"""
+            FROM ResourceContents rc
+                JOIN Resources r ON r.Id = rc.ResourceId
+                JOIN ParentResources pr ON pr.id = r.ParentResourceId
+                CROSS APPLY
+                (
+                    SELECT
+                        MAX(rcv.Id) AS MaxRcvId,
+                        MAX(rcv.AssignedUserId) AS AssignedUserId,
+                        IIF(MAX(CAST(rcv.IsPublished AS INT)) = 1, 1, 0) AS IsPublished,
+                        IIF(MAX(CAST(rcv.IsDraft AS INT)) = 1, 1, 0) AS IsDraft
+                    FROM ResourceContentVersions rcv
+                    WHERE rcv.ResourceContentId = rc.Id
+                    GROUP BY rcv.ResourceContentId
+                ) rcvd
+                LEFT JOIN ProjectResourceContents prc ON prc.ResourceContentId = rc.Id
+                {(filter.AssignedUserCompanyId.HasValue ? "    LEFT JOIN Users u ON rcvd.AssignedUserId = u.Id" : "")}
+                OUTER APPLY
+                (
+                    SELECT COUNT(rcAudio.Id) AS AudioCount
+                    FROM ResourceContents rcAudio
+                    WHERE
+                        rcAudio.ResourceId = r.Id AND
+                        rcAudio.LanguageId = rc.LanguageId AND
+                        rcAudio.Id <> rc.Id AND
+                        rcAudio.MediaType = {(int)ResourceContentMediaType.Audio}
+                    GROUP BY rcAudio.ResourceId
+                ) a
+                {(filter.IsPublished.HasValue && filter.IsPublished.Value
+                    ? ""
+                    : """
+                        OUTER APPLY
+                        (
+                            SELECT IIF(MIN(CAST(ct.Resolved AS INT)) = 0, 1, 0) AS HasUnresolvedCommentThreads
+                            FROM ResourceContentVersionCommentThreads rcvct
+                                JOIN CommentThreads ct ON rcvct.CommentThreadId = ct.Id
+                            WHERE rcvd.IsDraft = 1 AND rcvct.ResourceContentVersionId = rcvd.MaxRcvId
+                            GROUP BY rcvct.ResourceContentVersionId
+                        ) c
+                    """)}
             """;
 
         var coreParameters = new DynamicParameters();
@@ -206,6 +271,11 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
 
             coreParameters.Add(languageIdParamName, filter.LanguageId.Value);
             whereClausesSql.Add($"rc.LanguageId = @{languageIdParamName}");
+        }
+
+        if (filter.IsInProject.HasValue)
+        {
+            whereClausesSql.Add($"prc.ProjectId IS {(filter.IsInProject.Value ? "NOT " : "")}NULL");
         }
 
         if (filter.ExcludeContentMediaTypes is { Count: > 0 })
@@ -334,50 +404,9 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             }
         }
 
-        // Using CROSS APPLY and OUTER APPLY with inner groupings significantly improves performance over using JOINs with a main grouping.
-        var fromAndWhereSql = $"""
-            FROM ResourceContents rc
-                JOIN Resources r ON r.Id = rc.ResourceId
-                JOIN ParentResources pr ON pr.id = r.ParentResourceId
-                CROSS APPLY
-                (
-                    SELECT
-                        MAX(rcv.Id) AS MaxRcvId,
-                        MAX(rcv.AssignedUserId) AS AssignedUserId,
-                        IIF(MAX(CAST(rcv.IsPublished AS INT)) = 1, 1, 0) AS IsPublished,
-                        IIF(MAX(CAST(rcv.IsDraft AS INT)) = 1, 1, 0) AS IsDraft
-                    FROM ResourceContentVersions rcv
-                    WHERE rcv.ResourceContentId = rc.Id
-                    GROUP BY rcv.ResourceContentId
-                ) rcvd
-                {(filter.AssignedUserCompanyId.HasValue ? "    LEFT JOIN Users u ON rcvd.AssignedUserId = u.Id" : "")}
-                OUTER APPLY
-                (
-                    SELECT COUNT(rcAudio.Id) AS AudioCount
-                    FROM ResourceContents rcAudio
-                    WHERE
-                        rcAudio.ResourceId = r.Id AND
-                        rcAudio.LanguageId = rc.LanguageId AND
-                        rcAudio.Id <> rc.Id AND
-                        rcAudio.MediaType = {(int)ResourceContentMediaType.Audio}
-                    GROUP BY rcAudio.ResourceId
-                ) a
-                {(filter.IsPublished.HasValue && filter.IsPublished.Value
-                    ? ""
-                    : """
-                        OUTER APPLY
-                        (
-                            SELECT IIF(MIN(CAST(ct.Resolved AS INT)) = 0, 1, 0) AS HasUnresolvedCommentThreads
-                            FROM ResourceContentVersionCommentThreads rcvct
-                                JOIN CommentThreads ct ON rcvct.CommentThreadId = ct.Id
-                            WHERE rcvd.IsDraft = 1 AND rcvct.ResourceContentVersionId = rcvd.MaxRcvId
-                            GROUP BY rcvct.ResourceContentVersionId
-                        ) c
-                    """)}
-            {(whereClausesSql.Count > 0
-                ? $"WHERE{Environment.NewLine}    {string.Join($" AND{Environment.NewLine}    ", whereClausesSql)}"
-                : "")}
-            """;
+        var whereSql = whereClausesSql.Count > 0
+            ? $"WHERE{Environment.NewLine}    {string.Join($" AND{Environment.NewLine}    ", whereClausesSql)}"
+            : "";
 
         const string offsetLiteralName = "offset";
         const string limitLiteralName = "limit";
@@ -392,7 +421,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
 
         var dataSql = $"""
             {selectPropertiesSql}
-            {fromAndWhereSql}
+            {fromSql}
+            {whereSql}
             {pagingSql}
             """;
 
@@ -415,7 +445,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         {
             var totalSql = $"""
                 {selectCountSql}
-                {fromAndWhereSql}
+                {fromSql}
+                {whereSql}
                 """;
 
             total = await dbContext.Database.GetDbConnection()
