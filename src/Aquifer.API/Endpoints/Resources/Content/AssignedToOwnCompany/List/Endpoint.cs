@@ -32,8 +32,8 @@ public class Endpoint(
             new ResourceContentSearchFilter
             {
                 IsDraft = true,
-                IsInProject = true,
                 AssignedUserCompanyId = user.CompanyId,
+                IsInProject = true,
                 IncludeContentStatuses =
                 [
                     ResourceContentStatus.New,
@@ -46,30 +46,48 @@ public class Endpoint(
                 ],
             },
             offset: 0,
-            limit: int.MaxValue,
+            limit: null,
+            shouldSortByName: false,
             ct);
 
         var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);
 
         var projectByIdMap = await _dbContext.Projects
             .Where(p => resourceContentSummaries.Select(rcs => rcs.ProjectId).Distinct().Contains(p.Id))
+            .Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.ProjectedDeliveryDate,
+            })
             .ToDictionaryAsync(p => p.Id, ct);
 
-        var latestResourceContentVersionByIdMap = await _dbContext.ResourceContentVersions
+        var sourceWordCountByResourceContentVersionIdMap = await _dbContext.ResourceContentVersions
             .Where(rcv => resourceContentSummaries.Select(rcs => rcs.LatestResourceContentVersionId).Contains(rcv.Id))
-            .ToDictionaryAsync(rcv => rcv.Id, ct);
-
-        // AssignedUserId must be populated because we filtered on AssignedUserCompanyId.
-        var userByIdMap = await _dbContext.Users
-            .Where(u => resourceContentSummaries.Select(rcs => rcs.AssignedUserId!.Value).Distinct().Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, ct);
+            .Select(rcv => new { rcv.Id, rcv.SourceWordCount })
+            .ToDictionaryAsync(x => x.Id, x => x.SourceWordCount, ct);
 
         var lastUserAssignmentsByResourceContentVersionIdMap =
             await Helpers.GetLastUserAssignmentsByResourceContentVersionIdMapAsync(
-                latestResourceContentVersionByIdMap.Keys,
+                sourceWordCountByResourceContentVersionIdMap.Keys,
                 numberOfAssignments: 2,
                 _dbContext,
                 ct);
+
+        // AssignedUserId must be populated because we filtered on AssignedUserCompanyId.
+        // Also get previously assigned user IDs.
+        var userIdsToFetch = resourceContentSummaries
+            .Select(rcs => rcs.AssignedUserId!.Value)
+            .Concat(lastUserAssignmentsByResourceContentVersionIdMap.Values
+                .Select(x => x.Count > 1 ? x[1].UserId : null)
+                .OfType<int>())
+            .Distinct()
+            .ToList();
+
+        var userDtoByIdMap = await _dbContext.Users
+            .Where(u => userIdsToFetch.Contains(u.Id))
+            .Select(u => new UserDto(u.Id, u.FirstName, u.LastName))
+            .ToDictionaryAsync(u => u.Id, ct);
 
         Response = resourceContentSummaries
             .Select(rcs =>
@@ -78,10 +96,10 @@ public class Endpoint(
                 var project = projectByIdMap[rcs.ProjectId!.Value];
 
                 // Because we filtered by IsDraft we know that the LatestResourceContentVersionId is the Draft version.
-                var draftResourceContentVersion = latestResourceContentVersionByIdMap[rcs.LatestResourceContentVersionId];
+                var sourceWordCount = sourceWordCountByResourceContentVersionIdMap[rcs.LatestResourceContentVersionId];
 
-                var lastTwoUserAssignments = lastUserAssignmentsByResourceContentVersionIdMap[draftResourceContentVersion.Id];
-                var previouslyAssignedUser = lastTwoUserAssignments.Count > 1 ? lastTwoUserAssignments[1].User : null;
+                var lastTwoUserAssignments = lastUserAssignmentsByResourceContentVersionIdMap[rcs.LatestResourceContentVersionId];
+                var previouslyAssignedUserId = lastTwoUserAssignments.Count > 1 ? lastTwoUserAssignments[1].UserId : null;
 
                 return new Response
                 {
@@ -89,18 +107,20 @@ public class Endpoint(
                     EnglishLabel = rcs.ResourceEnglishLabel,
                     ParentResourceName = rcs.ParentResourceEnglishDisplayName,
                     LanguageEnglishDisplay = languageEntityByIdMap[rcs.LanguageId].EnglishDisplay,
-                    WordCount = draftResourceContentVersion.SourceWordCount,
+                    WordCount = sourceWordCount,
                     StatusValue = rcs.Status,
                     StatusDisplayName = rcs.Status.GetDisplayName(),
                     SortOrder = rcs.ResourceSortOrder,
                     ProjectName = project.Name,
-                    AssignedUser = UserDto.FromUserEntity(userByIdMap[rcs.AssignedUserId!.Value])!,
+                    AssignedUser = userDtoByIdMap[rcs.AssignedUserId!.Value],
                     DaysSinceContentUpdated = rcs.ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)rcs.ContentUpdated).Days,
                     DaysUntilProjectDeadline =
                         project.ProjectedDeliveryDate == null
                             ? null
                             : (project.ProjectedDeliveryDate.Value.ToDateTime(new TimeOnly(23, 59)) - DateTime.UtcNow).Days,
-                    LastAssignedUser = previouslyAssignedUser,
+                    LastAssignedUser = previouslyAssignedUserId != null
+                        ? userDtoByIdMap[previouslyAssignedUserId.Value]
+                        : null,
                     HasAudio = rcs.HasAudio,
                     HasUnresolvedCommentThreads = rcs.HasUnresolvedCommentThreads,
                 };

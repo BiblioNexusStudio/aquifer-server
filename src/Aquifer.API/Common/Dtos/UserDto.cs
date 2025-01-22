@@ -2,18 +2,23 @@ using Aquifer.Data.Entities;
 
 namespace Aquifer.API.Common.Dtos;
 
-public class UserDto
+public class UserDto(int id, string name)
 {
-    public required int Id { get; set; }
-    public required string Name { get; set; }
+    public int Id { get; } = id;
+    public string Name { get; } = name;
+
+    public UserDto(int id, string firstName, string lastName)
+        : this(id, $"{firstName} {lastName}")
+    {
+    }
+
+    public UserDto((int Id, string FirstName, string LastName) user)
+        : this(user.Id, user.FirstName, user.LastName)
+    {
+    }
 
     public static UserDto? FromUserEntity(UserEntity? user)
     {
-        if (user is null)
-        {
-            return null;
-        }
-
-        return new UserDto { Id = user.Id, Name = $"{user.FirstName} {user.LastName}" };
+        return user is null ? null : new UserDto(user.Id, user.FirstName, user.LastName);
     }
 }

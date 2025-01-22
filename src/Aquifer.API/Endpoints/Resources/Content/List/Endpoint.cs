@@ -40,6 +40,7 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
             },
             req.Offset,
             req.Limit,
+            shouldSortByName: true,
             ct);
 
         var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);

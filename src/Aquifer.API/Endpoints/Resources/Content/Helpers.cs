@@ -1,14 +1,13 @@
-using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
 using Aquifer.Common;
+using Aquifer.Common.Messages.Models;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Tiptap;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Services;
 using Microsoft.EntityFrameworkCore;
-using Aquifer.Common.Messages.Publishers;
-using Aquifer.Common.Messages.Models;
 
 namespace Aquifer.API.Endpoints.Resources.Content;
 
@@ -117,7 +116,7 @@ public static class Helpers
         version.Content = JsonUtilities.DefaultSerialize(deserializedContent);
     }
 
-    public static async Task<Dictionary<int, List<(UserDto? User, DateTime Created)>>>
+    public static async Task<Dictionary<int, List<(int? UserId, DateTime Created)>>>
         GetLastUserAssignmentsByResourceContentVersionIdMapAsync(
             IEnumerable<int> resourceContentVersionIds,
             int numberOfAssignments,
@@ -128,7 +127,6 @@ public static class Helpers
             .AsTracking()
             .Where(x => resourceContentVersionIds.Contains(x.ResourceContentVersionId))
             .OrderByDescending(x => x.Id)
-            .Include(x => x.AssignedUser)
             .ToListAsync(ct);
 
         return assignmentHistory
@@ -138,7 +136,7 @@ public static class Helpers
                 grp => grp
                     .OrderByDescending(x => x.Id)
                     .Take(numberOfAssignments)
-                    .Select(rcvauh => (UserDto.FromUserEntity(rcvauh.AssignedUser), rcvauh.Created))
+                    .Select(rcvauh => (rcvauh.AssignedUserId, rcvauh.Created))
                     .ToList());
     }
 }
