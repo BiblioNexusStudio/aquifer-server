@@ -37,13 +37,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 draftVersion.ResourceContent.Status,
                 ct);
 
-            draftVersion.ResourceContent.Status = newStatus;
-            await AssignUserToContentAsync(newStatus, request.AssignedUserId, draftVersion, user, ct);
-
             if (newStatus != draftVersion.ResourceContent.Status)
             {
                 await historyService.AddStatusHistoryAsync(draftVersion, newStatus, user.Id, ct);
             }
+
+            draftVersion.ResourceContent.Status = newStatus;
+            await AssignUserToContentAsync(newStatus, request.AssignedUserId, draftVersion, user, ct);
 
             Helpers.SanitizeTiptapContent(draftVersion);
         }
@@ -62,10 +62,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ResourceContentStatus.AquiferizePublisherReview, ResourceContentStatus.TranslationPublisherReview
         ];
 
-        var draftVersions = await dbContext.ResourceContentVersions
-            .AsTracking()
+        var draftVersions = await dbContext.ResourceContentVersions.AsTracking()
             .Where(x => contentIds.Contains(x.ResourceContentId) && allowedStatuses.Contains(x.ResourceContent.Status) && x.IsDraft)
-            .Include(x => x.ResourceContent).ToListAsync(ct);
+            .Include(x => x.ResourceContent)
+            .ToListAsync(ct);
 
         if (draftVersions.Count != contentIds.Count)
         {
@@ -75,8 +75,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         return draftVersions;
     }
 
-    private async Task AssignUserToContentAsync(ResourceContentStatus newStatus, int? assignedUserId, ResourceContentVersionEntity draftVersion,
-        UserEntity user, CancellationToken ct)
+    private async Task AssignUserToContentAsync(ResourceContentStatus newStatus,
+        int? assignedUserId,
+        ResourceContentVersionEntity draftVersion,
+        UserEntity user,
+        CancellationToken ct)
     {
         // there shouldn't be an assigned user if it's going into review pending
         if (Constants.ReviewPendingStatuses.Contains(newStatus))
@@ -98,7 +101,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
     }
 
-    private async Task ValidateAssignedUserAsync(UserEntity user, int? assignedUserId, ResourceContentVersionEntity draftVersion,
+    private async Task ValidateAssignedUserAsync(UserEntity user,
+        int? assignedUserId,
+        ResourceContentVersionEntity draftVersion,
         CancellationToken ct)
     {
         if (user.Id != draftVersion.AssignedUserId && Constants.CompanyReviewStatuses.Contains(draftVersion.ResourceContent.Status))
@@ -108,8 +113,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         if (assignedUserId is not null)
         {
-            var assignedUser = await dbContext.Users
-                .AsTracking()
+            var assignedUser = await dbContext.Users.AsTracking()
                 .SingleOrDefaultAsync(u => u.Id == assignedUserId && u.Enabled && u.Role == UserRole.Publisher, ct);
 
             if (assignedUser is null)
@@ -147,6 +151,5 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         return currentStatus == ResourceContentStatus.TranslationPublisherReview
             ? ResourceContentStatus.TranslationPublisherReview
             : ResourceContentStatus.AquiferizePublisherReview;
-
     }
 }
