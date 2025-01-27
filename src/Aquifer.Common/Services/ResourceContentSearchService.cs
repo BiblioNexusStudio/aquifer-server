@@ -8,7 +8,6 @@ namespace Aquifer.Common.Services;
 
 public interface IResourceContentSearchService
 {
-    // TODO add sort enum
     Task<(int Total, IReadOnlyList<ResourceContentSearchResult> ResourceContentSummaries)> SearchAsync(
         ResourceContentSearchIncludeFlags includeFlags,
         ResourceContentSearchFilter filter,
@@ -60,12 +59,13 @@ public enum ResourceContentSearchSortOrder
     ResourceContentId = 0,
 
     /// <summary>
-    /// Sort: ParentResource.DisplayName, Resource.SortOrder, Resource.EnglishLabel
+    /// Sort: ParentResource.DisplayName, Resource.SortOrder, Resource.EnglishLabel, ResourceContent.LanguageId
     /// </summary>
     ParentResourceAndResourceName = 1,
 
     /// <summary>
-    /// Sort: Project.ProjectedDeliveryDate (soonest first), Project.Name, ParentResource.DisplayName, Resource.SortOrder, Resource.EnglishLabel
+    /// Sort: Project.ProjectedDeliveryDate (soonest first), Project.Name, ParentResource.DisplayName, Resource.SortOrder,
+    /// Resource.EnglishLabel, ResourceContent.LanguageId
     /// </summary>
     ProjectProjectedDeliveryDate = 2,
 }
@@ -290,7 +290,6 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 rc.Status AS {nameof(ResourceContentSummary.Status)},
                 rc.ContentUpdated AS {nameof(ResourceContentSummary.ContentUpdated)},
                 rc.Updated AS {nameof(ResourceContentSummary.Updated)},
-
                 r.Id AS {nameof(ResourceSummary.Id)},
                 r.EnglishLabel AS {nameof(ResourceSummary.EnglishLabel)},
                 r.SortOrder AS {nameof(ResourceSummary.SortOrder)},
@@ -310,14 +309,14 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions)
                 ?
                 $"""
-                    NULL AS {nameof(ResourceContentVersionSummary.Id)},
                     rcvd.MaxRcvId AS {nameof(ResourceContentVersionsSummary.Id)},
                     rcvd.MaxVersion AS {nameof(ResourceContentVersionsSummary.MaxVersion)},
                     rcvd.AnyIsPublished AS {nameof(ResourceContentVersionsSummary.AnyIsPublished)},
                     rcvd.AnyIsDraft AS {nameof(ResourceContentVersionsSummary.AnyIsDraft)},
                     {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads)
-                        ? $"    ISNULL(c.CommentThreads, 0) AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)}"
-                        : $"    NULL AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)}")}
+                        ? $"ISNULL(c.CommentThreads, 0) AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)},"
+                        : $"NULL AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)},")}
+                    NULL AS {nameof(ResourceContentVersionSummary.Id)}
                 """
                 :
                 $"""
@@ -326,8 +325,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                     rcv.AssignedUserId AS {nameof(ResourceContentVersionSummary.AssignedUserId)},
                     rcv.SourceWordCount AS {nameof(ResourceContentVersionSummary.SourceWordCount)},
                     {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads)
-                        ? $"    ISNULL(c.CommentThreads, 0) AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)}"
-                        : $"    NULL AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)}")}
+                        ? $"ISNULL(c.CommentThreads, 0) AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)}"
+                        : $"NULL AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)}")}
                 """)}
             """;
 
@@ -387,8 +386,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                         FROM ResourceContentVersionCommentThreads rcvct
                             JOIN CommentThreads ct ON rcvct.CommentThreadId = ct.Id
                         {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions)
-                            ? "        WHERE rcvd.IsDraft = 1 AND rcvct.ResourceContentVersionId = rcvd.Id"
-                            : "        WHERE rcvct.ResourceContentVersionId = rcv.Id")}
+                            ? "WHERE rcvd.AnyIsDraft = 1 AND rcvct.ResourceContentVersionId = rcvd.MaxRcvId"
+                            : "WHERE rcvct.ResourceContentVersionId = rcv.Id")}
                         GROUP BY rcvct.ResourceContentVersionId
                     ) c
                 """
@@ -603,7 +602,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 ORDER BY
                     pr.DisplayName,
                     r.SortOrder,
-                    r.EnglishLabel
+                    r.EnglishLabel,
+                    rc.LanguageId
                 """,
             ResourceContentSearchSortOrder.ProjectProjectedDeliveryDate => """
                 ORDER BY
@@ -611,7 +611,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                     p.Name,
                     pr.DisplayName,
                     r.SortOrder,
-                    r.EnglishLabel
+                    r.EnglishLabel,
+                    rc.LanguageId
                 """,
             _ => throw new ArgumentOutOfRangeException(nameof(sortOrder), sortOrder, $"Unexpected \"{nameof(sortOrder)}\": \"{sortOrder}\"."),
         };
