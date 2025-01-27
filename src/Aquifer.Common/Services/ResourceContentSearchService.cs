@@ -607,7 +607,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 """,
             ResourceContentSearchSortOrder.ProjectProjectedDeliveryDate => """
                 ORDER BY
-                    p.ProjectedDeliveryDate,
+                    COALESCE(p.ProjectedDeliveryDate, '2100-12-31'),
                     p.Name,
                     pr.DisplayName,
                     r.SortOrder,
