@@ -24,6 +24,11 @@ public class Endpoint(
         Permissions(PermissionName.ReadResources);
     }
 
+    /// ---------------------------------------------------------------------------------------------------
+    /// ---------------------------------------------------------------------------------------------------
+    /// IMPORTANT: WHEN THIS SEARCH FILTER IS UPDATED THE /next-up ENDPOINT NEEDS TO BE UPDATED ACCORDINGLY
+    /// ---------------------------------------------------------------------------------------------------
+    /// ---------------------------------------------------------------------------------------------------
     public override async Task HandleAsync(CancellationToken ct)
     {
         var user = await _userService.GetUserFromJwtAsync(ct);
