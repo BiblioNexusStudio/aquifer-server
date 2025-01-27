@@ -11,7 +11,7 @@ public class Endpoint(
     IUserService _userService,
     IResourceContentSearchService _resourceContentSearchService,
     ICachingLanguageService _cachingLanguageService)
-    : EndpointWithoutRequest<IReadOnlyList<Response>>
+    : Endpoint<Request, IReadOnlyList<Response>>
 {
     public override void Configure()
     {
@@ -19,7 +19,7 @@ public class Endpoint(
         Permissions(PermissionName.AssignOverride);
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         var user = await _userService.GetUserFromJwtAsync(ct);
 
@@ -38,6 +38,8 @@ public class Endpoint(
                     ResourceContentStatus.TranslationAiDraftComplete,
                     ResourceContentStatus.AquiferizeAiDraftComplete,
                 ],
+                HasAudio = req.HasAudio,
+                HasUnresolvedCommentThreads = req.HasUnresolvedCommentThreads,
             },
             ResourceContentSearchSortOrder.ResourceContentId,
             offset: 0,
