@@ -171,6 +171,22 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             })
             .ToListAsync(ct);
 
+        var relatedAudioResourceContentIds = await dbContext.ResourceContents
+            .Where(rc =>
+                rc.Id != resourceContent.ResourceContentId &&
+                rc.ResourceId == resourceContent.ResourceId &&
+                rc.LanguageId == resourceContent.Language.Id &&
+                rc.MediaType == ResourceContentMediaType.Audio)
+            .Select(rc => rc.Id)
+            .ToListAsync(ct);
+
+        resourceContent.AudioResources = relatedAudioResourceContentIds
+            .Select(rcId => new AudioContentResponse
+            {
+                ContentId = rcId,
+            })
+            .ToList();
+
         resourceContent.IsDraft = relevantContentVersion.IsDraft;
         resourceContent.ResourceContentVersionId = relevantContentVersion.Id;
         resourceContent.ContentValue = relevantContentVersion.Content;
