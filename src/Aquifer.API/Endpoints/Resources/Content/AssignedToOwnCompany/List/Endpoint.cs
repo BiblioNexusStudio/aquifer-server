@@ -55,7 +55,7 @@ public class Endpoint(
             limit: null,
             ct);
 
-        var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);
+        var languageByIdMap = await _cachingLanguageService.GetLanguageByIdMapAsync(ct);
 
         // ResourceContentVersion is populated by default, and we didn't filter it out.
         var lastUserAssignmentsByResourceContentVersionIdMap =
@@ -95,7 +95,7 @@ public class Endpoint(
                     Id = rcs.ResourceContent.Id,
                     EnglishLabel = rcs.Resource.EnglishLabel,
                     ParentResourceName = rcs.ParentResource.DisplayName,
-                    LanguageEnglishDisplay = languageEntityByIdMap[rcs.ResourceContent.LanguageId].EnglishDisplay,
+                    LanguageEnglishDisplay = languageByIdMap[rcs.ResourceContent.LanguageId].EnglishDisplay,
                     WordCount = resourceContentVersion.SourceWordCount,
                     StatusValue = rcs.ResourceContent.Status,
                     StatusDisplayName = rcs.ResourceContent.Status.GetDisplayName(),

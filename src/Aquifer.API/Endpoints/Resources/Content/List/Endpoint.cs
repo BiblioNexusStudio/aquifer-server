@@ -46,7 +46,7 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
             req.Limit,
             ct);
 
-        var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);
+        var languageByIdMap = await _cachingLanguageService.GetLanguageByIdMapAsync(ct);
 
         var response = new Response
         {
@@ -56,7 +56,7 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
                     Id = rcs.ResourceContent.Id,
                     EnglishLabel = rcs.Resource.EnglishLabel,
                     ParentResourceName = rcs.ParentResource.DisplayName,
-                    LanguageEnglishDisplay = languageEntityByIdMap[rcs.ResourceContent.LanguageId].EnglishDisplay,
+                    LanguageEnglishDisplay = languageByIdMap[rcs.ResourceContent.LanguageId].EnglishDisplay,
                     Status = rcs.ResourceContent.Status.GetDisplayName(),
                     IsPublished = rcs.ResourceContentVersions!.AnyIsPublished,
                     HasAudio = rcs.Resource.HasAudioForLanguage!.Value,

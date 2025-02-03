@@ -46,7 +46,7 @@ public class Endpoint(
             limit: null,
             ct);
 
-        var languageEntityByIdMap = await _cachingLanguageService.GetLanguageEntityByIdMapAsync(ct);
+        var languageByIdMap = await _cachingLanguageService.GetLanguageByIdMapAsync(ct);
 
         var resources = resourceContentSummaries
             .Select(rcs =>
@@ -60,7 +60,7 @@ public class Endpoint(
                     Id = rcs.ResourceContent.Id,
                     EnglishLabel = rcs.Resource.EnglishLabel,
                     ParentResourceName = rcs.ParentResource.DisplayName,
-                    LanguageEnglishDisplay = languageEntityByIdMap[rcs.ResourceContent.LanguageId].EnglishDisplay,
+                    LanguageEnglishDisplay = languageByIdMap[rcs.ResourceContent.LanguageId].EnglishDisplay,
                     WordCount = resourceContentVersion.SourceWordCount,
                     ProjectName = project.Name,
                     ProjectProjectedDeliveryDate = project.ProjectedDeliveryDate,

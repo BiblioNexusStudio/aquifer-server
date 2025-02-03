@@ -9,8 +9,8 @@ namespace Aquifer.Common.Services.Caching;
 
 public interface ICachingLanguageService
 {
-    Task<LanguageEntity?> GetLanguageEntityAsync(int languageId, CancellationToken ct);
-    Task<ReadOnlyDictionary<int, LanguageEntity>> GetLanguageEntityByIdMapAsync(CancellationToken ct);
+    Task<Language?> GetLanguageAsync(int languageId, CancellationToken ct);
+    Task<ReadOnlyDictionary<int, Language>> GetLanguageByIdMapAsync(CancellationToken ct);
     Task<string?> GetLanguageCodeAsync(int languageId, CancellationToken ct);
     Task<ReadOnlyDictionary<int, string>> GetLanguageCodeByIdMapAsync(CancellationToken ct);
     Task<int?> GetLanguageIdAsync(string languageCode, CancellationToken ct);
@@ -30,21 +30,29 @@ public interface ICachingLanguageService
             CancellationToken ct);
 }
 
+public record Language(
+    int Id,
+    string ISO6393Code,
+    string EnglishDisplay,
+    string DisplayName,
+    bool Enabled,
+    ScriptDirection ScriptDirection);
+
 public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryCache _memoryCache) : ICachingLanguageService
 {
     private const string LanguageDictionariesCacheKey = $"{nameof(CachingLanguageService)}:LanguageDictionaries";
     private static readonly TimeSpan s_cacheLifetime = TimeSpan.FromMinutes(30);
 
-    public async Task<LanguageEntity?> GetLanguageEntityAsync(int languageId, CancellationToken ct)
+    public async Task<Language?> GetLanguageAsync(int languageId, CancellationToken ct)
     {
-        return (await GetLanguageEntityByIdMapAsync(ct))
+        return (await GetLanguageByIdMapAsync(ct))
             .GetValueOrDefault(languageId);
     }
 
-    public async Task<ReadOnlyDictionary<int, LanguageEntity>> GetLanguageEntityByIdMapAsync(CancellationToken ct)
+    public async Task<ReadOnlyDictionary<int, Language>> GetLanguageByIdMapAsync(CancellationToken ct)
     {
         return (await GetDictionariesFromCacheAsync(ct))
-            .LanguageEntityByIdMap;
+            .LanguageByIdMap;
     }
 
     public async Task<string?> GetLanguageCodeAsync(int languageId, CancellationToken ct)
@@ -73,11 +81,7 @@ public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryC
             .LanguageIdByCodeMap;
     }
 
-    private async Task<(
-            ReadOnlyDictionary<int, LanguageEntity> LanguageEntityByIdMap,
-            ReadOnlyDictionary<int, string> LanguageCodeByIdMap,
-            ReadOnlyDictionary<string, int> LanguageIdByCodeMap)>
-        GetDictionariesFromCacheAsync(CancellationToken ct)
+    private async Task<(ReadOnlyDictionary<int, Language> LanguageByIdMap, ReadOnlyDictionary<int, string> LanguageCodeByIdMap, ReadOnlyDictionary<string, int> LanguageIdByCodeMap)> GetDictionariesFromCacheAsync(CancellationToken ct)
     {
         return await _memoryCache.GetOrCreateAsync(
             LanguageDictionariesCacheKey,
@@ -85,11 +89,14 @@ public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryC
             {
                 cacheEntry.SlidingExpiration = s_cacheLifetime;
 
-                var languageEntityByIdMap = (await _dbContext.Languages
-                        .ToDictionaryAsync(l => l.Id, l => l, ct))
+                var languageByIdMap = (await _dbContext.Languages
+                        .ToListAsync(ct))
+                    .ToDictionary(
+                        l => l.Id,
+                        l => new Language(l.Id, l.ISO6393Code, l.EnglishDisplay, l.DisplayName, l.Enabled, l.ScriptDirection))
                     .AsReadOnly();
 
-                var languageCodeByIdMap = languageEntityByIdMap
+                var languageCodeByIdMap = languageByIdMap
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ISO6393Code)
                     .AsReadOnly();
 
@@ -97,7 +104,7 @@ public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryC
                     .ToDictionary(kvp => kvp.Value, kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
                     .AsReadOnly();
 
-                return (languageEntityByIdMap, languageCodeByIdMap, languageIdByCodeMap);
+                return (languageByIdMap, languageCodeByIdMap, languageIdByCodeMap);
             });
     }
 
