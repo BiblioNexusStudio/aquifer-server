@@ -1,4 +1,7 @@
-﻿using Aquifer.Data;
+﻿using System.Collections.ObjectModel;
+using Aquifer.Common.Utilities;
+using Aquifer.Data;
+using Aquifer.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -6,10 +9,12 @@ namespace Aquifer.Common.Services.Caching;
 
 public interface ICachingLanguageService
 {
+    Task<Language?> GetLanguageAsync(int languageId, CancellationToken ct);
+    Task<ReadOnlyDictionary<int, Language>> GetLanguageByIdMapAsync(CancellationToken ct);
     Task<string?> GetLanguageCodeAsync(int languageId, CancellationToken ct);
-    Task<IReadOnlyDictionary<int, string>> GetLanguageCodeByIdMapAsync(CancellationToken ct);
+    Task<ReadOnlyDictionary<int, string>> GetLanguageCodeByIdMapAsync(CancellationToken ct);
     Task<int?> GetLanguageIdAsync(string languageCode, CancellationToken ct);
-    Task<IReadOnlyDictionary<string, int>> GetLanguageIdByCodeMapAsync(CancellationToken ct);
+    Task<ReadOnlyDictionary<string, int>> GetLanguageIdByCodeMapAsync(CancellationToken ct);
 
     Task<(bool IsValidLanguageId, bool IsValidLanguageCode, int? ValidLanguageId)>
         ValidateLanguageIdOrCodeAsync(int? languageId, string? languageCode, bool shouldRequireInput, CancellationToken ct);
@@ -25,20 +30,38 @@ public interface ICachingLanguageService
             CancellationToken ct);
 }
 
+public record Language(
+    int Id,
+    string ISO6393Code,
+    string EnglishDisplay,
+    string DisplayName,
+    bool Enabled,
+    ScriptDirection ScriptDirection);
+
 public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryCache _memoryCache) : ICachingLanguageService
 {
     private const string LanguageDictionariesCacheKey = $"{nameof(CachingLanguageService)}:LanguageDictionaries";
     private static readonly TimeSpan s_cacheLifetime = TimeSpan.FromMinutes(30);
 
+    public async Task<Language?> GetLanguageAsync(int languageId, CancellationToken ct)
+    {
+        return (await GetLanguageByIdMapAsync(ct))
+            .GetValueOrDefault(languageId);
+    }
+
+    public async Task<ReadOnlyDictionary<int, Language>> GetLanguageByIdMapAsync(CancellationToken ct)
+    {
+        return (await GetDictionariesFromCacheAsync(ct))
+            .LanguageByIdMap;
+    }
+
     public async Task<string?> GetLanguageCodeAsync(int languageId, CancellationToken ct)
     {
         return (await GetLanguageCodeByIdMapAsync(ct))
-            .TryGetValue(languageId, out var languageCode)
-                ? languageCode
-                : null;
+            .GetValueOrDefault(languageId);
     }
 
-    public async Task<IReadOnlyDictionary<int, string>> GetLanguageCodeByIdMapAsync(CancellationToken ct)
+    public async Task<ReadOnlyDictionary<int, string>> GetLanguageCodeByIdMapAsync(CancellationToken ct)
     {
         return (await GetDictionariesFromCacheAsync(ct))
             .LanguageCodeByIdMap;
@@ -49,19 +72,16 @@ public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryC
         ArgumentNullException.ThrowIfNull(languageCode);
 
         return (await GetLanguageIdByCodeMapAsync(ct))
-            .TryGetValue(languageCode, out var languageId)
-                ? languageId
-                : null;
+            .GetValueOrNull(languageCode);
     }
 
-    public async Task<IReadOnlyDictionary<string, int>> GetLanguageIdByCodeMapAsync(CancellationToken ct)
+    public async Task<ReadOnlyDictionary<string, int>> GetLanguageIdByCodeMapAsync(CancellationToken ct)
     {
         return (await GetDictionariesFromCacheAsync(ct))
             .LanguageIdByCodeMap;
     }
 
-    private async Task<(IReadOnlyDictionary<int, string> LanguageCodeByIdMap, IReadOnlyDictionary<string, int> LanguageIdByCodeMap)>
-        GetDictionariesFromCacheAsync(CancellationToken ct)
+    private async Task<(ReadOnlyDictionary<int, Language> LanguageByIdMap, ReadOnlyDictionary<int, string> LanguageCodeByIdMap, ReadOnlyDictionary<string, int> LanguageIdByCodeMap)> GetDictionariesFromCacheAsync(CancellationToken ct)
     {
         return await _memoryCache.GetOrCreateAsync(
             LanguageDictionariesCacheKey,
@@ -69,13 +89,22 @@ public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryC
             {
                 cacheEntry.SlidingExpiration = s_cacheLifetime;
 
-                var LanguageCodeById = await _dbContext.Languages
-                    .Select(l => new { l.Id, l.ISO6393Code })
-                    .ToDictionaryAsync(l => l.Id, l => l.ISO6393Code, ct);
+                var languageByIdMap = (await _dbContext.Languages
+                        .ToListAsync(ct))
+                    .ToDictionary(
+                        l => l.Id,
+                        l => new Language(l.Id, l.ISO6393Code, l.EnglishDisplay, l.DisplayName, l.Enabled, l.ScriptDirection))
+                    .AsReadOnly();
 
-                return
-                    (LanguageCodeById,
-                    LanguageIdByCode: LanguageCodeById.ToDictionary(li => li.Value, li => li.Key, StringComparer.OrdinalIgnoreCase));
+                var languageCodeByIdMap = languageByIdMap
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ISO6393Code)
+                    .AsReadOnly();
+
+                var languageIdByCodeMap = languageCodeByIdMap
+                    .ToDictionary(kvp => kvp.Value, kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
+                    .AsReadOnly();
+
+                return (languageByIdMap, languageCodeByIdMap, languageIdByCodeMap);
             });
     }
 

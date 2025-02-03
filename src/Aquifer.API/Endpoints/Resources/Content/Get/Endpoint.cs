@@ -21,7 +21,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var self = await userService.GetUserFromJwtAsync(ct);
+        var currentUserId = (await userService.GetUserFromJwtAsync(ct)).Id;
         var resourceContent = await dbContext.ResourceContents.Where(x => x.Id == request.Id)
             .Select(rc => new Response
             {
@@ -118,15 +118,15 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         }
 
         if (relevantContentVersion.IsDraft &&
-            relevantContentVersion.AssignedUserId != self.Id &&
+            relevantContentVersion.AssignedUserId != currentUserId &&
             userService.HasPermission(PermissionName.SendReviewContent) &&
             Constants.ReviewPendingStatuses.Contains(resourceContent.Status))
         {
-            resourceContent.CanPullBackToCompanyReview = resourceContent.ProjectEntity?.CompanyLeadUserId == self.Id ||
+            resourceContent.CanPullBackToCompanyReview = resourceContent.ProjectEntity?.CompanyLeadUserId == currentUserId ||
                 await dbContext.ResourceContentVersionAssignedUserHistory
                     .Where(h => h.ResourceContentVersionId == relevantContentVersion.Id && h.AssignedUserId != null)
                     .OrderByDescending(h => h.Created)
-                    .Select(h => h.AssignedUserId == self.Id)
+                    .Select(h => h.AssignedUserId == currentUserId)
                     .FirstOrDefaultAsync(ct);
         }
 
@@ -171,6 +171,22 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             })
             .ToListAsync(ct);
 
+        var relatedAudioResourceContentIds = await dbContext.ResourceContents
+            .Where(rc =>
+                rc.Id != resourceContent.ResourceContentId &&
+                rc.ResourceId == resourceContent.ResourceId &&
+                rc.LanguageId == resourceContent.Language.Id &&
+                rc.MediaType == ResourceContentMediaType.Audio)
+            .Select(rc => rc.Id)
+            .ToListAsync(ct);
+
+        resourceContent.AudioResources = relatedAudioResourceContentIds
+            .Select(rcId => new AudioContentResponse
+            {
+                ContentId = rcId,
+            })
+            .ToList();
+
         resourceContent.IsDraft = relevantContentVersion.IsDraft;
         resourceContent.ResourceContentVersionId = relevantContentVersion.Id;
         resourceContent.ContentValue = relevantContentVersion.Content;
@@ -188,6 +204,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 .ThenInclude(x => x.User)
                 .Where(x => x.ResourceContentVersionId == relevantContentVersion.Id)
                 .ToListAsync(ct);
+
             resourceContent.CommentThreads = new CommentThreadsResponse
             {
                 ThreadTypeId = relevantContentVersion.Id,

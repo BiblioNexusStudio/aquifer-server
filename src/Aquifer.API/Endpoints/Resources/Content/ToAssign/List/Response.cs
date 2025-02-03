@@ -11,6 +11,8 @@ public class Response
     public required int? WordCount { get; set; }
     public required string ProjectName { get; set; }
     public required int SortOrder { get; set; }
+    public required bool HasAudio { get; init; }
+    public required bool HasUnresolvedCommentThreads { get; init; }
 
     public int? DaysUntilProjectDeadline =>
         ProjectProjectedDeliveryDate == null

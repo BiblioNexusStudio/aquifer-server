@@ -1,14 +1,13 @@
-using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
 using Aquifer.Common;
+using Aquifer.Common.Messages.Models;
+using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Tiptap;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Services;
 using Microsoft.EntityFrameworkCore;
-using Aquifer.Common.Messages.Publishers;
-using Aquifer.Common.Messages.Models;
 
 namespace Aquifer.API.Endpoints.Resources.Content;
 
@@ -117,30 +116,27 @@ public static class Helpers
         version.Content = JsonUtilities.DefaultSerialize(deserializedContent);
     }
 
-    public static async Task<List<(int resourceContentVersionId, UserDto? user)>> GetLastAssignmentsAsync(
-        IEnumerable<int> resourceContentVersionIds,
-        AquiferDbContext dbContext,
-        CancellationToken ct)
+    public static async Task<Dictionary<int, List<(int? UserId, DateTime Created)>>>
+        GetLastUserAssignmentsByResourceContentVersionIdMapAsync(
+            IEnumerable<int> resourceContentVersionIds,
+            int numberOfAssignments,
+            AquiferDbContext dbContext,
+            CancellationToken ct)
     {
         var assignmentHistory = await dbContext.ResourceContentVersionAssignedUserHistory
             .AsTracking()
             .Where(x => resourceContentVersionIds.Contains(x.ResourceContentVersionId))
             .OrderByDescending(x => x.Id)
-            .Include(x => x.AssignedUser)
             .ToListAsync(ct);
 
-        var groupedAssignmentsHistories = assignmentHistory.GroupBy(x => x.ResourceContentVersionId);
-
-        var lastAssignments = new List<(int resourceContentVersionId, UserDto? user)>();
-        foreach (var versionHistory in groupedAssignmentsHistories)
-        {
-            var lastAssignment = versionHistory.OrderByDescending(x => x.Id).Skip(1).Take(1).FirstOrDefault();
-            if (lastAssignment != null)
-            {
-                lastAssignments.Add((lastAssignment.ResourceContentVersionId, UserDto.FromUserEntity(lastAssignment.AssignedUser)));
-            }
-        }
-
-        return lastAssignments;
+        return assignmentHistory
+            .GroupBy(x => x.ResourceContentVersionId)
+            .ToDictionary(
+                grp => grp.Key,
+                grp => grp
+                    .OrderByDescending(x => x.Id)
+                    .Take(numberOfAssignments)
+                    .Select(rcvauh => (rcvauh.AssignedUserId, rcvauh.Created))
+                    .ToList());
     }
 }

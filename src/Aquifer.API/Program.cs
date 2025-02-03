@@ -8,6 +8,7 @@ using Aquifer.Common.Clients;
 using Aquifer.Common.Messages;
 using Aquifer.Common.Middleware;
 using Aquifer.Common.Services;
+using Aquifer.Common.Services.Caching;
 using Aquifer.Data;
 using Aquifer.Data.Services;
 using FastEndpoints;
@@ -24,6 +25,7 @@ var configuration = builder.Configuration.Get<ConfigurationOptions>()
 builder.Services.AddAuth(configuration.JwtSettings)
     .AddCors()
     .AddOutputCache()
+    .AddMemoryCache()
     .AddApplicationInsightsTelemetry()
     .AddSingleton<ITelemetryInitializer, RequestTelemetryInitializer>()
     .AddDbContext<AquiferDbContext>(options => options
@@ -42,6 +44,8 @@ builder.Services.AddAuth(configuration.JwtSettings)
     .AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount)
     .AddScoped<IUserService, UserService>()
     .AddScoped<IResourceHistoryService, ResourceHistoryService>()
+    .AddScoped<IResourceContentSearchService, ResourceContentSearchService>()
+    .AddScoped<ICachingLanguageService, CachingLanguageService>()
     .AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>()
     .AddQueueMessagePublisherServices()
     .AddAzureClient(builder.Environment.IsDevelopment())

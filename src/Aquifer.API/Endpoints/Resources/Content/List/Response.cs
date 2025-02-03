@@ -1,28 +1,19 @@
-using System.Text.Json.Serialization;
-using Aquifer.Common.Extensions;
-using Aquifer.Data.Entities;
-
 namespace Aquifer.API.Endpoints.Resources.Content.List;
 
 public record Response
 {
-    public required List<ResourceContentResponse> ResourceContents { get; set; }
-    public required int Total { get; set; }
+    public required IReadOnlyList<ResourceContentResponse> ResourceContents { get; init; }
+    public required int Total { get; init; }
 }
 
 public record ResourceContentResponse
 {
-    public required int Id { get; set; }
-    public required string EnglishLabel { get; set; }
-    public required string ParentResourceName { get; set; }
-    public required string LanguageEnglishDisplay { get; set; }
-
-    public string Status => StatusValue.GetDisplayName();
-    public bool IsPublished => IsPublishedValue == 1;
-
-    [JsonIgnore]
-    public ResourceContentStatus StatusValue { get; set; }
-
-    [JsonIgnore]
-    public int IsPublishedValue { get; set; }
+    public required int Id { get; init; }
+    public required string EnglishLabel { get; init; }
+    public required string ParentResourceName { get; init; }
+    public required string LanguageEnglishDisplay { get; init; }
+    public required string Status { get; init; }
+    public required bool IsPublished { get; init; }
+    public required bool HasAudio { get; init; }
+    public required bool HasUnresolvedCommentThreads { get; init; }
 }
