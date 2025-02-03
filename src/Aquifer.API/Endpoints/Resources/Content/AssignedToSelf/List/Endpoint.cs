@@ -15,7 +15,8 @@ public class Endpoint(
     AquiferDbContext _dbContext,
     IUserService _userService,
     IResourceContentSearchService _resourceContentSearchService,
-    ICachingLanguageService _cachingLanguageService)
+    ICachingLanguageService _cachingLanguageService,
+    ILogger<Endpoint> _logger)
     : Endpoint<Request, IReadOnlyList<Response>>
 {
     public override void Configure()
@@ -89,8 +90,9 @@ public class Endpoint(
                 var currentUserAssignment = lastTwoUserAssignments[0];
                 if (currentUserAssignment.UserId != user.Id)
                 {
-                    throw new InvalidOperationException(
-                        $"Expected the currently assigned user to be the last assigned user, but the current user ID is \"{user.Id}\" and the last assigned user is \"{currentUserAssignment.UserId}\".");
+                    // gracefully continue but log an error so that we can look into possible data issues
+                    _logger.LogError(
+                        $"Expected the currently assigned user to be the last assigned user, but the current user ID is \"{user.Id}\" and the last assigned user is \"{currentUserAssignment.UserId}\". Gracefully ignoring this data issue.");
                 }
 
                 var previouslyAssignedUserId = lastTwoUserAssignments.Count > 1 ? lastTwoUserAssignments[1].UserId : null;
