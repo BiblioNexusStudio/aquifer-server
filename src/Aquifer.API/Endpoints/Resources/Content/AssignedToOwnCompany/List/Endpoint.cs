@@ -87,8 +87,10 @@ public class Endpoint(
                 var project = rcs.Project!;
                 var resourceContentVersion = rcs.ResourceContentVersion!;
 
-                var lastTwoUserAssignments = lastUserAssignmentsByResourceContentVersionIdMap[resourceContentVersion.Id];
-                var previouslyAssignedUserId = lastTwoUserAssignments.Count > 1 ? lastTwoUserAssignments[1].UserId : null;
+                // The most recent user assignment history should be to assign to the company user, however there is missing assignment
+                // history data in the QA DB that needs to be gracefully handled.
+                var lastTwoUserAssignments = lastUserAssignmentsByResourceContentVersionIdMap.GetValueOrDefault(resourceContentVersion.Id);
+                var previouslyAssignedUserId = lastTwoUserAssignments?.Count > 1 ? lastTwoUserAssignments[1].UserId : null;
 
                 return new Response
                 {

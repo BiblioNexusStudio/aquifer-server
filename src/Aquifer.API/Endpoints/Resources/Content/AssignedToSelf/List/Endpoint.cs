@@ -84,18 +84,20 @@ public class Endpoint(
                 var project = rcs.Project;
                 var resourceContentVersion = rcs.ResourceContentVersion!;
 
-                // The most recent user assignment history should be to assign to the current user.
+                // The most recent user assignment history should be to assign to the current user, however there is missing assignment
+                // history data in the QA DB that needs to be gracefully handled.
                 var lastTwoUserAssignments =
-                    lastUserAssignmentsByResourceContentVersionIdMap[resourceContentVersion.Id];
-                var currentUserAssignment = lastTwoUserAssignments[0];
-                if (currentUserAssignment.UserId != user.Id)
+                    lastUserAssignmentsByResourceContentVersionIdMap.GetValueOrDefault(resourceContentVersion.Id);
+                var currentUserAssignment = lastTwoUserAssignments?[0];
+
+                if (currentUserAssignment?.UserId != user.Id)
                 {
                     // gracefully continue but log an error so that we can look into possible data issues
-                    _logger.LogError(
-                        $"Expected the currently assigned user to be the last assigned user, but the current user ID is \"{user.Id}\" and the last assigned user is \"{currentUserAssignment.UserId}\". Gracefully ignoring this data issue.");
+                    _logger.LogWarning(
+                        $"Expected the currently assigned user to be the last assigned user, but the current user ID is \"{user.Id}\" and the last assigned user is \"{currentUserAssignment?.UserId}\". Gracefully ignoring this data issue.");
                 }
 
-                var previouslyAssignedUserId = lastTwoUserAssignments.Count > 1 ? lastTwoUserAssignments[1].UserId : null;
+                var previouslyAssignedUserId = lastTwoUserAssignments?.Count > 1 ? lastTwoUserAssignments[1].UserId : null;
 
                 return new Response
                 {
@@ -109,7 +111,9 @@ public class Endpoint(
                     StatusDisplayName = rcs.ResourceContent.Status.GetDisplayName(),
                     SortOrder = rcs.Resource.SortOrder,
                     ProjectName = project?.Name,
-                    DaysSinceAssignment = (DateTime.UtcNow - currentUserAssignment.Created).Days,
+                    // To handle bad data (mostly in the QA DB), if there is no assignment information in the history data for the
+                    // resource content version then default to the ResourceContent's Updated date as the assignment date.
+                    DaysSinceAssignment = (DateTime.UtcNow - (currentUserAssignment?.Created ?? rcs.ResourceContent.Updated)).Days,
                     DaysUntilProjectDeadline = project?.ProjectedDeliveryDate == null
                         ? null
                         : (project.ProjectedDeliveryDate.Value.ToDateTime(new TimeOnly(23, 59)) - DateTime.UtcNow).Days,
