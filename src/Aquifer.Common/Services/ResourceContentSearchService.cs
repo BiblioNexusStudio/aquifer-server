@@ -626,7 +626,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             """;
 
         var resourceContentSearchResults = (await dbContext.Database.GetDbConnection()
-            .QueryAsync<
+            .QueryWithRetriesAsync<
                 ResourceContentSummary,
                 ResourceSummary,
                 ParentResourceSummary,
@@ -645,7 +645,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                         ResourceContentVersion = rcv,
                     },
                     pagingParameters,
-                    splitOn: "Id"))
+                    splitOn: "Id",
+                    cancellationToken: ct))
             .ToList()
             .AsReadOnly();
 
