@@ -144,6 +144,7 @@ public sealed class ResourceContentSearchResult
         public required int Id { get; init; }
         public required int? AssignedUserId { get; init; }
         public required int? SourceWordCount { get; init; }
+        public required ResourceContentVersionReviewLevel ReviewLevel { get; set; }
 
         /// <summary>
         /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads"/> flag is specified.
@@ -324,6 +325,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                     rcv.Id AS {nameof(ResourceContentVersionSummary.Id)},
                     rcv.AssignedUserId AS {nameof(ResourceContentVersionSummary.AssignedUserId)},
                     rcv.SourceWordCount AS {nameof(ResourceContentVersionSummary.SourceWordCount)},
+                    rcv.ReviewLevel AS {nameof(ResourceContentVersionSummary.ReviewLevel)},
                     {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads)
                         ? $"ISNULL(c.CommentThreads, 0) AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)}"
                         : $"NULL AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)}")}

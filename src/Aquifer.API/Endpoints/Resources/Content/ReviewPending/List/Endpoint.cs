@@ -1,12 +1,13 @@
 using Aquifer.API.Common;
-using Aquifer.Data;
+using Aquifer.Common.Services;
+using Aquifer.Common.Services.Caching;
 using Aquifer.Data.Entities;
 using FastEndpoints;
-using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.ReviewPending.List;
 
-public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<Response>>
+public class Endpoint(IResourceContentSearchService _resourceContentSearchService, ICachingLanguageService _cachingLanguageService)
+    : Endpoint<Request, List<Response>>
 {
     public override void Configure()
     {
@@ -14,34 +15,57 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
         Permissions(PermissionName.ReviewContent);
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var resourceContents =
-            (await dbContext.ResourceContentVersions
-                .Where(rcv =>
-                    rcv.IsDraft &&
-                    (rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
-                    rcv.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending))
-                .Select(rcv => new Response
+        var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
+            ResourceContentSearchIncludeFlags.Project |
+            ResourceContentSearchIncludeFlags.HasAudioForLanguage |
+            ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
+            new ResourceContentSearchFilter
+            {
+                IsDraft = true,
+                IncludeContentStatuses =
+                [
+                    ResourceContentStatus.AquiferizeReviewPending,
+                    ResourceContentStatus.TranslationReviewPending,
+                ],
+                HasAudio = req.HasAudio,
+                HasUnresolvedCommentThreads = req.HasUnresolvedCommentThreads,
+            },
+            ResourceContentSearchSortOrder.ResourceContentId,
+            offset: 0,
+            limit: null,
+            ct);
+
+        var languageByIdMap = await _cachingLanguageService.GetLanguageByIdMapAsync(ct);
+
+        var response = resourceContentSummaries
+            .Select(rcs =>
+            {
+                // Project may be null
+                var project = rcs.Project;
+                var resourceContentVersion = rcs.ResourceContentVersion!;
+
+                return new Response
                 {
-                    Id = rcv.ResourceContentId,
-                    EnglishLabel = rcv.ResourceContent.Resource.EnglishLabel,
-                    LanguageEnglishDisplay = rcv.ResourceContent.Language.EnglishDisplay,
-                    ParentResourceName = rcv.ResourceContent.Resource.ParentResource.DisplayName,
-                    LastStatusUpdate = rcv.ResourceContent.Updated,
-                    ProjectName = rcv.ResourceContent.ProjectResourceContents.FirstOrDefault() == null
-                        ? null
-                        : rcv.ResourceContent.ProjectResourceContents.First().Project.Name,
-                    WordCount = rcv.SourceWordCount,
-                    SortOrder = rcv.ResourceContent.Resource.SortOrder,
-                    ContentUpdated = rcv.ResourceContent.ContentUpdated,
-                    ReviewLevel = rcv.ReviewLevel,
-                })
-                .ToListAsync(ct))
+                    Id = rcs.ResourceContent.Id,
+                    EnglishLabel = rcs.Resource.EnglishLabel,
+                    LanguageEnglishDisplay = languageByIdMap[rcs.ResourceContent.LanguageId].EnglishDisplay,
+                    ParentResourceName = rcs.ParentResource.DisplayName,
+                    LastStatusUpdate = rcs.ResourceContent.Updated,
+                    ProjectName = project?.Name,
+                    WordCount = resourceContentVersion.SourceWordCount,
+                    SortOrder = rcs.Resource.SortOrder,
+                    ContentUpdated = rcs.ResourceContent.ContentUpdated,
+                    ReviewLevel = resourceContentVersion.ReviewLevel,
+                    HasAudio = rcs.Resource.HasAudioForLanguage!.Value,
+                    HasUnresolvedCommentThreads = resourceContentVersion.HasUnresolvedCommentThreads!.Value,
+                };
+            })
             .OrderByDescending(x => x.DaysSinceStatusChange)
             .ThenBy(x => x.EnglishLabel)
             .ToList();
 
-        await SendOkAsync(resourceContents, ct);
+        await SendOkAsync(response, ct);
     }
 }
