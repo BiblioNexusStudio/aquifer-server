@@ -107,7 +107,6 @@ public class Endpoint(
                     LanguageEnglishDisplay = languageByIdMap[rcs.ResourceContent.LanguageId].EnglishDisplay,
                     WordCount = resourceContentVersion.SourceWordCount,
                     StatusValue = rcs.ResourceContent.Status,
-                    Status = rcs.ResourceContent.Status.GetDisplayName(),
                     StatusDisplayName = rcs.ResourceContent.Status.GetDisplayName(),
                     SortOrder = rcs.Resource.SortOrder,
                     ProjectName = project?.Name,

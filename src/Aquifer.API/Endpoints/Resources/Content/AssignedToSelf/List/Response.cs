@@ -10,10 +10,9 @@ public record Response
     public required string ParentResourceName { get; init; }
     public required string LanguageEnglishDisplay { get; init; }
     public required int? WordCount { get; init; }
-    public required ResourceContentStatus StatusValue { get; init; }
     public required int SortOrder { get; init; }
     public required string? ProjectName { get; init; }
-    public required string Status { get; init; }
+    public required ResourceContentStatus StatusValue { get; init; }
     public required string StatusDisplayName { get; init; }
     public required int DaysSinceAssignment { get; init; }
     public required int? DaysUntilProjectDeadline { get; init; }
