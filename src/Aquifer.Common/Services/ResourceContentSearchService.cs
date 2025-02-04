@@ -365,7 +365,6 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             {(filter.AssignedUserCompanyId.HasValue
                 ? """
                       LEFT JOIN Users u ON rcv.AssignedUserId = u.Id
-                      LEFT JOIN Users u1 ON rcv.AssignedReviewerUserId = u1.Id
                   """
                 : "")}
             {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.HasAudioForLanguage)

@@ -72,7 +72,7 @@ public class Endpoint(
             .Concat(lastUserAssignmentsByResourceContentVersionIdMap.Values
                 .Select(x => x.Count > 1 ? x[1].UserId : null)
                 .OfType<int>())
-            .Concat(resourceContentSummaries.Select(rcs => rcs.ResourceContentVersion!.AssignedReviewerUserId != null ? rcs.ResourceContentVersion!.AssignedReviewerUserId : -1).OfType<int>())
+            .Concat(resourceContentSummaries.Select(rcs => rcs.ResourceContentVersion!.AssignedReviewerUserId).OfType<int>())
             .Distinct()
             .ToList();
 
