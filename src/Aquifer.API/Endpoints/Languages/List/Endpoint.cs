@@ -17,8 +17,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var languages = await dbContext.Languages
-            .Select(x => new Response
+        var languages = await dbContext.Languages.Select(x => new Response
             {
                 Id = x.Id,
                 Iso6393Code = x.ISO6393Code,
@@ -27,6 +26,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
                 Enabled = x.Enabled,
                 ScriptDirection = x.ScriptDirection
             })
+            .OrderBy(x => x.Iso6393Code)
             .ToListAsync(ct);
 
         await SendOkAsync(languages, ct);
