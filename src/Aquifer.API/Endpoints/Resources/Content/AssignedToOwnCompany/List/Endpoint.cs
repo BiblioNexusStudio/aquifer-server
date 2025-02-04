@@ -2,8 +2,8 @@ using Aquifer.API.Common;
 using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
 using Aquifer.Common.Extensions;
-using Aquifer.Common.Services.Caching;
 using Aquifer.Common.Services;
+using Aquifer.Common.Services.Caching;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -72,6 +72,7 @@ public class Endpoint(
             .Concat(lastUserAssignmentsByResourceContentVersionIdMap.Values
                 .Select(x => x.Count > 1 ? x[1].UserId : null)
                 .OfType<int>())
+            .Concat(resourceContentSummaries.Select(rcs => rcs.ResourceContentVersion!.AssignedReviewerUserId != null ? rcs.ResourceContentVersion!.AssignedReviewerUserId : -1).OfType<int>())
             .Distinct()
             .ToList();
 
@@ -104,6 +105,9 @@ public class Endpoint(
                     SortOrder = rcs.Resource.SortOrder,
                     ProjectName = project.Name,
                     AssignedUser = userDtoByIdMap[resourceContentVersion.AssignedUserId!.Value],
+                    AssignedReviewerUser = resourceContentVersion.AssignedReviewerUserId != null
+                        ? userDtoByIdMap[resourceContentVersion.AssignedReviewerUserId.Value]
+                        : null,
                     DaysSinceContentUpdated = rcs.ResourceContent.ContentUpdated == null
                         ? null
                         : (DateTime.UtcNow - (DateTime)rcs.ResourceContent.ContentUpdated).Days,
