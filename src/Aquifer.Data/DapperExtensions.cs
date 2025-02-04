@@ -245,6 +245,168 @@ public static class DapperExtensions
             new CommandDefinition(sql, param, transaction, commandTimeout, commandType, flags, cancellationToken)));
     }
 
+    public static async Task<IEnumerable<TReturn>> QueryWithRetriesAsync<TFirst, TSecond, TReturn>(
+        this IDbConnection cnn,
+        string sql,
+        Func<TFirst, TSecond, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default)
+    {
+        return await s_retryPolicy.ExecuteAsync(async () => await cnn.QueryAsync(
+            new CommandDefinition(
+                sql,
+                param,
+                transaction,
+                commandTimeout,
+                commandType,
+                buffered
+                    ? CommandFlags.Buffered
+                    : CommandFlags.None,
+                cancellationToken),
+            map,
+            splitOn));
+    }
+
+    public static async Task<IEnumerable<TReturn>> QueryWithRetriesAsync<TFirst, TSecond, TThird, TReturn>(
+        this IDbConnection cnn,
+        string sql,
+        Func<TFirst, TSecond, TThird, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default)
+    {
+        return await s_retryPolicy.ExecuteAsync(async () => await cnn.QueryAsync(
+            new CommandDefinition(
+                sql,
+                param,
+                transaction,
+                commandTimeout,
+                commandType,
+                buffered
+                    ? CommandFlags.Buffered
+                    : CommandFlags.None,
+                cancellationToken),
+            map,
+            splitOn));
+    }
+
+    public static async Task<IEnumerable<TReturn>> QueryWithRetriesAsync<TFirst, TSecond, TThird, TFourth, TReturn>(
+        this IDbConnection cnn,
+        string sql,
+        Func<TFirst, TSecond, TThird, TFourth, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default)
+    {
+        return await s_retryPolicy.ExecuteAsync(async () => await cnn.QueryAsync(
+            new CommandDefinition(
+                sql,
+                param,
+                transaction,
+                commandTimeout,
+                commandType,
+                buffered
+                    ? CommandFlags.Buffered
+                    : CommandFlags.None,
+                cancellationToken),
+            map,
+            splitOn));
+    }
+
+    public static async Task<IEnumerable<TReturn>> QueryWithRetriesAsync<TFirst, TSecond, TThird, TFourth, TFifth, TReturn>(
+        this IDbConnection cnn,
+        string sql,
+        Func<TFirst, TSecond, TThird, TFourth, TFifth, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default)
+    {
+        return await s_retryPolicy.ExecuteAsync(async () => await cnn.QueryAsync(
+            new CommandDefinition(
+                sql,
+                param,
+                transaction,
+                commandTimeout,
+                commandType,
+                buffered
+                    ? CommandFlags.Buffered
+                    : CommandFlags.None,
+                cancellationToken),
+            map,
+            splitOn));
+    }
+
+    public static async Task<IEnumerable<TReturn>> QueryWithRetriesAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn>(
+        this IDbConnection cnn,
+        string sql,
+        Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default)
+    {
+        return await s_retryPolicy.ExecuteAsync(async () => await cnn.QueryAsync(
+            new CommandDefinition(
+                sql,
+                param,
+                transaction,
+                commandTimeout,
+                commandType,
+                buffered
+                    ? CommandFlags.Buffered
+                    : CommandFlags.None,
+                cancellationToken),
+            map,
+            splitOn));
+    }
+
+    public static async Task<IEnumerable<TReturn>> QueryWithRetriesAsync<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn>(
+        this IDbConnection cnn,
+        string sql,
+        Func<TFirst, TSecond, TThird, TFourth, TFifth, TSixth, TSeventh, TReturn> map,
+        object? param = null,
+        IDbTransaction? transaction = null,
+        bool buffered = true,
+        string splitOn = "Id",
+        int? commandTimeout = null,
+        CommandType? commandType = null,
+        CancellationToken cancellationToken = default)
+    {
+        return await s_retryPolicy.ExecuteAsync(async () => await cnn.QueryAsync(
+            new CommandDefinition(
+                sql,
+                param,
+                transaction,
+                commandTimeout,
+                commandType,
+                buffered
+                    ? CommandFlags.Buffered
+                    : CommandFlags.None,
+                cancellationToken),
+            map,
+            splitOn));
+    }
+
     private static void LogRetry(Exception exception, TimeSpan retryAfter, int retryCount, Context context)
     {
         s_logger.LogWarning(exception, "Gracefully handled a transient error during a Dapper DB operation. Retry after: {retryAfter}. Retry attempt: {retryCount}.", retryAfter, retryCount);

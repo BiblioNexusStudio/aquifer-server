@@ -15,6 +15,9 @@ public class Response
     public required int? WordCount { get; set; }
     public int? DaysSinceContentUpdated => ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)ContentUpdated).Days;
     public ResourceContentVersionReviewLevel ReviewLevel { get; set; }
+    public required bool HasAudio { get; init; }
+    public required bool HasUnresolvedCommentThreads { get; init; }
+
     [JsonIgnore]
     public DateTime? ContentUpdated { get; set; }
 

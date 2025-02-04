@@ -13,7 +13,8 @@
     <PackageVersion Include="Azure.Storage.Queues" Version="12.21.0" />
     <PackageVersion Include="Contrib.Grpc.Core.M1" Version="2.41.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.3" />
-    <PackageVersion Include="Dapper" Version="2.1.35" />
+    <!-- Do not upgrade past 2.1.37 until https://github.com/DapperLib/Dapper/issues/2072 is fixed because DateOnly support is disabled. -->
+    <PackageVersion Include="Dapper" Version="2.1.37" />
     <PackageVersion Include="FastEndpoints" Version="5.32.0" />
     <PackageVersion Include="FastEndpoints.ClientGen.Kiota" Version="5.32.0" />
     <PackageVersion Include="FastEndpoints.Swagger" Version="5.32.0" />
@@ -32,6 +33,7 @@
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.0" />
     <PackageVersion Include="Microsoft.ClearScript.Complete" Version="7.4.5" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.0.1" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />

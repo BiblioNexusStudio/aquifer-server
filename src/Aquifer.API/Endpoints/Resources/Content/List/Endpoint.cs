@@ -1,14 +1,15 @@
 using Aquifer.API.Common;
+using Aquifer.Common.Extensions;
+using Aquifer.Common.Services;
+using Aquifer.Common.Services.Caching;
 using Aquifer.Common.Utilities;
-using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
-using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.List;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
+public class Endpoint(IResourceContentSearchService _resourceContentSearchService, ICachingLanguageService _cachingLanguageService)
+    : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -18,121 +19,53 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var (hasSearchQuery, isExactSearch) = GetSearchParams(req.SearchQuery);
-        var likeKey = isExactSearch ? "" : "%";
-        var searchParameter = new SqlParameter("SearchQuery", hasSearchQuery ? $"{likeKey}{req.SearchQuery!.Trim('"')}{likeKey}" : "");
+        var verseRange = BibleUtilities.VerseRangeForBookAndChapters(req.BookCode, req.StartChapter, req.EndChapter);
 
-        var total = (await dbContext.Database.SqlQueryRaw<int>(BuildQuery(req, true, hasSearchQuery, isExactSearch), searchParameter)
-            .ToListAsync(ct)).Single();
-        var resourceContent = total == 0
-            ? []
-            : await dbContext.Database
-                .SqlQueryRaw<ResourceContentResponse>(BuildQuery(req, false, hasSearchQuery, isExactSearch), searchParameter)
-                .ToListAsync(ct);
+        // The opposite of IsPublished == true is not IsDraft == true (because the most recent ResourceContentVersion for a ResourceContent
+        // can be neither of those statuses) but that logic is used here because consumers expect it.
+        var (total, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
+            ResourceContentSearchIncludeFlags.ResourceContentVersions |
+                ResourceContentSearchIncludeFlags.HasAudioForLanguage |
+                ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
+            new ResourceContentSearchFilter
+            {
+                ParentResourceId = req.ParentResourceId,
+                ResourceEnglishLabelQuery = req.SearchQuery,
+                LanguageId = req.LanguageId,
+                ExcludeContentMediaTypes = [ResourceContentMediaType.Audio],
+                ExcludeContentStatuses = [ResourceContentStatus.TranslationNotApplicable, ResourceContentStatus.CompleteNotApplicable],
+                IsPublished = req.IsPublished.HasValue && req.IsPublished.Value ? true : null,
+                IsDraft = req.IsPublished.HasValue && !req.IsPublished.Value ? true : null,
+                StartVerseId = verseRange?.startVerseId,
+                EndVerseId = verseRange?.endVerseId,
+                HasAudio = req.HasAudio,
+                HasUnresolvedCommentThreads = req.HasUnresolvedCommentThreads,
+            },
+            ResourceContentSearchSortOrder.ParentResourceAndResourceName,
+            req.Offset,
+            req.Limit,
+            ct);
+
+        var languageByIdMap = await _cachingLanguageService.GetLanguageByIdMapAsync(ct);
 
         var response = new Response
         {
-            ResourceContents = resourceContent,
-            Total = total
+            ResourceContents = resourceContentSummaries
+                .Select(rcs => new ResourceContentResponse
+                {
+                    Id = rcs.ResourceContent.Id,
+                    EnglishLabel = rcs.Resource.EnglishLabel,
+                    ParentResourceName = rcs.ParentResource.DisplayName,
+                    LanguageEnglishDisplay = languageByIdMap[rcs.ResourceContent.LanguageId].EnglishDisplay,
+                    Status = rcs.ResourceContent.Status.GetDisplayName(),
+                    IsPublished = rcs.ResourceContentVersions!.AnyIsPublished,
+                    HasAudio = rcs.Resource.HasAudioForLanguage!.Value,
+                    HasUnresolvedCommentThreads = rcs.ResourceContentVersions!.HasUnresolvedCommentThreads!.Value,
+                })
+                .ToList(),
+            Total = total,
         };
 
         await SendOkAsync(response, ct);
-    }
-
-    private static string BuildQuery(Request req, bool getTotalCount, bool hasSearchQuery, bool isExactSearch)
-    {
-        const string selectCount = "SELECT COUNT(DISTINCT(RC.Id)) AS Count";
-        const string selectProperties = """
-                                        SELECT RC.Id AS Id, R.EnglishLabel, PR.DisplayName AS ParentResourceName,
-                                        L.EnglishDisplay AS LanguageEnglishDisplay, RC.Status AS StatusValue,
-                                        IIF(MAX(CAST(RCV.IsPublished as INT)) = 1, 1, 0) AS IsPublishedValue
-                                        """;
-
-        var groupingWithOffset = $"""
-                                  GROUP BY RC.Id, R.EnglishLabel, PR.DisplayName, L.EnglishDisplay, RC.Status, R.SortOrder
-                                  ORDER BY PR.DisplayName, R.SortOrder, R.EnglishLabel
-                                  OFFSET {req.Offset} ROWS FETCH NEXT {req.Limit} ROWS ONLY
-                                  """;
-
-        return $"""
-                {(getTotalCount ? selectCount : selectProperties)}
-                FROM ResourceContents RC
-                    INNER JOIN Resources R ON R.Id = RC.ResourceId
-                    INNER JOIN ParentResources PR ON PR.id =R.ParentResourceId
-                    INNER JOIN Languages L ON L.Id = RC.LanguageId
-                    INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
-                WHERE RC.MediaType != {(int)ResourceContentMediaType.Audio} 
-                AND RC.Status != {(int)ResourceContentStatus.CompleteNotApplicable} 
-                AND RC.Status != {(int)ResourceContentStatus.TranslationNotApplicable}
-                {ApplyLanguageIdFilter(req.LanguageId)}
-                {ApplyParentResourceIdFilter(req.ParentResourceId)}
-                {ApplyIsPublishedFilter(req.IsPublished)}
-                {ApplySearchQueryFilter(hasSearchQuery, isExactSearch)}
-                {ApplyBookAndChapterFilter(req.BookCode, req.StartChapter, req.EndChapter)}
-                {(getTotalCount ? "" : groupingWithOffset)}
-                """;
-    }
-
-    private static string ApplyLanguageIdFilter(int? languageId)
-    {
-        return languageId.HasValue ? $"AND RC.LanguageId = {languageId.Value}" : "";
-    }
-
-    private static string ApplyParentResourceIdFilter(int? parentResourceId)
-    {
-        return parentResourceId.HasValue ? $"AND R.ParentResourceId = {parentResourceId.Value}" : "";
-    }
-
-    private static string ApplyBookAndChapterFilter(string? bookCode, int? startChapter, int? endChapter)
-    {
-        var verseRange = BibleUtilities.VerseRangeForBookAndChapters(bookCode, startChapter, endChapter);
-        if (verseRange is null)
-        {
-            return "";
-        }
-
-        var (startVerseId, endVerseId) = verseRange.Value;
-
-        return $"""
-                AND (
-                EXISTS (SELECT 1
-                    FROM [VerseResources] AS [v]
-                    WHERE [R].[Id] = [v].[ResourceId] AND [v].[VerseId] BETWEEN {startVerseId} AND {endVerseId})
-                OR
-                EXISTS (SELECT 1
-                    FROM [PassageResources] AS [p]
-                    INNER JOIN [Passages] AS [p0] ON [p].[PassageId] = [p0].[Id]
-                    WHERE [R].[Id] = [p].[ResourceId]
-                          AND ([p0].[StartVerseId] BETWEEN {startVerseId} AND {endVerseId}
-                               OR [p0].[EndVerseId] BETWEEN {startVerseId} AND {endVerseId}
-                               OR ([p0].[StartVerseId] <= {startVerseId} AND [p0].[EndVerseId] >= {endVerseId})))
-                )
-                """;
-    }
-
-    private static string ApplyIsPublishedFilter(bool? isPublished)
-    {
-        if (!isPublished.HasValue)
-        {
-            return "";
-        }
-
-        return isPublished.Value ? "AND RCV.IsPublished = 1" : "AND RCV.IsDraft = 1";
-    }
-
-    private static string ApplySearchQueryFilter(bool hasSearchQuery, bool isExactSearch)
-    {
-        if (!hasSearchQuery)
-        {
-            return "";
-        }
-
-        return isExactSearch ? "AND R.EnglishLabel = @SearchQuery" : "AND R.EnglishLabel LIKE @SearchQuery";
-    }
-
-    private static (bool hasSearchQuery, bool isExactQuery) GetSearchParams(string? searchQuery)
-    {
-        var hasSearchQuery = !string.IsNullOrWhiteSpace(searchQuery);
-        return (hasSearchQuery, hasSearchQuery && searchQuery![0].Equals('"') && searchQuery[^1].Equals('"'));
     }
 }

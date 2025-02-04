@@ -13,6 +13,8 @@ public class Response
     public IEnumerable<VerseReferenceResponse> VerseReferences { get; set; } = null!;
     public IEnumerable<PassageReferenceResponse> PassageReferences { get; set; } = null!;
     public required IEnumerable<AssociatedContentResponse> AssociatedResources { get; set; }
+    public IReadOnlyList<AudioContentResponse> AudioResources { get; set; } = null!;
+    public bool HasAudio => AudioResources.Count > 0;
     public required int ResourceContentId { get; set; }
     public required ResourceContentMediaType MediaType { get; set; }
     public required ResourceContentStatus Status { get; set; }
@@ -43,7 +45,8 @@ public class Response
                 IsComplete = ProjectEntity.ActualPublishDate is not null
             };
 
-    public CommentThreadsResponse CommentThreads { get; set; } = null!;
+    public bool HasUnresolvedCommentThreads => CommentThreads?.Threads.Any(t => !t.Resolved) ?? false;
+    public CommentThreadsResponse? CommentThreads { get; set; }
 
     [JsonIgnore]
     public string ContentValue { get; set; } = null!;
@@ -74,6 +77,11 @@ public class AssociatedContentResponse
     public required string ParentResourceName { get; set; }
     public required string EnglishLabel { get; set; }
     public IEnumerable<ResourceContentMediaType> MediaTypes { get; set; } = null!;
+}
+
+public class AudioContentResponse
+{
+    public required int ContentId { get; set; }
 }
 
 public class ProjectResponse

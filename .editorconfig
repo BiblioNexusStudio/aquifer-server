@@ -26,6 +26,12 @@ dotnet_diagnostic.IDE0046.severity = none
 # Suppress some indenting warnings
 dotnet_diagnostic.IDE0055.severity = none
 
+# Suppress requirement to deconstruct tuples
+dotnet_diagnostic.IDE0042.severity = suggestion
+
+# Suppress requirement to always use collection initializers
+dotnet_diagnostic.IDE0305.severity = suggestion
+
 #### Core EditorConfig Options ####
 
 # Indentation and spacing
@@ -68,7 +74,7 @@ dotnet_style_require_accessibility_modifiers = for_non_interface_members
 
 # Expression-level preferences
 dotnet_style_coalesce_expression = true:error
-dotnet_style_collection_initializer = true
+dotnet_style_collection_initializer = true:suggestion
 dotnet_style_explicit_tuple_names = true:error
 dotnet_style_namespace_match_folder = true
 dotnet_style_null_propagation = true:error
@@ -143,7 +149,7 @@ csharp_style_prefer_top_level_statements = true:error
 
 # Expression-level preferences
 csharp_prefer_simple_default_expression = true
-csharp_style_deconstructed_variable_declaration = true
+csharp_style_deconstructed_variable_declaration = true:suggestion
 csharp_style_implicit_object_creation_when_type_is_apparent = true:error
 csharp_style_inlined_variable_declaration = true:error
 csharp_style_prefer_index_operator = true
@@ -271,8 +277,8 @@ dotnet_style_null_propagation = true:error
 dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
 dotnet_style_prefer_auto_properties = true
 dotnet_style_object_initializer = true:suggestion
-dotnet_style_collection_initializer = true
+dotnet_style_collection_initializer = true:suggestion
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
-dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
+dotnet_style_prefer_collection_expression.when_types_loosely_match = true:suggestion
 tab_width = 4
 indent_size = 4

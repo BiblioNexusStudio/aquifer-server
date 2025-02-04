@@ -1,15 +1,22 @@
 using Aquifer.API.Common;
 using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
+using Aquifer.Common.Extensions;
+using Aquifer.Common.Services;
+using Aquifer.Common.Services.Caching;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Extensions;
 
 namespace Aquifer.API.Endpoints.Resources.Content.AssignedToOwnCompany.List;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService) : EndpointWithoutRequest<IEnumerable<Response>>
+public class Endpoint(
+    AquiferDbContext _dbContext,
+    IUserService _userService,
+    IResourceContentSearchService _resourceContentSearchService,
+    ICachingLanguageService _cachingLanguageService)
+    : Endpoint<Request, IReadOnlyList<Response>>
 {
     public override void Configure()
     {
@@ -17,85 +24,104 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         Permissions(PermissionName.ReadCompanyContentAssignments);
     }
 
-    public override async Task HandleAsync(CancellationToken ct)
+    public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var user = await userService.GetUserFromJwtAsync(ct);
-        List<ResourceContentStatus> statuses =
-        [
-            ResourceContentStatus.New,
-            ResourceContentStatus.AquiferizeAiDraftComplete,
-            ResourceContentStatus.AquiferizeCompanyReview,
-            ResourceContentStatus.AquiferizeEditorReview,
-            ResourceContentStatus.TranslationAiDraftComplete,
-            ResourceContentStatus.TranslationCompanyReview,
-            ResourceContentStatus.TranslationEditorReview
-        ];
+        var user = await _userService.GetUserFromJwtAsync(ct);
 
-        var query = $"""
-                     SELECT RCV.ResourceContentId AS ResourceContentId, RCV.Id AS ResourceContentVersionId, R.EnglishLabel, PR.DisplayName AS ParentResourceName, U.Id AS UserId,
-                            U.FirstName AS UserFirstName, U.LastName AS UserLastName, RC.Status AS StatusValue,
-                            L.EnglishDisplay AS LanguageEnglishDisplay, RCV.SourceWordCount AS WordCount, P.Name AS ProjectName,
-                            P.ProjectedDeliveryDate AS ProjectProjectedDeliveryDate, R.SortOrder, RC.ContentUpdated
-                     FROM ResourceContentVersions AS RCV
-                              INNER JOIN Users AS U ON RCV.AssignedUserId = U.Id
-                              INNER JOIN ResourceContents AS RC ON RCV.ResourceContentId = RC.Id
-                              INNER JOIN Resources AS R ON RC.ResourceId = R.Id
-                              INNER JOIN ParentResources AS PR ON R.ParentResourceId = PR.Id
-                              INNER JOIN Languages AS L ON RC.LanguageId = L.Id
-                              INNER JOIN ProjectResourceContents PRC ON PRC.ResourceContentId = RC.Id
-                              INNER JOIN Projects P ON P.Id = PRC.ProjectId
-                     WHERE RCV.IsDraft = 1 AND U.CompanyId = {user.CompanyId} AND RC.Status IN ({string.Join(',', statuses.Select(x => (int)x))})
-                     """;
-
-        var queryResponse = await dbContext.Database.SqlQueryRaw<SqlQueryResult>(query).ToListAsync(ct);
-        var resourceContentVersionIds = queryResponse.Select(x => x.ResourceContentVersionId);
-        var lastAssignments =
-            await Helpers.GetLastAssignmentsAsync(resourceContentVersionIds, dbContext, ct);
-
-        Response = queryResponse.Select(x => new Response
-        {
-            Id = x.ResourceContentId,
-            EnglishLabel = x.EnglishLabel,
-            ParentResourceName = x.ParentResourceName,
-            LanguageEnglishDisplay = x.LanguageEnglishDisplay,
-            WordCount = x.WordCount,
-            ProjectName = x.ProjectName,
-            SortOrder = x.SortOrder,
-            StatusValue = x.StatusValue,
-            StatusDisplayName = x.StatusValue.GetDisplayName(),
-            AssignedUser = new UserDto
+        var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
+            ResourceContentSearchIncludeFlags.Project |
+                ResourceContentSearchIncludeFlags.HasAudioForLanguage |
+                ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
+            new ResourceContentSearchFilter
             {
-                Id = x.UserId,
-                Name = $"{x.UserFirstName} {x.UserLastName}"
+                IsDraft = true,
+                AssignedUserCompanyId = user.CompanyId,
+                IsInProject = true,
+                IncludeContentStatuses =
+                [
+                    ResourceContentStatus.New,
+                    ResourceContentStatus.AquiferizeAiDraftComplete,
+                    ResourceContentStatus.AquiferizeCompanyReview,
+                    ResourceContentStatus.AquiferizeEditorReview,
+                    ResourceContentStatus.TranslationAiDraftComplete,
+                    ResourceContentStatus.TranslationCompanyReview,
+                    ResourceContentStatus.TranslationEditorReview,
+                ],
+                HasAudio = req.HasAudio,
+                HasUnresolvedCommentThreads = req.HasUnresolvedCommentThreads,
             },
-            DaysSinceContentUpdated = x.ContentUpdated == null ? null : (DateTime.UtcNow - (DateTime)x.ContentUpdated).Days,
-            DaysUntilProjectDeadline =
-                    x.ProjectProjectedDeliveryDate == null
-                        ? null
-                        : (x.ProjectProjectedDeliveryDate.Value.ToDateTime(new TimeOnly(23, 59)) - DateTime.UtcNow).Days,
-            LastAssignedUser = lastAssignments.FirstOrDefault(a => a.resourceContentVersionId == x.ResourceContentVersionId).user
-        }).OrderBy(x => x.DaysUntilProjectDeadline)
-            .ThenBy(x => x.ProjectName)
-            .ThenBy(x => x.ParentResourceName)
-            .ThenBy(x => x.SortOrder)
-            .ThenBy(x => x.EnglishLabel);
-    }
-}
+            ResourceContentSearchSortOrder.ProjectProjectedDeliveryDate,
+            offset: 0,
+            limit: null,
+            ct);
 
-internal class SqlQueryResult
-{
-    public required int ResourceContentId { get; set; }
-    public required int ResourceContentVersionId { get; set; }
-    public required string EnglishLabel { get; set; }
-    public required string ParentResourceName { get; set; }
-    public required int UserId { get; set; }
-    public required string UserFirstName { get; set; }
-    public required string UserLastName { get; set; }
-    public required ResourceContentStatus StatusValue { get; set; }
-    public required string LanguageEnglishDisplay { get; set; }
-    public required int? WordCount { get; set; }
-    public required string ProjectName { get; set; }
-    public required DateOnly? ProjectProjectedDeliveryDate { get; set; }
-    public required int SortOrder { get; set; }
-    public required DateTime? ContentUpdated { get; set; }
+        var languageByIdMap = await _cachingLanguageService.GetLanguageByIdMapAsync(ct);
+
+        // ResourceContentVersion is populated by default, and we didn't filter it out.
+        var lastUserAssignmentsByResourceContentVersionIdMap =
+            await Helpers.GetLastUserAssignmentsByResourceContentVersionIdMapAsync(
+                resourceContentSummaries.Select(rcs => rcs.ResourceContentVersion!.Id),
+                numberOfAssignments: 2,
+                _dbContext,
+                ct);
+
+        // AssignedUserId must be populated because we filtered on AssignedUserCompanyId.
+        // Also get previously assigned user IDs.
+        var userIdsToFetch = resourceContentSummaries
+            .Select(rcs => rcs.ResourceContentVersion!.AssignedUserId!.Value)
+            .Concat(lastUserAssignmentsByResourceContentVersionIdMap.Values
+                .Select(x => x.Count > 1 ? x[1].UserId : null)
+                .OfType<int>())
+            .Concat(resourceContentSummaries.Select(rcs => rcs.ResourceContentVersion!.AssignedReviewerUserId).OfType<int>())
+            .Distinct()
+            .ToList();
+
+        var userDtoByIdMap = await _dbContext.Users
+            .Where(u => userIdsToFetch.Contains(u.Id))
+            .Select(u => new UserDto(u.Id, u.FirstName, u.LastName))
+            .ToDictionaryAsync(u => u.Id, ct);
+
+        Response = resourceContentSummaries
+            .Select(rcs =>
+            {
+                // Project should never be null because we filtered to IsInProject = true
+                var project = rcs.Project!;
+                var resourceContentVersion = rcs.ResourceContentVersion!;
+
+                // The most recent user assignment history should be to assign to the company user, however there is missing assignment
+                // history data in the QA DB that needs to be gracefully handled.
+                var lastTwoUserAssignments = lastUserAssignmentsByResourceContentVersionIdMap.GetValueOrDefault(resourceContentVersion.Id);
+                var previouslyAssignedUserId = lastTwoUserAssignments?.Count > 1 ? lastTwoUserAssignments[1].UserId : null;
+
+                return new Response
+                {
+                    Id = rcs.ResourceContent.Id,
+                    EnglishLabel = rcs.Resource.EnglishLabel,
+                    ParentResourceName = rcs.ParentResource.DisplayName,
+                    LanguageEnglishDisplay = languageByIdMap[rcs.ResourceContent.LanguageId].EnglishDisplay,
+                    WordCount = resourceContentVersion.SourceWordCount,
+                    StatusValue = rcs.ResourceContent.Status,
+                    StatusDisplayName = rcs.ResourceContent.Status.GetDisplayName(),
+                    SortOrder = rcs.Resource.SortOrder,
+                    ProjectName = project.Name,
+                    AssignedUser = userDtoByIdMap[resourceContentVersion.AssignedUserId!.Value],
+                    AssignedReviewerUser = resourceContentVersion.AssignedReviewerUserId != null
+                        ? userDtoByIdMap[resourceContentVersion.AssignedReviewerUserId.Value]
+                        : null,
+                    DaysSinceContentUpdated = rcs.ResourceContent.ContentUpdated == null
+                        ? null
+                        : (DateTime.UtcNow - (DateTime)rcs.ResourceContent.ContentUpdated).Days,
+                    DaysUntilProjectDeadline =
+                        project.ProjectedDeliveryDate == null
+                            ? null
+                            : (project.ProjectedDeliveryDate.Value.ToDateTime(new TimeOnly(23, 59)) - DateTime.UtcNow).Days,
+                    LastAssignedUser = previouslyAssignedUserId != null
+                        ? userDtoByIdMap[previouslyAssignedUserId.Value]
+                        : null,
+                    HasAudio = rcs.Resource.HasAudioForLanguage!.Value,
+                    HasUnresolvedCommentThreads = resourceContentVersion.HasUnresolvedCommentThreads!.Value,
+                };
+            })
+            .ToList();
+    }
 }
