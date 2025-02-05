@@ -70,7 +70,7 @@ public class Endpoint(
             return;
         }
 
-        telemetry.TrackTrace($"Content with ID {req.ResourceContentId} exists but has unexpected `Content` JSON.", SeverityLevel.Error);
+        telemetry.TrackTrace($"Content with ID {req.ResourceContentId} exists but has unexpected `Content` JSON.", SeverityLevel.Warning);
         await SendNotFoundAsync(ct);
     }
 
