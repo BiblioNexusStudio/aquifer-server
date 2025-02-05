@@ -6,7 +6,6 @@ public record Request
     public int LanguageId { get; set; }
     public int ProjectManagerUserId { get; set; }
     public int CompanyId { get; set; }
-    public int ProjectPlatformId { get; set; }
-    public int? CompanyLeadUserId { get; set; }
+    public int CompanyLeadUserId { get; set; }
     public int[] ResourceIds { get; set; } = [];
 }
