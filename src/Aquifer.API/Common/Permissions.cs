@@ -38,16 +38,11 @@ public static class PermissionName
         SetStatusTranslationNotApplicable = "set-status:translation-not-applicable",
         SetStatusCompleteNotApplicable = "set-status:complete-not-applicable",
         SetTranslationPair = "set:translation-pair",
-        GetTranslationPair = "get:translation-pair";
+        GetTranslationPair = "get:translation-pair",
+        UpdateUser = "update:user";
 }
 
 public static class KeyVaultSecretName
 {
     public const string Auth0ClientSecret = "Auth0ClientSecret", OpenAiApiKey = "OpenAiApiKey";
-}
-
-public static class Auth0Constants
-{
-    public const string ClientCredentials = "client_credentials";
-    public const string Connection = "Username-Password-Authentication";
 }

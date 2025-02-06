@@ -1,13 +1,14 @@
 ﻿using System.Security.Claims;
 using Aquifer.API.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Aquifer.API.Services;
 
-public static class AuthService
+public static class AuthServiceRegistry
 {
-    public static IServiceCollection AddAuth(this IServiceCollection services, JwtSettingOptions? jwtSettings)
+    public static IServiceCollection AddAuthServices(this IServiceCollection services, JwtSettingOptions? jwtSettings)
     {
         ArgumentNullException.ThrowIfNull(jwtSettings);
 
@@ -21,6 +22,9 @@ public static class AuthService
             });
 
         services.AddAuthorization();
+
+        services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.Auth0Settings);
+        services.AddScoped<IAuth0Service, Auth0Service>();
 
         return services;
     }
