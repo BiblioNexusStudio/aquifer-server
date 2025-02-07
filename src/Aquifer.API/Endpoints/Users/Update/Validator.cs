@@ -10,9 +10,7 @@ public class Validator : Validator<Request>
 {
     public Validator()
     {
-        RuleFor(x => x.Role)
-            .NotNull()
-            .IsInEnum();
+        RuleFor(x => x.Role).IsInEnum();
         RuleFor(x => x.Role).Must(role =>
         {
             var userService = Resolve<IUserService>();

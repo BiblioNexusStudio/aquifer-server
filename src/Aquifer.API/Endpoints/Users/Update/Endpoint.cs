@@ -18,6 +18,13 @@ public class Endpoint(AquiferDbContext _dbContext, IAuth0Service _authService, I
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
+        // currently this patch route only supports updating the role
+        if (!req.Role.HasValue)
+        {
+            await SendNoContentAsync(ct);
+            return;
+        }
+
         var requestedRole = req.Role!.Value;
 
         // verify user exists and is in the same company as the current user (if not an admin)
