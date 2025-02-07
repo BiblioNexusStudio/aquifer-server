@@ -22,7 +22,7 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration.Get<ConfigurationOptions>()
     ?? throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
-builder.Services.AddAuth(configuration.JwtSettings)
+builder.Services.AddAuthServices(configuration.JwtSettings)
     .AddCors()
     .AddOutputCache()
     .AddMemoryCache()
@@ -40,7 +40,6 @@ builder.Services.AddAuth(configuration.JwtSettings)
         logging.RequestBodyLogLimit = 4096;
         logging.ResponseBodyLogLimit = 4096;
     })
-    .AddAquiferHttpServices()
     .AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount)
     .AddScoped<IUserService, UserService>()
     .AddScoped<IResourceHistoryService, ResourceHistoryService>()
