@@ -52,7 +52,6 @@ public sealed class Auth0Service : IAuth0Service
             ClientId = _auth0Options.ApiClientId,
             ClientSecret = await _keyVaultClient.GetSecretAsync(KeyVaultSecretName.Auth0ClientSecret),
             Audience = _auth0Options.Audience,
-            //GrantType = Auth0Constants.ClientCredentials, ????
         };
 
         var tokenResponse = await auth0AuthenticationClient.GetTokenAsync(request, ct);
