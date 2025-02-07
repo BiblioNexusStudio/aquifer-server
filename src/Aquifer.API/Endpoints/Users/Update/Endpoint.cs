@@ -18,6 +18,8 @@ public class Endpoint(AquiferDbContext _dbContext, IAuth0Service _authService, I
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
+        var requestedRole = req.Role!.Value;
+
         // verify user exists and is in the same company as the current user (if not an admin)
         var user = _dbContext.Users
             .AsTracking()
@@ -39,14 +41,21 @@ public class Endpoint(AquiferDbContext _dbContext, IAuth0Service _authService, I
                 StatusCodes.Status403Forbidden);
         }
 
+        if (user.Role == requestedRole)
+        {
+            _logger.LogInformation("User {userId} already has role {role}. No action taken.", user.Id, requestedRole);
+            await SendNoContentAsync(ct);
+            return;
+        }
+
         var accessToken = await _authService.GetAccessTokenAsync(ct);
 
         // look up the desired Auth0 role ID
-        var desiredAuth0RoleId = await _authService.GetRoleIdForRoleNameAsync(accessToken, req.Role!.Value.ToString(), ct);
+        var desiredAuth0RoleId = await _authService.GetRoleIdForRoleNameAsync(accessToken, requestedRole.ToString(), ct);
         if (desiredAuth0RoleId is null)
         {
-            _logger.LogWarning("Requested non-existent role: {requestedRole}.", req.Role);
-            ThrowError("Requested role does not exist", StatusCodes.Status400BadRequest);
+            _logger.LogWarning("Requested non-existent role: {requestedRole}.", requestedRole);
+            ThrowError(x => x.Role, "Requested role does not exist", StatusCodes.Status400BadRequest);
         }
 
         // remove existing roles for user with validation that they are valid roles
@@ -55,7 +64,10 @@ public class Endpoint(AquiferDbContext _dbContext, IAuth0Service _authService, I
         {
             if (!Enum.TryParse(auth0Role.Name, ignoreCase: true, out UserRole _))
             {
-                throw new InvalidOperationException($"Auth0 Role not found in {nameof(UserRole)} enum: \"{auth0Role.Name}\".");
+                ThrowError(
+                    x => x.UserId,
+                    $"Existing Auth0 roles for user {req.UserId} don't match expectations.  Contact a developer for support.",
+                    StatusCodes.Status400BadRequest);
             }
         }
 
@@ -68,9 +80,9 @@ public class Endpoint(AquiferDbContext _dbContext, IAuth0Service _authService, I
         await _authService.RemoveRolesFromUserAsync(accessToken, user.ProviderId, auth0Roles.Select(r => r.Id).ToList(), ct);
 
         // update the user's role
-        _logger.LogInformation("Adding role {roleId} to user {userId}.", desiredAuth0RoleId, user.Id);
+        _logger.LogInformation("Adding role {roleId} ({roleName}) to user {userId}.", desiredAuth0RoleId, requestedRole.ToString(), user.Id);
         await _authService.AssignRoleToUserAsync(accessToken, user.ProviderId, desiredAuth0RoleId, CancellationToken.None);
-        user.Role = req.Role!.Value;
+        user.Role = requestedRole;
         await _dbContext.SaveChangesAsync(CancellationToken.None);
 
         await SendNoContentAsync(ct);
