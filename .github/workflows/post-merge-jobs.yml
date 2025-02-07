@@ -55,7 +55,7 @@ jobs:
             - name: Setup .NET
               uses: actions/setup-dotnet@v4.0.1
               with:
-                  dotnet-version: '9.x'
+                  global-json-file: "./global.json"
             - name: Restore .net tools
               run: dotnet tool restore
             - name: Make build directory

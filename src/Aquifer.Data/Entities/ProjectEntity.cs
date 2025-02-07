@@ -14,7 +14,7 @@ public class ProjectEntity : IHasUpdatedTimestamp
     public UserEntity ProjectManagerUser { get; set; } = null!;
     public int CompanyId { get; set; }
     public CompanyEntity Company { get; set; } = null!;
-    public int ProjectPlatformId { get; set; }
+    public int ProjectPlatformId { get; set; } = 1; // Should always be Aquifer now
     public ProjectPlatformEntity ProjectPlatform { get; set; } = null!;
     public int? CompanyLeadUserId { get; set; }
     public UserEntity? CompanyLeadUser { get; set; }
