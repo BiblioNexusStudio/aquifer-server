@@ -4,7 +4,7 @@ using Aquifer.Data.Entities;
 using FastEndpoints;
 using FluentValidation;
 
-namespace Aquifer.API.Endpoints.Users.Role.Set;
+namespace Aquifer.API.Endpoints.Users.Update;
 
 public class Validator : Validator<Request>
 {

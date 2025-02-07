@@ -1,9 +1,9 @@
 ﻿using Aquifer.Data.Entities;
 
-namespace Aquifer.API.Endpoints.Users.Role.Set;
+namespace Aquifer.API.Endpoints.Users.Update;
 
 public sealed class Request
 {
     public required int UserId { get; init; }
-    public UserRole? Role { get; set; }
+    public required UserRole? Role { get; set; }
 }

@@ -5,14 +5,14 @@ using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Users.Role.Set;
+namespace Aquifer.API.Endpoints.Users.Update;
 
 public class Endpoint(AquiferDbContext _dbContext, IAuth0Service _authService, IUserService _userService, ILogger<Endpoint> _logger)
     : Endpoint<Request>
 {
     public override void Configure()
     {
-        Post("/users/{UserId}/role");
+        Patch("/users/{userId}");
         Permissions(PermissionName.UpdateUser, PermissionName.UpdateUsersInCompany);
     }
 
