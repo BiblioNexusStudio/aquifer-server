@@ -2,6 +2,7 @@
 
 namespace Aquifer.Data.Entities;
 
+[Index(nameof(ResourceContentVersionId))]
 [PrimaryKey(nameof(CommentThreadId), nameof(ResourceContentVersionId))]
 public class ResourceContentVersionCommentThreadEntity
 {
