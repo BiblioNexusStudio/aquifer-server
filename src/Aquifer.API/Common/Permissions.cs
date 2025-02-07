@@ -39,7 +39,8 @@ public static class PermissionName
         SetStatusCompleteNotApplicable = "set-status:complete-not-applicable",
         SetTranslationPair = "set:translation-pair",
         GetTranslationPair = "get:translation-pair",
-        UpdateUser = "update:user";
+        UpdateUser = "update:user",
+        UpdateUsersInCompany = "update:users-in-company";
 }
 
 public static class KeyVaultSecretName
