@@ -15,6 +15,7 @@ public sealed class NotificationEntity
 
 public enum NotificationKind
 {
+    None,
     Comment,
     HelpDocument,
 }
