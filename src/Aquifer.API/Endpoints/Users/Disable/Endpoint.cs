@@ -1,7 +1,5 @@
-﻿using Aquifer.API.Clients.Http.Auth0;
-using Aquifer.API.Common;
+﻿using Aquifer.API.Common;
 using Aquifer.API.Services;
-using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -12,8 +10,8 @@ namespace Aquifer.API.Endpoints.Users.Disable;
 public class Endpoint(
     AquiferDbContext dbContext,
     IUserService userService,
-    IAuth0HttpClient auth0HttpClient,
-    ILogger<Endpoint> logger) : Endpoint<Request>
+    IAuth0Service auth0Service)
+    : Endpoint<Request>
 {
     public override void Configure()
     {
@@ -41,42 +39,10 @@ public class Endpoint(
             return;
         }
 
-        var token = await GetAuth0TokenAsync(ct);
-        await BlockAuth0UserAsync(userToDisable, token, ct);
+        var token = await auth0Service.GetAccessTokenAsync(ct);
+        await auth0Service.BlockUserAsync(token, userToDisable.ProviderId, ct);
 
         userToDisable.Enabled = false;
         await dbContext.SaveChangesAsync(ct);
-    }
-
-    private async Task BlockAuth0UserAsync(UserEntity userToDisable, string token, CancellationToken ct)
-    {
-        var blockUserResponse = await auth0HttpClient.BlockUserAsync(userToDisable.ProviderId, token, ct);
-        var blockUserResponseContent = await blockUserResponse.Content.ReadAsStringAsync(ct);
-        if (!blockUserResponse.IsSuccessStatusCode)
-        {
-            HandleError(blockUserResponse, blockUserResponseContent, "Error blocking user on Auth0");
-        }
-    }
-
-    private async Task<string> GetAuth0TokenAsync(CancellationToken ct)
-    {
-        var authTokenResponse = await auth0HttpClient.GetAuth0TokenAsync(ct);
-        var authTokenResponseContent = await authTokenResponse.Content.ReadAsStringAsync(ct);
-        if (!authTokenResponse.IsSuccessStatusCode)
-        {
-            HandleError(authTokenResponse, authTokenResponseContent, "Error getting Auth0 access token");
-        }
-
-        return JsonUtilities.DefaultDeserialize<Auth0TokenResponse>(authTokenResponseContent).AccessToken;
-    }
-
-    private void HandleError(HttpResponseMessage responseMessage, string responseMessageContent, string error)
-    {
-        logger.LogError("{error} - {statusCode} - {responseMessageContent}",
-            error,
-            (int)responseMessage.StatusCode,
-            responseMessageContent);
-
-        ThrowError("Error from Auth0");
     }
 }

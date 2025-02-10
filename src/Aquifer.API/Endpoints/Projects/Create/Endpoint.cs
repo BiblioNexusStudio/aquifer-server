@@ -56,27 +56,18 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ThrowEntityNotFoundError<Request>(r => r.CompanyId);
         }
 
-        var projectPlatform =
-            await dbContext.ProjectPlatforms.AsTracking().SingleOrDefaultAsync(p => p.Id == request.ProjectPlatformId, ct);
-        if (projectPlatform is null)
-        {
-            ThrowEntityNotFoundError<Request>(r => r.ProjectPlatformId);
-        }
-
         if (dbContext.Projects.AsTracking().Any(p => p.Name == request.Title))
         {
             ThrowError(r => r.Title, "A project with this title already exists.");
         }
 
-        var companyLeadUser = await MaybeGetCompanyLeadUserAsync(projectPlatform, request, ct);
-
+        var companyLeadUser = await GetCompanyLeadUserAsync(request, ct);
         var resourceContents = await CreateOrFindResourceContentFromResourceIdsAsync(language.Id, request, user, ct);
 
-        var wordCount = await dbContext.ResourceContentVersions
-            .AsTracking()
+        var wordCount = await dbContext.ResourceContentVersions.AsTracking()
             .Where(rcv => request.ResourceIds.Contains(rcv.ResourceContent.ResourceId) &&
-                          rcv.IsPublished &&
-                          rcv.ResourceContent.LanguageId == 1)
+                rcv.IsPublished &&
+                rcv.ResourceContent.LanguageId == 1)
             .Select(rcv => rcv.WordCount ?? 0)
             .SumAsync(ct);
 
@@ -84,38 +75,31 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         {
             Name = request.Title,
             SourceWordCount = wordCount,
-            ProjectResourceContents = resourceContents
-                .Select(rc => new ProjectResourceContentEntity { ResourceContent = rc })
-                .ToList(),
+            ProjectResourceContents = resourceContents.Select(rc => new ProjectResourceContentEntity { ResourceContent = rc }).ToList(),
             Language = language,
             ProjectManagerUser = projectManagerUser,
             CompanyLeadUser = companyLeadUser,
             Company = company,
-            ProjectPlatform = projectPlatform
+            ProjectPlatformId = 1
         };
     }
 
-    private async Task<UserEntity?> MaybeGetCompanyLeadUserAsync(ProjectPlatformEntity projectPlatform, Request request, CancellationToken ct)
+    private async Task<UserEntity?> GetCompanyLeadUserAsync(Request request, CancellationToken ct)
     {
-        if (projectPlatform?.Name == "Aquifer")
+        var companyLeadUser = await dbContext.Users
+            .AsTracking()
+            .SingleOrDefaultAsync(u => u.Id == request.CompanyLeadUserId && u.Enabled, ct);
+        if (companyLeadUser is null)
         {
-            var companyLeadUser = await dbContext.Users
-                .AsTracking()
-                .SingleOrDefaultAsync(u => u.Id == request.CompanyLeadUserId && u.Enabled, ct);
-            if (companyLeadUser is null)
-            {
-                ThrowEntityNotFoundError<Request>(r => r.CompanyLeadUserId);
-            }
-
-            if (companyLeadUser.Role is not (UserRole.Publisher or UserRole.Manager))
-            {
-                ThrowError(r => r.CompanyLeadUserId, "Company lead must be a Manager or Publisher.");
-            }
-
-            return companyLeadUser;
+            ThrowEntityNotFoundError<Request>(r => r.CompanyLeadUserId);
         }
 
-        return null;
+        if (companyLeadUser.Role is not (UserRole.Publisher or UserRole.Manager))
+        {
+            ThrowError(r => r.CompanyLeadUserId, "Company lead must be a Manager or Publisher.");
+        }
+
+        return companyLeadUser;
     }
 
     private async Task<List<ResourceContentEntity>> CreateOrFindResourceContentFromResourceIdsAsync(int languageId,
@@ -135,11 +119,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         Request request,
         CancellationToken ct)
     {
-        var resourceContents = await dbContext.ResourceContents
-            .AsTracking()
+        var resourceContents = await dbContext.ResourceContents.AsTracking()
             .Where(rc => request.ResourceIds.Contains(rc.ResourceId) &&
-                         rc.LanguageId == languageId &&
-                         rc.MediaType != ResourceContentMediaType.Audio)
+                rc.LanguageId == languageId &&
+                rc.MediaType != ResourceContentMediaType.Audio)
             .Include(rc => rc.Versions.OrderByDescending(v => v.Created))
             .Include(rc => rc.ProjectResourceContents)
             .ToListAsync(ct);
@@ -191,12 +174,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         UserEntity user,
         CancellationToken ct)
     {
-        var englishOrLanguageResourceContents = await dbContext.ResourceContents
-            .AsTracking()
+        var englishOrLanguageResourceContents = await dbContext.ResourceContents.AsTracking()
             .Where(rc => request.ResourceIds.Contains(rc.ResourceId) && rc.MediaType != ResourceContentMediaType.Audio)
             .Where(rc => rc.LanguageId == languageId ||
-                         (rc.Resource.ResourceContents.All(rci => rci.LanguageId != languageId) &&
-                          rc.LanguageId == Constants.EnglishLanguageId))
+                (rc.Resource.ResourceContents.All(rci => rci.LanguageId != languageId) && rc.LanguageId == Constants.EnglishLanguageId))
             .Include(rc => rc.Versions)
             .Include(rc => rc.ProjectResourceContents)
             .Include(rc => rc.Language)

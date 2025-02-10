@@ -22,9 +22,9 @@ jobs:
             - name: Setup .NET
               uses: actions/setup-dotnet@v4.0.1
               with:
-                  dotnet-version: '9.x'
+                  global-json-file: "./global.json"
             - name: Build
-              run: dotnet build --no-incremental --configuration Release /p:WarningsAsErrors=true /warnaserror
+              run: dotnet build --no-incremental -m:1 --configuration Release /p:WarningsAsErrors=true /warnaserror
             - name: Login to Azure
               uses: azure/login@v2.1.1
               with:

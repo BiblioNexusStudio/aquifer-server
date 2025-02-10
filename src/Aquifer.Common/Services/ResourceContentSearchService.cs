@@ -143,6 +143,7 @@ public sealed class ResourceContentSearchResult
     {
         public required int Id { get; init; }
         public required int? AssignedUserId { get; init; }
+        public required int? AssignedReviewerUserId { get; init; }
         public required int? SourceWordCount { get; init; }
         public required ResourceContentVersionReviewLevel ReviewLevel { get; set; }
 
@@ -324,6 +325,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                     NULL AS {nameof(ResourceContentVersionsSummary.Id)},
                     rcv.Id AS {nameof(ResourceContentVersionSummary.Id)},
                     rcv.AssignedUserId AS {nameof(ResourceContentVersionSummary.AssignedUserId)},
+                    rcv.AssignedReviewerUserId AS {nameof(ResourceContentVersionSummary.AssignedReviewerUserId)},
                     rcv.SourceWordCount AS {nameof(ResourceContentVersionSummary.SourceWordCount)},
                     rcv.ReviewLevel AS {nameof(ResourceContentVersionSummary.ReviewLevel)},
                     {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads)

@@ -58,7 +58,7 @@ jobs:
             - name: Setup .NET
               uses: actions/setup-dotnet@v4.0.1
               with:
-                  dotnet-version: '9.x'
+                  global-json-file: "./global.json"
             - name: Install NuGet packages (linux)
               run: dotnet restore --runtime linux-x64
             - name: Restore CLI tools

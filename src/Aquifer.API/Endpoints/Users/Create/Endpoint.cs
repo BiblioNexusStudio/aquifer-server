@@ -1,7 +1,5 @@
-﻿using Aquifer.API.Clients.Http.Auth0;
-using Aquifer.API.Common;
+﻿using Aquifer.API.Common;
 using Aquifer.API.Services;
-using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -9,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Users.Create;
 
-public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderService, ILogger<Endpoint> logger, IUserService userService)
+public class Endpoint(AquiferDbContext dbContext, IAuth0Service authService, ILogger<Endpoint> logger, IUserService userService)
     : Endpoint<Request>
 {
     public override void Configure()
@@ -26,21 +24,10 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
 
     private async Task CreateUserAsync(Request req, CancellationToken ct)
     {
-        await ValidateCompanyIdAsync(req.CompanyId, ct);
-        var accessToken = await GetAccessTokenAsync(ct);
-        var roleId = await GetRoleIdAsync(req, accessToken, ct);
-        var newUserId = await CreateAuth0UserAsync(req, accessToken, ct);
-        await AssignAuth0RoleAsync(accessToken, newUserId, roleId, ct);
-        await SendPasswordResetAsync(accessToken, req.Email, ct);
-
-        await SaveUserToDatabaseAsync(req, newUserId, ct);
-    }
-
-    private async Task ValidateCompanyIdAsync(int companyId, CancellationToken ct)
-    {
+        // validate company (must match the current user if not admin)
         var newUserCompany = await dbContext.Companies
             .AsTracking()
-            .SingleOrDefaultAsync(x => x.Id == companyId, ct);
+            .SingleOrDefaultAsync(x => x.Id == req.CompanyId, ct);
         if (newUserCompany is null)
         {
             ThrowError(x => x.CompanyId, "Invalid company id");
@@ -51,98 +38,29 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0HttpClient authProviderS
         {
             ThrowError(x => x.CompanyId, "Not authorized to create user outside of company", StatusCodes.Status403Forbidden);
         }
-    }
 
-    private async Task<string> GetAccessTokenAsync(CancellationToken ct)
-    {
-        var response = await authProviderService.GetAuth0TokenAsync(ct);
-        var responseContent = await response.Content.ReadAsStringAsync(ct);
-        if (!response.IsSuccessStatusCode)
+        var accessToken = await authService.GetAccessTokenAsync(ct);
+
+        // confirm the requested role exists
+        var desiredUserAuth0RoleId = await authService.GetRoleIdForRoleNameAsync(accessToken, req.Role.ToString(), ct);
+        if (desiredUserAuth0RoleId is null)
         {
-            logger.LogWarning("Error getting Auth0 token: {statusCode} - {response}", response.StatusCode, responseContent);
-            ThrowError(responseContent, (int)response.StatusCode);
-        }
-
-        return JsonUtilities.DefaultDeserialize<Auth0TokenResponse>(responseContent).AccessToken;
-    }
-
-    private async Task<string> GetRoleIdAsync(Request req, string accessToken, CancellationToken ct)
-    {
-        var response = await authProviderService.GetUserRolesAsync(accessToken, ct);
-        var responseContent = await response.Content.ReadAsStringAsync(ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            logger.LogWarning("Error getting Auth0 roles: {statusCode} - {response}", response.StatusCode, responseContent);
-            ThrowError(responseContent, (int)response.StatusCode);
-        }
-
-        var roles = JsonUtilities.DefaultDeserialize<List<Auth0AssignUserRolesResponse>>(responseContent);
-        var role = roles.FirstOrDefault(r => r.Name.Equals(req.Role.ToString(), StringComparison.CurrentCultureIgnoreCase));
-        if (role is null)
-        {
-            logger.LogWarning("Requested non-existent role: {requestedRole} - {response}", req.Role, responseContent);
+            logger.LogWarning("Requested non-existent role: {requestedRole}.", req.Role);
             ThrowError("Requested role does not exist", 400);
         }
 
-        return role.Id;
-    }
+        // create the Auth0 user and assign the Auth0 role
+        var newAuth0UserId = await authService.CreateUserAsync(accessToken, req.Email, $"{req.FirstName} {req.LastName}", ct);
+        await authService.AssignRoleToUserAsync(accessToken, newAuth0UserId, desiredUserAuth0RoleId, CancellationToken.None);
 
-    private async Task<string> CreateAuth0UserAsync(Request req, string accessToken, CancellationToken ct)
-    {
-        var response = await authProviderService.CreateUserAsync($"{req.FirstName} {req.LastName}", req.Email, accessToken, ct);
-        var responseContent = await response.Content.ReadAsStringAsync(ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            logger.LogWarning("Error creating Auth0 user: {statusCode} - {response}", response.StatusCode, responseContent);
-            ThrowError(responseContent, (int)response.StatusCode);
-        }
-
-        return JsonUtilities.DefaultDeserialize<Auth0CreateUserResponse>(responseContent).UserId;
-    }
-
-    private async Task AssignAuth0RoleAsync(string accessToken, string userId, string roleId, CancellationToken ct)
-    {
-        var response = await authProviderService.AssignUserToRoleAsync(roleId, userId, accessToken, ct);
-
-        var responseContent = await response.Content.ReadAsStringAsync(ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            logger.LogWarning("Unable to assign Auth0 user to role: {statusCode} - {response}", response.StatusCode, responseContent);
-
-            ThrowError($"""
-                        Auth0 threw an error on user role assignment.
-                        Note that the Auth0 user has been created and recalling this
-                        endpoint will result in different errors. Please ask for help.
-                        {responseContent}
-                        """,
-                (int)response.StatusCode);
-        }
-    }
-
-    private async Task SendPasswordResetAsync(string accessToken, string email, CancellationToken ct)
-    {
         // Auth0 doesn't support creating a user account without a password and having the user
         // create a password as part of the email verification. So we have to create a password
         // as part of creating their account, and then immediately send them the reset email
         // which will act as a creation / set password flow.
+        await authService.ResetPasswordAsync(accessToken, req.Email, CancellationToken.None);
 
-        var response = await authProviderService.ResetPasswordAsync(email, accessToken, ct);
-
-        var responseContent = await response.Content.ReadAsStringAsync(ct);
-        if (!response.IsSuccessStatusCode)
-        {
-            logger.LogWarning("Unable to reset Auth0 password on account creation: {statusCode} - {response}",
-                response.StatusCode,
-                responseContent);
-
-            ThrowError($"""
-                        Auth0 threw an error sending the password reset email.
-                        Note that the Auth0 user has been created and recalling this
-                        endpoint will result in different errors. Please ask for help.
-                        {responseContent}
-                        """,
-                (int)response.StatusCode);
-        }
+        // create the DB user (and assign the DB role)
+        await SaveUserToDatabaseAsync(req, newAuth0UserId, CancellationToken.None);
     }
 
     private async Task SaveUserToDatabaseAsync(Request req, string providerUserId, CancellationToken ct)
