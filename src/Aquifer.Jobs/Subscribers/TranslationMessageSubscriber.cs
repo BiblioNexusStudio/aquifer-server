@@ -104,13 +104,29 @@ public sealed class TranslationMessageSubscriber(
         DurableTaskClient durableTaskClient,
         CancellationToken ct)
     {
+        const int aquiferProjectPlatformId = 1;
+
+        var project = (await _dbContext.Projects
+                .Where(p => p.Id == message.ProjectId)
+                .FirstOrDefaultAsync(ct))
+            ?? throw new InvalidOperationException($"Project with ID {message.ProjectId} does not exist.");
+
+        if (project.ProjectPlatformId != aquiferProjectPlatformId)
+        {
+            _logger.LogInformation(
+                "Gracefully skipping translations for Project ID {ProjectId} because the project platform is not Aquifer.",
+                message.ProjectId);
+
+            return;
+        }
+
         var projectResourceContentIds = await _dbContext.ProjectResourceContents.Where(prc => prc.ProjectId == message.ProjectId)
             .Select(prc => prc.ResourceContentId)
             .ToListAsync(ct);
 
         if (projectResourceContentIds.Count == 0)
         {
-            throw new InvalidOperationException($"Project ID {message.ProjectId} does not have any resource contents.");
+            throw new InvalidOperationException($"Project with ID {message.ProjectId} does not have any resource contents.");
         }
 
         // Kick off the durable function orchestration.
