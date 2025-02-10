@@ -16,6 +16,7 @@ public class Response
     public required string StatusDisplayName { get; init; }
     public required int? DaysUntilProjectDeadline { get; init; }
     public required UserDto AssignedUser { get; init; }
+    public required UserDto? AssignedReviewerUser { get; init; }
     public required int? DaysSinceContentUpdated { get; init; }
     public required UserDto? LastAssignedUser { get; init; }
     public required bool HasAudio { get; init; }
