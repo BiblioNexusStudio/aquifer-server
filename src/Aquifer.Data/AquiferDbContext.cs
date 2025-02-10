@@ -63,6 +63,7 @@ public class AquiferDbContext : DbContext
     public DbSet<JobHistoryEntity> JobHistory { get; set; }
     public DbSet<LanguageEntity> Languages { get; set; }
     public DbSet<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; }
+    public DbSet<NotificationEntity> Notifications { get; set; }
     public DbSet<ParentResourceEntity> ParentResources { get; set; }
     public DbSet<ParentResourceLocalizationEntity> ParentResourceLocalizations { get; set; }
     public DbSet<PassageEntity> Passages { get; set; }
