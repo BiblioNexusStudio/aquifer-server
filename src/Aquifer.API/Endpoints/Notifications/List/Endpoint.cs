@@ -26,16 +26,20 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
 
         var dbConnection = _dbContext.Database.GetDbConnection();
 
-        var resourceCommentNotificationData = await GetResourceCommentNotificationDataAsync(
-            dbConnection,
-            currentUserId,
-            oldestNotificationTimestamp,
-            ct);
+        var resourceCommentNotificationData = req.Kinds?.Contains(NotificationKind.Comment) ?? true
+            ? await GetResourceCommentNotificationDataAsync(
+                dbConnection,
+                currentUserId,
+                oldestNotificationTimestamp,
+                ct)
+            : Array.Empty<ResourceCommentNotificationData>();
 
-        var helpDocumentNotificationData = await GetHelpDocumentNotificationDataAsync(
-            dbConnection,
-            oldestNotificationTimestamp,
-            ct);
+        var helpDocumentNotificationData = req.Kinds?.Contains(NotificationKind.HelpDocument) ?? true
+            ? await GetHelpDocumentNotificationDataAsync(
+                dbConnection,
+                oldestNotificationTimestamp,
+                ct)
+            : Array.Empty<HelpDocumentNotificationData>();
 
         var readNotificationEntityIdsByNotificationKindMap = (await _dbContext.Notifications
                 .Where(n => n.Created > oldestNotificationTimestamp && n.IsRead)
