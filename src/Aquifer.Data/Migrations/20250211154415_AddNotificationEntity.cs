@@ -19,9 +19,10 @@ namespace Aquifer.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     Kind = table.Column<int>(type: "int", nullable: false),
-                    NotificationEntityId = table.Column<int>(type: "int", nullable: false),
-                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsRead = table.Column<bool>(type: "bit", nullable: false)
+                    NotificationKindId = table.Column<int>(type: "int", nullable: false),
+                    IsRead = table.Column<bool>(type: "bit", nullable: false),
+                    Created = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "getutcdate()"),
+                    Updated = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "getutcdate()")
                 },
                 constraints: table =>
                 {
@@ -34,9 +35,9 @@ namespace Aquifer.Data.Migrations
                 column: "AssignedUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Notifications_UserId_Kind_NotificationEntityId",
+                name: "IX_Notifications_UserId_Kind_NotificationKindId",
                 table: "Notifications",
-                columns: new[] { "UserId", "Kind", "NotificationEntityId" },
+                columns: new[] { "UserId", "Kind", "NotificationKindId" },
                 unique: true);
         }
 

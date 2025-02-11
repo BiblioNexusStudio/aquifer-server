@@ -20,7 +20,7 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService, IL
         if (req.NotificationKind == NotificationKind.Comment)
         {
             var comment = await _dbContext.Comments
-                .Where(c => c.Id == req.NotificationEntityId)
+                .Where(c => c.Id == req.NotificationKindId)
                 .FirstOrDefaultAsync(ct);
 
             if (comment is null)
@@ -32,7 +32,7 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService, IL
         else if (req.NotificationKind == NotificationKind.HelpDocument)
         {
             var helpDocument = await _dbContext.HelpDocuments
-                .Where(d => d.Id == req.NotificationEntityId)
+                .Where(d => d.Id == req.NotificationKindId)
                 .FirstOrDefaultAsync(ct);
 
             if (helpDocument is null)
@@ -54,7 +54,7 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService, IL
             // Note that only notifications that a user has interacted with are stored in the DB.
             var existingNotification = await _dbContext.Notifications
                 .AsTracking()
-                .Where(n => n.Kind == req.NotificationKind && n.NotificationEntityId == req.NotificationEntityId)
+                .Where(n => n.Kind == req.NotificationKind && n.NotificationKindId == req.NotificationKindId)
                 .FirstOrDefaultAsync(ct);
 
             if (existingNotification is not null)
@@ -67,7 +67,7 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService, IL
                 {
                     UserId = currentUserId,
                     Kind = req.NotificationKind,
-                    NotificationEntityId = req.NotificationEntityId,
+                    NotificationEntityId = req.NotificationKindId,
                     Created = DateTime.UtcNow,
                     IsRead = req.IsRead.Value,
                 };

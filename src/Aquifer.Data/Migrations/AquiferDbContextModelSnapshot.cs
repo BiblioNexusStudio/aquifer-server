@@ -994,7 +994,9 @@ namespace Aquifer.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
 
                     b.Property<bool>("IsRead")
                         .HasColumnType("bit");
@@ -1002,15 +1004,20 @@ namespace Aquifer.Data.Migrations
                     b.Property<int>("Kind")
                         .HasColumnType("int");
 
-                    b.Property<int>("NotificationEntityId")
+                    b.Property<int>("NotificationKindId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("Updated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "Kind", "NotificationEntityId")
+                    b.HasIndex("UserId", "Kind", "NotificationKindId")
                         .IsUnique();
 
                     b.ToTable("Notifications");
