@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Notifications.Update;
 
-public class Endpoint(AquiferDbContext _dbContext, IUserService _userService, ILogger<Endpoint> _logger) : Endpoint<Request>
+public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : Endpoint<Request>
 {
     public override void Configure()
     {
@@ -67,7 +67,7 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService, IL
                 {
                     UserId = currentUserId,
                     Kind = req.NotificationKind,
-                    NotificationEntityId = req.NotificationKindId,
+                    NotificationKindId = req.NotificationKindId,
                     Created = DateTime.UtcNow,
                     IsRead = req.IsRead.Value,
                 };

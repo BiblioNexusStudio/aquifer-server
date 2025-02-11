@@ -32,27 +32,27 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
                 currentUserId,
                 oldestNotificationTimestamp,
                 ct)
-            : Array.Empty<ResourceCommentNotificationData>();
+            : [];
 
         var helpDocumentNotificationData = req.Kinds?.Contains(NotificationKind.HelpDocument) ?? true
             ? await GetHelpDocumentNotificationDataAsync(
                 dbConnection,
                 oldestNotificationTimestamp,
                 ct)
-            : Array.Empty<HelpDocumentNotificationData>();
+            : [];
 
         var readNotificationEntityIdsByNotificationKindMap = (await _dbContext.Notifications
                 .Where(n => n.Created > oldestNotificationTimestamp && n.IsRead)
                 .Select(n => new
                 {
                     n.Kind,
-                    n.NotificationEntityId,
+                    n.NotificationKindId,
                 })
                 .ToListAsync(ct))
             .GroupBy(x => x.Kind)
             .ToDictionary(
                 grp => grp.Key,
-                grp => grp.Select(x => x.NotificationEntityId).ToHashSet());
+                grp => grp.Select(x => x.NotificationKindId).ToHashSet());
 
         var notifications = resourceCommentNotificationData
             .Select(c => new Response
