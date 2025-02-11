@@ -52,11 +52,11 @@
             // default is 0; wait ten seconds before retrying failed operations
             "visibilityTimeout": "00:00:10",
             // default; maximum number of queue messages to process in parallel
-            "batchSize": 16,
+            "batchSize": 4,
             // default; maximum number of retries for failed operations
             "maxDequeueCount": 5,
             // default; the maximum number of in-process operations allowed before pulling a new batch
-            "newBatchThreshold": 8,
+            "newBatchThreshold": 2,
             // default
             "messageEncoding": "base64"
         }
