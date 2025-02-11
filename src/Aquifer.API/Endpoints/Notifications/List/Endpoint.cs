@@ -106,8 +106,8 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
 
     private static async Task<IReadOnlyList<HelpDocumentNotificationData>> GetHelpDocumentNotificationDataAsync(
         DbConnection dbConnection,
-         DateTime minimumHelpDocumentCreatedDate,
-         CancellationToken ct)
+        DateTime minimumHelpDocumentCreatedDate,
+        CancellationToken ct)
     {
         const string query = """
             SELECT
@@ -149,7 +149,7 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
         DateTime minimumCommentCreatedDate,
         CancellationToken ct)
     {
-        // Get comment notifications for the current user where that user is assigned or has been previously been assigned to the associated
+        // Get comment notifications for the current user where that user is assigned or has previously been assigned to the associated
         // resource and where the current user is in the same company as the user who made the comment.  The user who made the comment
         // should not get a notification.
         const string query = """
