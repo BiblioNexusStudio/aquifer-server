@@ -51,19 +51,17 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService, IL
 
         if (req.IsRead.HasValue)
         {
-            // Only read notifications are stored in the DB.
+            // Note that only notifications that a user has interacted with are stored in the DB.
             var existingNotification = await _dbContext.Notifications
                 .AsTracking()
                 .Where(n => n.Kind == req.NotificationKind && n.NotificationEntityId == req.NotificationEntityId)
                 .FirstOrDefaultAsync(ct);
 
-            if (existingNotification is not null && !req.IsRead.Value)
+            if (existingNotification is not null)
             {
-                // instead of marking as unread, delete the notification altogether
-                _dbContext.Notifications.Remove(existingNotification);
-                await _dbContext.SaveChangesAsync(ct);
+                existingNotification.IsRead = req.IsRead.Value;
             }
-            else if (req.IsRead.Value)
+            else
             {
                 var newNotification = new NotificationEntity
                 {
@@ -71,19 +69,13 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService, IL
                     Kind = req.NotificationKind,
                     NotificationEntityId = req.NotificationEntityId,
                     Created = DateTime.UtcNow,
-                    IsRead = true,
+                    IsRead = req.IsRead.Value,
                 };
 
                 _dbContext.Notifications.Add(newNotification);
-                await _dbContext.SaveChangesAsync(ct);
             }
-            else
-            {
-                _logger.LogInformation(
-                    "An already unread notification (Kind: {NotificationKind}; NotificationEntityId: {NotificationEntityId}) was marked as unread, resulting in a no-op.",
-                    req.NotificationKind,
-                    req.NotificationEntityId);
-            }
+
+            await _dbContext.SaveChangesAsync(ct);
         }
 
         await SendNoContentAsync(ct);
