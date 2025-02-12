@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Users.List;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService) : EndpointWithoutRequest<List<Response>>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService) : EndpointWithoutRequest<IReadOnlyList<Response>>
 {
     public override void Configure()
     {
