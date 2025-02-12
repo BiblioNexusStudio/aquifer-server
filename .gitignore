@@ -404,6 +404,7 @@ FodyWeavers.xsd
 *.sln.iml
 *.DotSettings.user
 appsettings.Development.json
+appsettings.Production.json
 .idea/
 
 # Local queue development
