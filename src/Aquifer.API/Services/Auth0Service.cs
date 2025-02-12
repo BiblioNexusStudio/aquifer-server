@@ -13,6 +13,7 @@ namespace Aquifer.API.Services;
 public interface IAuth0Service
 {
     Task<string> GetAccessTokenAsync(CancellationToken ct);
+    Task<string> GetAccessTokenUsingResourceOwnerPasswordFlowAsync(string username, string password, CancellationToken ct);
 
     Task<IReadOnlyList<(string Id, string Name)>> GetAllRolesAsync(string accessToken, CancellationToken ct);
     Task<string?> GetRoleIdForRoleNameAsync(string accessToken, string roleName, CancellationToken ct);
@@ -28,20 +29,12 @@ public interface IAuth0Service
     Task BlockUserAsync(string accessToken, string auth0UserId, CancellationToken ct);
 
     Task ResetPasswordAsync(string accessToken, string email, CancellationToken ct);
+    Task SetUserPasswordAsync(string accessToken, string auth0UserId, string password, CancellationToken ct);
 }
 
-public sealed class Auth0Service : IAuth0Service
+public sealed class Auth0Service(Auth0Settings _auth0Options, IAzureKeyVaultClient _keyVaultClient) : IAuth0Service
 {
-    private readonly Auth0Settings _auth0Options;
-    private readonly IAzureKeyVaultClient _keyVaultClient;
-
     private const string Connection = "Username-Password-Authentication";
-
-    public Auth0Service(Auth0Settings auth0Options, IAzureKeyVaultClient keyVaultClient)
-    {
-        _auth0Options = auth0Options;
-        _keyVaultClient = keyVaultClient;
-    }
 
     public async Task<string> GetAccessTokenAsync(CancellationToken ct)
     {
@@ -57,6 +50,35 @@ public sealed class Auth0Service : IAuth0Service
         var tokenResponse = await auth0AuthenticationClient.GetTokenAsync(request, ct);
 
         return tokenResponse.AccessToken;
+    }
+
+    /// <summary>
+    /// This method should only be used by integration tests as it allows logging in directly with a username/password.
+    /// </summary>
+    public async Task<string> GetAccessTokenUsingResourceOwnerPasswordFlowAsync(string username, string password, CancellationToken ct)
+    {
+        using var auth0AuthenticationClient = GetAuthenticationApiClient();
+
+        var request = new ResourceOwnerTokenRequest
+        {
+            ClientId = _auth0Options.ApplicationClientId,
+            ClientSecret = await _keyVaultClient.GetSecretAsync(KeyVaultSecretName.ResourceOwnerAuth0ClientSecret),
+            Audience = _auth0Options.Audience,
+            Username = username,
+            Password = password,
+            Scope = "openid",
+        };
+
+        var tokenResponse = await auth0AuthenticationClient.GetTokenAsync(request, ct);
+
+        return tokenResponse.AccessToken;
+    }
+
+    public async Task SetUserPasswordAsync(string accessToken, string auth0UserId, string password, CancellationToken ct)
+    {
+        using var auth0ManagementClient = GetManagementApiClient(accessToken);
+
+        await auth0ManagementClient.Users.UpdateAsync(auth0UserId, new UserUpdateRequest { Password = password }, ct);
     }
 
     public async Task<IReadOnlyList<(string Id, string Name)>> GetAllRolesAsync(string accessToken, CancellationToken ct)

@@ -45,5 +45,13 @@ public static class PermissionName
 
 public static class KeyVaultSecretName
 {
-    public const string Auth0ClientSecret = "Auth0ClientSecret", OpenAiApiKey = "OpenAiApiKey";
+    public const string Auth0ClientSecret = "Auth0ClientSecret";
+
+    /// <summary>
+    /// This secret purposefully only exists in the "biblionexus-kv-dev" key vault and should only be used for integration testing.
+    /// DO NOT add this secret to the production key vault!!!
+    /// </summary>
+    public const string ResourceOwnerAuth0ClientSecret = "ResourceOwnerAuth0ClientSecret";
+
+    public const string OpenAiApiKey = "OpenAiApiKey";
 }
