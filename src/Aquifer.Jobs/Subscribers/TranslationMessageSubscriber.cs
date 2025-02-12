@@ -611,7 +611,7 @@ public sealed class TranslationMessageSubscriber(
     ///     update the existing draft resource version with translated content, create a new snapshot for the translation,
     ///     and change the resource content status.
     /// </summary>
-    private async Task TranslateResourceCoreAsync(
+    public async Task TranslateResourceCoreAsync(
         int resourceContentId,
         int startedByUserId,
         bool shouldForceRetranslation,
