@@ -40,7 +40,11 @@ jobs:
                       -e KeyVaultUri="${{ secrets.KEY_VAULT_URI }}" \
                       -e JwtSettings__Authority="${{ secrets.JWT_SETTINGS_AUTHORITY }}" \
                       -e JwtSettings__Audience="${{ secrets.JWT_SETTINGS_AUDIENCE }}" \
-                      -e Auth0Settings__ApiClientId="${{ secrets.AUTH0SETTINGS_API_CLIENT_ID }}" \
-                      -e Auth0Settings__ApplicationClientId="${{ secrets.AUTH0SETTINGS_APPLICATION_CLIENT_ID }}" \
+                      -e Auth0Settings__ApiClientId="${{ secrets.AUTH0_SETTINGS_API_CLIENT_ID }}" \
+                      -e Auth0Settings__ApplicationClientId="${{ secrets.AUTH0_SETTINGS_APPLICATION_CLIENT_ID }}" \
                       -e Auth0Settings__Audience="${{ secrets.AUTH0_SETTINGS_AUDIENCE }}" \
-                      -e Auth0Settings__BaseUri="${{ secrets.AUTH0_SETTINGS_BASE_URI }}"
+                      -e Auth0Settings__BaseUri="${{ secrets.AUTH0_SETTINGS_BASE_URI }}" \
+                      -e IntegrationTestAuth0Settings__ApplicationClientId="${{ secrets.INTEGRATION_TEST_AUTH0_SETTINGS_APPLICATION_CLIENT_ID }}" \
+                      -e IntegrationTestAuth0Settings__Audience="${{ secrets.INTEGRATION_TEST_AUTH0_SETTINGS_AUDIENCE }}" \
+                      -e IntegrationTestAuth0Settings__BaseUri="${{ secrets.INTEGRATION_TEST_AUTH0_SETTINGS_BASE_URI }}" \
+                      -e IntegrationTestUserSettings__TestUserPassword="${{ secrets.INTEGRATION_TEST_USER_SETTINGS_TEST_USER_PASSWORD }}"
