@@ -7,24 +7,24 @@ public sealed class VersificationUtilitiesTests(App _app) : TestBase<App>
 {
     private readonly ICachingVersificationService _versificationService = _app.GetRequiredService<ICachingVersificationService>();
 
-    private const int _engVersificationSchemeBibleId = 0;
-    private const int _bsbBibleId = 1;
-    private const int _ls1910BibleId = 6;
-    private const int _rsbBibleId = 9;
-    private const int _gltBibleId = 10;
+    private const int EngVersificationSchemeBibleId = 0;
+    private const int BsbBibleId = 1;
+    private const int Ls1910BibleId = 6;
+    private const int RsbBibleId = 9;
+    private const int GltBibleId = 10;
 
     [Theory]
-    [InlineData(_bsbBibleId, 1001001001, true,
+    [InlineData(BsbBibleId, 1001001001, true,
         "the BSB contains the given verse")]
-    [InlineData(_bsbBibleId, 1041017021, false,
+    [InlineData(BsbBibleId, 1041017021, false,
         "the BSB does not have the given verse")]
-    [InlineData(_bsbBibleId, 1072001001, false,
+    [InlineData(BsbBibleId, 1072001001, false,
         "the BSB does not have the given book")]
-    [InlineData(_engVersificationSchemeBibleId, 1001001001, true,
+    [InlineData(EngVersificationSchemeBibleId, 1001001001, true,
         "ENG contains the given verse")]
-    [InlineData(_engVersificationSchemeBibleId, 1041017021, true,
+    [InlineData(EngVersificationSchemeBibleId, 1041017021, true,
         "the BSB does not have the given verse")]
-    [InlineData(_engVersificationSchemeBibleId, 1072001001, true,
+    [InlineData(EngVersificationSchemeBibleId, 1072001001, true,
         "ENG contains the given verse")]
     public async Task IsValidVerseId_ValidArguments_Success(
         int bibleId,
@@ -42,15 +42,15 @@ public sealed class VersificationUtilitiesTests(App _app) : TestBase<App>
     }
 
     [Theory]
-    [InlineData(_bsbBibleId, 1001001001, 1001001001, new[] { 1001001001 },
+    [InlineData(BsbBibleId, 1001001001, 1001001001, new[] { 1001001001 },
         "a range of a single verse should return that verse")]
-    [InlineData(_bsbBibleId, 1001001001, 1001001003, new[] { 1001001001, 1001001002, 1001001003 },
+    [InlineData(BsbBibleId, 1001001001, 1001001003, new[] { 1001001001, 1001001002, 1001001003 },
         "a simple range within a single chapter should be correctly returned")]
-    [InlineData(_bsbBibleId, 1041017020, 1041017022, new[] { 1041017020, 1041017022 },
+    [InlineData(BsbBibleId, 1041017020, 1041017022, new[] { 1041017020, 1041017022 },
         "a range should not include excluded verse IDs for the given Bible")]
-    [InlineData(_bsbBibleId, 1041017027, 1041018002, new[] { 1041017027, 1041018001, 1041018002 },
+    [InlineData(BsbBibleId, 1041017027, 1041018002, new[] { 1041017027, 1041018001, 1041018002 },
         "a range spanning two chapters should be correctly returned")]
-    [InlineData(_bsbBibleId, 1041028019, 1042001002, new[] { 1041028019, 1041028020, 1042001001, 1042001002 },
+    [InlineData(BsbBibleId, 1041028019, 1042001002, new[] { 1041028019, 1041028020, 1042001001, 1042001002 },
         "a range spanning two books should be correctly returned")]
     public async Task ExpandVerseIdRangeAsync_ValidArguments_Success(
         int bibleId,
@@ -70,25 +70,25 @@ public sealed class VersificationUtilitiesTests(App _app) : TestBase<App>
     }
 
     [Theory]
-    [InlineData(_bsbBibleId, _bsbBibleId, 1001001001, 1001001001,
+    [InlineData(BsbBibleId, BsbBibleId, 1001001001, 1001001001,
         "the source and target Bibles are the same (with versification mappings) so the source and target verse IDs should be the same")]
-    [InlineData(_engVersificationSchemeBibleId, _bsbBibleId, 1041017021, null,
+    [InlineData(EngVersificationSchemeBibleId, BsbBibleId, 1041017021, null,
         "the target (BSB) does not have the given verse")]
-    [InlineData(_bsbBibleId, _rsbBibleId, 1001003001, 1001003003,
+    [InlineData(BsbBibleId, RsbBibleId, 1001003001, 1001003003,
         "the RSB has a different versification than the BSB for the given verse")]
-    [InlineData(_rsbBibleId, _bsbBibleId, 1001003003, 1001003001,
+    [InlineData(RsbBibleId, BsbBibleId, 1001003003, 1001003001,
         "the RSB has a different versification than the BSB for the given verse")]
-    [InlineData(_bsbBibleId, _rsbBibleId, 1016007067, 1016007068,
+    [InlineData(BsbBibleId, RsbBibleId, 1016007067, 1016007068,
         "the RSB has a different versification than the BSB for the given verse with an ignored optional base verse part")]
-    [InlineData(_rsbBibleId, _bsbBibleId, 1016007068, 1016007067,
+    [InlineData(RsbBibleId, BsbBibleId, 1016007068, 1016007067,
         "the RSB has a different versification than the BSB for the given verse with a non-matching base verse part")]
-    [InlineData(_engVersificationSchemeBibleId, _ls1910BibleId, 1004026001, 1004026001,
+    [InlineData(EngVersificationSchemeBibleId, Ls1910BibleId, 1004026001, 1004026001,
         "the ENG and LS1910 have the same versification with matching base verse parts")]
-    [InlineData(_ls1910BibleId, _engVersificationSchemeBibleId, 1004026001, 1004026001,
+    [InlineData(Ls1910BibleId, EngVersificationSchemeBibleId, 1004026001, 1004026001,
         "the ENG and LS1910 have the same versification with matching base verse parts")]
-    [InlineData(_bsbBibleId, _engVersificationSchemeBibleId, 1004026001, 1004026001,
+    [InlineData(BsbBibleId, EngVersificationSchemeBibleId, 1004026001, 1004026001,
         "the ENG has a different versification than the BSB, the Bible verse part of 'b' is not loaded, and the base verse part of 'b' is ignored which results in mapping back to the same verse ID")]
-    [InlineData(_engVersificationSchemeBibleId, _bsbBibleId, 1004026001, 1004026001,
+    [InlineData(EngVersificationSchemeBibleId, BsbBibleId, 1004026001, 1004026001,
         "the ENG has a different versification than the BSB and the base verse part of 'b' is ignored which results in mapping to the same verse ID")]
     public async Task ConvertVersification_ValidArguments_Success(
         int sourceBibleId,
@@ -111,10 +111,10 @@ public sealed class VersificationUtilitiesTests(App _app) : TestBase<App>
     public async Task ConvertVersificationRange_ValidArgumentsWithExclusionInSourceAndTarget_Success()
     {
         var results = await VersificationUtilities.ConvertVersificationRangeAsync(
-            sourceBibleId: _bsbBibleId,
+            sourceBibleId: BsbBibleId,
             1046016023,
             1046016027,
-            targetBibleId: _gltBibleId,
+            targetBibleId: GltBibleId,
             _versificationService,
             CancellationToken.None);
 

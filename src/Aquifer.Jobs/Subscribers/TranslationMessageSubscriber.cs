@@ -29,7 +29,7 @@ public sealed class TranslationMessageSubscriber(
     INotificationMessagePublisher _notificationMessagePublisher,
     IQueueClientFactory _queueClientFactory)
 {
-    private const int _englishLanguageId = 1;
+    private const int EnglishLanguageId = 1;
 
     private static readonly IReadOnlySet<TranslationOrigin> s_allowedTranslationOriginsForIndividualResourceContentTranslation =
         new HashSet<TranslationOrigin>
@@ -319,7 +319,7 @@ public sealed class TranslationMessageSubscriber(
         var englishResourceContentVersionsToTranslate = await _dbContext.ResourceContentVersions
             .Where(rcv =>
                 rcv.IsPublished &&
-                rcv.ResourceContent.LanguageId == _englishLanguageId &&
+                rcv.ResourceContent.LanguageId == EnglishLanguageId &&
                 rcv.ResourceContent.MediaType == ResourceContentMediaType.Text &&
                 rcv.ResourceContent.Resource.ParentResourceId == parentResource.Id)
             .ToListAsync(ct);
@@ -461,7 +461,7 @@ public sealed class TranslationMessageSubscriber(
             .Where(rcv =>
                 rcv.Id == dto.EnglishResourceContentVersionId &&
                 rcv.IsPublished &&
-                rcv.ResourceContent.LanguageId == _englishLanguageId &&
+                rcv.ResourceContent.LanguageId == EnglishLanguageId &&
                 rcv.ResourceContent.MediaType == ResourceContentMediaType.Text)
             .Include(x => x.ResourceContent)
             .SingleOrDefaultAsync(ct)
@@ -665,13 +665,13 @@ public sealed class TranslationMessageSubscriber(
 
         var resourceContentLanguage = resourceContentVersion.ResourceContent.Language;
 
-        if (isAquiferization && resourceContentLanguage.Id != _englishLanguageId)
+        if (isAquiferization && resourceContentLanguage.Id != EnglishLanguageId)
         {
             throw new InvalidOperationException(
                 $"Aborting aquiferization for Resource Content ID {resourceContentId} because status indicates aquiferization but content language is {resourceContentLanguage.EnglishDisplay}.");
         }
 
-        if (!isAquiferization && resourceContentLanguage.Id == _englishLanguageId)
+        if (!isAquiferization && resourceContentLanguage.Id == EnglishLanguageId)
         {
             throw new InvalidOperationException(
                 $"Aborting translation for Resource Content ID {resourceContentId} because status indicates translation but content language is English.");
@@ -690,7 +690,7 @@ public sealed class TranslationMessageSubscriber(
         // Translation should not have existing content (if not a forced retranslation)
         // but Aquiferization of English may have existing content.
         if (!shouldForceRetranslation &&
-            resourceContentLanguage.Id != _englishLanguageId &&
+            resourceContentLanguage.Id != EnglishLanguageId &&
             resourceContentVersion.ResourceContent.ContentUpdated != null)
         {
             _logger.LogInformation(

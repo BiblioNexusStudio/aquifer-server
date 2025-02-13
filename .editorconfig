@@ -81,6 +81,7 @@ dotnet_style_null_propagation = true:error
 dotnet_style_object_initializer = true
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
 dotnet_style_prefer_auto_properties = true
+dotnet_style_prefer_collection_expression.when_types_loosely_match = true:suggestion
 dotnet_style_prefer_compound_assignment = true:error
 dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
 dotnet_style_prefer_conditional_expression_over_return = true:suggestion
@@ -102,7 +103,7 @@ dotnet_remove_unnecessary_suppression_exclusions = none
 
 # New line preferences
 dotnet_style_allow_multiple_blank_lines_experimental = false:error
-dotnet_style_allow_statement_immediately_after_block_experimental = true
+dotnet_style_allow_statement_immediately_after_block_experimental = false
 
 #### C# Coding Conventions ####
 
@@ -226,6 +227,11 @@ csharp_preserve_single_line_statements = true
 
 # Naming rules
 
+dotnet_naming_rule.constant_fields_should_be_pascal_case.severity = warning
+dotnet_naming_rule.private_constants_rule.severity = warning
+dotnet_naming_rule.private_constants_rule.style = pascal_case
+dotnet_naming_rule.private_constants_rule.symbols = private_constants_symbols
+
 dotnet_naming_rule.interface_should_be_begins_with_i.severity = suggestion
 dotnet_naming_rule.interface_should_be_begins_with_i.symbols = interface
 dotnet_naming_rule.interface_should_be_begins_with_i.style = begins_with_i
@@ -238,7 +244,20 @@ dotnet_naming_rule.non_field_members_should_be_pascal_case.severity = suggestion
 dotnet_naming_rule.non_field_members_should_be_pascal_case.symbols = non_field_members
 dotnet_naming_rule.non_field_members_should_be_pascal_case.style = pascal_case
 
+dotnet_naming_rule.private_static_fields_rule.severity = warning
+dotnet_naming_rule.private_static_fields_rule.style = s_lower_camel_case_style
+dotnet_naming_rule.private_static_fields_rule.symbols = private_static_fields_symbols
+dotnet_naming_rule.private_static_readonly_rule.severity = warning
+dotnet_naming_rule.private_static_readonly_rule.style = s_lower_camel_case_style
+dotnet_naming_rule.private_static_readonly_rule.symbols = private_static_readonly_symbols
+
+dotnet_naming_rule.private_members_with_underscore.symbols = private_fields
+dotnet_naming_rule.private_members_with_underscore.style = prefix_underscore
+dotnet_naming_rule.private_members_with_underscore.severity = warning
+
 # Symbol specifications
+
+dotnet_naming_symbols.constant_fields.required_modifiers = const
 
 dotnet_naming_symbols.interface.applicable_kinds = interface
 dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
@@ -252,6 +271,20 @@ dotnet_naming_symbols.non_field_members.applicable_kinds = property, event, meth
 dotnet_naming_symbols.non_field_members.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
 dotnet_naming_symbols.non_field_members.required_modifiers =
 
+dotnet_naming_symbols.private_static_fields_symbols.applicable_accessibilities = private
+dotnet_naming_symbols.private_static_fields_symbols.applicable_kinds = field
+dotnet_naming_symbols.private_static_fields_symbols.required_modifiers = static
+dotnet_naming_symbols.private_static_readonly_symbols.applicable_accessibilities = private
+dotnet_naming_symbols.private_static_readonly_symbols.applicable_kinds = field
+dotnet_naming_symbols.private_static_readonly_symbols.required_modifiers = static, readonly
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_symbols.private_constants_symbols.applicable_accessibilities = private
+dotnet_naming_symbols.private_constants_symbols.applicable_kinds = field
+dotnet_naming_symbols.private_constants_symbols.required_modifiers = const
+
 # Naming styles
 
 dotnet_naming_style.pascal_case.required_prefix =
@@ -259,10 +292,16 @@ dotnet_naming_style.pascal_case.required_suffix =
 dotnet_naming_style.pascal_case.word_separator =
 dotnet_naming_style.pascal_case.capitalization = pascal_case
 
+dotnet_naming_style.prefix_underscore.capitalization = camel_case
+dotnet_naming_style.prefix_underscore.required_prefix = _
+
 dotnet_naming_style.begins_with_i.required_prefix = I
 dotnet_naming_style.begins_with_i.required_suffix =
 dotnet_naming_style.begins_with_i.word_separator =
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
+
+dotnet_naming_style.s_lower_camel_case_style.capitalization = camel_case
+dotnet_naming_style.s_lower_camel_case_style.required_prefix = s_
 
 # Resharper
 resharper_max_formal_parameters_on_line = 6
@@ -270,15 +309,3 @@ resharper_csharp_max_formal_parameters_on_line = 6
 resharper_csharp_continuous_indent_multiplier = 1
 resharper_csharp_max_invocation_arguments_on_line = 6
 resharper_csharp_wrap_list_pattern = chop_if_long
-
-[*.{cs,vb}]
-dotnet_style_coalesce_expression = true:error
-dotnet_style_null_propagation = true:error
-dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
-dotnet_style_prefer_auto_properties = true
-dotnet_style_object_initializer = true:suggestion
-dotnet_style_collection_initializer = true:suggestion
-dotnet_style_operator_placement_when_wrapping = beginning_of_line
-dotnet_style_prefer_collection_expression.when_types_loosely_match = true:suggestion
-tab_width = 4
-indent_size = 4

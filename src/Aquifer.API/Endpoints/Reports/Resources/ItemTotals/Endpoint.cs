@@ -9,7 +9,7 @@ namespace Aquifer.API.Endpoints.Reports.Resources.ItemTotals;
 
 public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Response>
 {
-    private readonly string TotalsQuery =
+    private readonly string _totalsQuery =
         $"""
          SELECT (SELECT COUNT(*)
           FROM Resources) AS TotalResources,
@@ -90,7 +90,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
         var totals = await dbContext.Database
-            .SqlQuery<Response>($"exec ({TotalsQuery})")
+            .SqlQuery<Response>($"exec ({_totalsQuery})")
             .ToListAsync(cancellationToken);
 
         await SendAsync(totals.Single(), cancellation: cancellationToken);

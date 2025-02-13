@@ -9,7 +9,7 @@ public sealed partial class FrenchTranslationProcessingService : ILanguageSpecif
     private const string NonBreakingSpace = "\u00a0";
     private const string HtmlEncodedNonBreakingSpace = "&nbsp;";
 
-    private static readonly IReadOnlySet<string> s_RegexItemsThatHaveNnbspAfterSelf = new HashSet<string>
+    private static readonly IReadOnlySet<string> s_regexItemsThatHaveNnbspAfterSelf = new HashSet<string>
     {
         @"\bv\.", // v.
         @"\bp\.", // p.
@@ -19,7 +19,7 @@ public sealed partial class FrenchTranslationProcessingService : ILanguageSpecif
         @"\bav\." // av.
     };
 
-    private static readonly IReadOnlySet<string> s_RegexItemsThatHaveNnbspBeforeSelf = new HashSet<string>
+    private static readonly IReadOnlySet<string> s_regexItemsThatHaveNnbspBeforeSelf = new HashSet<string>
     {
         "»",
         "!",
@@ -28,8 +28,8 @@ public sealed partial class FrenchTranslationProcessingService : ILanguageSpecif
         ";"
     };
 
-    private readonly string _nnbspAfterPattern = @$"({string.Join("|", s_RegexItemsThatHaveNnbspAfterSelf)})(?=[A-Za-zà-üÀ-Ü0-9\x20])";
-    private readonly string _nnbspBeforePattern = @$"(\b|\x20)({string.Join("|", s_RegexItemsThatHaveNnbspBeforeSelf)})";
+    private readonly string _nnbspAfterPattern = @$"({string.Join("|", s_regexItemsThatHaveNnbspAfterSelf)})(?=[A-Za-zà-üÀ-Ü0-9\x20])";
+    private readonly string _nnbspBeforePattern = @$"(\b|\x20)({string.Join("|", s_regexItemsThatHaveNnbspBeforeSelf)})";
 
     public string Iso6393Code => "FRA";
 

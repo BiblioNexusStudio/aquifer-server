@@ -73,7 +73,8 @@ public static class Helpers
             await historyService.AddAssignedUserHistoryAsync(newResourceContentVersion, assignedUserId, user.Id, ct);
         }
 
-        var resourceContent = await dbContext.ResourceContents.AsTracking().SingleOrDefaultAsync(rc => rc.Id == contentId, ct) ?? throw new ArgumentNullException();
+        var resourceContent = await dbContext.ResourceContents.AsTracking().SingleOrDefaultAsync(rc => rc.Id == contentId, ct)
+            ?? throw new ArgumentException($"Content with ID {contentId} not found.", nameof(contentId));
 
         if (assignedUserId is null || resourceContent.LanguageId == Constants.EnglishLanguageId)
         {
@@ -105,6 +106,7 @@ public static class Helpers
             {
                 resourceContent.Updated = DateTime.UtcNow;
             }
+
             await historyService.AddStatusHistoryAsync(newResourceContentVersion, ResourceContentStatus.AquiferizeEditorReview, user.Id, ct);
         }
     }

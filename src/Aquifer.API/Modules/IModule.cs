@@ -13,7 +13,7 @@ public interface IModule
 public static class ModuleExtensions
 {
     // this could also be added into the DI container
-    private static readonly List<IModule> registeredModules = [];
+    private static readonly List<IModule> s_registeredModules = [];
 
     public static IServiceCollection RegisterModules(this IServiceCollection services)
     {
@@ -21,7 +21,7 @@ public static class ModuleExtensions
         foreach (var module in modules)
         {
             module.RegisterModule(services);
-            registeredModules.Add(module);
+            s_registeredModules.Add(module);
         }
 
         return services;
@@ -29,7 +29,7 @@ public static class ModuleExtensions
 
     public static WebApplication MapEndpoints(this WebApplication app)
     {
-        foreach (var module in registeredModules)
+        foreach (var module in s_registeredModules)
         {
             module.MapEndpoints(app);
         }

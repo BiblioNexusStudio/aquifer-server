@@ -5,8 +5,8 @@ namespace Aquifer.Common.Utilities;
 
 public static class BibleBookCodeUtilities
 {
-    private static readonly Dictionary<string, BibleBookMetadata> BookCodeToMetadata = [];
-    private static readonly Dictionary<BookId, BibleBookMetadata> BookIdToMetadata = [];
+    private static readonly Dictionary<string, BibleBookMetadata> s_bookCodeToMetadata = [];
+    private static readonly Dictionary<BookId, BibleBookMetadata> s_bookIdToMetadata = [];
 
     static BibleBookCodeUtilities()
     {
@@ -20,29 +20,29 @@ public static class BibleBookCodeUtilities
                 BookCode = bookId.ToString().Replace("Book", ""),
                 BookFullName = bookId.GetDisplayName()
             };
-            BookCodeToMetadata.Add(bookId.ToString().Replace("Book", ""), metadata);
-            BookIdToMetadata.Add(bookId, metadata);
+            s_bookCodeToMetadata.Add(bookId.ToString().Replace("Book", ""), metadata);
+            s_bookIdToMetadata.Add(bookId, metadata);
         }
     }
 
     public static string CodeFromId(BookId bookId)
     {
-        return BookIdToMetadata.TryGetValue(bookId, out var obj) ? obj.BookCode : "";
+        return s_bookIdToMetadata.TryGetValue(bookId, out var obj) ? obj.BookCode : "";
     }
 
     public static BookId IdFromCode(string stringValue)
     {
-        return BookCodeToMetadata.TryGetValue(stringValue.ToUpper(), out var obj) ? obj.BookId : BookId.None;
+        return s_bookCodeToMetadata.TryGetValue(stringValue.ToUpper(), out var obj) ? obj.BookId : BookId.None;
     }
 
     public static string FullNameFromId(BookId bookId)
     {
-        return BookIdToMetadata.TryGetValue(bookId, out var obj) ? obj.BookFullName : "";
+        return s_bookIdToMetadata.TryGetValue(bookId, out var obj) ? obj.BookFullName : "";
     }
 
     public static List<BibleBookMetadata> GetAll()
     {
-        return BookIdToMetadata.Select(x => x.Value).Skip(1).ToList();
+        return s_bookIdToMetadata.Select(x => x.Value).Skip(1).ToList();
     }
 
     public record BibleBookMetadata

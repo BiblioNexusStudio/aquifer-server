@@ -7,7 +7,7 @@ namespace Aquifer.Data.EventHandlers;
 
 public static class BadTranslationPairHandler
 {
-    private static readonly IReadOnlySet<string> s_KeyBlacklist = new HashSet<string>
+    private static readonly IReadOnlySet<string> s_keyBlacklist = new HashSet<string>
     {
         "span",
         "div"
@@ -25,7 +25,7 @@ public static class BadTranslationPairHandler
                     return;
                 }
 
-                if (x.Key.Length < 3 || s_KeyBlacklist.Contains(x.Key))
+                if (x.Key.Length < 3 || s_keyBlacklist.Contains(x.Key))
                 {
                     throw new TranslationPairKeyNotAllowedException(
                         $"The key ${x.Key} is not allowed. Keys 2 or fewer characters and some specific keys are not allowed.");

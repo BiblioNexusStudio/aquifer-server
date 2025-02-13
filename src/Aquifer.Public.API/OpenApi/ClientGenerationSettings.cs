@@ -10,7 +10,7 @@ namespace Aquifer.Public.API.OpenApi;
 /// </summary>
 public static class ClientGenerationSettings
 {
-    private const string _clientsRouteName = "clients";
+    private const string ClientsRouteName = "clients";
 
     public static IEndpointRouteBuilder ConfigureClientGeneration(
         this IEndpointRouteBuilder app,
@@ -18,7 +18,7 @@ public static class ClientGenerationSettings
         TimeSpan clientZipCacheDuration)
     {
         app.MapApiClientEndpoint(
-            $"/{_clientsRouteName}/cs",
+            $"/{ClientsRouteName}/cs",
             c =>
             {
                 c.SwaggerDocumentName = swaggerDocumentName;
@@ -26,7 +26,7 @@ public static class ClientGenerationSettings
                 c.ClientNamespaceName = "BiblioNexus.Aquifer.API.Client";
                 c.ClientClassName = "AquiferClient";
                 c.OutputPath = Path.Combine(c.OutputPath, "cs", Path.GetRandomFileName());
-                c.ExcludePatterns = [$"**/{_clientsRouteName}/**"];
+                c.ExcludePatterns = [$"**/{ClientsRouteName}/**"];
             },
             o =>
             {
@@ -143,7 +143,7 @@ public static class ClientGenerationSettings
             });
 
         app.MapApiClientEndpoint(
-            $"/{_clientsRouteName}/java",
+            $"/{ClientsRouteName}/java",
             c =>
             {
                 c.SwaggerDocumentName = swaggerDocumentName;
@@ -151,7 +151,7 @@ public static class ClientGenerationSettings
                 c.ClientNamespaceName = "org.biblionexus.aquifer.api.client";
                 c.ClientClassName = "AquiferClient";
                 c.OutputPath = Path.Combine(c.OutputPath, "java", Path.GetRandomFileName());
-                c.ExcludePatterns = [$"**/{_clientsRouteName}/**"];
+                c.ExcludePatterns = [$"**/{ClientsRouteName}/**"];
             },
             o =>
             {
@@ -171,7 +171,7 @@ public static class ClientGenerationSettings
             });
 
         app.MapApiClientEndpoint(
-            $"/{_clientsRouteName}/py",
+            $"/{ClientsRouteName}/py",
             c =>
             {
                 c.SwaggerDocumentName = swaggerDocumentName;
@@ -179,7 +179,7 @@ public static class ClientGenerationSettings
                 c.ClientNamespaceName = "biblionexus_aquifer_api_client";
                 c.ClientClassName = "AquiferClient";
                 c.OutputPath = Path.Combine(c.OutputPath, "py", Path.GetRandomFileName());
-                c.ExcludePatterns = [$"**/{_clientsRouteName}/**"];
+                c.ExcludePatterns = [$"**/{ClientsRouteName}/**"];
             },
             o =>
             {
@@ -198,7 +198,7 @@ public static class ClientGenerationSettings
             });
 
         app.MapApiClientEndpoint(
-            $"/{_clientsRouteName}/ts",
+            $"/{ClientsRouteName}/ts",
             c =>
             {
                 c.SwaggerDocumentName = swaggerDocumentName;
@@ -206,7 +206,7 @@ public static class ClientGenerationSettings
                 c.ClientNamespaceName = "biblionexus-aquifer-api-client";
                 c.ClientClassName = "AquiferClient";
                 c.OutputPath = Path.Combine(c.OutputPath, "ts", Path.GetRandomFileName());
-                c.ExcludePatterns = [$"**/{_clientsRouteName}/**"];
+                c.ExcludePatterns = [$"**/{ClientsRouteName}/**"];
             },
             o =>
             {
