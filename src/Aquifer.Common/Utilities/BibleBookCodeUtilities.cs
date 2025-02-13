@@ -10,7 +10,7 @@ public static class BibleBookCodeUtilities
 
     static BibleBookCodeUtilities()
     {
-        var bookIds = Enum.GetValues(typeof(BookId)).Cast<BookId>();
+        var bookIds = Enum.GetValues<BookId>();
 
         foreach (var bookId in bookIds)
         {
