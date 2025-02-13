@@ -6,7 +6,7 @@ namespace Aquifer.Data.EventHandlers;
 
 public static class ResourceStatusChangeHandler
 {
-    private static readonly List<ResourceContentStatus> InReviewOrGreaterStatuses =
+    private static readonly List<ResourceContentStatus> s_inReviewOrGreaterStatuses =
     [
         ResourceContentStatus.Complete, ResourceContentStatus.AquiferizePublisherReview, ResourceContentStatus.TranslationPublisherReview
     ];
@@ -63,7 +63,7 @@ public static class ResourceStatusChangeHandler
             await dbContext.Projects.Where(x =>
                     x.ProjectResourceContents.Any(prc => inReviewContentIds.Contains(prc.ResourceContent.Id)) &&
                     x.ProjectResourceContents.Where(prc => !inReviewContentIds.Contains(prc.ResourceContent.Id))
-                        .All(prc => InReviewOrGreaterStatuses.Contains(prc.ResourceContent.Status)))
+                        .All(prc => s_inReviewOrGreaterStatuses.Contains(prc.ResourceContent.Status)))
                 .ExecuteUpdateAsync(x => x
                     .SetProperty(p => p.ActualDeliveryDate, DateOnly.FromDateTime(DateTime.UtcNow))
                     .SetProperty(p => p.Updated, DateTime.UtcNow));
@@ -75,7 +75,7 @@ public static class ResourceStatusChangeHandler
                     x.ActualDeliveryDate != null &&
                     x.ActualPublishDate == null &&
                     x.ProjectResourceContents.Any(prc => editorReviewIds.Contains(prc.ResourceContent.Id)) &&
-                    x.ProjectResourceContents.Where(prc => !editorReviewIds.Contains(prc.ResourceContent.Id)).All(prc => InReviewOrGreaterStatuses.Contains(prc.ResourceContent.Status)))
+                    x.ProjectResourceContents.Where(prc => !editorReviewIds.Contains(prc.ResourceContent.Id)).All(prc => s_inReviewOrGreaterStatuses.Contains(prc.ResourceContent.Status)))
                 .ExecuteUpdateAsync(x => x
                     .SetProperty(p => p.ActualDeliveryDate, null as DateOnly?)
                     .SetProperty(p => p.Updated, DateTime.UtcNow));

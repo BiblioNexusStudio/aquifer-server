@@ -41,6 +41,7 @@ public sealed class Endpoint(AquiferDbContext _dbContext, ICachingLanguageServic
         {
             ThrowError(r => r.LanguageIds, $"Invalid 'Language Ids': \"{string.Join("\", \"", invalidLanguageIds)}\"");
         }
+
         if (invalidLanguageCodes is not [])
         {
             ThrowError(r => r.LanguageCodes, $"Invalid 'Language Codes': \"{string.Join("\", \"", invalidLanguageCodes)}\"");

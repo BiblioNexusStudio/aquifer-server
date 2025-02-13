@@ -20,8 +20,8 @@ public sealed class SendResourceAssignmentNotificationsManager(
     ILogger<SendResourceAssignmentNotificationsManager> _logger)
     : ManagerBase<SendResourceAssignmentNotificationsManager>(_logger)
 {
-    private const int _maxNumberOfResourcesToDisplayInNotificationContent = 25;
-    private const int _maxAgeOfResourceAssignmentInMinutes = 120;
+    private const int MaxNumberOfResourcesToDisplayInNotificationContent = 25;
+    private const int MaxAgeOfResourceAssignmentInMinutes = 120;
 
     [Function(nameof(SendResourceAssignmentNotificationsManager))]
     [FixedDelayRetry(maxRetryCount: 1, Timings.TenSecondDelayInterval)]
@@ -42,7 +42,7 @@ public sealed class SendResourceAssignmentNotificationsManager(
         var includeResourcesAssignedSince = new[]
         {
             jobHistory.LastProcessed,
-            DateTime.UtcNow.AddMinutes(-_maxAgeOfResourceAssignmentInMinutes),
+            DateTime.UtcNow.AddMinutes(-MaxAgeOfResourceAssignmentInMinutes),
         }
         .Max();
 
@@ -86,9 +86,9 @@ public sealed class SendResourceAssignmentNotificationsManager(
                         [EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notification: Resources Assigned",
                         ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
                         ["resourceCount"] = countOfResourcesAssignedToUser,
-                        ["additionalResourceCount"] = Math.Max(countOfResourcesAssignedToUser - _maxNumberOfResourcesToDisplayInNotificationContent, 0),
+                        ["additionalResourceCount"] = Math.Max(countOfResourcesAssignedToUser - MaxNumberOfResourcesToDisplayInNotificationContent, 0),
                         ["parentResources"] = userGrouping
-                            .Take(_maxNumberOfResourcesToDisplayInNotificationContent)
+                            .Take(MaxNumberOfResourcesToDisplayInNotificationContent)
                             .GroupBy(uh => uh.ParentResourceName)
                             .OrderBy(parentResourceGrouping => parentResourceGrouping.Key)
                             .Select(parentResourceGrouping => new

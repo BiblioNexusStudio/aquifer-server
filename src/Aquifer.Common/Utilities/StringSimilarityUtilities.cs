@@ -65,6 +65,7 @@ public static class StringSimilarityUtilities
             
             result.Add(substring);
         }
+
         result.Add(text);
         
         return result;

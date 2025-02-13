@@ -51,9 +51,9 @@ public sealed class OpenAiChatCompletionException(string message, string prompt,
 
 public sealed partial class OpenAiTranslationService : ITranslationService
 {
-    private const string _englishLanguageCode = "ENG";
-    private const int _maxContentLength = 5_000;
-    private const int _maxParallelizationForSingleTranslation = 3;
+    private const string EnglishLanguageCode = "ENG";
+    private const int MaxContentLength = 5_000;
+    private const int MaxParallelizationForSingleTranslation = 3;
 
     private static readonly TimeSpan s_openAiNetworkTimeout = TimeSpan.FromMinutes(10);
 
@@ -93,10 +93,10 @@ public sealed partial class OpenAiTranslationService : ITranslationService
         IDictionary<string, string> translationPairs,
         CancellationToken cancellationToken)
     {
-        if (text.Length > _maxContentLength)
+        if (text.Length > MaxContentLength)
         {
             throw new ArgumentException(
-                $"{nameof(text)} must have fewer than {_maxContentLength} characters but has {text.Length}.",
+                $"{nameof(text)} must have fewer than {MaxContentLength} characters but has {text.Length}.",
                 nameof(text));
         }
 
@@ -124,7 +124,7 @@ public sealed partial class OpenAiTranslationService : ITranslationService
         foreach (var paragraphs in ParagraphRegex()
             .Split(html)
             .Where(x => !string.IsNullOrWhiteSpace(x) && x.Length > 2)
-            .Chunk(_maxParallelizationForSingleTranslation))
+            .Chunk(MaxParallelizationForSingleTranslation))
         {
             // Operate on the paragraphs in each batch in parallel,
             // but wait for all paragraphs in the batch to finish before starting the next batch.
@@ -203,7 +203,7 @@ public sealed partial class OpenAiTranslationService : ITranslationService
 
     private string? GetHtmlTranslationPrompt((string Iso6393Code, string EnglishName) destinationLanguage)
     {
-        if (string.Equals(destinationLanguage.Iso6393Code, _englishLanguageCode, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(destinationLanguage.Iso6393Code, EnglishLanguageCode, StringComparison.OrdinalIgnoreCase))
         {
             return null;
         }

@@ -34,7 +34,7 @@ public sealed record EmailAddress(
 public class SendGridEmailService : IEmailService
 {
     // the SendGrid API limit is 1,000
-    private const int _maximumNumberOfTosPerApiCall = 1_000;
+    private const int MaximumNumberOfTosPerApiCall = 1_000;
     private static readonly Regex s_removePlusAddressing = new("\\+.*@", RegexOptions.Compiled);
 
     private readonly SendGridClient _sendGridClient;
@@ -180,7 +180,7 @@ public class SendGridEmailService : IEmailService
 
             return groups
                 .Select(grp => grp.First())
-                .Chunk(_maximumNumberOfTosPerApiCall)
+                .Chunk(MaximumNumberOfTosPerApiCall)
                 .Concat(
                     RecursivelyChunkAndZipGroupedItems(
                         groups
