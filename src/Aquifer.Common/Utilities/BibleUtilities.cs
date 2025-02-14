@@ -33,7 +33,7 @@ public static class BibleUtilities
         return ((int)bookId * 1000000) + ((chapter + 1) * 1000) - 1 + 1000000000;
     }
 
-    public static List<(int, int)> VerseRangesForBookAndChapters(string? bookCode, int[]? chapters)
+    public static List<(int StartVerseId, int EndVerseId)> VerseRangesForBookAndChapters(string? bookCode, int[]? chapters)
     {
         if (bookCode is null)
         {
@@ -47,7 +47,7 @@ public static class BibleUtilities
             : chapters.Select(c => (LowerBoundOfChapter(bookId, c), UpperBoundOfChapter(bookId, c))).ToList();
     }
 
-    public static (int startVerseId, int endVerseId)? VerseRangeForBookAndChapters(string? bookCode, int? startChapter, int? endChapter)
+    public static (int StartVerseId, int EndVerseId)? VerseRangeForBookAndChapters(string? bookCode, int? startChapter, int? endChapter)
     {
         if (bookCode is null)
         {
@@ -74,7 +74,7 @@ public static class BibleUtilities
         return (LowerBoundOfBook(bookId), UpperBoundOfBook(bookId));
     }
 
-    public static (int startVerseId, int endVerseId) GetVerseIds(string bookCode,
+    public static (int StartVerseId, int EndVerseId) GetVerseIds(string bookCode,
         int startChapter,
         int endChapter,
         int startVerse,
