@@ -17,7 +17,7 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
     {
         var currentUserId = (await _userService.GetUserFromJwtAsync(ct)).Id;
 
-        var updates = req.Updates!;
+        var updates = req.Updates;
 
         var invalidNotificationKinds = updates
             .Select(u => u.NotificationKind)

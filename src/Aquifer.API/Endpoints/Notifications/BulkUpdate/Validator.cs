@@ -7,7 +7,9 @@ public class Validator : Validator<Request>
 {
     public Validator()
     {
-        RuleFor(x => x.Updates).NotNull();
+        RuleFor(x => x.Updates)
+            .NotNull()
+            .NotEmpty();
 
         RuleForEach(x => x.Updates)
             .ChildRules(

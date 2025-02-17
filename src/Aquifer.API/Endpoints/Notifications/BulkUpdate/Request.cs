@@ -4,7 +4,7 @@ namespace Aquifer.API.Endpoints.Notifications.BulkUpdate;
 
 public sealed class Request
 {
-    public IReadOnlyList<NotificationUpdate>? Updates { get; init; }
+    public IReadOnlyList<NotificationUpdate> Updates { get; init; } = [];
 }
 
 public sealed class NotificationUpdate
