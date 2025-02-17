@@ -80,16 +80,28 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
         }
 
         var created = DateTime.UtcNow;
+
+        // Note that only notifications that a user has interacted with are stored in the DB.
+        var existingNotifications = await _dbContext.Notifications
+            .AsTracking()
+            .Where(n => n.UserId == currentUserId &&
+                ((n.Kind == NotificationKind.Comment && requestedCommentIds.Contains(n.NotificationKindId)) ||
+                    (n.Kind == NotificationKind.HelpDocument && requestedHelpDocumentIds.Contains(n.NotificationKindId))))
+            .ToListAsync(ct);
+
+        var existingNotificationByIdMapByKindMap = existingNotifications
+            .GroupBy(n => n.Kind)
+            .ToDictionary(
+                n => n.Key,
+                grp => grp.ToDictionary(n => n.NotificationKindId));
+
         foreach (var update in updates)
         {
             if (update.IsRead.HasValue)
             {
-                // Note that only notifications that a user has interacted with are stored in the DB.
-                var existingNotification = await _dbContext
-                    .Notifications
-                    .AsTracking()
-                    .Where(n => n.Kind == update.NotificationKind && n.NotificationKindId == update.NotificationKindId)
-                    .FirstOrDefaultAsync(ct);
+                var existingNotification = existingNotificationByIdMapByKindMap
+                    .GetValueOrDefault(update.NotificationKind)
+                    ?.GetValueOrDefault(update.NotificationKindId);
 
                 if (existingNotification is not null)
                 {
