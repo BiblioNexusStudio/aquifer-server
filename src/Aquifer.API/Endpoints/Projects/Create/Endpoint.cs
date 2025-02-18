@@ -109,10 +109,17 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         if (languageId == Constants.EnglishLanguageId)
         {
+            if (request.IsAlreadyTranslated)
+            {
+                ThrowError(r => r.LanguageId, "English projects cannot be created with already translated resource contents.");
+            }
+
             return await CreateOrFindAquiferizationResourceContentAsync(languageId, request, ct);
         }
 
-        return await CreateOrFindTranslationResourceContentAsync(languageId, request, user, ct);
+        return request.IsAlreadyTranslated
+            ? await CreateOrFindTranslatedResourceContentAsync(languageId, request, user, ct)
+            : await CreateOrFindTranslationResourceContentAsync(languageId, request, user, ct);
     }
 
     private async Task<List<ResourceContentEntity>> CreateOrFindAquiferizationResourceContentAsync(int languageId,
@@ -164,6 +171,75 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     ResourceContent = resourceContent
                 });
             }
+        }
+
+        return resourceContents;
+    }
+
+    private async Task<List<ResourceContentEntity>> CreateOrFindTranslatedResourceContentAsync(
+        int languageId,
+        Request request,
+        UserEntity user,
+        CancellationToken ct)
+    {
+        var languageResourceContents = await dbContext.ResourceContents.AsTracking()
+            .Where(rc => request.ResourceIds.Contains(rc.ResourceId) &&
+                rc.MediaType != ResourceContentMediaType.Audio &&
+                rc.LanguageId == languageId)
+            .Include(rc => rc.Versions)
+            .Include(rc => rc.ProjectResourceContents)
+            .Include(rc => rc.Language)
+            .ToListAsync(ct);
+
+        List<ResourceContentEntity> resourceContents = [];
+
+        foreach (var resourceContent in languageResourceContents)
+        {
+            if (resourceContent.ProjectResourceContents.Count > 0)
+            {
+                ThrowError(r => r.ResourceIds, "One or more resources are already in a project.");
+            }
+
+            if (resourceContent.Versions.Any(rcv => rcv.IsDraft))
+            {
+                ThrowError(r => r.ResourceIds, "One or more resources already have a draft version.");
+            }
+
+            // this published base version should also be the most recent version because there are no draft versions
+            var baseVersion = resourceContent.Versions.FirstOrDefault(v => v.IsPublished);
+            if (baseVersion is null)
+            {
+                ThrowError(r => r.ResourceIds, "One or more resources are missing a published version to use as a base.");
+            }
+
+            const ResourceContentStatus status = ResourceContentStatus.New;
+
+            var newResourceContentVersion = new ResourceContentVersionEntity
+            {
+                IsPublished = false,
+                IsDraft = true,
+                ReviewLevel = ResourceContentVersionReviewLevel.Professional,
+                DisplayName = baseVersion.DisplayName,
+                Content = baseVersion.Content,
+                ContentSize = baseVersion.ContentSize,
+                WordCount = baseVersion.WordCount,
+                SourceWordCount = baseVersion.WordCount,
+                ResourceContentVersionStatusHistories =
+                [
+                    new ResourceContentVersionStatusHistoryEntity
+                    {
+                        Status = status,
+                        ChangedByUserId = user.Id,
+                        Created = DateTime.UtcNow
+                    }
+                ],
+                Version = baseVersion.Version + 1,
+            };
+
+            resourceContent.Versions.Add(newResourceContentVersion);
+            resourceContent.Status = status;
+
+            resourceContents.Add(resourceContent);
         }
 
         return resourceContents;

@@ -245,7 +245,8 @@ public sealed class TranslationMessageSubscriber(
             .Where(rcv => rcv.ResourceContent.ProjectResourceContents.Any(prc => prc.Project.Id == project.Id) &&
                 rcv.IsDraft &&
                 (rcv.ResourceContent.Status == ResourceContentStatus.TranslationAiDraftComplete ||
-                    rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeAiDraftComplete) &&
+                    rcv.ResourceContent.Status == ResourceContentStatus.AquiferizeAiDraftComplete ||
+                    rcv.ResourceContent.Status == ResourceContentStatus.New) &&
                 rcv.AssignedUserId == null)
             .ToListAsync(activityContext.CancellationToken);
 

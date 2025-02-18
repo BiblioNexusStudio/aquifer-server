@@ -8,4 +8,5 @@ public record Request
     public int CompanyId { get; set; }
     public int CompanyLeadUserId { get; set; }
     public int[] ResourceIds { get; set; } = [];
+    public bool IsAlreadyTranslated { get; set; }
 }

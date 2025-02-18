@@ -33,7 +33,7 @@ public static class BibleUtilities
         return ((int)bookId * 1000000) + ((chapter + 1) * 1000) - 1 + 1000000000;
     }
 
-    public static List<(int, int)> VerseRangesForBookAndChapters(string? bookCode, int[]? chapters)
+    public static IReadOnlyList<(int StartVerseId, int EndVerseId)> VerseRangesForBookAndChapters(string? bookCode, int[]? chapters)
     {
         if (bookCode is null)
         {
@@ -42,12 +42,43 @@ public static class BibleUtilities
 
         var bookId = BibleBookCodeUtilities.IdFromCode(bookCode);
 
-        return chapters is null || chapters.Length == 0
-            ? [(LowerBoundOfBook(bookId), UpperBoundOfBook(bookId))]
-            : chapters.Select(c => (LowerBoundOfChapter(bookId, c), UpperBoundOfChapter(bookId, c))).ToList();
+        return VerseRangesForBookAndChapters(bookId, chapters ?? []);
     }
 
-    public static (int startVerseId, int endVerseId)? VerseRangeForBookAndChapters(string? bookCode, int? startChapter, int? endChapter)
+    public static IReadOnlyList<(int StartVerseId, int EndVerseId)> VerseRangesForBookAndChapters(
+        BookId bookId,
+        IReadOnlyList<int> chapters)
+    {
+        if (chapters.Count == 0)
+        {
+            return [(LowerBoundOfBook(bookId), UpperBoundOfBook(bookId))];
+        }
+
+        var orderedChapters = chapters.Distinct().Order().ToList();
+
+        // collapse consecutive chapters into chapter ranges
+        var startChapterOfRange = orderedChapters[0];
+        var lastChapter = orderedChapters[0];
+        var chapterRanges = new List<(int StartChapter, int EndChapter)>();
+        foreach (var chapter in orderedChapters.Skip(1))
+        {
+            if (chapter != lastChapter + 1)
+            {
+                chapterRanges.Add((startChapterOfRange, lastChapter));
+                startChapterOfRange = chapter;
+            }
+
+            lastChapter = chapter;
+        }
+
+        chapterRanges.Add((startChapterOfRange, orderedChapters[^1]));
+
+        return chapterRanges
+            .Select(cr => (LowerBoundOfChapter(bookId, cr.StartChapter), UpperBoundOfChapter(bookId, cr.EndChapter)))
+            .ToList();
+    }
+
+    public static (int StartVerseId, int EndVerseId)? VerseRangeForBookAndChapters(string? bookCode, int? startChapter, int? endChapter)
     {
         if (bookCode is null)
         {
@@ -56,6 +87,11 @@ public static class BibleUtilities
 
         var bookId = BibleBookCodeUtilities.IdFromCode(bookCode);
 
+        return VerseRangeForBookAndChapters(bookId, startChapter, endChapter);
+    }
+
+    public static (int StartVerseId, int EndVerseId)? VerseRangeForBookAndChapters(BookId bookId, int? startChapter, int? endChapter)
+    {
         if (startChapter is not null || endChapter is not null)
         {
             if (startChapter is null || endChapter is null)
@@ -74,7 +110,7 @@ public static class BibleUtilities
         return (LowerBoundOfBook(bookId), UpperBoundOfBook(bookId));
     }
 
-    public static (int startVerseId, int endVerseId) GetVerseIds(string bookCode,
+    public static (int StartVerseId, int EndVerseId) GetVerseIds(string bookCode,
         int startChapter,
         int endChapter,
         int startVerse,
