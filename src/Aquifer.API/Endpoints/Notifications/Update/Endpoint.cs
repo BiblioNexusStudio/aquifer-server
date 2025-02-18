@@ -10,7 +10,7 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
 {
     public override void Configure()
     {
-        Patch("/notifications/{notificationKind}/{notificationEntityId}");
+        Patch("/notifications/{notificationKind}/{notificationKindId}");
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
