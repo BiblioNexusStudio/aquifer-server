@@ -19,12 +19,13 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
 
         // search for unaquiferized resources
         var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
-            ResourceContentSearchIncludeFlags.None,
+            ResourceContentSearchIncludeFlags.Project,
             new ResourceContentSearchFilter
             {
                 IncludeContentMediaTypes = [ResourceContentMediaType.Text],
                 IsPublished = true,
                 IsTranslated = true,
+                IsInProject = false,
                 LanguageId = request.LanguageId,
                 ParentResourceId = request.ParentResourceId,
                 ResourceEnglishLabelQuery = request.SearchQuery,

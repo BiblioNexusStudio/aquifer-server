@@ -228,6 +228,20 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 nameof(filter));
         }
 
+        if (filter is { IsTranslated: not null, LanguageId: Constants.EnglishLanguageId })
+        {
+            throw new ArgumentException(
+                $"\"{nameof(filter.LanguageId)}\" may not be English when filtering by \"{nameof(filter.IsTranslated)}\".",
+                nameof(filter));
+        }
+
+        if (filter is { IsTranslated: true, IsPublished: not true })
+        {
+            throw new ArgumentException(
+                $"The \"{nameof(filter.IsPublished)}\" filter must also be true when filtering by an \"{nameof(filter.IsTranslated)}\" value of true.",
+                nameof(filter));
+        }
+
         if (filter.IsInProject.HasValue && !includeFlags.HasFlag(ResourceContentSearchIncludeFlags.Project))
         {
             throw new ArgumentException(
@@ -463,7 +477,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         }
 
         const string languageIdParamName = "languageId";
-        if (filter.IsTranslated.HasValue)
+        if (filter.IsTranslated.HasValue && !filter.IsTranslated.Value)
         {
             const string englishLanguageIdParamName = "englishLanguageId";
 
@@ -553,19 +567,16 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             if (filter.IsTranslated.Value)
             {
                 // If the resource has a published (and no draft) version in the target language, it is considered already translated.
+                // The published check happens elsewhere by requiring the IsPublished filter to be true.
                 whereClausesSql.Add(
                     $"""
-                        EXISTS
+                        NOT EXISTS
                         (
                             SELECT NULL
-                            FROM ResourceContents rc2
-                                JOIN ResourceContentVersions rcv2 ON rcv2.ResourceContentId = rc2.Id
-                                LEFT JOIN ResourceContentVersions rcv3 ON rcv3.ResourceContentId = rc2.Id AND rcv3.IsDraft = 1
+                            FROM ResourceContentVersions rcv2
                             WHERE
-                                rc2.ResourceId = rc.ResourceId AND
-                                rc2.LanguageId = @{languageIdParamName} AND
-                                rcv2.IsPublished = 1 AND
-                                rcv3.Id IS NULL
+                                rcv2.ResourceContentId = rc.Id AND
+                                rcv2.IsDraft = 1
                         )
                     """);
             }
