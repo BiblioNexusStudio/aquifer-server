@@ -29,6 +29,7 @@ public class AquiferDbContext : DbContext
         SavingChanges += OnSavingChanges;
     }
 
+    public DbSet<ApiKeyEntity> ApiKeys { get; set; }
     public DbSet<AssociatedResourceEntity> AssociatedResources { get; set; }
     public DbSet<BibleBookContentEntity> BibleBookContents { get; set; }
     public DbSet<BibleEntity> Bibles { get; set; }
