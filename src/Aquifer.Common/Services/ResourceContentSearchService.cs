@@ -31,11 +31,12 @@ public sealed class ResourceContentSearchFilter
     public int? AssignedUserCompanyId { get; set; }
     public bool? IsPublished { get; set; }
     public bool? IsDraft { get; set; }
-    public int? StartVerseId { get; set; }
-    public int? EndVerseId { get; set; }
+    public bool? IsNewestResourceContentVersion { get; set; }
+    public IReadOnlyList<(int StartVerseId, int EndVerseId)>? VerseIdRanges { get; set; }
     public bool? HasAudio { get; set; }
     public bool? HasUnresolvedCommentThreads { get; set; }
     public bool? IsInProject { get; set; }
+    public bool? IsTranslated { get; set; }
 }
 
 /// <summary>
@@ -145,6 +146,7 @@ public sealed class ResourceContentSearchResult
         public required int? AssignedUserId { get; init; }
         public required int? AssignedReviewerUserId { get; init; }
         public required int? SourceWordCount { get; init; }
+        public required int? WordCount { get; init; }
         public required ResourceContentVersionReviewLevel ReviewLevel { get; set; }
 
         /// <summary>
@@ -205,10 +207,38 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         }
 
         if (!includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions) &&
-            filter is { IsDraft: null, IsPublished: null })
+            filter is { IsDraft: null, IsPublished: null, IsNewestResourceContentVersion: null })
         {
             throw new ArgumentException(
-                $"One of \"{nameof(filter.IsDraft)}\" or \"{nameof(filter.IsPublished)}\" must be passed when the \"{nameof(ResourceContentSearchIncludeFlags.ResourceContentVersions)}\" flag is not included.",
+                $"One of \"{nameof(filter.IsDraft)}\", \"{nameof(filter.IsPublished)}\", or \"{nameof(filter.IsNewestResourceContentVersion)}\" must be passed when the \"{nameof(ResourceContentSearchIncludeFlags.ResourceContentVersions)}\" flag is not included.",
+                nameof(filter));
+        }
+
+        if (includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions) && filter.IsTranslated.HasValue)
+        {
+            throw new ArgumentException(
+                $"The \"{nameof(ResourceContentSearchIncludeFlags.ResourceContentVersions)}\" flag must not included when filtering by \"{nameof(filter.IsTranslated)}\".",
+                nameof(filter));
+        }
+
+        if (filter is { IsTranslated: not null, LanguageId: null })
+        {
+            throw new ArgumentException(
+                $"The \"{nameof(filter.LanguageId)}\" must also be passed when filtering by \"{nameof(filter.IsTranslated)}\".",
+                nameof(filter));
+        }
+
+        if (filter is { IsTranslated: not null, LanguageId: Constants.EnglishLanguageId })
+        {
+            throw new ArgumentException(
+                $"\"{nameof(filter.LanguageId)}\" may not be English when filtering by \"{nameof(filter.IsTranslated)}\".",
+                nameof(filter));
+        }
+
+        if (filter is { IsTranslated: true, IsPublished: not true })
+        {
+            throw new ArgumentException(
+                $"The \"{nameof(filter.IsPublished)}\" filter must also be true when filtering by an \"{nameof(filter.IsTranslated)}\" value of true.",
                 nameof(filter));
         }
 
@@ -248,18 +278,17 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 nameof(filter));
         }
 
-        if (filter is { StartVerseId: not null, EndVerseId: null } or { StartVerseId: null, EndVerseId: not null })
+        if (filter.VerseIdRanges is not null)
         {
-            throw new ArgumentException(
-                $"\"{nameof(filter.StartVerseId)}\" and \"{nameof(filter.EndVerseId)}\" must both be passed if one is passed.",
-                nameof(filter));
-        }
-
-        if (filter is { StartVerseId: not null, EndVerseId: not null } && filter.StartVerseId > filter.EndVerseId)
-        {
-            throw new ArgumentException(
-                $"\"{nameof(filter.StartVerseId)}\" must be less than or equal to \"{nameof(filter.EndVerseId)}\".",
-                nameof(filter));
+            foreach (var verseIdRange in filter.VerseIdRanges)
+            {
+                if (verseIdRange.StartVerseId > verseIdRange.EndVerseId)
+                {
+                    throw new ArgumentException(
+                        $"\"{nameof(verseIdRange.StartVerseId)}\" must be less than or equal to \"{nameof(verseIdRange.EndVerseId)}\".",
+                        nameof(filter));
+                }
+            }
         }
 
         if (filter is { ExcludeContentMediaTypes: not null, IncludeContentMediaTypes: not null })
@@ -275,6 +304,15 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 $"\"{nameof(filter.ExcludeContentStatuses)}\" and \"{nameof(filter.IncludeContentStatuses)}\" cannot both be passed.",
                 nameof(filter));
         }
+
+        var cteSql = filter.VerseIdRanges is not null
+            ? $"""
+            WITH ChapterVerseRanges AS (
+                SELECT *
+                FROM (VALUES {string.Join(", ", filter.VerseIdRanges.Select(r => $"({r.StartVerseId}, {r.EndVerseId})"))}) AS T(StartVerseId, EndVerseId)
+            )
+            """
+            : "";
 
         const string selectCountSql = "SELECT COUNT(rc.Id) AS Count";
 
@@ -327,6 +365,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                     rcv.AssignedUserId AS {nameof(ResourceContentVersionSummary.AssignedUserId)},
                     rcv.AssignedReviewerUserId AS {nameof(ResourceContentVersionSummary.AssignedReviewerUserId)},
                     rcv.SourceWordCount AS {nameof(ResourceContentVersionSummary.SourceWordCount)},
+                    rcv.WordCount AS {nameof(ResourceContentVersionSummary.WordCount)},
                     rcv.ReviewLevel AS {nameof(ResourceContentVersionSummary.ReviewLevel)},
                     {(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads)
                         ? $"ISNULL(c.CommentThreads, 0) AS {nameof(ResourceContentVersionSummary.HasUnresolvedCommentThreads)}"
@@ -437,10 +476,16 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             }
         }
 
-        if (filter.LanguageId.HasValue)
+        const string languageIdParamName = "languageId";
+        if (filter.IsTranslated.HasValue && !filter.IsTranslated.Value)
         {
-            const string languageIdParamName = "languageId";
+            const string englishLanguageIdParamName = "englishLanguageId";
 
+            coreParameters.Add(englishLanguageIdParamName, Constants.EnglishLanguageId);
+            whereClausesSql.Add($"rc.LanguageId = {{={englishLanguageIdParamName}}}");
+        }
+        else if (filter.LanguageId.HasValue)
+        {
             coreParameters.Add(languageIdParamName, filter.LanguageId.Value);
             whereClausesSql.Add($"rc.LanguageId = @{languageIdParamName}");
         }
@@ -460,10 +505,9 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             whereClausesSql.Add($"rc.MediaType NOT IN @{excludeContentMediaTypesParamName}");
         }
 
+        const string includeContentMediaTypesParamName = "contentMediaTypeIds";
         if (filter.IncludeContentMediaTypes is { Count: > 0 })
         {
-            const string includeContentMediaTypesParamName = "contentMediaTypeIds";
-
             coreParameters.Add(includeContentMediaTypesParamName, filter.IncludeContentMediaTypes
                 .Select(x => (int)x)
                 .ToArray());
@@ -500,38 +544,61 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             whereClausesSql.Add($"ISNULL(a.AudioCount, 0) {(filter.HasAudio.Value ? ">" : "=")} 0");
         }
 
-        if (filter is { StartVerseId: not null, EndVerseId: not null })
+        if (filter.VerseIdRanges is not null)
         {
-            const string startVerseIdParamName = "startVerseId";
-            const string endVerseIdParamName = "endVerseId";
-
-            coreParameters.Add(startVerseIdParamName, filter.StartVerseId.Value);
-            coreParameters.Add(endVerseIdParamName, filter.EndVerseId.Value);
-            whereClausesSql.Add($"""
-                (
-                    EXISTS
-                    (
-                        SELECT NULL
-                        FROM VerseResources vr
-                        WHERE r.Id = vr.ResourceId AND
-                            vr.VerseId BETWEEN @{startVerseIdParamName} AND @{endVerseIdParamName}
-                    )
-                    OR
-                    EXISTS
-                    (
-                        SELECT NULL
-                        FROM PassageResources AS psr
-                            JOIN Passages p ON psr.PassageId = p.Id
-                        WHERE
-                            r.Id = psr.ResourceId AND
-                            (
-                                p.StartVerseId BETWEEN @{startVerseIdParamName} AND @{endVerseIdParamName} OR
-                                p.EndVerseId BETWEEN @{startVerseIdParamName} AND @{endVerseIdParamName} OR
-                                (p.StartVerseId <= @{startVerseIdParamName} AND p.EndVerseId >= @{endVerseIdParamName})
-                            )
-                    )
+            whereClausesSql.Add("""
+                EXISTS (
+                    SELECT NULL
+                    FROM ChapterVerseRanges cvr
+                    LEFT JOIN PassageResources pr ON pr.ResourceId = rc.ResourceId
+                    LEFT JOIN Passages p ON p.Id = pr.PassageId
+                    LEFT JOIN VerseResources vr ON vr.ResourceId = rc.ResourceId
+                    WHERE (p.StartVerseId BETWEEN cvr.StartVerseId AND cvr.EndVerseId)
+                        OR (p.EndVerseId BETWEEN cvr.StartVerseId AND cvr.EndVerseId)
+                        OR (p.StartVerseId <= cvr.StartVerseId AND p.EndVerseId >= cvr.EndVerseId)
+                        OR (vr.VerseId >= cvr.StartVerseId AND vr.VerseId <= cvr.EndVerseId)
                 )
             """);
+        }
+
+        if (filter is { IsTranslated: not null, LanguageId: not null })
+        {
+            coreParameters.Add(languageIdParamName, filter.LanguageId.Value);
+            if (filter.IsTranslated.Value)
+            {
+                // If the resource has a published (and no draft) version in the target language, it is considered already translated.
+                // The published check happens elsewhere by requiring the IsPublished filter to be true.
+                whereClausesSql.Add(
+                    $"""
+                        NOT EXISTS
+                        (
+                            SELECT NULL
+                            FROM ResourceContentVersions rcv2
+                            WHERE
+                                rcv2.ResourceContentId = rc.Id AND
+                                rcv2.IsDraft = 1
+                        )
+                    """);
+            }
+            else
+            {
+                whereClausesSql.Add(
+                        $"""
+                        NOT EXISTS
+                        (
+                            SELECT NULL
+                            FROM ResourceContents rc2
+                            WHERE
+                                rc2.ResourceId = rc.ResourceId AND
+                                {(filter.IncludeContentMediaTypes is { Count: > 0 }
+                                    ? $"rc2.MediaType IN @{includeContentMediaTypesParamName} AND"
+                                    : "")}
+                                rc2.LanguageId = @{languageIdParamName} AND
+                                (rc2.Status NOT IN ({(int)ResourceContentStatus.TranslationAwaitingAiDraft}, {(int)ResourceContentStatus.TranslationAiDraftComplete})
+                                    OR EXISTS (SELECT NULL FROM ProjectResourceContents prc2 WHERE prc2.ResourceContentId = rc2.Id))
+                        )
+                    """);
+            }
         }
 
         if (filter.AssignedUserId.HasValue)
@@ -580,6 +647,19 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             }
         }
 
+        if (filter.IsNewestResourceContentVersion.HasValue)
+        {
+            whereClausesSql.Add($"""
+                    rcv.Id {(filter.IsNewestResourceContentVersion.Value ? "=" : "<>")}
+                    (
+                        SELECT TOP 1 rcv4.id
+                        FROM ResourceContentVersions rcv4
+                        WHERE rcv.ResourceContentId = rcv4.ResourceContentId
+                        ORDER BY rcv4.Created DESC
+                    );
+                """);
+        }
+
         var whereSql = whereClausesSql.Count > 0
             ? $"WHERE{Environment.NewLine}    {string.Join($" AND{Environment.NewLine}    ", whereClausesSql)}"
             : "";
@@ -622,6 +702,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         };
 
         var dataSql = $"""
+            {cteSql}
             {selectPropertiesSql}
             {fromSql}
             {whereSql}
@@ -663,6 +744,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         else
         {
             var totalSql = $"""
+                {cteSql}
                 {selectCountSql}
                 {fromSql}
                 {whereSql}
