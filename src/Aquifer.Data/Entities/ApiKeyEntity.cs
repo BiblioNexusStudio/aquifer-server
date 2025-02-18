@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
-[Index(nameof(ApiKey), IsUnique = true), EntityTypeConfiguration(typeof(ApiKeyEntityConfiguration))]
+[EntityTypeConfiguration(typeof(ApiKeyEntityConfiguration))]
 public class ApiKeyEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
