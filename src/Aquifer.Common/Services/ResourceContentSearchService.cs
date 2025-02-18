@@ -305,7 +305,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 nameof(filter));
         }
 
-        var cteSql = filter.VerseIdRanges is not null
+        var cteSql = filter.VerseIdRanges?.Count > 0
             ? $"""
             WITH ChapterVerseRanges AS (
                 SELECT *
@@ -544,7 +544,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             whereClausesSql.Add($"ISNULL(a.AudioCount, 0) {(filter.HasAudio.Value ? ">" : "=")} 0");
         }
 
-        if (filter.VerseIdRanges is not null)
+        if (filter.VerseIdRanges?.Count > 0)
         {
             whereClausesSql.Add("""
                 EXISTS (
