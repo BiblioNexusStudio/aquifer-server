@@ -17,7 +17,7 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
     {
         var verseIdRanges = BibleUtilities.VerseRangesForBookAndChapters(request.BookCode, request.Chapters);
 
-        // search for unaquiferized resources
+        // search for already translated resources
         var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
             ResourceContentSearchIncludeFlags.Project,
             new ResourceContentSearchFilter
