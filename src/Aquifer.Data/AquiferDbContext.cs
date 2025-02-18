@@ -8,26 +8,37 @@ namespace Aquifer.Data;
 
 public class AquiferDbContext : DbContext
 {
-    private readonly DbContextOptions<AquiferDbContext> _options;
+    private readonly DbContextOptions _options;
 
-    public AquiferDbContext(DbContextOptions<AquiferDbContext> options) : base(options)
+    public AquiferDbContext(DbContextOptions<AquiferDbContext> options) : this(options, isReadOnly: false)
+    {
+    }
+
+    public AquiferDbContext(DbContextOptions options, bool isReadOnly) : base(options)
     {
         _options = options;
 
-        // Note the issue here. I don't want to seal the class because there are situations where we want to put
-        // a wrapper around it. https://www.jetbrains.com/help/resharper/VirtualMemberCallInConstructor.html
-        // It's likely irrelevant anyway, because the events are additive.
-        // ReSharper disable once VirtualMemberCallInConstructor
-        ChangeTracker.StateChanged += OnStateChange;
+        IsReadOnly = isReadOnly;
 
-        // Using an async lambda for a void returning method could crash the process if there are any exceptions in this event.
-        // If a crash occurs then we should look into changing this based on https://stackoverflow.com/a/43187621.
+        if (!isReadOnly)
+        {
+            // Note the issue here. I don't want to seal the class because there are situations where we want to put
+            // a wrapper around it. https://www.jetbrains.com/help/resharper/VirtualMemberCallInConstructor.html
+            // It's likely irrelevant anyway, because the events are additive.
+            // ReSharper disable once VirtualMemberCallInConstructor
+            ChangeTracker.StateChanged += OnStateChange;
+
+            // Using an async lambda for a void returning method could crash the process if there are any exceptions in this event.
+            // If a crash occurs then we should look into changing this based on https://stackoverflow.com/a/43187621.
 #pragma warning disable VSTHRD101
-        SavedChanges += async (s, e) => await OnSavedChangesAsync(s, e);
+            SavedChanges += async (s, e) => await OnSavedChangesAsync(s, e);
 #pragma warning restore VSTHRD101
 
-        SavingChanges += OnSavingChanges;
+            SavingChanges += OnSavingChanges;
+        }
     }
+
+    public bool IsReadOnly { get; }
 
     public DbSet<ApiKeyEntity> ApiKeys { get; set; }
     public DbSet<AssociatedResourceEntity> AssociatedResources { get; set; }

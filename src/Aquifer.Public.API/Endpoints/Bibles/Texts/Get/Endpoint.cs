@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Bibles.Texts.Get;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Response>
 {
     public override void Configure()
     {

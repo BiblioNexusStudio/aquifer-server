@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Types.List;
 
-public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<Response>>
+public class Endpoint(AquiferDbReadOnlyContext dbContext) : EndpointWithoutRequest<IReadOnlyList<Response>>
 {
     public override void Configure()
     {

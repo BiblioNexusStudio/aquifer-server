@@ -9,6 +9,7 @@ public class ConfigurationOptions
 public class ConnectionStringOptions
 {
     public required string BiblioNexusDb { get; init; }
+    public required string BiblioNexusReadOnlyDb { get; init; }
     public required string AzureStorageAccount { get; init; }
 }
 
