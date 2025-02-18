@@ -17,67 +17,9 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
     {
         var currentUserId = (await _userService.GetUserFromJwtAsync(ct)).Id;
 
-        var updates = req.Updates;
-
-        var invalidNotificationKinds = updates
-            .Select(u => u.NotificationKind)
-            .Distinct()
-            .Except([NotificationKind.Comment, NotificationKind.HelpDocument])
-            .ToList();
-
-        if (invalidNotificationKinds.Count > 0)
-        {
-            ThrowError(
-                x => x.Updates,
-                $"Invalid {nameof(NotificationUpdate.NotificationKind)}: \"{string.Join("\", \"", invalidNotificationKinds)}\".",
-                StatusCodes.Status400BadRequest);
-        }
-
-        var requestedCommentIds = updates
-            .Where(u => u.NotificationKind == NotificationKind.Comment)
-            .Select(u => u.NotificationKindId)
-            .Distinct()
-            .ToList();
-
-        var existingCommentIds = await _dbContext.Comments
-            .Where(c => requestedCommentIds.Contains(c.Id))
-            .Select(c => c.Id)
-            .ToListAsync(ct);
-
-        var nonExistentRequestedCommentIds = requestedCommentIds
-            .Except(existingCommentIds)
-            .ToList();
-
-        if (nonExistentRequestedCommentIds.Count > 0)
-        {
-            ThrowError(
-                x => x.Updates,
-                $"The following Comment IDs do not exist: {string.Join(", ", nonExistentRequestedCommentIds)}.",
-                StatusCodes.Status400BadRequest);
-        }
-
-        var requestedHelpDocumentIds = updates
-            .Where(u => u.NotificationKind == NotificationKind.HelpDocument)
-            .Select(u => u.NotificationKindId)
-            .Distinct()
-            .ToList();
-
-        var existingHelpDocumentIds = await _dbContext.HelpDocuments
-            .Where(d => requestedHelpDocumentIds.Contains(d.Id))
-            .Select(d => d.Id)
-            .ToListAsync(ct);
-
-        var nonExistentHelpDocumentIds = requestedHelpDocumentIds
-            .Except(existingHelpDocumentIds)
-            .ToList();
-
-        if (nonExistentHelpDocumentIds.Count > 0)
-        {
-            ThrowError(
-                x => x.Updates,
-                $"The following Help Document IDs do not exist: {string.Join(", ", nonExistentHelpDocumentIds)}.",
-                StatusCodes.Status400BadRequest);
-        }
+        ThrowErrorOnInvalidNotificationKinds(req);
+        var requestedCommentIds = await ThrowErrorOnInvalidCommentIdsAsync(req, ct);
+        var requestedHelpDocumentIds = await ThrowErrorOnInvalidHelpDocumentIdsAsync(req, ct);
 
         var created = DateTime.UtcNow;
 
@@ -95,7 +37,7 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
                 n => n.Key,
                 grp => grp.ToDictionary(n => n.NotificationKindId));
 
-        foreach (var update in updates)
+        foreach (var update in req.Updates)
         {
             if (update.IsRead.HasValue)
             {
@@ -126,5 +68,78 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
         await _dbContext.SaveChangesAsync(ct);
 
         await SendNoContentAsync(ct);
+    }
+
+    private void ThrowErrorOnInvalidNotificationKinds(Request req)
+    {
+        var invalidNotificationKinds = req.Updates
+            .Select(u => u.NotificationKind)
+            .Distinct()
+            .Except([NotificationKind.Comment, NotificationKind.HelpDocument])
+            .ToList();
+
+        if (invalidNotificationKinds.Count > 0)
+        {
+            ThrowError(
+                x => x.Updates,
+                $"Invalid {nameof(NotificationUpdate.NotificationKind)}: \"{string.Join("\", \"", invalidNotificationKinds)}\".",
+                StatusCodes.Status400BadRequest);
+        }
+    }
+
+    private async Task<IReadOnlyList<int>> ThrowErrorOnInvalidCommentIdsAsync(Request req, CancellationToken ct)
+    {
+        var requestedCommentIds = req.Updates
+            .Where(u => u.NotificationKind == NotificationKind.Comment)
+            .Select(u => u.NotificationKindId)
+            .Distinct()
+            .ToList();
+
+        var existingCommentIds = await _dbContext.Comments
+            .Where(c => requestedCommentIds.Contains(c.Id))
+            .Select(c => c.Id)
+            .ToListAsync(ct);
+
+        var nonExistentRequestedCommentIds = requestedCommentIds
+            .Except(existingCommentIds)
+            .ToList();
+
+        if (nonExistentRequestedCommentIds.Count > 0)
+        {
+            ThrowError(
+                x => x.Updates,
+                $"The following Comment IDs do not exist: {string.Join(", ", nonExistentRequestedCommentIds)}.",
+                StatusCodes.Status400BadRequest);
+        }
+
+        return requestedCommentIds;
+    }
+
+    private async Task<IReadOnlyList<int>> ThrowErrorOnInvalidHelpDocumentIdsAsync(Request req, CancellationToken ct)
+    {
+        var requestedHelpDocumentIds = req.Updates
+            .Where(u => u.NotificationKind == NotificationKind.HelpDocument)
+            .Select(u => u.NotificationKindId)
+            .Distinct()
+            .ToList();
+
+        var existingHelpDocumentIds = await _dbContext.HelpDocuments
+            .Where(d => requestedHelpDocumentIds.Contains(d.Id))
+            .Select(d => d.Id)
+            .ToListAsync(ct);
+
+        var nonExistentHelpDocumentIds = requestedHelpDocumentIds
+            .Except(existingHelpDocumentIds)
+            .ToList();
+
+        if (nonExistentHelpDocumentIds.Count > 0)
+        {
+            ThrowError(
+                x => x.Updates,
+                $"The following Help Document IDs do not exist: {string.Join(", ", nonExistentHelpDocumentIds)}.",
+                StatusCodes.Status400BadRequest);
+        }
+
+        return requestedHelpDocumentIds;
     }
 }
