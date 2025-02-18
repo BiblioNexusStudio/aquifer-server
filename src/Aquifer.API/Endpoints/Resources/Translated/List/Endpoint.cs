@@ -8,13 +8,6 @@ namespace Aquifer.API.Endpoints.Resources.Translated.List;
 public class Endpoint(IResourceContentSearchService _resourceContentSearchService)
     : Endpoint<Request, IReadOnlyList<Response>>
 {
-    private static readonly IReadOnlySet<ResourceContentStatus> s_aquiferizationResourceContentStatuses = new HashSet<ResourceContentStatus>
-    {
-        ResourceContentStatus.AquiferizeEditorReview,
-        ResourceContentStatus.AquiferizePublisherReview,
-        ResourceContentStatus.AquiferizeReviewPending
-    };
-
     public override void Configure()
     {
         Get("/resources/translated");
@@ -49,7 +42,6 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
                 Title = rcs.Resource.EnglishLabel,
                 SortOrder = rcs.Resource.SortOrder,
                 WordCount = rcs.ResourceContentVersion!.WordCount ?? 0,
-                IsBeingAquiferized = s_aquiferizationResourceContentStatuses.Contains(rcs.ResourceContent.Status),
             })
             .ToList();
 

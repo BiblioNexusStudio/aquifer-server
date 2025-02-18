@@ -6,5 +6,4 @@ public record Response
     public required int SortOrder { get; set; }
     public required int ResourceId { get; set; }
     public required int WordCount { get; set; }
-    public required bool IsBeingAquiferized { get; set; }
 }
