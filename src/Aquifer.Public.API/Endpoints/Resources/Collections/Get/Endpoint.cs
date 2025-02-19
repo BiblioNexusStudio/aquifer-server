@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Collections.Get;
 
-public sealed class Endpoint(AquiferDbContext _dbContext, ICachingLanguageService _cachingLanguageService)
+public sealed class Endpoint(AquiferDbReadOnlyContext _dbContext, ICachingLanguageService _cachingLanguageService)
     : Endpoint<Request, Response>
 {
     public override void Configure()

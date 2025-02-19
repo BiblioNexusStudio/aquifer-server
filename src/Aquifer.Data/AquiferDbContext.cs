@@ -29,6 +29,8 @@ public class AquiferDbContext : DbContext
         SavingChanges += OnSavingChanges;
     }
 
+    public virtual bool IsReadOnly => false;
+
     public DbSet<AssociatedResourceEntity> AssociatedResources { get; set; }
     public DbSet<BibleBookContentEntity> BibleBookContents { get; set; }
     public DbSet<BibleEntity> Bibles { get; set; }
