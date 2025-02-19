@@ -3,13 +3,11 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Aquifer.Data;
 
-public sealed class AquiferDbReadOnlyContext(DbContextOptions<AquiferDbContext> _options)
-    : AquiferDbContext(_options)
+public sealed class AquiferDbReadOnlyContext(DbContextOptions<AquiferDbReadOnlyContext> _options)
+    : AquiferDbContext(_options, isReadOnly: true)
 {
     private const string ErrorMessage =
         $"{nameof(AquiferDbReadOnlyContext)} is read-only. Use {nameof(AquiferDbContext)} for write operations.";
-
-    public override bool IsReadOnly => true;
 
 #pragma warning disable IDE0022 // Use block body for method (justification: all we're doing is throwing an exception)
 

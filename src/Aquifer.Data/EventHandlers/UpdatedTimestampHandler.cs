@@ -16,5 +16,5 @@ public static class UpdatedTimestampHandler
 
 public interface IHasUpdatedTimestamp
 {
-    public DateTime Updated { get; set; }
+    DateTime Updated { get; set; }
 }

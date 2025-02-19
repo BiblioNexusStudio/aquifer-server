@@ -18,13 +18,10 @@ var configuration = builder.Configuration.Get<ConfigurationOptions>()
 
 builder.Services
     .AddDbContext<AquiferDbReadOnlyContext>(options => options
-        .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
-        .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: builder.Environment.IsDevelopment())
-        .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
-    .AddDbContext<AquiferDbReadOnlyContext>(options => options
         .UseAzureSql(configuration.ConnectionStrings.BiblioNexusReadOnlyDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
         .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: builder.Environment.IsDevelopment())
         .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
+    .AddScoped<AquiferDbContext, AquiferDbReadOnlyContext>()
     .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))
     .AddFastEndpoints()
     .AddMemoryCache()
@@ -36,7 +33,6 @@ builder.Services
     .AddOutputCache()
     .AddApplicationInsightsTelemetry()
     .AddHealthChecks()
-    .AddDbContextCheck<AquiferDbContext>()
     .AddDbContextCheck<AquiferDbReadOnlyContext>();
 
 builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
