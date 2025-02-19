@@ -13,14 +13,17 @@ using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-var configuration = builder.Configuration.Get<ConfigurationOptions>()
-    ?? throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
+var configuration = builder.Configuration.Get<ConfigurationOptions>() ??
+    throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
-builder.Services
-    .AddDbContext<AquiferDbContext>(options => options
-        .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
-        .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: builder.Environment.IsDevelopment())
-        .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
+builder
+    .Services
+    .AddDbContext<
+        AquiferDbContext>(
+        options => options
+            .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
+            .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
+            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
     .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))
     .AddFastEndpoints()
     .AddMemoryCache()
@@ -40,24 +43,27 @@ var app = builder.Build();
 
 StaticLoggerFactory.LoggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
 
-app.UseHealthChecks("/_health")
+app
+    .UseHealthChecks("/_health")
     .UseResponseCaching()
     .UseOutputCache()
-    .UseFastEndpoints(config =>
-    {
-        config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        config.Endpoints.Configurator = ep => ep.AllowAnonymous();
-    })
     .UseOpenApi()
-    .UseReDoc(options =>
-    {
-        options.Path = "/docs";
-        // hide the version number
-        options.CustomInlineStyles = "h1 > span { display: none; }";
-        options.DocumentTitle = "Aquifer API Documentation";
-    });
-
-app.UseResponseCachingVaryByAllQueryKeys();
+    .UseReDoc(
+        options =>
+        {
+            options.Path = "/docs";
+            // hide the version number
+            options.CustomInlineStyles = "h1 > span { display: none; }";
+            options.DocumentTitle = "Aquifer API Documentation";
+        })
+    .UseMiddleware<ApiKeyAuthorizationMiddleware>()
+    .UseFastEndpoints(
+        config =>
+        {
+            config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            config.Endpoints.Configurator = ep => ep.AllowAnonymous();
+        })
+    .UseResponseCachingVaryByAllQueryKeys();
 
 app.ConfigureClientGeneration(SwaggerDocumentSettings.DocumentName, TimeSpan.FromDays(365));
 
