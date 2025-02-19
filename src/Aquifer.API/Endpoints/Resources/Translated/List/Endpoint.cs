@@ -3,35 +3,29 @@ using Aquifer.Common.Utilities;
 using Aquifer.Data.Entities;
 using FastEndpoints;
 
-namespace Aquifer.API.Endpoints.Resources.Untranslated.List;
+namespace Aquifer.API.Endpoints.Resources.Translated.List;
 
 public class Endpoint(IResourceContentSearchService _resourceContentSearchService)
     : Endpoint<Request, IReadOnlyList<Response>>
 {
-    private static readonly IReadOnlySet<ResourceContentStatus> s_aquiferizationResourceContentStatuses = new HashSet<ResourceContentStatus>
-    {
-        ResourceContentStatus.AquiferizeEditorReview,
-        ResourceContentStatus.AquiferizePublisherReview,
-        ResourceContentStatus.AquiferizeReviewPending
-    };
-
     public override void Configure()
     {
-        Get("/resources/untranslated");
+        Get("/resources/translated");
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var verseIdRanges = BibleUtilities.VerseRangesForBookAndChapters(request.BookCode, request.Chapters);
 
-        // search for untranslated resources
+        // search for already translated resources
         var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
-            ResourceContentSearchIncludeFlags.None,
+            ResourceContentSearchIncludeFlags.Project,
             new ResourceContentSearchFilter
             {
                 IncludeContentMediaTypes = [ResourceContentMediaType.Text],
                 IsPublished = true,
-                IsTranslated = false,
+                IsTranslated = true,
+                IsInProject = false,
                 LanguageId = request.LanguageId,
                 ParentResourceId = request.ParentResourceId,
                 ResourceEnglishLabelQuery = request.SearchQuery,
@@ -49,7 +43,6 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
                 Title = rcs.Resource.EnglishLabel,
                 SortOrder = rcs.Resource.SortOrder,
                 WordCount = rcs.ResourceContentVersion!.WordCount ?? 0,
-                IsBeingAquiferized = s_aquiferizationResourceContentStatuses.Contains(rcs.ResourceContent.Status),
             })
             .ToList();
 
