@@ -4,7 +4,7 @@ using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 
-namespace Aquifer.API.Telemetry;
+namespace Aquifer.Public.API.Telemetry;
 
 public class RequestTelemetryInitializer(IHttpContextAccessor httpContextAccessor) : ITelemetryInitializer
 {
@@ -15,14 +15,7 @@ public class RequestTelemetryInitializer(IHttpContextAccessor httpContextAccesso
             return;
         }
 
-        // Should change this to "internal-admin" once a Well API is separated out
-        requestTelemetry.Properties[Constants.TelemetryBnApiPropertyName] = "internal";
-
-        if (httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated is true)
-        {
-            requestTelemetry.Properties[Constants.TelemetryUserPropertyName] =
-                httpContextAccessor.HttpContext.User.FindFirst("user")?.Value;
-        }
+        requestTelemetry.Properties[Constants.TelemetryBnApiPropertyName] = "public";
 
         if ((httpContextAccessor.HttpContext?.Items.TryGetValue(Constants.HttpContextItemCachedApiKey, out var maybeCachedApiKey) ??
                 false) &&
