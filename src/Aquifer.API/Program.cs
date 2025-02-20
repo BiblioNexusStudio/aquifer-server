@@ -22,24 +22,27 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration.Get<ConfigurationOptions>()
     ?? throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
-builder.Services.AddAuthServices(configuration.JwtSettings)
+builder.Services
+    .AddAuthServices(configuration.JwtSettings)
     .AddCors()
     .AddOutputCache()
     .AddMemoryCache()
     .AddApplicationInsightsTelemetry()
     .AddSingleton<ITelemetryInitializer, RequestTelemetryInitializer>()
-    .AddDbContext<AquiferDbContext>(options => options
-        .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
-        .EnableSensitiveDataLogging(sensitiveDataLoggingEnabled: builder.Environment.IsDevelopment())
-        .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
+    .AddDbContext<AquiferDbContext>(
+        options => options
+            .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
+            .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
+            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
     .RegisterModules()
     .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))
-    .AddHttpLogging(logging =>
-    {
-        logging.LoggingFields = HttpLoggingFields.Response;
-        logging.RequestBodyLogLimit = 4096;
-        logging.ResponseBodyLogLimit = 4096;
-    })
+    .AddHttpLogging(
+        logging =>
+        {
+            logging.LoggingFields = HttpLoggingFields.Response;
+            logging.RequestBodyLogLimit = 4096;
+            logging.ResponseBodyLogLimit = 4096;
+        })
     .AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount)
     .AddScoped<IUserService, UserService>()
     .AddScoped<IResourceHistoryService, ResourceHistoryService>()
