@@ -1,10 +1,11 @@
 ﻿using Aquifer.Common.Services.Caching;
 using Aquifer.Data.Entities;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 
 namespace Aquifer.Common.Middleware;
 
-public class ApiKeyAuthorizationMiddleware(RequestDelegate _next)
+public class ApiKeyAuthorizationMiddleware(RequestDelegate _next, IOptions<ApiKeyAuthorizationMiddlewareOptions> _options)
 {
     private const string ApiKeyHeaderName = "api-key";
 
@@ -23,7 +24,7 @@ public class ApiKeyAuthorizationMiddleware(RequestDelegate _next)
 
         var scopedApiKey = await cachingApiKeyService.GetCachedApiKeyAsync(
             apiKeyToValidate[0]!,
-            ApiKeyScope.PublicApi,
+            _options.Value.Scope,
             context.RequestAborted);
 
         if (scopedApiKey is null)
@@ -38,4 +39,9 @@ public class ApiKeyAuthorizationMiddleware(RequestDelegate _next)
 
         await _next(context);
     }
+}
+
+public class ApiKeyAuthorizationMiddlewareOptions
+{
+    public ApiKeyScope Scope { get; set; }
 }

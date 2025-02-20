@@ -5,6 +5,7 @@ using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Middleware;
 using Aquifer.Common.Services;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using Aquifer.Public.API.Configuration;
 using Aquifer.Public.API.OpenApi;
 using Aquifer.Public.API.Services;
@@ -18,8 +19,7 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration.Get<ConfigurationOptions>() ??
     throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
-builder
-    .Services
+builder.Services
     .AddDbContext<
         AquiferDbContext>(
         options => options
@@ -41,13 +41,13 @@ builder
     .AddDbContextCheck<AquiferDbContext>();
 
 builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
+builder.Services.Configure<ApiKeyAuthorizationMiddlewareOptions>(o => o.Scope = ApiKeyScope.PublicApi);
 
 var app = builder.Build();
 
 StaticLoggerFactory.LoggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
 
-app
-    .UseHealthChecks("/_health")
+app.UseHealthChecks("/_health")
     .UseResponseCaching()
     .UseOutputCache()
     .UseOpenApi()
