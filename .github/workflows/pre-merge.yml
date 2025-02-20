@@ -48,5 +48,5 @@ jobs:
                       -e IntegrationTestAuth0Settings__Audience="${{ secrets.INTEGRATION_TEST_AUTH0_SETTINGS_AUDIENCE }}" \
                       -e IntegrationTestAuth0Settings__BaseUri="${{ secrets.INTEGRATION_TEST_AUTH0_SETTINGS_BASE_URI }}" \
                       -e IntegrationTestUserSettings__TestUserPassword="${{ secrets.INTEGRATION_TEST_USER_SETTINGS_TEST_USER_PASSWORD }}" \
-                      -e IntegrationTestUserSettings__InternalApiKey="${{ secrets.INTERNAL_API_KEY }}" \
-                      -e IntegrationTestUserSettings__PublicApiKey="${{ secrets.PUBLIC_API_KEY }}"
+                      -e InternalApiKey="${{ secrets.INTERNAL_API_KEY }}" \
+                      -e PublicApiKey="${{ secrets.PUBLIC_API_KEY }}"
