@@ -49,15 +49,6 @@ public sealed class App : AppFixture<Program>
     ///     The default requires an API Key header value.
     ///     This is sufficient for Public API tests and no actual web requests are sent via this fixture.
     /// </summary>
-    /// <remarks>
-    ///     Example of adding a default header to the existing client:
-    ///     <example>
-    ///         <code>
-    /// Client.DefaultRequestHeaders.Add("api-key", "TODO");
-    /// </code>
-    ///     </example>
-    ///     An entirely new client could be defined in this class and set up in this method as well (e.g. an authenticated client).
-    /// </remarks>
     protected override Task SetupAsync()
     {
         InitializeIntegrationTestAppHost();

@@ -73,14 +73,6 @@ public sealed class App : AppFixture<Program>
     ///     This is sufficient for Internal API tests because no actual web requests are sent via this fixture.
     ///     Various authenticated client with different roles/permissions are also needed.
     /// </summary>
-    /// <remarks>
-    ///     Example of adding a default header to the existing client:
-    ///     <example>
-    ///         <code>
-    /// Client.DefaultRequestHeaders.Add("api-key", "TODO");
-    /// </code>
-    ///     </example>
-    /// </remarks>
     protected override async Task SetupAsync()
     {
         try
