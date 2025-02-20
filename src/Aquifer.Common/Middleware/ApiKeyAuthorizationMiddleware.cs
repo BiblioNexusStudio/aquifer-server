@@ -10,6 +10,7 @@ public class ApiKeyAuthorizationMiddleware(RequestDelegate _next)
 
     public async Task InvokeAsync(HttpContext context, ICachingApiKeyService cachingApiKeyService)
     {
+        // This should never happen in practice because the WAF prevents requests without the "api-key" header
         if (!context.Request.Headers.TryGetValue(ApiKeyHeaderName, out var apiKeyToValidate) ||
             apiKeyToValidate.Count == 0 ||
             string.IsNullOrEmpty(apiKeyToValidate[0]))
@@ -20,15 +21,20 @@ public class ApiKeyAuthorizationMiddleware(RequestDelegate _next)
             return;
         }
 
-        var isKeyValid = await cachingApiKeyService.IsValidApiKeyAsync(apiKeyToValidate[0]!, ApiKeyScope.PublicApi, CancellationToken.None);
+        var scopedApiKey = await cachingApiKeyService.GetCachedApiKeyAsync(
+            apiKeyToValidate[0]!,
+            ApiKeyScope.PublicApi,
+            context.RequestAborted);
 
-        if (!isKeyValid)
+        if (scopedApiKey is null)
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             await context.Response.WriteAsync("Invalid API key");
 
             return;
         }
+
+        context.Items.Add(Constants.HttpContextItemCachedApiKey, scopedApiKey);
 
         await _next(context);
     }

@@ -8,7 +8,9 @@ using Aquifer.Data;
 using Aquifer.Public.API.Configuration;
 using Aquifer.Public.API.OpenApi;
 using Aquifer.Public.API.Services;
+using Aquifer.Public.API.Telemetry;
 using FastEndpoints;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +32,7 @@ builder
     .AddCachingServices()
     .AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount)
     .AddSingleton<IResourceContentRequestTrackingMessagePublisher, ResourceContentRequestTrackingMessagePublisher>()
+    .AddSingleton<ITelemetryInitializer, RequestTelemetryInitializer>()
     .AddAzureClient(builder.Environment.IsDevelopment())
     .AddSwaggerDocumentSettings()
     .AddOutputCache()

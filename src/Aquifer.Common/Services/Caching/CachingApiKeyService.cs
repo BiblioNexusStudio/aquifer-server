@@ -9,6 +9,7 @@ public interface ICachingApiKeyService
 {
     Task<bool> IsValidApiKeyAsync(string apiKey, ApiKeyScope scope, CancellationToken ct);
     Task<CachedApiKey?> GetCachedApiKeyAsync(string apiKey, CancellationToken ct);
+    Task<CachedApiKey?> GetCachedApiKeyAsync(string apiKey, ApiKeyScope scope, CancellationToken ct);
 }
 
 public class CachingApiKeyService(AquiferDbContext _dbContext, IMemoryCache _memoryCache) : ICachingApiKeyService
@@ -21,9 +22,16 @@ public class CachingApiKeyService(AquiferDbContext _dbContext, IMemoryCache _mem
         return (await GetApiKeysFromCacheAsync(ct)).SingleOrDefault(x => x.ApiKey == apiKey);
     }
 
+    public async Task<CachedApiKey?> GetCachedApiKeyAsync(string apiKey, ApiKeyScope scope, CancellationToken ct)
+    {
+        return (await GetApiKeysFromCacheAsync(ct)).SingleOrDefault(
+            x => (x.Scope == scope || x.Scope == ApiKeyScope.All) && x.ApiKey == apiKey);
+    }
+
     public async Task<bool> IsValidApiKeyAsync(string apiKey, ApiKeyScope scope, CancellationToken ct)
     {
-        return (await GetApiKeysFromCacheAsync(ct)).Any(x => (x.Scope == scope || x.Scope == ApiKeyScope.All) && x.ApiKey == apiKey);
+        var scopedApiKey = await GetCachedApiKeyAsync(apiKey, scope, ct);
+        return scopedApiKey is not null;
     }
 
     private async Task<List<CachedApiKey>> GetApiKeysFromCacheAsync(CancellationToken ct)
@@ -34,10 +42,10 @@ public class CachingApiKeyService(AquiferDbContext _dbContext, IMemoryCache _mem
                 {
                     cacheEntry.SlidingExpiration = s_cacheLifetime;
 
-                    return await _dbContext.ApiKeys.Select(x => new CachedApiKey(x.ApiKey, x.Scope, x.Organization)).ToListAsync(ct);
+                    return await _dbContext.ApiKeys.Select(x => new CachedApiKey(x.Id, x.ApiKey, x.Scope, x.Organization)).ToListAsync(ct);
                 }) ??
             throw new InvalidOperationException($"{ApiKeysCacheKey} unexpectedly had a null value cached.");
     }
 }
 
-public record CachedApiKey(string ApiKey, ApiKeyScope Scope, string? Organization);
+public record CachedApiKey(int Id, string ApiKey, ApiKeyScope Scope, string? Organization);
