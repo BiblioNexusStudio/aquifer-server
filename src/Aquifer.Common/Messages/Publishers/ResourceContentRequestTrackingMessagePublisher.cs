@@ -1,4 +1,5 @@
 ﻿using Aquifer.Common.Messages.Models;
+using Aquifer.Common.Services.Caching;
 using Microsoft.AspNetCore.Http;
 
 namespace Aquifer.Common.Messages.Publishers;
@@ -63,11 +64,13 @@ public class ResourceContentRequestTrackingMessagePublisher(IQueueClientFactory 
         }
 
         var sourceHeader = httpContext.Request.Headers["bn-source"].ToString();
+        httpContext.Items.TryGetValue(Constants.HttpContextItemCachedApiKey, out var maybeCachedApiKey);
+
         var message = new TrackResourceContentRequestMessage
         {
             Source = string.IsNullOrEmpty(sourceHeader) ? source : sourceHeader,
             IpAddress = GetClientIp(httpContext),
-            SubscriptionName = httpContext.Request.Headers["bn-subscription-name"],
+            SubscriptionName = maybeCachedApiKey is CachedApiKey cachedApiKey ? cachedApiKey.ApiKey : null,
             EndpointId = endpointId,
             UserId = httpContext.Request.Headers["bn-user-id"],
             ResourceContentIds = resourceContentIds
