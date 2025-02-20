@@ -656,7 +656,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                         FROM ResourceContentVersions rcv4
                         WHERE rcv.ResourceContentId = rcv4.ResourceContentId
                         ORDER BY rcv4.Created DESC
-                    );
+                    )
                 """);
         }
 
