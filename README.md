@@ -63,7 +63,7 @@ Entities are listed in an alphabetical order.
 ### Create a New Migration
 To create a new migration, run:
 ```bash
-dotnet ef migrations add --startup-project src/Aquifer.Migrations --project src/Aquifer.Data <MigrationNameHere>
+dotnet ef migrations add --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext <MigrationNameHere>
 ```
 Your new migration will be created in the `src/Aquifer.Data/Migrations` directory along with the `.Designer` file and updated `AquiferDbContextModelSnapshot.cs` file.
 
@@ -74,7 +74,7 @@ this to your advantage to create empty migrations and add your own custom code.
 
 To run migrations and add your changes to the DB, run:
 ```bash
-dotnet ef database update --startup-project src/Aquifer.Migrations --project src/Aquifer.Data
+dotnet ef database update --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext
 ```
 
 ## Test
