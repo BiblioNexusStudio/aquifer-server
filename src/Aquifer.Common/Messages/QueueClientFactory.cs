@@ -7,7 +7,7 @@ namespace Aquifer.Common.Messages;
 
 public interface IQueueClientFactory
 {
-    public Task<QueueClient> GetQueueClientAsync(string queueName, CancellationToken ct);
+    Task<QueueClient> GetQueueClientAsync(string queueName, CancellationToken ct);
 }
 
 public sealed class QueueClientFactory(QueueConfigurationOptions _queueConfigurationOptions, IAzureClientService _azureClientService)
