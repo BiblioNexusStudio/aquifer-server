@@ -68,7 +68,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     ? null
                     : rc.ProjectResourceContents.First(prc => prc.ResourceContentId == request.Id).Project,
                 HasPublishedVersion = rc.Versions.Any(rcv => rcv.IsPublished),
-                HasAdditionalReviewer = rc.Versions.Any(rcv => rcv.AssignedReviewerUser != null)
+                HasAdditionalReviewer = rc.Versions.Any(rcv => rcv.AssignedReviewerUser != null && rcv.IsDraft)
             })
             .AsSplitQuery()
             .FirstOrDefaultAsync(ct);
