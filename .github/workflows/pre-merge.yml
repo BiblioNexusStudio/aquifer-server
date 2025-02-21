@@ -37,7 +37,7 @@ jobs:
                       -e ASPNETCORE_ENVIRONMENT="${{ vars.ASPNETCORE_ENVIRONMENT }}" \
                       -e ConnectionStrings__AzureStorageAccount="${{ secrets.AZURE_STORAGE_ACCOUNT_CONNECTION_STRING }}" \
                       -e ConnectionStrings__BiblioNexusDb="${{ secrets.BIBLIONEXUS_DB_CONNECTION_STRING }}" \
-                      -e ConnectionStrings__BiblioNexusReadOnlyDb="${{ secrets.BIBLIONEXUS_READ_ONLY_DB_CONNECTION_STRING }}" \
+                      -e ConnectionStrings__BiblioNexusReadOnlyDb="${{ secrets.BIBLIONEXUS_DB_CONNECTION_STRING }};ApplicationIntent=ReadOnly;" \
                       -e KeyVaultUri="${{ secrets.KEY_VAULT_URI }}" \
                       -e JwtSettings__Authority="${{ secrets.JWT_SETTINGS_AUTHORITY }}" \
                       -e JwtSettings__Audience="${{ secrets.JWT_SETTINGS_AUDIENCE }}" \
