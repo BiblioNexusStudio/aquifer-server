@@ -72,10 +72,9 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
 
     private static IReadOnlyList<int> GetVerseIds(Response response, BookId bookId)
     {
-        return response.Chapters
+        return [.. response.Chapters
             .SelectMany(chapter => chapter.Verses
-                .Select(verse => BibleUtilities.GetVerseId(bookId, chapter.Number, verse.Number)))
-            .ToList();
+                .Select(verse => BibleUtilities.GetVerseId(bookId, chapter.Number, verse.Number)))];
     }
 
     private async Task MapVersificationDifferencesToResponseVersesAsync(Request req, Response response, CancellationToken ct)
@@ -112,18 +111,18 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
                 mapping => FormatBaseBookChapterVerseMapping(mapping.Value!.Value));
 
         // Apply mappings to verses using LINQ instead of nested loops
-        response.Chapters = response.Chapters.Select(chapter =>
+        response.Chapters = [.. response.Chapters.Select(chapter =>
         {
-            chapter.Verses = chapter.Verses.Select(verse =>
+            chapter.Verses = [.. chapter.Verses.Select(verse =>
             {
                 var verseId = BibleUtilities.GetVerseId(bookId, chapter.Number, verse.Number);
                 verse.BaseMapping = baseMappings.GetValueOrDefault(verseId)!;
                 
                 return verse;
-            }).ToList();
+            })];
             
             return chapter;
-        }).ToList();
+        })];
         
         response.VerseMap = new ReadOnlyDictionary<int, int?>(verseMap); // todo remove
     }
