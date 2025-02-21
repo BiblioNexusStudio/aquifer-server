@@ -4,15 +4,15 @@ namespace Aquifer.Common.Messages.Publishers;
 
 public interface ITranslationMessagePublisher
 {
-    public Task PublishTranslateLanguageResourcesMessageAsync(
+    Task PublishTranslateLanguageResourcesMessageAsync(
         TranslateLanguageResourcesMessage message,
         CancellationToken cancellationToken);
 
-    public Task PublishTranslateProjectResourcesMessageAsync(
+    Task PublishTranslateProjectResourcesMessageAsync(
         TranslateProjectResourcesMessage message,
         CancellationToken cancellationToken);
 
-    public Task PublishTranslateResourceMessageAsync(
+    Task PublishTranslateResourceMessageAsync(
         TranslateResourceMessage message,
         CancellationToken cancellationToken);
 }
