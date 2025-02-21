@@ -4,11 +4,11 @@ namespace Aquifer.Common.Messages.Publishers;
 
 public interface INotificationMessagePublisher
 {
-    public Task PublishSendProjectStartedNotificationMessageAsync(
+    Task PublishSendProjectStartedNotificationMessageAsync(
         SendProjectStartedNotificationMessage message,
         CancellationToken cancellationToken);
 
-    public Task PublishSendResourceCommentCreatedNotificationMessageAsync(
+    Task PublishSendResourceCommentCreatedNotificationMessageAsync(
         SendResourceCommentCreatedNotificationMessage message,
         CancellationToken cancellationToken);
 }
