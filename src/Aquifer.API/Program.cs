@@ -64,7 +64,11 @@ if (builder.Environment.IsDevelopment())
 }
 
 builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
-builder.Services.Configure<ApiKeyAuthorizationMiddlewareOptions>(o => o.Scope = ApiKeyScope.InternalApi);
+builder.Services.Configure<ApiKeyAuthorizationMiddlewareOptions>(o =>
+{
+    o.Scope = ApiKeyScope.InternalApi;
+    o.ExemptRoutes = ["/marketing"];
+});
 
 var app = builder.Build();
 

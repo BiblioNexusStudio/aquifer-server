@@ -11,6 +11,12 @@ public class ApiKeyAuthorizationMiddleware(RequestDelegate _next, IOptions<ApiKe
 
     public async Task InvokeAsync(HttpContext context, ICachingApiKeyService cachingApiKeyService)
     {
+        if (_options.Value.ExemptRoutes.Any(x => context.Request.Path.StartsWithSegments(x)))
+        {
+            await _next(context);
+            return;
+        }
+
         var apiKeyToValidate = context.Request.Headers[ApiKeyHeaderName].FirstOrDefault() ??
             context.Request.Query[ApiKeyHeaderName].FirstOrDefault();
         // This should never happen in practice because the WAF prevents requests without the "api-key" header
@@ -41,4 +47,15 @@ public class ApiKeyAuthorizationMiddleware(RequestDelegate _next, IOptions<ApiKe
 public class ApiKeyAuthorizationMiddlewareOptions
 {
     public ApiKeyScope Scope { get; set; }
+
+    /// <summary>
+    ///     Routes that will not require an API key. This uses simple <c>StartsWith</c> logic.
+    /// </summary>
+    /// <example>
+    /// This would prevent any routes that start with "/marketing" from requiring an API key:
+    /// <code>
+    /// /marketing
+    /// </code>
+    /// </example>
+    public IReadOnlyList<string> ExemptRoutes { get; set; } = [];
 }
