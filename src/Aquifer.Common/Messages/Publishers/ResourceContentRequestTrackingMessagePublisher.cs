@@ -70,7 +70,7 @@ public class ResourceContentRequestTrackingMessagePublisher(IQueueClientFactory 
         {
             Source = string.IsNullOrEmpty(sourceHeader) ? source : sourceHeader,
             IpAddress = GetClientIp(httpContext),
-            SubscriptionName = maybeCachedApiKey is CachedApiKey cachedApiKey ? cachedApiKey.ApiKey : null,
+            SubscriptionName = maybeCachedApiKey is CachedApiKey cachedApiKey ? cachedApiKey.Organization : null,
             EndpointId = endpointId,
             UserId = httpContext.Request.Headers["bn-user-id"],
             ResourceContentIds = resourceContentIds
