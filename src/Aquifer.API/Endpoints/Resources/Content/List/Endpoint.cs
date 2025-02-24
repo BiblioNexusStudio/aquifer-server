@@ -36,7 +36,7 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
                 ExcludeContentStatuses = [ResourceContentStatus.TranslationNotApplicable, ResourceContentStatus.CompleteNotApplicable],
                 IsPublished = req.IsPublished.HasValue && req.IsPublished.Value ? true : null,
                 IsDraft = req.IsPublished.HasValue && !req.IsPublished.Value ? true : null,
-                VerseIdRanges = verseRange.HasValue ? [verseRange.Value] : null,
+                VerseIdRanges = verseRange.HasValue ? [new VerseIdRange(verseRange.Value)] : null,
                 HasAudio = req.HasAudio,
                 HasUnresolvedCommentThreads = req.HasUnresolvedCommentThreads,
             },
