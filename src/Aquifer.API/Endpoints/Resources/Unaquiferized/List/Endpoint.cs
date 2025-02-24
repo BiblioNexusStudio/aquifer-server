@@ -20,7 +20,7 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
 
         // searching for unaquiferized resources can be done with a combination of search filters
         var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
-            ResourceContentSearchIncludeFlags.None,
+            ResourceContentSearchIncludeFlags.Project,
             new ResourceContentSearchFilter
             {
                 IncludeContentMediaTypes = [ResourceContentMediaType.Text],
