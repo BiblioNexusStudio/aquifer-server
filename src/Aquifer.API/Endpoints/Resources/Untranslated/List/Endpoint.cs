@@ -35,7 +35,7 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
                 LanguageId = request.LanguageId,
                 ParentResourceId = request.ParentResourceId,
                 ResourceEnglishLabelQuery = request.SearchQuery,
-                VerseIdRanges = verseIdRanges,
+                VerseIdRanges = verseIdRanges.Select(vir => new VerseIdRange(vir)).ToList(),
             },
             ResourceContentSearchSortOrder.ParentResourceAndResourceName,
             offset: 0,
