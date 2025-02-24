@@ -32,11 +32,22 @@ public sealed class ResourceContentSearchFilter
     public bool? IsPublished { get; set; }
     public bool? IsDraft { get; set; }
     public bool? IsNewestResourceContentVersion { get; set; }
-    public IReadOnlyList<(int StartVerseId, int EndVerseId)>? VerseIdRanges { get; set; }
+    public IReadOnlyList<VerseIdRange>? VerseIdRanges { get; set; }
     public bool? HasAudio { get; set; }
     public bool? HasUnresolvedCommentThreads { get; set; }
     public bool? IsInProject { get; set; }
     public bool? IsTranslated { get; set; }
+}
+
+// The property names of this class must match the column names on the dbo.VerseIdRanges User-Defined Table Type!
+public sealed class VerseIdRange(int _startVerseId, int _endVerseId)
+{
+    public VerseIdRange((int StartVerseId, int EndVerseId) verseIdRange) : this(verseIdRange.StartVerseId, verseIdRange.EndVerseId)
+    {
+    }
+
+    public int StartVerseId { get; } = _startVerseId;
+    public int EndVerseId { get; } = _endVerseId;
 }
 
 /// <summary>
@@ -305,15 +316,6 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 nameof(filter));
         }
 
-        var cteSql = filter.VerseIdRanges?.Count > 0
-            ? $"""
-            WITH ChapterVerseRanges AS (
-                SELECT *
-                FROM (VALUES {string.Join(", ", filter.VerseIdRanges.Select(r => $"({r.StartVerseId}, {r.EndVerseId})"))}) AS T(StartVerseId, EndVerseId)
-            )
-            """
-            : "";
-
         const string selectCountSql = "SELECT COUNT(rc.Id) AS Count";
 
         // Facts that help improve search performance:
@@ -546,17 +548,19 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
 
         if (filter.VerseIdRanges?.Count > 0)
         {
-            whereClausesSql.Add("""
+            const string verseIdRangesParamName = "verseIdRanges";
+            coreParameters.Add(verseIdRangesParamName, filter.VerseIdRanges.AsTableValuedParameter("VerseIdRanges"));
+            whereClausesSql.Add($"""
                 EXISTS (
                     SELECT NULL
-                    FROM ChapterVerseRanges cvr
+                    FROM @{verseIdRangesParamName} vir
                     LEFT JOIN PassageResources pr ON pr.ResourceId = rc.ResourceId
                     LEFT JOIN Passages p ON p.Id = pr.PassageId
                     LEFT JOIN VerseResources vr ON vr.ResourceId = rc.ResourceId
-                    WHERE (p.StartVerseId BETWEEN cvr.StartVerseId AND cvr.EndVerseId)
-                        OR (p.EndVerseId BETWEEN cvr.StartVerseId AND cvr.EndVerseId)
-                        OR (p.StartVerseId <= cvr.StartVerseId AND p.EndVerseId >= cvr.EndVerseId)
-                        OR (vr.VerseId >= cvr.StartVerseId AND vr.VerseId <= cvr.EndVerseId)
+                    WHERE (p.StartVerseId BETWEEN vir.StartVerseId AND vir.EndVerseId)
+                        OR (p.EndVerseId BETWEEN vir.StartVerseId AND vir.EndVerseId)
+                        OR (p.StartVerseId <= vir.StartVerseId AND p.EndVerseId >= vir.EndVerseId)
+                        OR (vr.VerseId >= vir.StartVerseId AND vr.VerseId <= vir.EndVerseId)
                 )
             """);
         }
@@ -702,7 +706,6 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         };
 
         var dataSql = $"""
-            {cteSql}
             {selectPropertiesSql}
             {fromSql}
             {whereSql}
@@ -744,7 +747,6 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         else
         {
             var totalSql = $"""
-                {cteSql}
                 {selectCountSql}
                 {fromSql}
                 {whereSql}
