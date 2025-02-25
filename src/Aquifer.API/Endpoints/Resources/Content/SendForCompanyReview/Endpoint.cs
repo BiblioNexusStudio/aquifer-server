@@ -26,7 +26,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var contentIds = request.ContentId is not null ? [request.ContentId.Value] : request.ContentIds!;
         List<ResourceContentStatus> allowedStatuses =
         [
-            ResourceContentStatus.AquiferizeEditorReview, ResourceContentStatus.TranslationEditorReview
+            ResourceContentStatus.AquiferizeEditorReview, ResourceContentStatus.TranslationEditorReview,
+            ResourceContentStatus.AquiferizeCompanyReview, ResourceContentStatus.TranslationCompanyReview
         ];
 
         var draftVersions = await dbContext.ResourceContentVersions
@@ -56,18 +57,25 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 draftVersion.ResourceContent.Status,
                 ct);
 
-            var reviewPendingStatus = draftVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview
-                ? ResourceContentStatus.TranslationCompanyReview
-                : ResourceContentStatus.AquiferizeCompanyReview;
+            var reviewPendingStatus = draftVersion.ResourceContent.Status == ResourceContentStatus.AquiferizeEditorReview
+                ? ResourceContentStatus.AquiferizeCompanyReview
+                : draftVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview
+                    ? ResourceContentStatus.TranslationCompanyReview
+                    : draftVersion.ResourceContent.Status;
 
-            draftVersion.ResourceContent.Status = reviewPendingStatus;
+            if (draftVersion.ResourceContent.Status != reviewPendingStatus)
+            {
+                draftVersion.ResourceContent.Status = reviewPendingStatus;
+                await historyService.AddStatusHistoryAsync(draftVersion, reviewPendingStatus, user.Id, ct);
+            }
+
             await SetAssignedUserIdAsync(user,
                 draftVersion.ResourceContent.ProjectResourceContents.FirstOrDefault(x => x.Project.ActualPublishDate == null)?.Project,
                 managerIds,
                 draftVersion);
 
             await historyService.AddAssignedUserHistoryAsync(draftVersion, draftVersion.AssignedUserId, user.Id, ct);
-            await historyService.AddStatusHistoryAsync(draftVersion, reviewPendingStatus, user.Id, ct);
+
         }
 
         await dbContext.SaveChangesAsync(ct);
@@ -89,7 +97,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         var companyReviewer = user.Company.CompanyReviewers.SingleOrDefault(x => x.LanguageId == draftVersion.ResourceContent.LanguageId);
 
-        if (draftVersion.AssignedReviewerUserId is not null)
+        if (draftVersion.AssignedReviewerUserId is not null &&
+            (draftVersion.ResourceContent.Status == ResourceContentStatus.AquiferizeEditorReview ||
+             draftVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview))
         {
             draftVersion.AssignedUserId = draftVersion.AssignedReviewerUserId;
         }

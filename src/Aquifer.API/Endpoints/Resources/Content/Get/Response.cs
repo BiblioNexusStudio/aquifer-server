@@ -46,6 +46,7 @@ public class Response
             };
 
     public bool HasUnresolvedCommentThreads => CommentThreads?.Threads.Any(t => !t.Resolved) ?? false;
+    public bool HasAdditionalReviewer { get; set; }
     public CommentThreadsResponse? CommentThreads { get; set; }
 
     [JsonIgnore]
