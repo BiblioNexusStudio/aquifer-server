@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Languages.List;
 
-public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<Response>>
+public class Endpoint(AquiferDbReadOnlyContext dbContext) : EndpointWithoutRequest<IReadOnlyList<Response>>
 {
     public override void Configure()
     {
@@ -21,14 +21,16 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var languages = await dbContext.Languages.Select(x => new Response
-        {
-            Id = x.Id,
-            Code = x.ISO6393Code,
-            EnglishDisplay = x.EnglishDisplay,
-            LocalizedDisplay = x.DisplayName,
-            ScriptDirection = x.ScriptDirection.ToString()
-        }).ToListAsync(ct);
+        var languages = await dbContext.Languages
+            .Select(x => new Response
+            {
+                Id = x.Id,
+                Code = x.ISO6393Code,
+                EnglishDisplay = x.EnglishDisplay,
+                LocalizedDisplay = x.DisplayName,
+                ScriptDirection = x.ScriptDirection.ToString()
+            })
+            .ToListAsync(ct);
 
         await SendOkAsync(languages, ct);
     }

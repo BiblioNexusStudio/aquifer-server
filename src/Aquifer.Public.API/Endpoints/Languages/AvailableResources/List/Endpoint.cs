@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Languages.AvailableResources.List;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Response>>
+public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, IReadOnlyList<Response>>
 {
     public override void Configure()
     {
