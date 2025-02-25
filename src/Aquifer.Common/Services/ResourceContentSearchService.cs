@@ -378,25 +378,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             """;
 
         // Using CROSS APPLY and OUTER APPLY with inner groupings significantly improves performance over using JOINs with a main grouping.
-        const string verseIdRangesParamName = "verseIdRanges";
         var fromSql = $"""
             FROM ResourceContents rc
-            {(filter.VerseIdRanges?.Count > 0
-                ? $"""
-                    CROSS APPLY
-                    (
-                        SELECT DISTINCT vr.ResourceId
-                        FROM @{verseIdRangesParamName} vir
-                        LEFT JOIN PassageResources pr ON pr.ResourceId = rc.ResourceId
-                        LEFT JOIN Passages p ON p.Id = pr.PassageId
-                        LEFT JOIN VerseResources vr ON vr.ResourceId = rc.ResourceId
-                        WHERE (p.StartVerseId BETWEEN vir.StartVerseId AND vir.EndVerseId)
-                            OR (p.EndVerseId BETWEEN vir.StartVerseId AND vir.EndVerseId)
-                            OR (p.StartVerseId <= vir.StartVerseId AND p.EndVerseId >= vir.EndVerseId)
-                            OR (vr.VerseId >= vir.StartVerseId AND vr.VerseId <= vir.EndVerseId)
-                    ) matchingResources
-                """
-                : "")}
                 JOIN Resources r ON r.Id = rc.ResourceId
                 JOIN ParentResources pr ON pr.Id = r.ParentResourceId
             {(!includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions)
@@ -463,7 +446,33 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
 
         if (filter.VerseIdRanges?.Count > 0)
         {
+            const string verseIdRangesParamName = "verseIdRanges";
             coreParameters.Add(verseIdRangesParamName, filter.VerseIdRanges.AsTableValuedParameter(VerseIdRangesTableTypeName));
+            whereClausesSql.Add("""
+                (
+                    EXISTS
+                    (
+                        SELECT NULL
+                        FROM @verseIdRanges vir
+                            JOIN VerseResources vr ON vr.ResourceId = r.Id
+                        WHERE vr.VerseId BETWEEN vir.StartVerseId AND vir.EndVerseId
+                    )
+                    OR
+                    EXISTS
+                    (
+                        SELECT NULL
+                        FROM @verseIdRanges vir
+                            JOIN PassageResources pr ON pr.ResourceId = r.Id
+                            JOIN Passages p ON p.Id = pr.PassageId
+                        WHERE
+                        (
+                            p.StartVerseId BETWEEN vir.StartVerseId AND vir.EndVerseId OR
+                            p.EndVerseId BETWEEN vir.StartVerseId AND vir.EndVerseId OR
+                            (p.StartVerseId <= vir.StartVerseId AND p.EndVerseId >= vir.EndVerseId)
+                        )
+                    )
+                )
+                """);
         }
 
         if (filter.ParentResourceId.HasValue)
