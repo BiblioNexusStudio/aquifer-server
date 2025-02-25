@@ -20,12 +20,12 @@ var configuration = builder.Configuration.Get<ConfigurationOptions>() ??
     throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
 builder.Services
-    .AddDbContext<
-        AquiferDbContext>(
+    .AddDbContext<AquiferDbReadOnlyContext>(
         options => options
-            .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
+            .UseAzureSql(configuration.ConnectionStrings.BiblioNexusReadOnlyDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
             .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
+    .AddScoped<AquiferDbContext, AquiferDbReadOnlyContext>()
     .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))
     .AddFastEndpoints()
     .AddMemoryCache()
@@ -38,7 +38,7 @@ builder.Services
     .AddOutputCache()
     .AddApplicationInsightsTelemetry()
     .AddHealthChecks()
-    .AddDbContextCheck<AquiferDbContext>();
+    .AddDbContextCheck<AquiferDbReadOnlyContext>();
 
 builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
 builder.Services.Configure<ApiKeyAuthorizationMiddlewareOptions>(o => o.Scope = ApiKeyScope.PublicApi);

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Search.GetResources;
 
-public class Endpoint(AquiferDbContext dbContext, ICachingLanguageService cachingLanguageService) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbReadOnlyContext dbContext, ICachingLanguageService cachingLanguageService) : Endpoint<Request, Response>
 {
     public override void Configure()
     {

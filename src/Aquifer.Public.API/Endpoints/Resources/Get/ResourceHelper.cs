@@ -8,7 +8,7 @@ namespace Aquifer.Public.API.Endpoints.Resources.Get;
 
 public static class ResourceHelper
 {
-    public static async Task<Response> GetResourceContentAsync(AquiferDbContext dbContext,
+    public static async Task<Response> GetResourceContentAsync(AquiferDbReadOnlyContext dbContext,
         CommonResourceRequest req,
         Action<string, int?> throwError,
         CancellationToken ct)

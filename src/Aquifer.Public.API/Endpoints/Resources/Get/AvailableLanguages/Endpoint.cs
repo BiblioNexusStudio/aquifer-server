@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Get.AvailableLanguages;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerable<Response>>
+public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, IReadOnlyList<Response>>
 {
     public override void Configure()
     {
