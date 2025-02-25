@@ -10,6 +10,7 @@ using Aquifer.Common.Middleware;
 using Aquifer.Common.Services;
 using Aquifer.Common.Services.Caching;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using Aquifer.Data.Services;
 using FastEndpoints;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -19,8 +20,8 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-var configuration = builder.Configuration.Get<ConfigurationOptions>()
-    ?? throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
+var configuration = builder.Configuration.Get<ConfigurationOptions>() ??
+    throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
 builder.Services
     .AddAuthServices(configuration.JwtSettings)
@@ -48,6 +49,7 @@ builder.Services
     .AddScoped<IResourceHistoryService, ResourceHistoryService>()
     .AddScoped<IResourceContentSearchService, ResourceContentSearchService>()
     .AddScoped<ICachingLanguageService, CachingLanguageService>()
+    .AddScoped<ICachingApiKeyService, CachingApiKeyService>()
     .AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>()
     .AddQueueMessagePublisherServices()
     .AddAzureClient(builder.Environment.IsDevelopment())
@@ -62,6 +64,11 @@ if (builder.Environment.IsDevelopment())
 }
 
 builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
+builder.Services.Configure<ApiKeyAuthorizationMiddlewareOptions>(o =>
+{
+    o.Scope = ApiKeyScope.InternalApi;
+    o.ExemptRoutes = ["/marketing"];
+});
 
 var app = builder.Build();
 
@@ -74,6 +81,7 @@ if (builder.Environment.IsDevelopment())
     app.UseResponseCompression();
 }
 
+app.UseMiddleware<ApiKeyAuthorizationMiddleware>();
 app.UseAuth();
 app.UseOutputCache();
 if (app.Environment.IsDevelopment())

@@ -7,6 +7,13 @@ public static class Constants
 {
     public const int EnglishLanguageId = 1;
 
+    public const string HttpContextItemCachedApiKey = "CachedApiKey";
+
+    public const string TelemetryBnApiPropertyName = "bnApi";
+    public const string TelemetryBnApiCallerPropertyName = "bnApiCaller";
+    public const string TelemetryBnApiCallerIdPropertyName = "bnApiCallerId";
+    public const string TelemetryUserPropertyName = "user";
+
     // Some guide types have predetermined passages (rather than freeform "select any Bible section").
     // ID 1 = FIA (formerly CBBT-ER)
     public static readonly ReadOnlyCollection<int> PredeterminedPassageGuideIds = new([1]);
@@ -15,7 +22,8 @@ public static class Constants
     public static readonly ReadOnlyCollection<ResourceContentMediaType> FallbackToEnglishForMediaTypes =
         new([ResourceContentMediaType.Image, ResourceContentMediaType.Video]);
 
-    public static readonly ReadOnlyCollection<ResourceContentStatus> AquiferizationStatuses = new([
+    public static readonly ReadOnlyCollection<ResourceContentStatus> AquiferizationStatuses = new(
+    [
         ResourceContentStatus.AquiferizeAwaitingAiDraft,
         ResourceContentStatus.AquiferizeAiDraftComplete,
         ResourceContentStatus.AquiferizeEditorReview,
@@ -24,7 +32,8 @@ public static class Constants
         ResourceContentStatus.AquiferizeCompanyReview
     ]);
 
-    public static readonly ReadOnlyCollection<ResourceContentStatus> TranslationStatuses = new([
+    public static readonly ReadOnlyCollection<ResourceContentStatus> TranslationStatuses = new(
+    [
         ResourceContentStatus.TranslationAwaitingAiDraft,
         ResourceContentStatus.TranslationAiDraftComplete,
         ResourceContentStatus.TranslationEditorReview,
@@ -36,8 +45,8 @@ public static class Constants
     public static readonly ReadOnlyCollection<ResourceContentStatus> ReviewPendingStatuses =
         new([ResourceContentStatus.TranslationReviewPending, ResourceContentStatus.AquiferizeReviewPending]);
 
-    public static readonly ReadOnlyCollection<ResourceContentStatus> PublisherReviewStatuses =
-        new([ResourceContentStatus.TranslationPublisherReview, ResourceContentStatus.AquiferizePublisherReview]);
+    public static readonly ReadOnlyCollection<ResourceContentStatus> PublisherReviewStatuses = new(
+        [ResourceContentStatus.TranslationPublisherReview, ResourceContentStatus.AquiferizePublisherReview]);
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> CompanyReviewStatuses =
         new([ResourceContentStatus.TranslationCompanyReview, ResourceContentStatus.AquiferizeCompanyReview]);
