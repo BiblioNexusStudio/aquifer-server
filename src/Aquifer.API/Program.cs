@@ -48,6 +48,7 @@ builder.Services
     .AddScoped<IResourceHistoryService, ResourceHistoryService>()
     .AddScoped<IResourceContentSearchService, ResourceContentSearchService>()
     .AddScoped<ICachingLanguageService, CachingLanguageService>()
+    .AddScoped<ICachingVersificationService, CachingVersificationService>()
     .AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>()
     .AddQueueMessagePublisherServices()
     .AddAzureClient(builder.Environment.IsDevelopment())
