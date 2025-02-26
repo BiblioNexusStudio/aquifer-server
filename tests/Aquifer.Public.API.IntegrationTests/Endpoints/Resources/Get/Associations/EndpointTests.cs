@@ -18,7 +18,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
         bool expectHasPassageAssociations,
         bool expectHasResourceAssociations)
     {
-        var (response, result) = await _app.Client.GETAsync<Endpoint, Request, Response>(
+        var (response, result) = await _app.AnonymousClient.GETAsync<Endpoint, Request, Response>(
             new Request
             {
                 ContentId = resourceContentId,

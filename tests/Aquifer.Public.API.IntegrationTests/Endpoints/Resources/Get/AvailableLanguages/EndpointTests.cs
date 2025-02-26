@@ -15,7 +15,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
     [InlineData(TextResourceContentId, "hin")]
     public async Task ValidRequest_ShouldReturnSuccess(int resourceContentId, string expectedLanguageCode)
     {
-        var (response, results) = await _app.Client.GETAsync<Endpoint, Request, IReadOnlyList<Response>>(
+        var (response, results) = await _app.AnonymousClient.GETAsync<Endpoint, Request, IReadOnlyList<Response>>(
             new Request
             {
                 ContentId = resourceContentId,

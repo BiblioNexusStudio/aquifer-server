@@ -37,7 +37,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
     [MemberData(nameof(GetValidRequestData))]
     public async Task ValidRequest_ShouldReturnSuccess(Request request)
     {
-        var (response, result) = await _app.Client.GETAsync<Endpoint, Request, Response>(request);
+        var (response, result) = await _app.AnonymousClient.GETAsync<Endpoint, Request, Response>(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         result.Should().NotBeNull();

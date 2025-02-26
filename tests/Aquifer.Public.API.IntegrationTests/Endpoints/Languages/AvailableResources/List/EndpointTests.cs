@@ -30,7 +30,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
     [MemberData(nameof(GetValidRequestData))]
     public async Task ValidRequest_ShouldReturnSuccess(Request request)
     {
-        var (response, results) = await _app.Client.GETAsync<Endpoint, Request, IReadOnlyList<Response>>(request);
+        var (response, results) = await _app.AnonymousClient.GETAsync<Endpoint, Request, IReadOnlyList<Response>>(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         results.Should().NotBeNullOrEmpty();

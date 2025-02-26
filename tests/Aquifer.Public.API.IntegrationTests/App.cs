@@ -17,6 +17,8 @@ namespace Aquifer.Public.API.IntegrationTests;
 /// </summary>
 public sealed class App : AppFixture<Program>
 {
+    public HttpClient AnonymousClient { get; private set; } = null!;
+
     /// <summary>
     ///     Only use this <see cref="IHost" />> for integration test specific configuration outside the internal API's config.
     /// </summary>
@@ -57,7 +59,8 @@ public sealed class App : AppFixture<Program>
         using var integrationTestSetupScope = integrationTestScopeFactory.CreateScope();
 
         var integrationTestConfiguration = integrationTestSetupScope.ServiceProvider.GetRequiredService<IOptions<ConfigurationOptions>>();
-        Client.DefaultRequestHeaders.Add("api-key", integrationTestConfiguration.Value.PublicApiKey);
+        AnonymousClient = CreateClient(new ClientOptions { BypassCaching = true });
+        AnonymousClient.DefaultRequestHeaders.Add("api-key", integrationTestConfiguration.Value.PublicApiKey);
 
         return ValueTask.CompletedTask;
     }
@@ -67,6 +70,8 @@ public sealed class App : AppFixture<Program>
     /// </summary>
     protected override ValueTask TearDownAsync()
     {
+        AnonymousClient.Dispose();
+
         return ValueTask.CompletedTask;
     }
 

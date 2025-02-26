@@ -10,7 +10,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
     [Fact]
     public async Task ValidRequest_ShouldReturnSuccess()
     {
-        var (response, results) = await _app.Client.GETAsync<Endpoint, IReadOnlyList<Response>>();
+        var (response, results) = await _app.AnonymousClient.GETAsync<Endpoint, IReadOnlyList<Response>>();
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         results.Should().NotBeNull();
