@@ -24,7 +24,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         var user = await userService.GetUserFromJwtAsync(ct);
 
-        return await dbContext.Projects.Where(p => p.ProjectManagerUserId == user.Id && p.ActualPublishDate == null)
+        var projects = await dbContext.Projects
+            .Where(p => p.ProjectManagerUserId == user.Id && p.ActualPublishDate == null)
             .Select(x => new Response
             {
                 Id = x.Id,
@@ -56,5 +57,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 }
             })
             .ToListAsync(ct);
+
+        await ProjectResourceStatusCountHelper.PopulateCountsPerProjectAsync(projects, dbContext, ct);
+        return projects;
     }
 }
