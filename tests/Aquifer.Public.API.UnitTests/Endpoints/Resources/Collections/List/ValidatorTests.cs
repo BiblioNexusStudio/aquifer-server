@@ -28,10 +28,10 @@ public sealed class ValidatorTests
 
     public static TheoryData<Request> GetValidRequestData =>
     [
-        new() { ResourceType = ResourceType.None, Offset = 0, Limit = 1 },
-        new() { ResourceType = ResourceType.None, Offset = 0, Limit = 100 },
-        new() { ResourceType = ResourceType.None, Offset = int.MaxValue, Limit = 1 },
-        new() { ResourceType = ResourceType.Dictionary, Offset = int.MaxValue, Limit = 1 },
+        new Request { ResourceType = ResourceType.None, Offset = 0, Limit = 1 },
+        new Request { ResourceType = ResourceType.None, Offset = 0, Limit = 100 },
+        new Request { ResourceType = ResourceType.None, Offset = int.MaxValue, Limit = 1 },
+        new Request { ResourceType = ResourceType.Dictionary, Offset = int.MaxValue, Limit = 1 },
     ];
 
     [Theory]

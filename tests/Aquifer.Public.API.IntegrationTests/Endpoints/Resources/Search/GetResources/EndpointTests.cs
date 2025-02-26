@@ -12,19 +12,19 @@ public sealed class EndpointTests(App _app) : TestBase<App>
 {
     public static TheoryData<Request> GetValidRequestData =>
     [
-        new()
+        new Request
         {
             Query = "Dios",
             LanguageCode = "spa",
         },
-        new()
+        new Request
         {
             LanguageCode = "arb",
             ResourceType = ResourceType.StudyNotes,
             Offset = 2,
             Limit = 10,
         },
-        new()
+        new Request
         {
             BookCode = BibleBookCodeUtilities.CodeFromId(BookId.BookMAT),
             StartChapter = 2,

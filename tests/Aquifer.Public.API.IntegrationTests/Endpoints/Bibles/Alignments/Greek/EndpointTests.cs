@@ -11,7 +11,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
 {
     public static TheoryData<Request> GetValidRequestData =>
     [
-        new()
+        new Request
         {
             BibleId = 1,
             BookCode = BibleBookCodeUtilities.CodeFromId(BookId.BookMAT),
@@ -23,7 +23,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
             EndWord = 3,
             ShouldReturnSenseData = true,
         },
-        new()
+        new Request
         {
             BibleId = 2,
             StartChapter = 2,

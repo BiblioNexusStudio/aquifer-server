@@ -10,17 +10,17 @@ public sealed class EndpointTests(App _app) : TestBase<App>
 {
     public static TheoryData<Request> GetValidRequestData =>
     [
-        new()
+        new Request
         {
             Code = "TyndaleBibleDictionary",
             LanguageCodes = ["eng", "fra"],
         },
-        new()
+        new Request
         {
             Code = "TyndaleStudyNotes",
             LanguageIds = [4, 11],
         },
-        new()
+        new Request
         {
             Code = "TyndaleStudyNotesBookIntros",
         },

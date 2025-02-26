@@ -11,12 +11,12 @@ public sealed class EndpointTests(App _app) : TestBase<App>
 {
     public static TheoryData<Request> GetValidRequestData =>
     [
-        new()
+        new Request
         {
             BookCode = BibleBookCodeUtilities.CodeFromId(BookId.BookMRK),
             LanguageCodes = ["eng", "fra"],
         },
-        new()
+        new Request
         {
             BookCode = BibleBookCodeUtilities.CodeFromId(BookId.BookMAT),
             StartChapter = 2,

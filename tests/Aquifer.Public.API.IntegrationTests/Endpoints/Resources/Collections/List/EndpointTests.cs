@@ -10,11 +10,11 @@ public sealed class EndpointTests(App _app) : TestBase<App>
 {
     public static TheoryData<Request> GetValidRequestData =>
     [
-        new()
+        new Request
         {
             ResourceType = ResourceType.Dictionary,
         },
-        new()
+        new Request
         {
             Offset = 10,
             Limit = 10,

@@ -9,21 +9,21 @@ public sealed class EndpointTests(App _app) : TestBase<App>
 {
     public static TheoryData<Request> GetValidRequestData =>
     [
-        new()
+        new Request
         {
             LanguageId = 4,
             ResourceCollectionCode = "TyndaleBibleDictionary",
             Timestamp = DateTime.UtcNow.AddMonths(-1),
             Limit = 2,
         },
-        new()
+        new Request
         {
             LanguageCode = "spa",
             Offset = 10,
             Limit = 15,
             Timestamp = DateTime.UtcNow.AddDays(-90).AddHours(1),
         },
-        new()
+        new Request
         {
             Timestamp = DateTime.UtcNow.AddDays(-90).AddHours(1),
             Limit = 100,

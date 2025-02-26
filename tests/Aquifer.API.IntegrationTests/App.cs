@@ -73,7 +73,7 @@ public sealed class App : AppFixture<Program>
     ///     This is sufficient for Internal API tests because no actual web requests are sent via this fixture.
     ///     Various authenticated client with different roles/permissions are also needed.
     /// </summary>
-    protected override async Task SetupAsync()
+    protected override async ValueTask SetupAsync()
     {
         try
         {
@@ -147,7 +147,7 @@ public sealed class App : AppFixture<Program>
         }
     }
 
-    protected override Task TearDownAsync()
+    protected override ValueTask TearDownAsync()
     {
         Host.Dispose();
 
@@ -157,7 +157,7 @@ public sealed class App : AppFixture<Program>
         ReviewerClient.Dispose();
         CommunityReviewerClient.Dispose();
 
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     private static string GetTestUserEmail(UserRole testUserRole)

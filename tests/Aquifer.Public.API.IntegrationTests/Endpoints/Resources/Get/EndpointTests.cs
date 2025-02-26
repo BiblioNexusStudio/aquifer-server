@@ -15,22 +15,22 @@ public sealed class EndpointTests(App _app) : TestBase<App>
 
     public static TheoryData<Request> GetValidRequestData =>
     [
-        new()
+        new Request
         {
             ContentId = ImageResourceContentId,
             ContentTextType = TiptapContentType.Json,
         },
-        new()
+        new Request
         {
             ContentId = TextResourceContentId,
             ContentTextType = TiptapContentType.Json,
         },
-        new()
+        new Request
         {
             ContentId = TextResourceContentId,
             ContentTextType = TiptapContentType.Html,
         },
-        new()
+        new Request
         {
             ContentId = TextResourceContentId,
             ContentTextType = TiptapContentType.Markdown,

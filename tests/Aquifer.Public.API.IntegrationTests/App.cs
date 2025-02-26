@@ -49,7 +49,7 @@ public sealed class App : AppFixture<Program>
     ///     The default requires an API Key header value.
     ///     This is sufficient for Public API tests and no actual web requests are sent via this fixture.
     /// </summary>
-    protected override Task SetupAsync()
+    protected override ValueTask SetupAsync()
     {
         InitializeIntegrationTestAppHost();
 
@@ -59,15 +59,15 @@ public sealed class App : AppFixture<Program>
         var integrationTestConfiguration = integrationTestSetupScope.ServiceProvider.GetRequiredService<IOptions<ConfigurationOptions>>();
         Client.DefaultRequestHeaders.Add("api-key", integrationTestConfiguration.Value.PublicApiKey);
 
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
     ///     Use this method to dispose of any <see cref="HttpClient" />s created in <see cref="SetupAsync" />.
     /// </summary>
-    protected override Task TearDownAsync()
+    protected override ValueTask TearDownAsync()
     {
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     private void InitializeIntegrationTestAppHost()
