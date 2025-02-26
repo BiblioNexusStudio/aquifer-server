@@ -59,6 +59,28 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.API.IntegrationTest
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Common.IntegrationTests", "tests\Aquifer.Common.IntegrationTests\Aquifer.Common.IntegrationTests.csproj", "{73F5F966-C27E-47AB-8B02-7A4B48C374EC}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		.github\CODEOWNERS = .github\CODEOWNERS
+		.github\settings.yml = .github\settings.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "actions", "actions", "{61FDF919-192A-435C-8A61-2F7E97AC6454}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{7F69D32F-5B88-4B95-8AB7-9A8F72A36132}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\create-hotfix.yml = .github\workflows\create-hotfix.yml
+		.github\workflows\post-merge-internal-api.yml = .github\workflows\post-merge-internal-api.yml
+		.github\workflows\post-merge-jobs.yml = .github\workflows\post-merge-jobs.yml
+		.github\workflows\post-merge-public-api.yml = .github\workflows\post-merge-public-api.yml
+		.github\workflows\pre-merge.yml = .github\workflows\pre-merge.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy-to-env", "deploy-to-env", "{92256CE3-C3B2-4A50-85B4-8D0564FB3E11}"
+	ProjectSection(SolutionItems) = preProject
+		.github\actions\deploy-to-env\action.yml = .github\actions\deploy-to-env\action.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -153,6 +175,10 @@ Global
 		{5205B15E-7521-40A7-8C66-19C231839E4F} = {51DD9DE3-DA20-4C0B-82D6-029445F6BD42}
 		{EFCB9F65-BC0A-4AB6-9A42-19A0BD15ED30} = {51DD9DE3-DA20-4C0B-82D6-029445F6BD42}
 		{73F5F966-C27E-47AB-8B02-7A4B48C374EC} = {51DD9DE3-DA20-4C0B-82D6-029445F6BD42}
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {180F25DB-77E1-47DA-B532-B40736EBFD15}
+		{61FDF919-192A-435C-8A61-2F7E97AC6454} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{7F69D32F-5B88-4B95-8AB7-9A8F72A36132} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{92256CE3-C3B2-4A50-85B4-8D0564FB3E11} = {61FDF919-192A-435C-8A61-2F7E97AC6454}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8E32492B-EA66-40E4-A7A8-67E4ABA14A53}

@@ -93,7 +93,7 @@ jobs:
                   color: warning
                   environment: dev-qa-jobs
                   default_branch_name: master
-                  service_name: Jobs
+                  service_name: Jobs (East US)
               env:
                   SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -191,7 +191,7 @@ jobs:
                   color: ${{ job.status == 'failure' && 'danger' || 'good' }}
                   environment: prod-jobs
                   default_branch_name: master
-                  service_name: Jobs
+                  service_name: Jobs (East US)
                   message_id: ${{ steps.slack-notify.outputs.message_id }}
               env:
                     SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
