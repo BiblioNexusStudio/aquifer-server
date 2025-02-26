@@ -31,7 +31,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
         results.Should().NotBeNullOrEmpty();
 
         // assert that response data matches the request
-        results.Count.Should().BeLessThan(request.Limit);
+        results.Count.Should().BeLessThanOrEqualTo(request.Limit);
         if (request.ResourceType != ResourceType.None)
         {
             results.Should().OnlyContain(r => r.ResourceType == request.ResourceType);
