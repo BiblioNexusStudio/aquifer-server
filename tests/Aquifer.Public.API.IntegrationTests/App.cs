@@ -1,6 +1,7 @@
 ﻿using FastEndpoints.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -44,6 +45,8 @@ public sealed class App : AppFixture<Program>
     /// </summary>
     protected override void ConfigureServices(IServiceCollection services)
     {
+        // Turn off API output caching for testing.  See https://github.com/FastEndpoints/FastEndpoints/issues/892 for reasoning.
+        services.AddSingleton<IOutputCacheStore, DevNullOutputCacheStore>();
     }
 
     /// <summary>
@@ -88,5 +91,25 @@ public sealed class App : AppFixture<Program>
 
         // There's no need to start/stop the host; we're only using it to build configuration and services.
         //await Host.StartAsync();
+    }
+
+    public sealed class DevNullOutputCacheStore : IOutputCacheStore
+    {
+        private static readonly ValueTask<byte[]?> s_emptyGetValueTask = new();
+
+        public ValueTask EvictByTagAsync(string tag, CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask<byte[]?> GetAsync(string key, CancellationToken cancellationToken)
+        {
+            return s_emptyGetValueTask;
+        }
+
+        public ValueTask SetAsync(string key, byte[] value, string[]? tags, TimeSpan validFor, CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
+        }
     }
 }
