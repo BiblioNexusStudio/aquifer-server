@@ -1,6 +1,4 @@
-﻿using System.Collections.ObjectModel;
-
-namespace Aquifer.API.Endpoints.Bibles.Texts.Get;
+﻿namespace Aquifer.API.Endpoints.Bibles.Texts.Get;
 
 public class Response
 {
@@ -11,7 +9,6 @@ public class Response
     public required string BookCode { get; set; }
     public required int BookNumber { get; set; }
     public IEnumerable<ResponseChapters> Chapters { get; set; } = null!;
-    public ReadOnlyDictionary<int, int?> VerseMap { get; set; } = null!; // todo remove
 }
 
 public class ResponseChapters

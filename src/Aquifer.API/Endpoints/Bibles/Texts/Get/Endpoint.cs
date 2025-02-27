@@ -1,5 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using Aquifer.API.Helpers;
+﻿using Aquifer.API.Helpers;
 using Aquifer.Common.Services.Caching;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
@@ -81,7 +80,6 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
     {
         if (!response.Chapters.Any())
         {
-            response.VerseMap = new ReadOnlyDictionary<int, int?>(new Dictionary<int, int?>()); // todo remove
             return;
         }
 
@@ -90,40 +88,34 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
         
         if (!verseIds.Any())
         {
-            response.VerseMap = new ReadOnlyDictionary<int, int?>(new Dictionary<int, int?>()); // todo remove
             return;
         }
-
-        // Get versification mapping
-        var verseMap = await VersificationUtilities.ConvertVersificationRangeAsync(
+        
+        var versificationMap = await VersificationUtilities.ConvertVersificationRangeAsync(
             req.BibleId,
             verseIds.Min(),
             verseIds.Max(),
             0, // Target Bible ID is 1 (BSB)? 0 (EVB)?
             versificationService,
             ct);
-
-        // Create mapping dictionary only for verses that differ
-        var baseMappings = verseMap
+        
+        var baseBibleVerseMappings = versificationMap
             .Where(mapping => mapping.Value.HasValue && mapping.Value.Value != mapping.Key)
             .ToDictionary(
                 mapping => mapping.Key,
                 mapping => FormatBaseBookChapterVerseMapping(mapping.Value!.Value));
-
-        // Apply mappings to verses using LINQ instead of nested loops
+        
         response.Chapters = [.. response.Chapters.Select(chapter =>
         {
             chapter.Verses = [.. chapter.Verses.Select(verse =>
             {
                 var verseId = BibleUtilities.GetVerseId(bookId, chapter.Number, verse.Number);
-                verse.BaseMapping = baseMappings.GetValueOrDefault(verseId)!;
+                verse.BaseMapping = baseBibleVerseMappings.GetValueOrDefault(verseId)!;
                 
                 return verse;
             })];
             
             return chapter;
         })];
-        
-        response.VerseMap = new ReadOnlyDictionary<int, int?>(verseMap); // todo remove
     }
 }
