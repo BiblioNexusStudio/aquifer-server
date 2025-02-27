@@ -70,7 +70,7 @@ jobs:
             - name: Zip API
               run: cd ./Aquifer.API && zip ../build/Build.zip *
             - name: Bundle migrations
-              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --output build/Migrate --self-contained
+              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate --self-contained
             - name: Publish artifact
               uses: actions/upload-artifact@v4.4.0
               with:
@@ -129,7 +129,7 @@ jobs:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   linear-api-key: ${{ secrets.LINEAR_API_KEY }}
                   slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
-                  service-name: Internal API
+                  service-name: Internal API (East US)
 
     deploy_internal_api_to_prod:
         if: needs.check_should_deploy.outputs.should_deploy == 'true'
@@ -160,7 +160,7 @@ jobs:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   linear-api-key: ${{ secrets.LINEAR_API_KEY }}
                   slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
-                  service-name: Internal API
+                  service-name: Internal API (East US)
             - uses: BiblioNexusStudio/github-actions/delete-hotfix-branch@master
               with:
                   current_branch: ${{ github.ref_name }}

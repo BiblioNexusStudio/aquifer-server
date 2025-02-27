@@ -8,6 +8,7 @@ public sealed class ConfigurationOptions
     public required Auth0Settings IntegrationTestAuth0Settings { get; init; }
     public required UserSettings IntegrationTestUserSettings { get; init; }
     public required string KeyVaultUri { get; init; }
+    public required string InternalApiKey { get; init; }
 
     public sealed class ConnectionStringOptions
     {

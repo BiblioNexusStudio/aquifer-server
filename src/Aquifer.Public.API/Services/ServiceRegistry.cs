@@ -7,6 +7,7 @@ public static class ServiceRegistry
     public static IServiceCollection AddCachingServices(this IServiceCollection services)
     {
         services.AddScoped<ICachingLanguageService, CachingLanguageService>();
+        services.AddScoped<ICachingApiKeyService, CachingApiKeyService>();
 
         return services;
     }

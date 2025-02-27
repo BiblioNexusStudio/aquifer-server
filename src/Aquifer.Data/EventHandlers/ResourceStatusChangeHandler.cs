@@ -11,7 +11,7 @@ public static class ResourceStatusChangeHandler
         ResourceContentStatus.Complete, ResourceContentStatus.AquiferizePublisherReview, ResourceContentStatus.TranslationPublisherReview
     ];
 
-    public static async Task HandleAsync(DbContextOptions<AquiferDbContext> dbContextOptions, IEnumerable<EntityEntry> entityEntries)
+    public static async Task HandleAsync(DbContextOptions dbContextOptions, IEnumerable<EntityEntry> entityEntries)
     {
         List<int> completedContentIds = [];
         List<int> inReviewContentIds = [];
@@ -45,7 +45,7 @@ public static class ResourceStatusChangeHandler
             return;
         }
 
-        await using var dbContext = new AquiferDbContext(dbContextOptions);
+        await using var dbContext = new AquiferDbContext(dbContextOptions, isReadOnly: false);
 
         if (completedContentIds.Count > 0)
         {

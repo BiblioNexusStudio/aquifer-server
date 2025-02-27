@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Bibles.List;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IReadOnlyList<Response>>
+public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, IReadOnlyList<Response>>
 {
     public override void Configure()
     {

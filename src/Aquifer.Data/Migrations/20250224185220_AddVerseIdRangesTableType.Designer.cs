@@ -4,6 +4,7 @@ using Aquifer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    partial class AquiferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250224185220_AddVerseIdRangesTableType")]
+    partial class AddVerseIdRangesTableType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1416,9 +1419,9 @@ namespace Aquifer.Data.Migrations
 
                     SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("Status"), new[] { "ContentUpdated", "LanguageId", "ResourceId" });
 
-                    b.HasIndex("LanguageId", "MediaType", "Status");
+                    b.HasIndex("LanguageId", "MediaType");
 
-                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("LanguageId", "MediaType", "Status"), new[] { "Created", "ResourceId", "Updated", "ContentUpdated" });
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("LanguageId", "MediaType"), new[] { "Created", "ResourceId", "Status" });
 
                     b.HasIndex("ResourceId", "LanguageId", "MediaType")
                         .IsUnique();

@@ -5,11 +5,20 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FastEndpoints.Testing" />
+        <PackageReference Include="FastEndpoints.Testing"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Aquifer.Public.API\Aquifer.Public.API.csproj" />
+        <ProjectReference Include="..\..\src\Aquifer.Public.API\Aquifer.Public.API.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="appsettings.Development.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="appsettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
 </Project>
