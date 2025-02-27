@@ -183,7 +183,6 @@ jobs:
               with:
                   environment: prod
                   full-environment: prod-public
-                  connection-url: ${{ vars.DB_CONNECTION_URL_PROD }}
                   web-app-name: ${{ vars.AZURE_WEB_APP_NAME_PUBLIC_PROD_INDIA }}
                   resource-group: ${{ vars.AZURE_RESOURCE_GROUP_PROD_INDIA }}
                   azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
