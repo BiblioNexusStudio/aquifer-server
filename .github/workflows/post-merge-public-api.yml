@@ -18,6 +18,8 @@ on:
             - master
             - 'release-hotfix-*'
         paths:
+            - '.github/actions/**'
+            - '.github/workflows/**'
             - 'Directory.Build.props'
             - 'Directory.Packages.props'
             - 'src/Aquifer.AI/**'
@@ -170,9 +172,6 @@ jobs:
             - build
             - check_should_deploy
             - deploy_public_api_to_prod_east_us
-        environment:
-            name: prod-public
-            url: ${{ vars.URL_PROD }}
         steps:
             - name: Checkout source code
               uses: actions/checkout@v4.1.7
@@ -183,7 +182,6 @@ jobs:
               with:
                   environment: prod
                   full-environment: prod-public
-                  connection-url: ${{ vars.DB_CONNECTION_URL_PROD }}
                   web-app-name: ${{ vars.AZURE_WEB_APP_NAME_PUBLIC_PROD_INDIA }}
                   resource-group: ${{ vars.AZURE_RESOURCE_GROUP_PROD_INDIA }}
                   azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -203,9 +201,6 @@ jobs:
             - check_should_deploy
             - deploy_public_api_to_prod_east_us
             - deploy_public_api_to_prod_central_india
-        environment:
-            name: prod-public
-            url: ${{ vars.URL_PROD }}
         steps:
             - uses: BiblioNexusStudio/github-actions/delete-hotfix-branch@master
               with:
