@@ -1,6 +1,7 @@
 ﻿using FastEndpoints.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,8 @@ namespace Aquifer.Public.API.IntegrationTests;
 /// </summary>
 public sealed class App : AppFixture<Program>
 {
+    public HttpClient AnonymousClient { get; private set; } = null!;
+
     /// <summary>
     ///     Only use this <see cref="IHost" />> for integration test specific configuration outside the internal API's config.
     /// </summary>
@@ -42,6 +45,8 @@ public sealed class App : AppFixture<Program>
     /// </summary>
     protected override void ConfigureServices(IServiceCollection services)
     {
+        // Turn off API output caching for testing.  See https://github.com/FastEndpoints/FastEndpoints/issues/892 for reasoning.
+        services.AddSingleton<IOutputCacheStore, DevNullOutputCacheStore>();
     }
 
     /// <summary>
@@ -49,7 +54,7 @@ public sealed class App : AppFixture<Program>
     ///     The default requires an API Key header value.
     ///     This is sufficient for Public API tests and no actual web requests are sent via this fixture.
     /// </summary>
-    protected override Task SetupAsync()
+    protected override ValueTask SetupAsync()
     {
         InitializeIntegrationTestAppHost();
 
@@ -57,17 +62,20 @@ public sealed class App : AppFixture<Program>
         using var integrationTestSetupScope = integrationTestScopeFactory.CreateScope();
 
         var integrationTestConfiguration = integrationTestSetupScope.ServiceProvider.GetRequiredService<IOptions<ConfigurationOptions>>();
-        Client.DefaultRequestHeaders.Add("api-key", integrationTestConfiguration.Value.PublicApiKey);
+        AnonymousClient = CreateClient(new ClientOptions { BypassCaching = true });
+        AnonymousClient.DefaultRequestHeaders.Add("api-key", integrationTestConfiguration.Value.PublicApiKey);
 
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
     ///     Use this method to dispose of any <see cref="HttpClient" />s created in <see cref="SetupAsync" />.
     /// </summary>
-    protected override Task TearDownAsync()
+    protected override ValueTask TearDownAsync()
     {
-        return Task.CompletedTask;
+        AnonymousClient.Dispose();
+
+        return ValueTask.CompletedTask;
     }
 
     private void InitializeIntegrationTestAppHost()
@@ -83,5 +91,25 @@ public sealed class App : AppFixture<Program>
 
         // There's no need to start/stop the host; we're only using it to build configuration and services.
         //await Host.StartAsync();
+    }
+
+    public sealed class DevNullOutputCacheStore : IOutputCacheStore
+    {
+        private static readonly ValueTask<byte[]?> s_emptyGetValueTask = new();
+
+        public ValueTask EvictByTagAsync(string tag, CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask<byte[]?> GetAsync(string key, CancellationToken cancellationToken)
+        {
+            return s_emptyGetValueTask;
+        }
+
+        public ValueTask SetAsync(string key, byte[] value, string[]? tags, TimeSpan validFor, CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
+        }
     }
 }

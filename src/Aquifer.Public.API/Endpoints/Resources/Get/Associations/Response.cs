@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using Aquifer.Common.Utilities;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Get.Associations;
 
@@ -17,21 +16,13 @@ public class PassageAssociation
     [JsonIgnore]
     public int EndVerseId { get; init; }
 
-    [JsonIgnore]
-    private (Data.Enums.BookId BookId, int Chapter, int Verse) StartTranslatedVerse =>
-        BibleUtilities.TranslateVerseId(StartVerseId);
+    public string StartBookCode { get; set; } = null!;
+    public int StartChapter { get; set; }
+    public int StartVerse { get; set; }
 
-    public string StartBookCode => BibleBookCodeUtilities.CodeFromId(StartTranslatedVerse.BookId);
-    public int StartChapter => StartTranslatedVerse.Chapter;
-    public int StartVerse => StartTranslatedVerse.Verse;
-
-    [JsonIgnore]
-    private (Data.Enums.BookId BookId, int Chapter, int Verse) EndTranslatedVerse =>
-        BibleUtilities.TranslateVerseId(EndVerseId);
-
-    public string EndBookCode => BibleBookCodeUtilities.CodeFromId(EndTranslatedVerse.BookId);
-    public int EndChapter => EndTranslatedVerse.Chapter;
-    public int EndVerse => EndTranslatedVerse.Verse;
+    public string EndBookCode { get; set; } = null!;
+    public int EndChapter { get; set; }
+    public int EndVerse { get; set; }
 }
 
 public class ResourceAssociation
