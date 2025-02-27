@@ -170,9 +170,6 @@ jobs:
             - build
             - check_should_deploy
             - deploy_public_api_to_prod_east_us
-        environment:
-            name: prod-public
-            url: ${{ vars.URL_PROD }}
         steps:
             - name: Checkout source code
               uses: actions/checkout@v4.1.7
@@ -202,9 +199,6 @@ jobs:
             - check_should_deploy
             - deploy_public_api_to_prod_east_us
             - deploy_public_api_to_prod_central_india
-        environment:
-            name: prod-public
-            url: ${{ vars.URL_PROD }}
         steps:
             - uses: BiblioNexusStudio/github-actions/delete-hotfix-branch@master
               with:
