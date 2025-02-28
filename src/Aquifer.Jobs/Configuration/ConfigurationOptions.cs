@@ -50,5 +50,4 @@ public class NotificationsOptions
 {
     public required string SendResourceAssignmentNotificationTemplateId { get; init; }
     public required string SendProjectStartedNotificationTemplateId { get; init; }
-    public required string SendResourceCommentCreatedNotificationTemplateId { get; init; }
 }
