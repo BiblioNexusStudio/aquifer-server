@@ -2,7 +2,6 @@
 using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Services.Caching;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Hosting;
 
 namespace Aquifer.Common.Messages.Publishers;
 
@@ -99,28 +98,5 @@ public class ResourceContentRequestTrackingMessagePublisher(
         }
 
         return httpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
-    }
-
-    public sealed class TrackResourceContentRequestBackgroundService(
-        Channel<TrackResourceContentRequestMessage> _channel,
-        IQueueClientFactory _queueClientFactory)
-        : BackgroundService
-    {
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (await _channel.Reader.WaitToReadAsync(stoppingToken))
-            {
-                var message = await _channel.Reader.ReadAsync(stoppingToken);
-                await PublishTrackResourceContentRequestMessageCoreAsync(message, stoppingToken);
-            }
-        }
-
-        private async Task PublishTrackResourceContentRequestMessageCoreAsync(
-            TrackResourceContentRequestMessage message,
-            CancellationToken ct)
-        {
-            var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.TrackResourceContentRequest, ct);
-            await queueClient.SendMessageAsync(message, cancellationToken: ct);
-        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Threading.Channels;
 using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Messages.Publishers;
+using Aquifer.Common.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aquifer.Common.Extensions;
@@ -11,7 +12,7 @@ public static class ServiceCollectionExtensions
     {
         return services
             .AddSingleton<IResourceContentRequestTrackingMessagePublisher, ResourceContentRequestTrackingMessagePublisher>()
-            .AddHostedService<ResourceContentRequestTrackingMessagePublisher.TrackResourceContentRequestBackgroundService>()
+            .AddHostedService<TrackResourceContentRequestBackgroundService>()
             .AddSingleton(
                 _ => Channel.CreateUnbounded<TrackResourceContentRequestMessage>(
                     new UnboundedChannelOptions
