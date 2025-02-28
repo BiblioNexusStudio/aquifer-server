@@ -41,18 +41,13 @@ public class ProjectResourceStatusCounts
 
     public ProjectResourceStatusCounts() { }
 
-    public ProjectResourceStatusCounts(
-        int completedCount,
-        int inCompanyReviewCount,
-        int inPublisherReviewCount,
-        int inEditorReviewCount,
-        int notStartedCount)
+    public ProjectResourceStatusCounts(IEnumerable<(ResourceContentStatus Status, int? WordCount)> resourceData)
     {
-        Completed = completedCount;
-        InCompanyReview = inCompanyReviewCount;
-        InPublisherReview = inPublisherReviewCount;
-        EditorReview = inEditorReviewCount;
-        NotStarted = notStartedCount;
+        NotStarted = resourceData.Where(x => NotStartedStatuses.Contains(x.Status)).Sum(x => x.WordCount ?? 0);
+        EditorReview = resourceData.Where(x => EditorReviewStatuses.Contains(x.Status)).Sum(x => x.WordCount ?? 0);
+        InCompanyReview = resourceData.Where(x => InCompanyReviewStatuses.Contains(x.Status)).Sum(x => x.WordCount ?? 0);
+        InPublisherReview = resourceData.Where(x => InPublisherReviewStatuses.Contains(x.Status)).Sum(x => x.WordCount ?? 0);
+        Completed = resourceData.Where(x => CompletedStatuses.Contains(x.Status)).Sum(x => x.WordCount ?? 0);
     }
     public int NotStarted { get; init; }
     public int EditorReview { get; init; }

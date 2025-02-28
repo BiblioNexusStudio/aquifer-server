@@ -48,17 +48,7 @@ public static class ProjectResourceStatusCountHelper
         var countsPerProject = new Dictionary<int, ProjectResourceStatusCounts>();
         foreach (var id in projectIds)
         {
-            countsPerProject[id] = new ProjectResourceStatusCounts(
-                counts.Where(x => x.ProjectId == id && ProjectResourceStatusCounts.CompletedStatuses.Contains(x.Status))
-                    .Sum(x => x.WordCount ?? 0),
-                counts.Where(x => x.ProjectId == id && ProjectResourceStatusCounts.InCompanyReviewStatuses.Contains(x.Status))
-                    .Sum(x => x.WordCount ?? 0),
-                counts.Where(x => x.ProjectId == id && ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(x.Status))
-                    .Sum(x => x.WordCount ?? 0),
-                counts.Where(x => x.ProjectId == id && ProjectResourceStatusCounts.EditorReviewStatuses.Contains(x.Status))
-                    .Sum(x => x.WordCount ?? 0),
-                counts.Where(x => x.ProjectId == id && ProjectResourceStatusCounts.NotStartedStatuses.Contains(x.Status))
-                    .Sum(x => x.WordCount ?? 0));
+            countsPerProject[id] = new ProjectResourceStatusCounts(counts.Select(pri => (pri.Status, pri.WordCount)));
         }
 
         return countsPerProject;
