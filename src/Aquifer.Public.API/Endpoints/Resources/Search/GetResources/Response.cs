@@ -7,7 +7,7 @@ public class Response
     public int TotalItemCount { get; set; }
     public int ReturnedItemCount { get; set; }
     public int Offset { get; set; }
-    public List<ResponseContent> Items { get; set; } = [];
+    public IReadOnlyList<ResponseContent> Items { get; set; } = [];
 }
 
 public class ResponseContent

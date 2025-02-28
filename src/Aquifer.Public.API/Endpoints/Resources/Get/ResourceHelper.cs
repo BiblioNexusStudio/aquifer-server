@@ -65,6 +65,8 @@ public static class ResourceHelper
             : TiptapContentType.None;
 
         response.Content = TiptapConverter.ConvertJsonToType(response.ContentValue, contentTextType);
+        response.Grouping.MediaType = response.Grouping.MediaTypeValue.ToString();
+
         return response;
     }
 }

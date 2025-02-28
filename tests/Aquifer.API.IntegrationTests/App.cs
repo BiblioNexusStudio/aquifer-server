@@ -11,6 +11,7 @@ using FastEndpoints;
 using FastEndpoints.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +35,8 @@ namespace Aquifer.API.IntegrationTests;
 public sealed class App : AppFixture<Program>
 {
     private const int AquiferApiIntegrationTestsCompanyId = 26;
+
+    public HttpClient AnonymousClient { get; private set; } = null!;
     public HttpClient PublisherClient { get; private set; } = null!;
     public HttpClient ManagerClient { get; private set; } = null!;
     public HttpClient EditorClient { get; private set; } = null!;
@@ -65,15 +68,15 @@ public sealed class App : AppFixture<Program>
     /// </summary>
     protected override void ConfigureServices(IServiceCollection services)
     {
+        // Turn off API output caching for testing.  See https://github.com/FastEndpoints/FastEndpoints/issues/892 for reasoning.
+        services.AddSingleton<IOutputCacheStore, DevNullOutputCacheStore>();
     }
 
     /// <summary>
     ///     Configure Clients here.
-    ///     The default requires an API Key header value.
-    ///     This is sufficient for Internal API tests because no actual web requests are sent via this fixture.
-    ///     Various authenticated client with different roles/permissions are also needed.
+    ///     Various authenticated client with different roles/permissions are needed.
     /// </summary>
-    protected override async Task SetupAsync()
+    protected override async ValueTask SetupAsync()
     {
         try
         {
@@ -91,7 +94,7 @@ public sealed class App : AppFixture<Program>
             using var integrationTestSetupScope = integrationTestScopeFactory.CreateScope();
 
             var integrationTestConfiguration =
-                integrationTestSetupScope.ServiceProvider.GetRequiredService<IOptions<ConfigurationOptions>>();
+                integrationTestSetupScope.ServiceProvider.GetRequiredService<IOptions<ConfigurationOptions>>().Value;
             var integrationTestAuth0Service = integrationTestSetupScope.ServiceProvider.GetRequiredService<IAuth0Service>();
             var integrationTestUserSettings =
                 integrationTestSetupScope.ServiceProvider.GetRequiredService<ConfigurationOptions.UserSettings>();
@@ -102,12 +105,10 @@ public sealed class App : AppFixture<Program>
                 integrationTestUserSettings.TestUserPassword,
                 CancellationToken.None);
 
-            AddInternalApiKeyToClient(Client, integrationTestConfiguration);
+            AnonymousClient = CreateClient(integrationTestConfiguration.InternalApiKey, shouldBypassCaching: true);
 
             // Note: The Publisher client user must be manually created so that we have a user to create the other test users.
-            PublisherClient = CreateClient(
-                c => c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", publisherBearerToken));
-            AddInternalApiKeyToClient(PublisherClient, integrationTestConfiguration);
+            PublisherClient = CreateClient(integrationTestConfiguration.InternalApiKey, publisherBearerToken, shouldBypassCaching: true);
 
             var testUserBearerTokenByRoleMap = await CreateTestUsersAsync(
                 PublisherClient,
@@ -119,26 +120,21 @@ public sealed class App : AppFixture<Program>
                 CancellationToken.None);
 
             ManagerClient = CreateClient(
-                c => c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-                    "Bearer",
-                    testUserBearerTokenByRoleMap[UserRole.Manager]));
+                integrationTestConfiguration.InternalApiKey,
+                testUserBearerTokenByRoleMap[UserRole.Manager],
+                shouldBypassCaching: true);
             EditorClient = CreateClient(
-                c => c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-                    "Bearer",
-                    testUserBearerTokenByRoleMap[UserRole.Editor]));
+                integrationTestConfiguration.InternalApiKey,
+                testUserBearerTokenByRoleMap[UserRole.Editor],
+                shouldBypassCaching: true);
             ReviewerClient = CreateClient(
-                c => c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-                    "Bearer",
-                    testUserBearerTokenByRoleMap[UserRole.Reviewer]));
+                integrationTestConfiguration.InternalApiKey,
+                testUserBearerTokenByRoleMap[UserRole.Reviewer],
+                shouldBypassCaching: true);
             CommunityReviewerClient = CreateClient(
-                c => c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-                    "Bearer",
-                    testUserBearerTokenByRoleMap[UserRole.CommunityReviewer]));
-
-            AddInternalApiKeyToClient(ManagerClient, integrationTestConfiguration);
-            AddInternalApiKeyToClient(EditorClient, integrationTestConfiguration);
-            AddInternalApiKeyToClient(ReviewerClient, integrationTestConfiguration);
-            AddInternalApiKeyToClient(CommunityReviewerClient, integrationTestConfiguration);
+                integrationTestConfiguration.InternalApiKey,
+                testUserBearerTokenByRoleMap[UserRole.CommunityReviewer],
+                shouldBypassCaching: true);
         }
         catch (Exception e)
         {
@@ -147,17 +143,35 @@ public sealed class App : AppFixture<Program>
         }
     }
 
-    protected override Task TearDownAsync()
+    protected override ValueTask TearDownAsync()
     {
         Host.Dispose();
 
+        AnonymousClient.Dispose();
         PublisherClient.Dispose();
         ManagerClient.Dispose();
         EditorClient.Dispose();
         ReviewerClient.Dispose();
         CommunityReviewerClient.Dispose();
 
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
+    }
+
+    private HttpClient CreateClient(string? apiKey = null, string? bearerToken = null, bool shouldBypassCaching = false)
+    {
+        var client = CreateClient(new ClientOptions { BypassCaching = shouldBypassCaching });
+
+        if (apiKey is not null)
+        {
+            client.DefaultRequestHeaders.Add("api-key", apiKey);
+        }
+
+        if (bearerToken is not null)
+        {
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+        }
+
+        return client;
     }
 
     private static string GetTestUserEmail(UserRole testUserRole)
@@ -292,8 +306,23 @@ public sealed class App : AppFixture<Program>
         //await Host.StartAsync();
     }
 
-    private void AddInternalApiKeyToClient(HttpClient client, IOptions<ConfigurationOptions> options)
+    public sealed class DevNullOutputCacheStore : IOutputCacheStore
     {
-        client.DefaultRequestHeaders.Add("api-key", options.Value.InternalApiKey);
+        private static readonly ValueTask<byte[]?> s_emptyGetValueTask = new();
+
+        public ValueTask EvictByTagAsync(string tag, CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask<byte[]?> GetAsync(string key, CancellationToken cancellationToken)
+        {
+            return s_emptyGetValueTask;
+        }
+
+        public ValueTask SetAsync(string key, byte[] value, string[]? tags, TimeSpan validFor, CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
+        }
     }
 }
