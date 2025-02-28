@@ -1,6 +1,6 @@
 ﻿namespace Aquifer.API.Endpoints.Projects.List;
 
-public class Response : IProjectWithCount
+public class Response
 {
     public int Id { get; set; }
     public required string Name { get; set; }
