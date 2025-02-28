@@ -58,7 +58,16 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 })
             .ToListAsync(ct);
 
-        await ProjectResourceStatusCountHelper.GetResourceStatusCountsPerProjectAsync(projects.Select(x => x.Id).ToList(), dbContext, ct);
+        var statusCountsPerProject =
+            await ProjectResourceStatusCountHelper.GetResourceStatusCountsPerProjectAsync(
+                projects.Select(x => x.Id).ToList(),
+                dbContext,
+                ct);
+
+        foreach (var p in projects)
+        {
+            p.Counts = statusCountsPerProject[p.Id];
+        }
 
         return projects;
     }

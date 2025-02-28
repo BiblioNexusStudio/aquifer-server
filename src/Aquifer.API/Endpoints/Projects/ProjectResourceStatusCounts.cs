@@ -39,6 +39,21 @@ public class ProjectResourceStatusCounts
         ResourceContentStatus.Complete, ResourceContentStatus.CompleteNotApplicable
     ];
 
+    public ProjectResourceStatusCounts() { }
+
+    public ProjectResourceStatusCounts(
+        int completedCount,
+        int inCompanyReviewCount,
+        int inPublisherReviewCount,
+        int inEditorReviewCount,
+        int notStartedCount)
+    {
+        Completed = completedCount;
+        InCompanyReview = inCompanyReviewCount;
+        InPublisherReview = inPublisherReviewCount;
+        EditorReview = inEditorReviewCount;
+        NotStarted = notStartedCount;
+    }
     public int NotStarted { get; init; }
     public int EditorReview { get; init; }
     public int InCompanyReview { get; init; }

@@ -30,11 +30,13 @@ public static class ProjectResourceStatusCountHelper
                          ) x
                          WHERE x.LatestVersionRank = 1
                      ) RCVD ON RCVD.ResourceContentId = RC.Id
-                     WHERE PRC.ProjectId IN ({projectIds})
+                     WHERE PRC.ProjectId IN ({string.Join(", ", projectIds)})
                      GROUP BY ProjectId, Status
                      """;
 
-        return await dbContext.Database.SqlQueryRaw<ProjectResourceSourceWordCount>(query).ToListAsync(ct);
+        return await dbContext.Database
+            .SqlQueryRaw<ProjectResourceSourceWordCount>(query)
+            .ToListAsync(ct);
     }
 
     public static async Task<Dictionary<int, ProjectResourceStatusCounts>> GetResourceStatusCountsPerProjectAsync(
@@ -42,23 +44,21 @@ public static class ProjectResourceStatusCountHelper
         AquiferDbContext dbContext,
         CancellationToken ct)
     {
-        var countsEachProject = await GetCountsPerProjectAsync(projectIds, dbContext, ct);
+        var counts = await GetCountsPerProjectAsync(projectIds, dbContext, ct);
         var countsPerProject = new Dictionary<int, ProjectResourceStatusCounts>();
         foreach (var id in projectIds)
         {
-            var counts = countsEachProject.Where(x => x.ProjectId == id).ToArray();
-            countsPerProject[id] = new ProjectResourceStatusCounts
-            {
-                NotStarted =
-                    counts.Where(x => ProjectResourceStatusCounts.NotStartedStatuses.Contains(x.Status)).Sum(x => x.WordCount ?? 0),
-                EditorReview =
-                    counts.Where(x => ProjectResourceStatusCounts.EditorReviewStatuses.Contains(x.Status)).Sum(x => x.WordCount ?? 0),
-                InCompanyReview =
-                    counts.Where(x => ProjectResourceStatusCounts.InCompanyReviewStatuses.Contains(x.Status)).Sum(x => x.WordCount ?? 0),
-                InPublisherReview =
-                    counts.Where(x => ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(x.Status)).Sum(x => x.WordCount ?? 0),
-                Completed = counts.Where(x => ProjectResourceStatusCounts.CompletedStatuses.Contains(x.Status)).Sum(x => x.WordCount ?? 0)
-            };
+            countsPerProject[id] = new ProjectResourceStatusCounts(
+                counts.Where(x => x.ProjectId == id && ProjectResourceStatusCounts.CompletedStatuses.Contains(x.Status))
+                    .Sum(x => x.WordCount ?? 0),
+                counts.Where(x => x.ProjectId == id && ProjectResourceStatusCounts.InCompanyReviewStatuses.Contains(x.Status))
+                    .Sum(x => x.WordCount ?? 0),
+                counts.Where(x => x.ProjectId == id && ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(x.Status))
+                    .Sum(x => x.WordCount ?? 0),
+                counts.Where(x => x.ProjectId == id && ProjectResourceStatusCounts.EditorReviewStatuses.Contains(x.Status))
+                    .Sum(x => x.WordCount ?? 0),
+                counts.Where(x => x.ProjectId == id && ProjectResourceStatusCounts.NotStartedStatuses.Contains(x.Status))
+                    .Sum(x => x.WordCount ?? 0));
         }
 
         return countsPerProject;

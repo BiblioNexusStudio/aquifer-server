@@ -38,27 +38,20 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     x.ProjectedDeliveryDate.HasValue
                         ? x.ProjectedDeliveryDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber
                         : null,
-                Counts = new ProjectResourceStatusCounts
-                {
-                    NotStarted =
-                        x.ProjectResourceContents.Count(prc =>
-                            ProjectResourceStatusCounts.NotStartedStatuses.Contains(prc.ResourceContent.Status)),
-                    EditorReview =
-                        x.ProjectResourceContents.Count(prc =>
-                            ProjectResourceStatusCounts.EditorReviewStatuses.Contains(prc.ResourceContent.Status)),
-                    InCompanyReview =
-                        x.ProjectResourceContents.Count(prc =>
-                            ProjectResourceStatusCounts.InCompanyReviewStatuses.Contains(prc.ResourceContent.Status)),
-                    InPublisherReview =
-                        x.ProjectResourceContents.Count(prc =>
-                            ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(prc.ResourceContent.Status)),
-                    Completed = x.ProjectResourceContents.Count(prc =>
-                        ProjectResourceStatusCounts.CompletedStatuses.Contains(prc.ResourceContent.Status))
-                }
+                Counts = new ProjectResourceStatusCounts()
             })
             .ToListAsync(ct);
 
-        await ProjectResourceStatusCountHelper.GetResourceStatusCountsPerProjectAsync(projects.Select(p => p.Id).ToList(), dbContext, ct);
+        var countsPerProject =
+            await ProjectResourceStatusCountHelper.GetResourceStatusCountsPerProjectAsync(
+                projects.Select(p => p.Id).ToList(),
+                dbContext,
+                ct);
+        foreach (var p in projects)
+        {
+            p.Counts = countsPerProject[p.Id];
+        }
+
         return projects;
     }
 }

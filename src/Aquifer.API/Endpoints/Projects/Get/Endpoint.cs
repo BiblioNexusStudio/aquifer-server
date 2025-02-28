@@ -35,23 +35,17 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         project.Items = items.OrderBy(x => x.SortOrder).ThenBy(x => x.EnglishLabel);
 
         var projectResourceItems = project.Items as ProjectResourceItem[] ?? project.Items.ToArray();
-        project.Counts = new ProjectResourceStatusCounts
-        {
-            NotStarted =
-                projectResourceItems.Where(i => ProjectResourceStatusCounts.NotStartedStatuses.Contains(i.Status))
-                    .Sum(i => i.WordCount ?? 0),
-            EditorReview =
-                projectResourceItems.Where(i => ProjectResourceStatusCounts.EditorReviewStatuses.Contains(i.Status))
-                    .Sum(i => i.WordCount ?? 0),
-            InCompanyReview =
-                projectResourceItems.Where(i => ProjectResourceStatusCounts.InCompanyReviewStatuses.Contains(i.Status))
-                    .Sum(i => i.WordCount ?? 0),
-            InPublisherReview =
-                projectResourceItems.Where(i => ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(i.Status))
-                    .Sum(i => i.WordCount ?? 0),
-            Completed = projectResourceItems.Where(i => ProjectResourceStatusCounts.CompletedStatuses.Contains(i.Status))
-                .Sum(i => i.WordCount ?? 0)
-        };
+        project.Counts = new ProjectResourceStatusCounts(
+            projectResourceItems.Where(i => ProjectResourceStatusCounts.CompletedStatuses.Contains(i.Status))
+                .Sum(i => i.WordCount ?? 0),
+            projectResourceItems.Where(i => ProjectResourceStatusCounts.InCompanyReviewStatuses.Contains(i.Status))
+                .Sum(i => i.WordCount ?? 0),
+            projectResourceItems.Where(i => ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(i.Status))
+                .Sum(i => i.WordCount ?? 0),
+            projectResourceItems.Where(i => ProjectResourceStatusCounts.EditorReviewStatuses.Contains(i.Status))
+                .Sum(i => i.WordCount ?? 0),
+            projectResourceItems.Where(i => ProjectResourceStatusCounts.NotStartedStatuses.Contains(i.Status))
+                .Sum(i => i.WordCount ?? 0));
 
         await SendOkAsync(project, ct);
     }
