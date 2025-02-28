@@ -48,7 +48,8 @@ public static class ProjectResourceStatusCountHelper
         var countsPerProject = new Dictionary<int, ProjectResourceStatusCounts>();
         foreach (var id in projectIds)
         {
-            countsPerProject[id] = new ProjectResourceStatusCounts(counts.Where(p => p.ProjectId == id).Select(pri => (pri.Status, pri.WordCount)));
+            countsPerProject[id] = new ProjectResourceStatusCounts(
+                counts.Where(p => p.ProjectId == id).Select(pri => (pri.Status, pri.WordCount)).ToList());
         }
 
         return countsPerProject;

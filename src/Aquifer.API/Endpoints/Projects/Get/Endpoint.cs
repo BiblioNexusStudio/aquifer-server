@@ -35,7 +35,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         project.Items = items.OrderBy(x => x.SortOrder).ThenBy(x => x.EnglishLabel);
 
         var projectResourceItems = project.Items as ProjectResourceItem[] ?? project.Items;
-        project.Counts = new ProjectResourceStatusCounts(projectResourceItems.Select(pri => (pri.Status, pri.WordCount)));
+        project.Counts = new ProjectResourceStatusCounts(projectResourceItems.Select(pri => (pri.Status, pri.WordCount)).ToList());
 
         await SendOkAsync(project, ct);
     }
