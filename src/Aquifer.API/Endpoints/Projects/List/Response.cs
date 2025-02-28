@@ -16,5 +16,5 @@ public class Response
     public required bool IsStarted { get; set; }
     public required bool IsCompleted { get; set; }
 
-    public required ProjectResourceStatusCounts Counts { get; set; }
+    public ProjectResourceStatusCounts? Counts { get; set; }
 }

@@ -53,8 +53,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     Days =
                         p.ProjectedDeliveryDate.HasValue
                             ? p.ProjectedDeliveryDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber
-                            : null,
-                    Counts = new ProjectResourceStatusCounts()
+                            : null
                 })
             .ToListAsync(ct);
 
