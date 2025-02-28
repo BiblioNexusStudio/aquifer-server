@@ -8,7 +8,6 @@ public static class Queues
 
     // notifications
     public const string SendProjectStartedNotification = "send-project-started-notification";
-    public const string SendResourceCommentCreatedNotification = "send-resource-comment-created-notification";
 
     // resource tracking
     public const string TrackResourceContentRequest = "track-resource-content-request";
@@ -18,6 +17,7 @@ public static class Queues
     public const string TranslateProjectResources = "translate-project-resources";
     public const string TranslateResource = "translate-resource";
     
+    // similarities
     public const string GenerateResourceContentSimilarityScore = "generate-resource-content-similarity-score";
 
     public static string GetPoisonQueueName(string queueName)

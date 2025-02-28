@@ -7,10 +7,6 @@ public interface INotificationMessagePublisher
     Task PublishSendProjectStartedNotificationMessageAsync(
         SendProjectStartedNotificationMessage message,
         CancellationToken cancellationToken);
-
-    Task PublishSendResourceCommentCreatedNotificationMessageAsync(
-        SendResourceCommentCreatedNotificationMessage message,
-        CancellationToken cancellationToken);
 }
 
 public sealed class NotificationMessagePublisher(IQueueClientFactory _queueClientFactory)
@@ -21,14 +17,6 @@ public sealed class NotificationMessagePublisher(IQueueClientFactory _queueClien
         CancellationToken cancellationToken)
     {
         var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.SendProjectStartedNotification, cancellationToken);
-        await queueClient.SendMessageAsync(message, cancellationToken: cancellationToken);
-    }
-
-    public async Task PublishSendResourceCommentCreatedNotificationMessageAsync(
-        SendResourceCommentCreatedNotificationMessage message,
-        CancellationToken cancellationToken)
-    {
-        var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.SendResourceCommentCreatedNotification, cancellationToken);
         await queueClient.SendMessageAsync(message, cancellationToken: cancellationToken);
     }
 }
