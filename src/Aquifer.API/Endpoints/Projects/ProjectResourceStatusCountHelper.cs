@@ -35,7 +35,7 @@ public static class ProjectResourceStatusCountHelper
                                  ) x
                                  WHERE x.LatestVersionRank = 1
                              ) RCVD ON RCVD.ResourceContentId = RC.Id
-                             GROUP BY [ProjectId], [Status]
+                             GROUP BY ProjectId, Status
                              """;
 
         return await dbContext.Database.SqlQueryRaw<ProjectResourceSourceWordCount>(query).ToListAsync(ct);
