@@ -19,10 +19,10 @@ public static class ProjectResourceStatusCountHelper
         const string query = """
                              SELECT
                                  SUM(RCVD.SourceWordCount) AS WordCount,
-                                 RC.Status as Status,
-                                 PRC.ProjectId as ProjectId
+                                 RC.Status,
+                                 PRC.ProjectId
                              FROM ResourceContents RC
-                             JOIN ProjectResourceContents PRC on RC.Id = PRC.ResourceContentId
+                             JOIN ProjectResourceContents PRC ON RC.Id = PRC.ResourceContentId
                              LEFT JOIN
                              (
                                  SELECT *
