@@ -18,6 +18,8 @@ on:
             - master
             - 'release-hotfix-*'
         paths:
+            - '.github/actions/**'
+            - '.github/workflows/**'
             - 'Directory.Build.props'
             - 'Directory.Packages.props'
             - 'src/Aquifer.AI/**'

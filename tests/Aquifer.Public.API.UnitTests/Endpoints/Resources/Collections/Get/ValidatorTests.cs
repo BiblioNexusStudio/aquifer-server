@@ -40,11 +40,11 @@ public sealed class ValidatorTests
 
     public static TheoryData<Request> GetValidRequestData =>
     [
-        new() { Code = "TyndaleBibleDictionary", LanguageCodes = null, LanguageIds = null },
-        new() { Code = "TyndaleBibleDictionary", LanguageCodes = ["eng"], LanguageIds = null },
-        new() { Code = "TyndaleBibleDictionary", LanguageCodes = ["eng", "tpi"], LanguageIds = null },
-        new() { Code = "TyndaleBibleDictionary", LanguageCodes = null, LanguageIds = [1] },
-        new() { Code = "TyndaleBibleDictionary", LanguageCodes = null, LanguageIds = [1, 2] },
+        new Request { Code = "TyndaleBibleDictionary", LanguageCodes = null, LanguageIds = null },
+        new Request { Code = "TyndaleBibleDictionary", LanguageCodes = ["eng"], LanguageIds = null },
+        new Request { Code = "TyndaleBibleDictionary", LanguageCodes = ["eng", "tpi"], LanguageIds = null },
+        new Request { Code = "TyndaleBibleDictionary", LanguageCodes = null, LanguageIds = [1] },
+        new Request { Code = "TyndaleBibleDictionary", LanguageCodes = null, LanguageIds = [1, 2] },
     ];
 
     [Theory]

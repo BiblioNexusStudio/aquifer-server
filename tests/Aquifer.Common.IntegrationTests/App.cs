@@ -22,7 +22,7 @@ public sealed class App : IAsyncLifetime
 
     private IServiceScope AppServiceScope { get; set; } = null!;
 
-    public Task InitializeAsync()
+    public ValueTask InitializeAsync()
     {
         Host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
             .UseEnvironment(Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? Environments.Development)
@@ -60,17 +60,18 @@ public sealed class App : IAsyncLifetime
         // There's no need to start/stop the host; we're only using it to build configuration and services.
         //await Host.StartAsync();
 
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
-    public Task DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         // There's no need to start/stop the host; we're only using it to build configuration and services.
         //await Host.StopAsync();
 
         AppServiceScope.Dispose();
         Host.Dispose();
-        return Task.CompletedTask;
+
+        return ValueTask.CompletedTask;
     }
 
     public T GetRequiredService<T>() where T : notnull

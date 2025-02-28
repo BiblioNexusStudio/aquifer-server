@@ -2,14 +2,15 @@
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
+        <OutputType>Exe</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FastEndpoints.Testing"/>
+        <PackageReference Include="FastEndpoints.Testing" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Aquifer.Public.API\Aquifer.Public.API.csproj"/>
+        <ProjectReference Include="..\..\src\Aquifer.Public.API\Aquifer.Public.API.csproj" />
     </ItemGroup>
 
     <ItemGroup>
