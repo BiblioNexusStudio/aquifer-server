@@ -21,4 +21,5 @@ public class ResponseChapterVerses
 {
     public required int Number { get; set; }
     public required string Text { get; set; }
+    public string BaseMapping { get; set; } = null!;
 }
