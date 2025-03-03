@@ -407,6 +407,43 @@ public static class DapperExtensions
             splitOn));
     }
 
+    /// <summary>
+    /// Creates a Dapper TVP from the given <paramref name="source"/> where the properties of <typeref name="T"/>
+    /// correspond to the SQL column names.
+    /// </summary>
+    /// <typeparam name="T">The type corresponding to the SQL object's schema.</typeparam>
+    /// <param name="source">The items to convert.</param>
+    /// <param name="typeName">Database type name.</param>
+    /// <returns>Table-Valued Parameter</returns>
+    public static SqlMapper.ICustomQueryParameter AsTableValuedParameter<T>(this IEnumerable<T> source, string typeName)
+    {
+        // create DataTable
+        using var dataTable = new DataTable(typeName);
+
+        var props = typeof(T).GetProperties();
+
+        // add columns based upon the properties of T
+        foreach (var prop in props)
+        {
+            dataTable.Columns.Add(prop.Name, Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
+        }
+
+        // add row to DataTable for every item
+        foreach (var item in source)
+        {
+            var row = dataTable.NewRow();
+            foreach (var prop in props)
+            {
+                var value = prop.GetValue(item, null);
+                row[prop.Name] = value ?? DBNull.Value;
+            }
+
+            dataTable.Rows.Add(row);
+        }
+
+        return dataTable.AsTableValuedParameter(typeName);
+    }
+
     private static void LogRetry(Exception exception, TimeSpan retryAfter, int retryCount, Context context)
     {
         s_logger.LogWarning(exception, "Gracefully handled a transient error during a Dapper DB operation. Retry after: {retryAfter}. Retry attempt: {retryCount}.", retryAfter, retryCount);

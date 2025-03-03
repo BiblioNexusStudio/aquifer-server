@@ -37,6 +37,7 @@ jobs:
                       -e ASPNETCORE_ENVIRONMENT="${{ vars.ASPNETCORE_ENVIRONMENT }}" \
                       -e ConnectionStrings__AzureStorageAccount="${{ secrets.AZURE_STORAGE_ACCOUNT_CONNECTION_STRING }}" \
                       -e ConnectionStrings__BiblioNexusDb="${{ secrets.BIBLIONEXUS_DB_CONNECTION_STRING }}" \
+                      -e ConnectionStrings__BiblioNexusReadOnlyDb="${{ secrets.BIBLIONEXUS_DB_CONNECTION_STRING }};ApplicationIntent=ReadOnly;" \
                       -e KeyVaultUri="${{ secrets.KEY_VAULT_URI }}" \
                       -e JwtSettings__Authority="${{ secrets.JWT_SETTINGS_AUTHORITY }}" \
                       -e JwtSettings__Audience="${{ secrets.JWT_SETTINGS_AUDIENCE }}" \
@@ -47,4 +48,6 @@ jobs:
                       -e IntegrationTestAuth0Settings__ApplicationClientId="${{ secrets.INTEGRATION_TEST_AUTH0_SETTINGS_APPLICATION_CLIENT_ID }}" \
                       -e IntegrationTestAuth0Settings__Audience="${{ secrets.INTEGRATION_TEST_AUTH0_SETTINGS_AUDIENCE }}" \
                       -e IntegrationTestAuth0Settings__BaseUri="${{ secrets.INTEGRATION_TEST_AUTH0_SETTINGS_BASE_URI }}" \
-                      -e IntegrationTestUserSettings__TestUserPassword="${{ secrets.INTEGRATION_TEST_USER_SETTINGS_TEST_USER_PASSWORD }}"
+                      -e IntegrationTestUserSettings__TestUserPassword="${{ secrets.INTEGRATION_TEST_USER_SETTINGS_TEST_USER_PASSWORD }}" \
+                      -e InternalApiKey="${{ secrets.INTERNAL_API_KEY }}" \
+                      -e PublicApiKey="${{ secrets.PUBLIC_API_KEY }}"

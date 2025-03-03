@@ -1,4 +1,6 @@
-﻿using Microsoft.ApplicationInsights.Channel;
+﻿using Aquifer.Common;
+using Aquifer.Common.Services.Caching;
+using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 
@@ -8,9 +10,26 @@ public class RequestTelemetryInitializer(IHttpContextAccessor httpContextAccesso
 {
     public void Initialize(ITelemetry telemetry)
     {
-        if (telemetry is RequestTelemetry requestTelemetry && httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated is true)
+        if (telemetry is not RequestTelemetry requestTelemetry)
         {
-            requestTelemetry.Properties["user"] = httpContextAccessor.HttpContext.User.FindFirst("user")?.Value;
+            return;
+        }
+
+        // Should change this to "internal-admin" once a Well API is separated out
+        requestTelemetry.Properties[Constants.TelemetryBnApiPropertyName] = "internal";
+
+        if (httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated is true)
+        {
+            requestTelemetry.Properties[Constants.TelemetryUserPropertyName] =
+                httpContextAccessor.HttpContext.User.FindFirst("user")?.Value;
+        }
+
+        if ((httpContextAccessor.HttpContext?.Items.TryGetValue(Constants.HttpContextItemCachedApiKey, out var maybeCachedApiKey) ??
+                false) &&
+            maybeCachedApiKey is CachedApiKey cachedApiKey)
+        {
+            requestTelemetry.Properties[Constants.TelemetryBnApiCallerIdPropertyName] = cachedApiKey.Id.ToString();
+            requestTelemetry.Properties[Constants.TelemetryBnApiCallerPropertyName] = cachedApiKey.Organization;
         }
     }
 }

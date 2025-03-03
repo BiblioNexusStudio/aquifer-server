@@ -1416,9 +1416,9 @@ namespace Aquifer.Data.Migrations
 
                     SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("Status"), new[] { "ContentUpdated", "LanguageId", "ResourceId" });
 
-                    b.HasIndex("LanguageId", "MediaType");
+                    b.HasIndex("LanguageId", "MediaType", "Status");
 
-                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("LanguageId", "MediaType"), new[] { "Created", "ResourceId", "Status" });
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("LanguageId", "MediaType", "Status"), new[] { "Created", "ResourceId", "Updated", "ContentUpdated" });
 
                     b.HasIndex("ResourceId", "LanguageId", "MediaType")
                         .IsUnique();

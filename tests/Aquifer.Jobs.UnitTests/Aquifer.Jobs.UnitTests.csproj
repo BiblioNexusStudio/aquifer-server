@@ -2,10 +2,11 @@
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
+        <OutputType>Exe</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Aquifer.Jobs\Aquifer.Jobs.csproj"/>
+        <ProjectReference Include="..\..\src\Aquifer.Jobs\Aquifer.Jobs.csproj" />
     </ItemGroup>
 
 </Project>

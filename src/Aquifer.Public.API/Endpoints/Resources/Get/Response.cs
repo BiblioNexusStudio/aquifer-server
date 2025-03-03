@@ -31,7 +31,7 @@ public class ResourceTypeMetadata
     [JsonIgnore]
     public ResourceContentMediaType MediaTypeValue { get; set; }
 
-    public string MediaType => MediaTypeValue.ToString();
+    public string MediaType { get; set; } = null!;
 
     public required ResourceLicenseInfo LicenseInfo { get; init; }
 }

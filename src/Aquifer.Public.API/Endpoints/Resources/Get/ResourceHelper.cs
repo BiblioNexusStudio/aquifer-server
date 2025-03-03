@@ -8,7 +8,7 @@ namespace Aquifer.Public.API.Endpoints.Resources.Get;
 
 public static class ResourceHelper
 {
-    public static async Task<Response> GetResourceContentAsync(AquiferDbContext dbContext,
+    public static async Task<Response> GetResourceContentAsync(AquiferDbReadOnlyContext dbContext,
         CommonResourceRequest req,
         Action<string, int?> throwError,
         CancellationToken ct)
@@ -65,6 +65,8 @@ public static class ResourceHelper
             : TiptapContentType.None;
 
         response.Content = TiptapConverter.ConvertJsonToType(response.ContentValue, contentTextType);
+        response.Grouping.MediaType = response.Grouping.MediaTypeValue.ToString();
+
         return response;
     }
 }

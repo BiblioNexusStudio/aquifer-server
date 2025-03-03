@@ -28,11 +28,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var isPublisher = user.Role == UserRole.Publisher;
         foreach (var draftVersion in draftVersions)
         {
-            await ValidateAssignedUserAsync(user, request.AssignedUserId, draftVersion, ct);
+            await ValidateAssignedUserAsync(user, request.AssignedUserId, isPublisher, draftVersion, ct);
 
             var newStatus = GetNewStatus(isPublisher, draftVersion.ResourceContent.Status);
 
-            await historyService.AddSnapshotHistoryAsync(draftVersion,
+            await historyService.AddSnapshotHistoryAsync(
+                draftVersion,
                 draftVersion.AssignedUserId,
                 draftVersion.ResourceContent.Status,
                 ct);
@@ -62,7 +63,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ResourceContentStatus.AquiferizePublisherReview, ResourceContentStatus.TranslationPublisherReview
         ];
 
-        var draftVersions = await dbContext.ResourceContentVersions.AsTracking()
+        var draftVersions = await dbContext.ResourceContentVersions
+            .AsTracking()
             .Where(x => contentIds.Contains(x.ResourceContentId) && allowedStatuses.Contains(x.ResourceContent.Status) && x.IsDraft)
             .Include(x => x.ResourceContent)
             .ToListAsync(ct);
@@ -75,7 +77,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         return draftVersions;
     }
 
-    private async Task AssignUserToContentAsync(ResourceContentStatus newStatus,
+    private async Task AssignUserToContentAsync(
+        ResourceContentStatus newStatus,
         int? assignedUserId,
         ResourceContentVersionEntity draftVersion,
         UserEntity user,
@@ -91,7 +94,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         {
             if (assignedUserId is not null && assignedUserId != draftVersion.AssignedUserId)
             {
-                await historyService.AddSnapshotHistoryAsync(draftVersion,
+                await historyService.AddSnapshotHistoryAsync(
+                    draftVersion,
                     draftVersion.AssignedUserId,
                     draftVersion.ResourceContent.Status,
                     ct);
@@ -101,19 +105,22 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
     }
 
-    private async Task ValidateAssignedUserAsync(UserEntity user,
+    private async Task ValidateAssignedUserAsync(
+        UserEntity user,
         int? assignedUserId,
+        bool isPublisher,
         ResourceContentVersionEntity draftVersion,
         CancellationToken ct)
     {
-        if (user.Id != draftVersion.AssignedUserId && Constants.CompanyReviewStatuses.Contains(draftVersion.ResourceContent.Status))
+        if (user.Id != draftVersion.AssignedUserId && !isPublisher)
         {
-            ThrowError("User must be assigned to content to send for publisher review.");
+            ThrowError("Non-publishers must be assigned to content to call send-for-publisher-review.");
         }
 
         if (assignedUserId is not null)
         {
-            var assignedUser = await dbContext.Users.AsTracking()
+            var assignedUser = await dbContext.Users
+                .AsTracking()
                 .SingleOrDefaultAsync(u => u.Id == assignedUserId && u.Enabled && u.Role == UserRole.Publisher, ct);
 
             if (assignedUser is null)

@@ -2,6 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
+        <OutputType>Exe</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
@@ -11,9 +12,6 @@
         <None Update="appsettings.Development.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="appsettings.example.json">
-            <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-        </None>
     </ItemGroup>
 
     <ItemGroup>
@@ -21,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\Aquifer.API\Aquifer.API.csproj" />
+        <ProjectReference Include="..\..\src\Aquifer.API\Aquifer.API.csproj" />
     </ItemGroup>
 
 </Project>

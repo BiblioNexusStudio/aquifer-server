@@ -10,7 +10,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
     [Fact]
     public async Task UnauthenticatedRequest_ShouldReturnUnauthorized()
     {
-        var (response, _) = await _app.Client.GETAsync<Endpoint, Request, ErrorResponse>(
+        var (response, _) = await _app.AnonymousClient.GETAsync<Endpoint, Request, ErrorResponse>(
             new Request
             {
                 Id = 1890,

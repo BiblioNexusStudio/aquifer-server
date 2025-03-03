@@ -4,7 +4,7 @@ using FastEndpoints;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Get.ByLanguage;
 
-public class Endpoint(AquiferDbContext dbContext, IResourceContentRequestTrackingMessagePublisher trackingMessagePublisher)
+public class Endpoint(AquiferDbReadOnlyContext dbContext, IResourceContentRequestTrackingMessagePublisher trackingMessagePublisher)
     : Endpoint<Request, Response>
 {
     public override void Configure()

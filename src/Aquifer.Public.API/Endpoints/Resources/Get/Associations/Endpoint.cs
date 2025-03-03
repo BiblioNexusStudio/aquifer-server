@@ -1,11 +1,12 @@
 using System.Data.Common;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Get.Associations;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -47,6 +48,19 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 }))
                 .ToList()
         };
+
+        foreach (var passageAssociation in response.PassageAssociations)
+        {
+            var startTranslatedVerse = BibleUtilities.TranslateVerseId(passageAssociation.StartVerseId);
+            passageAssociation.StartBookCode = BibleBookCodeUtilities.CodeFromId(startTranslatedVerse.bookId);
+            passageAssociation.StartChapter = startTranslatedVerse.chapter;
+            passageAssociation.StartVerse = startTranslatedVerse.verse;
+
+            var endTranslatedVerse = BibleUtilities.TranslateVerseId(passageAssociation.EndVerseId);
+            passageAssociation.EndBookCode = BibleBookCodeUtilities.CodeFromId(endTranslatedVerse.bookId);
+            passageAssociation.EndChapter = endTranslatedVerse.chapter;
+            passageAssociation.EndVerse = endTranslatedVerse.verse;
+        }
 
         await SendOkAsync(response, ct);
     }

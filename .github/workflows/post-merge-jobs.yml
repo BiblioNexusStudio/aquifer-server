@@ -17,6 +17,8 @@ on:
             - master
             - 'release-hotfix-*'
         paths:
+            - '.github/actions/**'
+            - '.github/workflows/**'
             - 'Directory.Build.props'
             - 'Directory.Packages.props'
             - 'src/Aquifer.AI/**'
@@ -66,7 +68,7 @@ jobs:
                 dotnet build --configuration Release --output ../../build --runtime win-x64
                 cd ../..
             - name: Bundle migrations
-              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --output build/Migrate --self-contained
+              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate --self-contained
             - name: Publish artifact
               uses: actions/upload-artifact@v4.4.0
               with:
@@ -93,7 +95,7 @@ jobs:
                   color: warning
                   environment: dev-qa-jobs
                   default_branch_name: master
-                  service_name: Jobs
+                  service_name: Jobs (East US)
               env:
                   SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -191,7 +193,7 @@ jobs:
                   color: ${{ job.status == 'failure' && 'danger' || 'good' }}
                   environment: prod-jobs
                   default_branch_name: master
-                  service_name: Jobs
+                  service_name: Jobs (East US)
                   message_id: ${{ steps.slack-notify.outputs.message_id }}
               env:
                     SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

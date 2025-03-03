@@ -12,8 +12,8 @@ inputs:
         description: Azure Resource Group
         required: true
     connection-url:
-        description: DB connection URL
-        required: true
+        description: DB connection URL (required for running migration scripts; leave empty if no migrations are needed)
+        required: false
     web-app-name:
         description: Azure Web App name
         required: true
@@ -68,9 +68,11 @@ runs:
               tenant-id: ${{ inputs.azure-tenant-id }}
               subscription-id: ${{ inputs.azure-subscription-id }}
         - name: Make migration script executable
+          if: ${{ inputs.connection-url != '' }}
           run: chmod +x ./build/Migrate
           shell: bash
         - name: Run migrations
+          if: ${{ inputs.connection-url != '' }}
           run: ./build/Migrate --connection '${{ inputs.connection-url }}'
           shell: bash
         - name: Deploy to staging slot if not dev
@@ -105,4 +107,3 @@ runs:
               SLACK_BOT_TOKEN: ${{ inputs.slack-bot-token }}
               GITHUB_TOKEN: ${{ inputs.github-token }}
               LINEAR_API_KEY: ${{ inputs.linear-api-key }}
-
