@@ -65,8 +65,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         foreach (var p in projects)
         {
-            p.Counts = statusCountsPerProject.TryGetValue(p.Id, out var projectId)
-                ? statusCountsPerProject[p.Id]
+            p.Counts = statusCountsPerProject.TryGetValue(p.Id, out var projectResourceStatusCounts)
+                ? projectResourceStatusCounts
                 : new ProjectResourceStatusCounts
                 {
                     NotStarted = 0,
