@@ -40,19 +40,15 @@ public static class ProjectResourceStatusCountHelper
     }
 
     public static async Task<Dictionary<int, ProjectResourceStatusCounts>> GetResourceStatusCountsPerProjectAsync(
-        List<int> projectIds,
+        IReadOnlyList<int> projectIds,
         AquiferDbContext dbContext,
         CancellationToken ct)
     {
-        var counts = await GetCountsPerProjectAsync(projectIds, dbContext, ct);
-        var countsPerProject = new Dictionary<int, ProjectResourceStatusCounts>();
-        foreach (var id in projectIds)
-        {
-            countsPerProject[id] = new ProjectResourceStatusCounts(
-                counts.Where(p => p.ProjectId == id).Select(pri => (pri.Status, pri.WordCount)).ToList());
-        }
-
-        return countsPerProject;
+        return (await GetCountsPerProjectAsync(projectIds, dbContext, ct))
+            .GroupBy(c => c.ProjectId)
+            .ToDictionary(
+                grp => grp.Key,
+                grp => new ProjectResourceStatusCounts(grp.Select(c => (c.Status, c.WordCount)).ToList()));
     }
 
     private record ProjectResourceSourceWordCount

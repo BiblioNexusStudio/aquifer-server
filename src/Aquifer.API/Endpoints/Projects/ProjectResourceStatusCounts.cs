@@ -50,7 +50,7 @@ public class ProjectResourceStatusCounts
 
     public ProjectResourceStatusCounts() { }
 
-    public ProjectResourceStatusCounts(List<(ResourceContentStatus Status, int? WordCount)> resourceData)
+    public ProjectResourceStatusCounts(IReadOnlyList<(ResourceContentStatus Status, int? WordCount)> resourceData)
     {
         NotStarted = resourceData.Where(x => NotStartedStatuses.Contains(x.Status)).Sum(x => x.WordCount ?? 0);
         EditorReview = resourceData.Where(x => EditorReviewStatuses.Contains(x.Status)).Sum(x => x.WordCount ?? 0);
