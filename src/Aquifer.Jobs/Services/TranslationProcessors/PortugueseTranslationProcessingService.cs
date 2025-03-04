@@ -4,6 +4,10 @@ namespace Aquifer.Jobs.Services.TranslationProcessors;
 
 public sealed class PortugueseTranslationProcessingService : ILanguageSpecificTranslationProcessingService
 {
+    private const string NarrowNonBreakingSpace = "\u202f";
+    private const string NonBreakingSpace = "\u00a0";
+    private const string HtmlEncodedNonBreakingSpace = "&nbsp;";
+
     public string Iso6393Code => "POR";
 
     public async Task<string> PostProcessHtmlAsync(string html, CancellationToken cancellationToken)
@@ -41,7 +45,13 @@ public sealed class PortugueseTranslationProcessingService : ILanguageSpecificTr
                 text,
                 m =>
                 {
-                    var correctedValue = m.Value.Trim().Replace(".", "");
+                    var correctedValue = m.Value
+                        .Trim()
+                        .Replace(".", "")
+                        .Replace(NarrowNonBreakingSpace, " ")
+                        .Replace(NonBreakingSpace, " ")
+                        .Replace(HtmlEncodedNonBreakingSpace, " ");
+
                     correctedValue = correctedValue.ToLower() switch
                     {
                         "gen" or "gên" or "ge" => "Gn",
