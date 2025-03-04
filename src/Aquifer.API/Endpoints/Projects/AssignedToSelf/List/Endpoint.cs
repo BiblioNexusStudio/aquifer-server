@@ -50,15 +50,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         {
             p.Counts = countsPerProject.TryGetValue(p.Id, out var projectResourceStatusCounts)
                 ? projectResourceStatusCounts
-                : new ProjectResourceStatusCounts
-                {
-                    NotStarted = 0,
-                    EditorReview = 0,
-                    InCompanyReview = 0,
-                    InPublisherReview = 0,
-                    Completed = 0,
-                    Remaining = 0
-                };
+                : new ProjectResourceStatusCounts();
         }
 
         return projects;
