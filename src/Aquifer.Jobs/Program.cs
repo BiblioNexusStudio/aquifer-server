@@ -33,6 +33,7 @@ var host = new HostBuilder()
         var isDevelopment = context.HostingEnvironment.EnvironmentName == Environments.Development;
 
         services.AddOptions<ConfigurationOptions>().Bind(context.Configuration);
+        services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.Ffmpeg);
         services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.OpenAi);
         services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.OpenAiTranslation);
 

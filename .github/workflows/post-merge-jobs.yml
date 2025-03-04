@@ -60,8 +60,10 @@ jobs:
                   global-json-file: "./global.json"
             - name: Restore .net tools
               run: dotnet tool restore
-            - name: Make build directory
-              run: mkdir ./build
+            - name: Make build and temp directories
+              run: |
+                  mkdir ./build
+                  mkdir ./temp
             - name: Build Jobs
               run: |
                 cd src/Aquifer.Jobs
@@ -69,6 +71,19 @@ jobs:
                 cd ../..
             - name: Bundle migrations
               run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate --self-contained
+            - name: Download ffmpeg from Azure Blob Storage
+              uses: armanrahman22/azblob-download-action
+              with:
+                  storage-account-name: "aquiferstoragedev"
+                  container-name: "deployment-artifacts"
+                  blob-name: "ffmpeg/ffmpeg-7.1-essentials_build.zip"
+                  download-path: "./temp/ffmpeg.zip"
+            - name: Unzip ffmpeg into build folder
+              run: |
+                mkdir -p ./build/lib/ffmpeg
+                unzip ./temp/ffmpeg.zip -d ./build/lib/ffmpeg
+                rm ./temp/ffmpeg.zip
+              shell: bash
             - name: Publish artifact
               uses: actions/upload-artifact@v4.4.0
               with:
