@@ -33,6 +33,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var items = await GetProjectItemsAsync(req.ProjectId, ct);
 
         project.Items = items.OrderBy(x => x.SortOrder).ThenBy(x => x.EnglishLabel);
+
+        project.Counts = new ProjectResourceStatusCounts(project.Items.Select(pri => (pri.Status, pri.WordCount)).ToList());
+
         await SendOkAsync(project, ct);
     }
 
@@ -61,25 +64,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             ActualDeliveryDate = x.ActualDeliveryDate,
             ActualPublishDate = x.ActualPublishDate,
             ProjectedDeliveryDate = x.ProjectedDeliveryDate,
-            ProjectedPublishDate = x.ProjectedPublishDate,
-            Counts = new ProjectResourceStatusCounts
-            {
-                NotStarted =
-                    x.ProjectResourceContents.Count(prc =>
-                        ProjectResourceStatusCounts.NotStartedStatuses.Contains(prc.ResourceContent.Status)),
-                EditorReview =
-                    x.ProjectResourceContents.Count(prc =>
-                        ProjectResourceStatusCounts.EditorReviewStatuses.Contains(prc.ResourceContent.Status)),
-                InCompanyReview =
-                    x.ProjectResourceContents.Count(prc =>
-                        ProjectResourceStatusCounts.InCompanyReviewStatuses.Contains(prc.ResourceContent.Status)),
-                InPublisherReview =
-                    x.ProjectResourceContents.Count(prc =>
-                        ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(prc.ResourceContent.Status)),
-                Completed =
-                    x.ProjectResourceContents.Count(prc =>
-                        ProjectResourceStatusCounts.CompletedStatuses.Contains(prc.ResourceContent.Status))
-            }
+            ProjectedPublishDate = x.ProjectedPublishDate
         }).SingleOrDefaultAsync(ct);
     }
 
