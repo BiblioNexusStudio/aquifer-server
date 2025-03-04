@@ -40,6 +40,7 @@ public sealed class PortugueseTranslationProcessingService : ILanguageSpecificTr
 
     private static Task<string> SetCorrectBibleBookAbbreviationAsync(string text)
     {
+        text = text.Replace(HtmlEncodedNonBreakingSpace, " ");
         text = CommonRegex.BibleBookPrefixInVerse()
             .Replace(
                 text,
@@ -49,8 +50,7 @@ public sealed class PortugueseTranslationProcessingService : ILanguageSpecificTr
                         .Trim()
                         .Replace(".", "")
                         .Replace(NarrowNonBreakingSpace, " ")
-                        .Replace(NonBreakingSpace, " ")
-                        .Replace(HtmlEncodedNonBreakingSpace, " ");
+                        .Replace(NonBreakingSpace, " ");
 
                     correctedValue = correctedValue.ToLower() switch
                     {
