@@ -3,7 +3,7 @@ using Aquifer.Common.Utilities;
 
 namespace Aquifer.Jobs.Services.TranslationProcessors;
 
-public sealed partial class FrenchTranslationProcessingService : ILanguageSpecificTranslationProcessingService
+public sealed class FrenchTranslationProcessingService : ILanguageSpecificTranslationProcessingService
 {
     private const string NarrowNonBreakingSpace = "\u202f";
     private const string NonBreakingSpace = "\u00a0";
@@ -35,7 +35,8 @@ public sealed partial class FrenchTranslationProcessingService : ILanguageSpecif
 
     public async Task<string> PostProcessHtmlAsync(string html, CancellationToken cancellationToken)
     {
-        var processedHtml = await HtmlUtilities.ProcessHtmlTextContentAsync(html,
+        var processedHtml = await HtmlUtilities.ProcessHtmlTextContentAsync(
+            html,
             async text =>
             {
                 text = await SetNarrowNonBreakingSpacesAsync(text);
@@ -43,6 +44,7 @@ public sealed partial class FrenchTranslationProcessingService : ILanguageSpecif
 
                 return text;
             });
+
         return processedHtml;
     }
 
@@ -64,8 +66,9 @@ public sealed partial class FrenchTranslationProcessingService : ILanguageSpecif
 
     private static Task<string> SetCorrectBibleBookAbbreviationAsync(string text)
     {
-        text = BibleBookRegex()
-            .Replace(text,
+        text = CommonRegex.BibleBookPrefixInVerse()
+            .Replace(
+                text,
                 m =>
                 {
                     var correctedValue = m.Value.Trim().Replace(".", "");
@@ -148,7 +151,4 @@ public sealed partial class FrenchTranslationProcessingService : ILanguageSpecif
 
         return Task.FromResult(text);
     }
-
-    [GeneratedRegex(@"(?:\d+[^\S\r\n])?([a-zA-Zà-üÀ-Ü]+\.?[^\S\r\n]?)(?=[^\S\r\n]?\d+)")]
-    private static partial Regex BibleBookRegex();
 }
