@@ -48,7 +48,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 ct);
         foreach (var p in projects)
         {
-            p.Counts = countsPerProject[p.Id];
+            p.Counts = countsPerProject.TryGetValue(p.Id, out var projectResourceStatusCounts)
+                ? projectResourceStatusCounts
+                : new ProjectResourceStatusCounts();
         }
 
         return projects;
