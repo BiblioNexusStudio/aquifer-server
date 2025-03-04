@@ -72,7 +72,7 @@ jobs:
             - name: Bundle migrations
               run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate --self-contained
             - name: Download ffmpeg from Azure Blob Storage
-              uses: armanrahman22/azblob-download-action
+              uses: armanrahman22/azblob-download-action@v0.0.4
               with:
                   storage-account-name: "aquiferstoragedev"
                   container-name: "deployment-artifacts"
