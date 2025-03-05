@@ -62,8 +62,8 @@ jobs:
               run: dotnet tool restore
             - name: Make build and temp directories
               run: |
-                  mkdir ./build
-                  mkdir ./temp
+                  mkdir -p ./build
+                  mkdir -p ./temp/ffmpeg
             - name: Build Jobs
               run: |
                 cd src/Aquifer.Jobs
