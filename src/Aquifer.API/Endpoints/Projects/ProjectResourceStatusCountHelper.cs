@@ -7,7 +7,7 @@ namespace Aquifer.API.Endpoints.Projects;
 public static class ProjectResourceStatusCountHelper
 {
     private static async Task<List<ProjectResourceSourceWordCount>> GetCountsPerProjectAsync(
-        IEnumerable<int>? projectIds,
+        IReadOnlyList<int>? projectIds,
         AquiferDbContext dbContext,
         CancellationToken ct)
     {
@@ -30,7 +30,7 @@ public static class ProjectResourceStatusCountHelper
                                ) x
                                WHERE x.LatestVersionRank = 1
                            ) RCVD ON RCVD.ResourceContentId = RC.Id
-                           {(projectIds != null ? $"WHERE PRC.ProjectId IN ({string.Join(", ", projectIds)})" : "")}
+                           {(projectIds is { Count: > 0 } ? $"WHERE PRC.ProjectId IN ({string.Join(", ", projectIds)})" : "")}
                            GROUP BY ProjectId, Status
                            """;
         return await dbContext.Database
