@@ -81,8 +81,8 @@ jobs:
                   download-path: "./temp"
             - name: Unzip ffmpeg into build folder
               run: |
-                mkdir -p ./build/lib/ffmpeg
-                unzip ./temp/ffmpeg.zip -d ./build/lib/ffmpeg
+                mkdir -p ./build/lib
+                unzip ./temp/ffmpeg.zip -d ./build/lib
                 rm ./temp/ffmpeg.zip
               shell: bash
             - name: Publish artifact
