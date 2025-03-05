@@ -6,6 +6,7 @@ public class ConfigurationOptions
 {
     public required string AquiferAdminBaseUri { get; init; }
     public required string AquiferApiBaseUri { get; init; }
+    public required FfmpegOptions Ffmpeg { get; init; }
     public required string KeyVaultUri { get; init; }
     public required ConnectionStringOptions ConnectionStrings { get; init; }
     public required AnalyticsOptions Analytics { get; init; }
@@ -37,6 +38,11 @@ public class AnalyticsOptions
 public class EmailOptions
 {
     public required string SubjectPrefix { get; init; }
+}
+
+public class FfmpegOptions
+{
+    public required string FfmpegFilePath { get; init; }
 }
 
 public class MarketingEmailOptions
