@@ -78,12 +78,12 @@ jobs:
                   storage-account-name: "aquiferstoragedev"
                   container-name: "deployment-artifacts"
                   blob-name: "ffmpeg/ffmpeg-7.1-essentials_build.zip"
-                  download-path: "./temp/ffmpeg.zip"
+                  download-path: "./temp"
             - name: Unzip ffmpeg into build folder
               run: |
                 mkdir -p ./build/lib/ffmpeg
-                unzip ./temp/ffmpeg.zip -d ./build/lib/ffmpeg
-                rm ./temp/ffmpeg.zip
+                unzip ./temp/ffmpeg/ffmpeg-7.1-essentials_build.zip -d ./build/lib/ffmpeg
+                rm ./temp/ffmpeg/ffmpeg-7.1-essentials_build.zip
               shell: bash
             - name: Publish artifact
               uses: actions/upload-artifact@v4.4.0
