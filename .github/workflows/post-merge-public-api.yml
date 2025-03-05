@@ -72,7 +72,7 @@ jobs:
             - name: Zip Public API
               run: cd ./Aquifer.Public.API && zip ../build/Build.zip *
             - name: Bundle migrations
-              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate --self-contained
+              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate --self-contained --no-build
             - name: Publish artifact
               uses: actions/upload-artifact@v4.6.1
               with:
