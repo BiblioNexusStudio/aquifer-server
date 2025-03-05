@@ -8,8 +8,23 @@ using Microsoft.Extensions.Logging;
 
 namespace Aquifer.Jobs.Subscribers;
 
-public sealed class CompressAudioMessageSubscriber(FfmpegOptions _ffmpegOptions, ILogger<CompressAudioMessageSubscriber> _logger)
+public sealed class CompressAudioMessageSubscriber
 {
+    private readonly ILogger<CompressAudioMessageSubscriber> _logger;
+    private readonly string _ffmpegFilePath;
+
+    public CompressAudioMessageSubscriber(FfmpegOptions ffmpegOptions, ILogger<CompressAudioMessageSubscriber> logger)
+    {
+        _logger = logger;
+
+        // Allow developers to specify a local workstation path but if running in Azure treat the passed setting as relative to
+        // the Azure Functions App deployment directory.
+        var functionAppRootDirectory = $@"{Environment.GetEnvironmentVariable("HOME")}\site\wwwroot";
+        _ffmpegFilePath = !Path.IsPathFullyQualified(ffmpegOptions.FfmpegFilePath) && Directory.Exists(functionAppRootDirectory)
+            ? Path.Combine(functionAppRootDirectory, ffmpegOptions.FfmpegFilePath)
+            : ffmpegOptions.FfmpegFilePath;
+    }
+
     private const string CompressAudioMessageSubscriberFunctionName = "CompressAudioMessageSubscriber";
 
     [Function(CompressAudioMessageSubscriberFunctionName)]
@@ -32,7 +47,7 @@ public sealed class CompressAudioMessageSubscriber(FfmpegOptions _ffmpegOptions,
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = _ffmpegOptions.FfmpegFilePath,
+                FileName = _ffmpegFilePath,
                 Arguments = "-version",
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
