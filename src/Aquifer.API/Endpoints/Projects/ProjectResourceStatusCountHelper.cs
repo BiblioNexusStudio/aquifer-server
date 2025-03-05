@@ -30,7 +30,7 @@ public static class ProjectResourceStatusCountHelper
                                ) x
                                WHERE x.LatestVersionRank = 1
                            ) RCVD ON RCVD.ResourceContentId = RC.Id
-                           {(projectIds != null && projectIds.Any() ? $"WHERE PRC.ProjectId IN ({string.Join(", ", projectIds)})" : "")}
+                           {(projectIds is { Count: > 0 } ? $"WHERE PRC.ProjectId IN ({string.Join(", ", projectIds)})" : "")}
                            GROUP BY ProjectId, Status
                            """;
         return await dbContext.Database
