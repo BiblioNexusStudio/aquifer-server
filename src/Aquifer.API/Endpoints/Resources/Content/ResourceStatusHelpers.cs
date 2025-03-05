@@ -97,9 +97,8 @@ public static class ResourceStatusHelpers
         {
             var reviewer = await dbContext.Users
                 .Where(u => u.Id == assignedReviewerUserId
-                            && u.Enabled
-                            && u.CompanyId == userToAssign.CompanyId
-                            && (u.Role == UserRole.Reviewer || u.Role == UserRole.Manager))
+                            && u.Enabled &&
+                            u.CompanyId == userToAssign.CompanyId)
                 .SingleOrDefaultAsync(ct);
 
             if (reviewer is null)

@@ -24,7 +24,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         var user = await userService.GetUserFromJwtAsync(ct);
 
-        return await dbContext.Projects.Where(p => p.ProjectManagerUserId == user.Id && p.ActualPublishDate == null)
+        var projects = await dbContext.Projects
+            .Where(p => p.ProjectManagerUserId == user.Id && p.ActualPublishDate == null)
             .Select(x => new Response
             {
                 Id = x.Id,
@@ -36,25 +37,22 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 Days =
                     x.ProjectedDeliveryDate.HasValue
                         ? x.ProjectedDeliveryDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber
-                        : null,
-                Counts = new ProjectResourceStatusCounts
-                {
-                    NotStarted =
-                        x.ProjectResourceContents.Count(prc =>
-                            ProjectResourceStatusCounts.NotStartedStatuses.Contains(prc.ResourceContent.Status)),
-                    EditorReview =
-                        x.ProjectResourceContents.Count(prc =>
-                            ProjectResourceStatusCounts.EditorReviewStatuses.Contains(prc.ResourceContent.Status)),
-                    InCompanyReview =
-                        x.ProjectResourceContents.Count(prc =>
-                            ProjectResourceStatusCounts.InCompanyReviewStatuses.Contains(prc.ResourceContent.Status)),
-                    InPublisherReview =
-                        x.ProjectResourceContents.Count(prc =>
-                            ProjectResourceStatusCounts.InPublisherReviewStatuses.Contains(prc.ResourceContent.Status)),
-                    Completed = x.ProjectResourceContents.Count(prc =>
-                        ProjectResourceStatusCounts.CompletedStatuses.Contains(prc.ResourceContent.Status))
-                }
+                        : null
             })
             .ToListAsync(ct);
+
+        var countsPerProject =
+            await ProjectResourceStatusCountHelper.GetResourceStatusCountsPerProjectAsync(
+                projects.Select(p => p.Id).ToList(),
+                dbContext,
+                ct);
+        foreach (var p in projects)
+        {
+            p.Counts = countsPerProject.TryGetValue(p.Id, out var projectResourceStatusCounts)
+                ? projectResourceStatusCounts
+                : new ProjectResourceStatusCounts();
+        }
+
+        return projects;
     }
 }
