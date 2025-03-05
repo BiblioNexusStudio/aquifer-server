@@ -63,7 +63,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
 
     private static string FormatBaseBookChapterVerseMapping(int mappedVerseId)
     {
-        var ( targetBookId, targetChapter, targetVerse ) = BibleUtilities.TranslateVerseId(mappedVerseId);
+        var (targetBookId, targetChapter, targetVerse) = BibleUtilities.TranslateVerseId(mappedVerseId);
         var targetBookName = BibleBookCodeUtilities.FullNameFromId(targetBookId);
         
         return $"{targetBookName} {targetChapter}:{targetVerse}";
@@ -71,9 +71,10 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
 
     private static IReadOnlyList<int> GetVerseIds(Response response, BookId bookId)
     {
-        return [.. response.Chapters
+        return response.Chapters
             .SelectMany(chapter => chapter.Verses
-                .Select(verse => BibleUtilities.GetVerseId(bookId, chapter.Number, verse.Number)))];
+                .Select(verse => BibleUtilities.GetVerseId(bookId, chapter.Number, verse.Number)))
+            .ToList();
     }
 
     private async Task MapVersificationDifferencesToResponseVersesAsync(Request req, Response response, CancellationToken ct)
@@ -92,10 +93,10 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
         }
         
         var versificationMap = await VersificationUtilities.ConvertVersificationRangeAsync(
-            req.BibleId,
+            0, // the "eng" English Bible superset "common" versification
             verseIds.Min(),
             verseIds.Max(),
-            0, // Target Bible ID is 1 (BSB)? 0 (EVB)?
+            req.BibleId,
             versificationService,
             ct);
         
@@ -105,17 +106,13 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
                 mapping => mapping.Key,
                 mapping => FormatBaseBookChapterVerseMapping(mapping.Value!.Value));
         
-        response.Chapters = [.. response.Chapters.Select(chapter =>
+        foreach (var chapter in response.Chapters)
         {
-            chapter.Verses = [.. chapter.Verses.Select(verse =>
+            foreach (var verse in chapter.Verses)
             {
                 var verseId = BibleUtilities.GetVerseId(bookId, chapter.Number, verse.Number);
                 verse.BaseMapping = baseBibleVerseMappings.GetValueOrDefault(verseId)!;
-                
-                return verse;
-            })];
-            
-            return chapter;
-        })];
+            }
+        }
     }
 }
