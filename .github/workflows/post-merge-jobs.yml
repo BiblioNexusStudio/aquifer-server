@@ -74,6 +74,7 @@ jobs:
             - name: Download ffmpeg from Azure Blob Storage
               uses: armanrahman22/azblob-download-action@v0.0.4
               with:
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
                   storage-account-name: "aquiferstoragedev"
                   container-name: "deployment-artifacts"
                   blob-name: "ffmpeg/ffmpeg-7.1-essentials_build.zip"
@@ -122,9 +123,7 @@ jobs:
             - name: Login to Azure
               uses: azure/login@v2.1.1
               with:
-                  client-id: ${{ secrets.AZURE_CLIENT_ID }}
-                  tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-                  subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
             - name: Make migration script executable
               run: chmod +x ./build/Migrate
               shell: bash

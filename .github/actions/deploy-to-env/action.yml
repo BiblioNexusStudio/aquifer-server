@@ -64,9 +64,7 @@ runs:
         - name: Login to Azure
           uses: azure/login@v2.1.1
           with:
-              client-id: ${{ inputs.azure-client-id }}
-              tenant-id: ${{ inputs.azure-tenant-id }}
-              subscription-id: ${{ inputs.azure-subscription-id }}
+              creds: ${{ secrets.AZURE_CREDENTIALS }}
         - name: Make migration script executable
           if: ${{ inputs.connection-url != '' }}
           run: chmod +x ./build/Migrate
