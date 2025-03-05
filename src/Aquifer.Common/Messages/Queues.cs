@@ -2,6 +2,9 @@
 
 public static class Queues
 {
+    // audio
+    public const string CompressAudio = "compress-audio";
+
     // email
     public const string SendEmail = "send-email";
     public const string SendTemplatedEmail = "send-templated-email";

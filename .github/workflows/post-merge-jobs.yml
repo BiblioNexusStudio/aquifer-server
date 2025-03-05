@@ -53,15 +53,17 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout source code
-              uses: actions/checkout@v4.1.7
+              uses: actions/checkout@v4.2.2
             - name: Setup .NET
-              uses: actions/setup-dotnet@v4.0.1
+              uses: actions/setup-dotnet@v4.3.0
               with:
                   global-json-file: "./global.json"
             - name: Restore .net tools
               run: dotnet tool restore
-            - name: Make build directory
-              run: mkdir ./build
+            - name: Make build and temp directories
+              run: |
+                  mkdir -p ./build
+                  mkdir -p ./temp
             - name: Build Jobs
               run: |
                 cd src/Aquifer.Jobs
@@ -69,8 +71,22 @@ jobs:
                 cd ../..
             - name: Bundle migrations
               run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate --self-contained
+            - name: Download ffmpeg from Azure Blob Storage
+              uses: armanrahman22/azblob-download-action@v0.0.4
+              with:
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
+                  storage-account-name: "aquiferstoragedev"
+                  container-name: "deployment-artifacts"
+                  blob-name: "ffmpeg.zip"
+                  download-path: "./temp"
+            - name: Unzip ffmpeg into build folder
+              run: |
+                mkdir -p ./build/lib
+                unzip ./temp/ffmpeg.zip -d ./build/lib
+                rm ./temp/ffmpeg.zip
+              shell: bash
             - name: Publish artifact
-              uses: actions/upload-artifact@v4.4.0
+              uses: actions/upload-artifact@v4.6.1
               with:
                   include-hidden-files: true
                   name: build
@@ -100,16 +116,14 @@ jobs:
                   SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
-            - uses: actions/download-artifact@v4.1.8
+            - uses: actions/download-artifact@v4.1.9
               with:
                   name: build
                   path: build
             - name: Login to Azure
-              uses: azure/login@v2.1.1
+              uses: azure/login@v2.2.0
               with:
-                  client-id: ${{ secrets.AZURE_CLIENT_ID }}
-                  tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-                  subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
             - name: Make migration script executable
               run: chmod +x ./build/Migrate
               shell: bash
@@ -121,7 +135,6 @@ jobs:
               with:
                   app-name: ${{ vars.AZURE_FUNCTION_APP_NAME_DEV_QA }}
                   package: build
-                  publish-profile: ${{ secrets.AZURE_FUNCTION_APP_PUBLISH_PROFILE_DEV_QA }}
             - name: Notify Slack deploy status
               if: ${{ !cancelled()  }}
               uses: BiblioNexusStudio/github-action-slack-notify-build@main
@@ -162,16 +175,14 @@ jobs:
                   SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
-            - uses: actions/download-artifact@v4.1.8
+            - uses: actions/download-artifact@v4.1.9
               with:
                   name: build
                   path: build
             - name: Login to Azure
-              uses: azure/login@v2.1.1
+              uses: azure/login@v2.2.0
               with:
-                  client-id: ${{ secrets.AZURE_CLIENT_ID }}
-                  tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-                  subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
             - name: Make migration script executable
               run: chmod +x ./build/Migrate
               shell: bash
@@ -183,7 +194,6 @@ jobs:
               with:
                   app-name: ${{ vars.AZURE_FUNCTION_APP_NAME_PROD }}
                   package: build
-                  publish-profile: ${{ secrets.AZURE_FUNCTION_APP_PUBLISH_PROFILE_PROD }}
             - name: Notify Slack deploy status
               if: ${{ !cancelled()  }}
               uses: BiblioNexusStudio/github-action-slack-notify-build@main

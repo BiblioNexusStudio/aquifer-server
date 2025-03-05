@@ -16,21 +16,19 @@ jobs:
             name: qa-tests
         steps:
             - name: Checkout source code
-              uses: actions/checkout@v4.1.7
+              uses: actions/checkout@v4.2.2
               with:
                   ref: ${{ github.event.pull_request.head.sha }}
             - name: Setup .NET
-              uses: actions/setup-dotnet@v4.0.1
+              uses: actions/setup-dotnet@v4.3.0
               with:
                   global-json-file: "./global.json"
             - name: Build
               run: dotnet build --no-incremental -m:1 --configuration Release /p:WarningsAsErrors=true /warnaserror
             - name: Login to Azure
-              uses: azure/login@v2.1.1
+              uses: azure/login@v2.2.0
               with:
-                  client-id: ${{ secrets.AZURE_CLIENT_ID }}
-                  tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-                  subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
             - name: Test
               run: |
                   dotnet test \
