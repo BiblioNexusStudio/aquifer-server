@@ -21,5 +21,12 @@ public class ResponseChapterVerses
 {
     public required int Number { get; set; }
     public required string Text { get; set; }
-    public string BaseMapping { get; set; } = null!;
+    public VerseReference? EnglishBaseVerseMapping { get; set; }
+}
+
+public class VerseReference
+{
+    public required string BookName { get; set; }
+    public required int ChapterNumber { get; set; }
+    public required int VerseNumber { get; set; }
 }

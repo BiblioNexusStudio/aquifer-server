@@ -61,12 +61,17 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
         await (response is null ? SendNotFoundAsync(ct) : SendOkAsync(response, ct));
     }
 
-    private static string FormatBaseBookChapterVerseMapping(int mappedVerseId)
+    private static VerseReference FormatBaseBookChapterVerseMapping(int mappedVerseId)
     {
         var (targetBookId, targetChapter, targetVerse) = BibleUtilities.TranslateVerseId(mappedVerseId);
         var targetBookName = BibleBookCodeUtilities.FullNameFromId(targetBookId);
         
-        return $"{targetBookName} {targetChapter}:{targetVerse}";
+        return new VerseReference
+        {
+            BookName = targetBookName,
+            ChapterNumber = targetChapter,
+            VerseNumber = targetVerse
+        };
     }
 
     private static IReadOnlyList<int> GetVerseIds(Response response, BookId bookId)
@@ -111,7 +116,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
             foreach (var verse in chapter.Verses)
             {
                 var verseId = BibleUtilities.GetVerseId(bookId, chapter.Number, verse.Number);
-                verse.BaseMapping = baseBibleVerseMappings.GetValueOrDefault(verseId)!;
+                verse.EnglishBaseVerseMapping = baseBibleVerseMappings.GetValueOrDefault(verseId)!;
             }
         }
     }
