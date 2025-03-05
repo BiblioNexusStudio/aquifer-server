@@ -57,12 +57,12 @@ runs:
               SLACK_BOT_TOKEN: ${{ inputs.slack-bot-token }}
               GITHUB_TOKEN: ${{ inputs.github-token }}
               LINEAR_API_KEY: ${{ inputs.linear-api-key }}
-        - uses: actions/download-artifact@v4.1.8
+        - uses: actions/download-artifact@v4.1.9
           with:
               name: build
               path: build
         - name: Login to Azure
-          uses: azure/login@v2.1.1
+          uses: azure/login@v2.2.0
           with:
               creds: ${{ secrets.AZURE_CREDENTIALS }}
         - name: Make migration script executable
@@ -75,7 +75,7 @@ runs:
           shell: bash
         - name: Deploy to staging slot if not dev
           if: inputs.environment != 'dev'
-          uses: azure/webapps-deploy@v3.0.1
+          uses: azure/webapps-deploy@v3.0.2
           with:
               app-name: ${{ inputs.web-app-name }}
               slot-name: staging
@@ -86,7 +86,7 @@ runs:
           shell: bash
         - name: Deploy directly to production if dev
           if: inputs.environment == 'dev'
-          uses: azure/webapps-deploy@v3.0.1
+          uses: azure/webapps-deploy@v3.0.2
           with:
               app-name: ${{ inputs.web-app-name }}
               package: ./build/Build.zip
