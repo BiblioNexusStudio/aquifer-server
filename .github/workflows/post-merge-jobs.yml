@@ -60,16 +60,20 @@ jobs:
                   global-json-file: "./global.json"
                   cache: true
                   cache-dependency-path: "Directory.Packages.props"
+            - name: Restore NuGet packages
+              run: dotnet restore --runtime win-x64
             - name: Restore .net tools
               run: dotnet tool restore
+            - name: Build Solution
+              run: dotnet build --configuration Release --runtime win-x64 --no-restore
             - name: Make build and temp directories
               run: |
                   mkdir -p ./build
                   mkdir -p ./temp
-            - name: Build Jobs
+            - name: Create Jobs deployment artifact
               run: |
                 cd src/Aquifer.Jobs
-                dotnet build --configuration Release --output ../../build --runtime win-x64
+                dotnet build --output ../../build --configuration Release --runtime win-x64 --no-build
                 cd ../..
             - name: Bundle migrations
               run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate --self-contained --no-build
@@ -87,7 +91,7 @@ jobs:
                 unzip ./temp/ffmpeg.zip -d ./build/lib
                 rm ./temp/ffmpeg.zip
               shell: bash
-            - name: Publish artifact
+            - name: Publish deployment artifact
               uses: actions/upload-artifact@v4.6.1
               with:
                   include-hidden-files: true

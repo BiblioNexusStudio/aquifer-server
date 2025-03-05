@@ -33,7 +33,7 @@ jobs:
                   creds: ${{ secrets.AZURE_CREDENTIALS }}
             - name: Test
               run: |
-                  dotnet test \
+                  dotnet test --no-build \
                       -e ASPNETCORE_ENVIRONMENT="${{ vars.ASPNETCORE_ENVIRONMENT }}" \
                       -e ConnectionStrings__AzureStorageAccount="${{ secrets.AZURE_STORAGE_ACCOUNT_CONNECTION_STRING }}" \
                       -e ConnectionStrings__BiblioNexusDb="${{ secrets.BIBLIONEXUS_DB_CONNECTION_STRING }}" \
