@@ -65,14 +65,11 @@ runs:
           uses: azure/login@v2.2.0
           with:
               creds: ${{ secrets.AZURE_CREDENTIALS }}
-        - name: Make migration script executable
-          if: ${{ inputs.connection-url != '' }}
-          run: chmod +x ./build/Migrate
-          shell: bash
         - name: Run migrations
           if: ${{ inputs.connection-url != '' }}
-          run: ./build/Migrate --connection '${{ inputs.connection-url }}'
-          shell: bash
+          run: |
+            ./build/Migrate.exe --connection '${{ inputs.connection-url }}'
+            rm ./build/Migrate.exe
         - name: Deploy to staging slot if not dev
           if: inputs.environment != 'dev'
           uses: azure/webapps-deploy@v3.0.2
@@ -83,7 +80,6 @@ runs:
         - name: Swap with production if not dev
           if: inputs.environment != 'dev'
           run: az webapp deployment slot swap --name ${{ inputs.web-app-name }} --resource-group ${{ inputs.resource-group }} --slot staging --target-slot production
-          shell: bash
         - name: Deploy directly to production if dev
           if: inputs.environment == 'dev'
           uses: azure/webapps-deploy@v3.0.2

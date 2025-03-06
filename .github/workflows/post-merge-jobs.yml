@@ -35,7 +35,7 @@ permissions:
 
 jobs:
     check_should_deploy:
-        runs-on: ubuntu-latest
+        runs-on: windows-latest
         outputs:
             should_deploy: ${{ github.event_name == 'workflow_dispatch' || steps.check_deploy.outputs.should_deploy == 'true' }}
         steps:
@@ -50,7 +50,7 @@ jobs:
         needs:
             - check_should_deploy
         if: needs.check_should_deploy.outputs.should_deploy == 'true'
-        runs-on: ubuntu-latest
+        runs-on: windows-latest
         steps:
             - name: Checkout source code
               uses: actions/checkout@v4.2.2
@@ -61,22 +61,22 @@ jobs:
                   cache: true
                   cache-dependency-path: "Directory.Packages.props"
             - name: Restore NuGet packages
-              run: dotnet restore --runtime win-x64
+              run: dotnet restore
             - name: Restore .net tools
               run: dotnet tool restore
             - name: Build Solution
-              run: dotnet build --configuration Release --runtime win-x64 --no-restore
+              run: dotnet build --configuration Release --no-restore
             - name: Make build and temp directories
               run: |
-                  mkdir -p ./build
-                  mkdir -p ./temp
+                  mkdir ./build
+                  mkdir ./temp
             - name: Create Jobs deployment artifact
               run: |
                 cd src/Aquifer.Jobs
-                dotnet build --output ../../build --configuration Release --runtime win-x64 --no-build
+                dotnet build --output ../../build --configuration Release --no-restore
                 cd ../..
             - name: Bundle migrations
-              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate --self-contained --no-build
+              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate.exe --self-contained --no-build
             - name: Download ffmpeg from Azure Blob Storage
               uses: armanrahman22/azblob-download-action@v0.0.4
               with:
@@ -87,10 +87,9 @@ jobs:
                   download-path: "./temp"
             - name: Unzip ffmpeg into build folder
               run: |
-                mkdir -p ./build/lib
-                unzip ./temp/ffmpeg.zip -d ./build/lib
-                rm ./temp/ffmpeg.zip
-              shell: bash
+                mkdir ./build/lib
+                Expand-Archive -Path "./temp/ffmpeg.zip" -DestinationPath "./build/lib"
+                rm ./temp -r
             - name: Publish deployment artifact
               uses: actions/upload-artifact@v4.6.1
               with:
@@ -101,7 +100,7 @@ jobs:
     deploy_jobs_to_dev_qa:
         if: needs.check_should_deploy.outputs.should_deploy == 'true'
         name: Deploy Jobs to dev/qa
-        runs-on: ubuntu-latest
+        runs-on: windows-latest
         needs:
             - build
             - check_should_deploy
@@ -130,12 +129,10 @@ jobs:
               uses: azure/login@v2.2.0
               with:
                   creds: ${{ secrets.AZURE_CREDENTIALS }}
-            - name: Make migration script executable
-              run: chmod +x ./build/Migrate
-              shell: bash
             - name: Run migrations
-              run: ./build/Migrate --connection '${{ vars.DB_CONNECTION_URL_DEV_QA }}'
-              shell: bash
+              run: |
+                ./build/Migrate.exe --connection '${{ vars.DB_CONNECTION_URL_DEV_QA }}'
+                rm ./build/Migrate.exe
             - name: Deploy Jobs to dev/qa
               uses: Azure/functions-action@v1.5.2
               with:
@@ -160,7 +157,7 @@ jobs:
     deploy_jobs_to_prod:
         if: needs.check_should_deploy.outputs.should_deploy == 'true'
         name: Deploy Jobs to prod
-        runs-on: ubuntu-latest
+        runs-on: windows-latest
         needs:
             - build
             - check_should_deploy
@@ -189,12 +186,10 @@ jobs:
               uses: azure/login@v2.2.0
               with:
                   creds: ${{ secrets.AZURE_CREDENTIALS }}
-            - name: Make migration script executable
-              run: chmod +x ./build/Migrate
-              shell: bash
             - name: Run migrations
-              run: ./build/Migrate --connection '${{ vars.DB_CONNECTION_URL_PROD }}'
-              shell: bash
+              run: |
+                ./build/Migrate.exe --connection '${{ vars.DB_CONNECTION_URL_PROD }}'
+                rm ./build/Migrate.exe
             - name: Deploy Jobs to prod
               uses: Azure/functions-action@v1.5.2
               with:
