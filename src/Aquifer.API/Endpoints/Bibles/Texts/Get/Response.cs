@@ -21,7 +21,7 @@ public class ResponseChapterVerses
 {
     public required int Number { get; set; }
     public required string Text { get; set; }
-    public VerseReference? EnglishBaseVerseMapping { get; set; }
+    public VerseReference? SourceTextVerseReference { get; set; }
 }
 
 public class VerseReference

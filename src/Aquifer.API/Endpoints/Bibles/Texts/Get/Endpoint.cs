@@ -87,7 +87,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
         var maxVerseId = BibleUtilities.GetVerseId(bookId, maxChapter.Number, maxChapter.Verses.Last().Number);
         
         var versificationMap = await VersificationUtilities.ConvertVersificationRangeAsync(
-            0, // the "eng" English Bible superset "common" versification
+            CachingVersificationService.EngVersificationSchemeBibleId,
             minVerseId,
             maxVerseId,
             req.BibleId,
@@ -105,7 +105,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
             foreach (var verse in chapter.Verses)
             {
                 var verseId = BibleUtilities.GetVerseId(bookId, chapter.Number, verse.Number);
-                verse.EnglishBaseVerseMapping = baseBibleVerseMappings.GetValueOrDefault(verseId)!;
+                verse.SourceTextVerseReference = baseBibleVerseMappings.GetValueOrDefault(verseId);
             }
         }
     }
