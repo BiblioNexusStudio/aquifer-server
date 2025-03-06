@@ -61,19 +61,23 @@ jobs:
               uses: actions/setup-dotnet@v4.3.0
               with:
                   global-json-file: "./global.json"
-            - name: Install NuGet packages (linux)
-              run: dotnet restore --runtime linux-x64
+                  cache: true
+                  cache-dependency-path: "Directory.Packages.props"
+            - name: Restore NuGet packages
+              run: dotnet restore
             - name: Restore CLI tools
               run: dotnet tool restore
+            - name: Build Solution
+              run: dotnet build --configuration Release --no-restore
             - name: Make build directory
               run: mkdir ./build
-            - name: Build Public API
-              run: dotnet publish src/Aquifer.Public.API --output ./Aquifer.Public.API --configuration Release --runtime win-x64 --self-contained
-            - name: Zip Public API
+            - name: Create Aquifer Public API deployment artifact
+              run: dotnet publish src/Aquifer.Public.API --output ./Aquifer.Public.API --configuration Release --no-build
+            - name: Zip deployment artifact
               run: cd ./Aquifer.Public.API && zip ../build/Build.zip *
             - name: Bundle migrations
-              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate --self-contained
-            - name: Publish artifact
+              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate --configuration Release --self-contained --no-build
+            - name: Publish deployment artifact
               uses: actions/upload-artifact@v4.6.1
               with:
                   include-hidden-files: true

@@ -58,19 +58,25 @@ jobs:
               uses: actions/setup-dotnet@v4.3.0
               with:
                   global-json-file: "./global.json"
+                  cache: true
+                  cache-dependency-path: "Directory.Packages.props"
+            - name: Restore NuGet packages
+              run: dotnet restore
             - name: Restore .net tools
               run: dotnet tool restore
+            - name: Build Solution
+              run: dotnet build --configuration Release --no-restore
             - name: Make build and temp directories
               run: |
-                  mkdir -p ./build
-                  mkdir -p ./temp
-            - name: Build Jobs
+                  mkdir ./build
+                  mkdir ./temp
+            - name: Create Jobs deployment artifact
               run: |
                 cd src/Aquifer.Jobs
-                dotnet build --configuration Release --output ../../build --runtime win-x64
+                dotnet build --output ../../build --configuration Release --no-restore
                 cd ../..
             - name: Bundle migrations
-              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate --self-contained
+              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate --configuration Release --self-contained --no-build
             - name: Download ffmpeg from Azure Blob Storage
               uses: armanrahman22/azblob-download-action@v0.0.4
               with:
@@ -84,8 +90,7 @@ jobs:
                 mkdir -p ./build/lib
                 unzip ./temp/ffmpeg.zip -d ./build/lib
                 rm ./temp/ffmpeg.zip
-              shell: bash
-            - name: Publish artifact
+            - name: Publish deployment artifact
               uses: actions/upload-artifact@v4.6.1
               with:
                   include-hidden-files: true
@@ -128,8 +133,9 @@ jobs:
               run: chmod +x ./build/Migrate
               shell: bash
             - name: Run migrations
-              run: ./build/Migrate --connection '${{ vars.DB_CONNECTION_URL_DEV_QA }}'
-              shell: bash
+              run: |
+                ./build/Migrate --connection '${{ vars.DB_CONNECTION_URL_DEV_QA }}'
+                rm ./build/Migrate
             - name: Deploy Jobs to dev/qa
               uses: Azure/functions-action@v1.5.2
               with:
@@ -187,8 +193,9 @@ jobs:
               run: chmod +x ./build/Migrate
               shell: bash
             - name: Run migrations
-              run: ./build/Migrate --connection '${{ vars.DB_CONNECTION_URL_PROD }}'
-              shell: bash
+              run: |
+                ./build/Migrate --connection '${{ vars.DB_CONNECTION_URL_PROD }}'
+                rm ./build/Migrate
             - name: Deploy Jobs to prod
               uses: Azure/functions-action@v1.5.2
               with:
@@ -209,4 +216,3 @@ jobs:
                     SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
                     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                     LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
-
