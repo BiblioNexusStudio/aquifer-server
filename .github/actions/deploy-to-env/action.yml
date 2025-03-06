@@ -17,14 +17,8 @@ inputs:
     web-app-name:
         description: Azure Web App name
         required: true
-    azure-client-id:
-        description: Azure Client ID
-        required: true
-    azure-tenant-id:
-        description: Azure Tenant ID
-        required: true
-    azure-subscription-id:
-        description: Azure Subscription ID
+    azure-credentials:
+        description: Azure Credentials
         required: true
     linear-api-key:
         description: Linear API key
@@ -64,7 +58,7 @@ runs:
         - name: Login to Azure
           uses: azure/login@v2.2.0
           with:
-              creds: ${{ secrets.AZURE_CREDENTIALS }}
+              creds: ${{ inputs.azure-credentials }}
         - name: Make migration script executable
           if: ${{ inputs.connection-url != '' }}
           run: chmod +x ./build/Migrate
