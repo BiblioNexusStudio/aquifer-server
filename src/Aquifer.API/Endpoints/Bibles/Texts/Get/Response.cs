@@ -21,4 +21,12 @@ public class ResponseChapterVerses
 {
     public required int Number { get; set; }
     public required string Text { get; set; }
+    public VerseReference? SourceTextVerseReference { get; set; }
+}
+
+public class VerseReference
+{
+    public required string BookName { get; set; }
+    public required int ChapterNumber { get; set; }
+    public required int VerseNumber { get; set; }
 }
