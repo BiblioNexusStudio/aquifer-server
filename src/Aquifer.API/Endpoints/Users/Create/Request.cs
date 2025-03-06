@@ -9,4 +9,5 @@ public class Request
     public string LastName { get; set; } = null!;
     public UserRole Role { get; set; }
     public int CompanyId { get; set; }
+    public int? LanguageId { get; set; }
 }

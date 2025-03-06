@@ -75,6 +75,7 @@ public class Endpoint(AquiferDbContext dbContext, IAuth0Service authService, ILo
             Role = req.Role,
             Enabled = true,
             AquiferNotificationsEnabled = true,
+            LanguageId = req.LanguageId
         };
 
         await dbContext.Users.AddAsync(user, ct);
