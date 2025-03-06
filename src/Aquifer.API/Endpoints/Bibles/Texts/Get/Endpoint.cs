@@ -2,7 +2,6 @@
 using Aquifer.Common.Services.Caching;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
-using Aquifer.Data.Enums;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -74,14 +73,6 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
         };
     }
 
-    private static IReadOnlyList<int> GetVerseIds(Response response, BookId bookId)
-    {
-        return response.Chapters
-            .SelectMany(chapter => chapter.Verses
-                .Select(verse => BibleUtilities.GetVerseId(bookId, chapter.Number, verse.Number)))
-            .ToList();
-    }
-
     private async Task MapVersificationDifferencesToResponseVersesAsync(Request req, Response response, CancellationToken ct)
     {
         if (!response.Chapters.Any())
@@ -90,17 +81,15 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
         }
 
         var bookId = BibleBookCodeUtilities.IdFromCode(response.BookCode);
-        var verseIds = GetVerseIds(response, bookId);
-        
-        if (!verseIds.Any())
-        {
-            return;
-        }
+        var minChapter = response.Chapters.First();  
+        var minVerseId = BibleUtilities.GetVerseId(bookId, minChapter.Number, minChapter.Verses.First().Number);  
+        var maxChapter = response.Chapters.Last();  
+        var maxVerseId = BibleUtilities.GetVerseId(bookId, maxChapter.Number, maxChapter.Verses.Last().Number);
         
         var versificationMap = await VersificationUtilities.ConvertVersificationRangeAsync(
             0, // the "eng" English Bible superset "common" versification
-            verseIds.Min(),
-            verseIds.Max(),
+            minVerseId,
+            maxVerseId,
             req.BibleId,
             versificationService,
             ct);
