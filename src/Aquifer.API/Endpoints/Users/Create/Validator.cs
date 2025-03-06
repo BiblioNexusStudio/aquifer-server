@@ -15,6 +15,7 @@ public class Validator : Validator<Request>
         RuleFor(x => x.Email).NotNull().EmailAddress();
         RuleFor(x => x.Role).IsInEnum();
         RuleFor(x => x.CompanyId).GreaterThan(0);
+        RuleFor(x => x.LanguageId).GreaterThan(0);
         RuleFor(x => x.Role).Must(role =>
         {
             var userService = Resolve<IUserService>();
