@@ -71,7 +71,9 @@ runs:
           shell: bash
         - name: Run migrations
           if: ${{ inputs.connection-url != '' }}
-          run: ./build/Migrate --connection '${{ inputs.connection-url }}'
+          run: |
+            ./build/Migrate --connection '${{ inputs.connection-url }}'
+            rm ./build/Migrate
           shell: bash
         - name: Deploy to staging slot if not dev
           if: inputs.environment != 'dev'
