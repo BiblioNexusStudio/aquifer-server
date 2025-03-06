@@ -38,7 +38,7 @@ permissions:
 
 jobs:
     check_should_deploy:
-        runs-on: windows-latest
+        runs-on: ubuntu-latest
         outputs:
             should_deploy: ${{ github.event_name == 'workflow_dispatch' || steps.check_deploy.outputs.should_deploy == 'true' }}
         steps:
@@ -53,7 +53,7 @@ jobs:
             - check_should_deploy
         if: needs.check_should_deploy.outputs.should_deploy == 'true'
         name: Build
-        runs-on: windows-latest
+        runs-on: ubuntu-latest
         steps:
             - name: Checkout source code
               uses: actions/checkout@v4.2.2
@@ -74,9 +74,9 @@ jobs:
             - name: Create Aquifer Public API deployment artifact
               run: dotnet publish src/Aquifer.Public.API --output ./Aquifer.Public.API --configuration Release --no-build
             - name: Zip deployment artifact
-              run: Compress-Archive -Path "./Aquifer.API/*" -DestinationPath "./build/Build.zip"
+              run: cd ./Aquifer.Public.API && zip ../build/Build.zip *
             - name: Bundle migrations
-              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate.exe --configuration Release --self-contained --no-build
+              run: dotnet ef migrations bundle --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext --output build/Migrate --configuration Release --self-contained --no-build
             - name: Publish deployment artifact
               uses: actions/upload-artifact@v4.6.1
               with:
@@ -87,7 +87,7 @@ jobs:
     deploy_public_api_to_dev:
         if: needs.check_should_deploy.outputs.should_deploy == 'true'
         name: Deploy Public API to dev
-        runs-on: windows-latest
+        runs-on: ubuntu-latest
         needs:
             - build
             - check_should_deploy
@@ -111,7 +111,7 @@ jobs:
     deploy_public_api_to_qa:
         if: needs.check_should_deploy.outputs.should_deploy == 'true'
         name: Deploy Public API to qa
-        runs-on: windows-latest
+        runs-on: ubuntu-latest
         needs:
             - build
             - check_should_deploy
@@ -140,7 +140,7 @@ jobs:
     deploy_public_api_to_prod_east_us:
         if: needs.check_should_deploy.outputs.should_deploy == 'true'
         name: Deploy Public API to prod (East US)
-        runs-on: windows-latest
+        runs-on: ubuntu-latest
         needs:
             - build
             - check_should_deploy
@@ -171,7 +171,7 @@ jobs:
     deploy_public_api_to_prod_central_india:
         if: needs.check_should_deploy.outputs.should_deploy == 'true'
         name: Deploy Public API to prod (Central India)
-        runs-on: windows-latest
+        runs-on: ubuntu-latest
         needs:
             - build
             - check_should_deploy
@@ -201,7 +201,7 @@ jobs:
     delete_hotfix_branch:
         if: needs.check_should_deploy.outputs.should_deploy == 'true'
         name: Delete Hotfix Branch
-        runs-on: windows-latest
+        runs-on: ubuntu-latest
         needs:
             - build
             - check_should_deploy
