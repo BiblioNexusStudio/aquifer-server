@@ -132,6 +132,7 @@ jobs:
             - name: Make migration script executable
               run: chmod +x ./build/Migrate
               shell: bash
+            - name: Run migrations
               run: |
                 ./build/Migrate --connection '${{ vars.DB_CONNECTION_URL_DEV_QA }}'
                 rm ./build/Migrate
