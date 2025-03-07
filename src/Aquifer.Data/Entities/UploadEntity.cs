@@ -23,8 +23,8 @@ public enum UploadStatus
     [Display(Name = "Pending")]
     Pending = 1,
 
-    [Display(Name = "Started")]
-    Started = 2,
+    [Display(Name = "Processing")]
+    Processing = 2,
 
     [Display(Name = "Completed")]
     Completed = 3,

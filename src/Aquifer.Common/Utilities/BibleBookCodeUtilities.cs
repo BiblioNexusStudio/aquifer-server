@@ -5,8 +5,9 @@ namespace Aquifer.Common.Utilities;
 
 public static class BibleBookCodeUtilities
 {
-    private static readonly Dictionary<string, BibleBookMetadata> s_bookCodeToMetadata = [];
+    private static readonly Dictionary<string, BibleBookMetadata> s_bookCodeToMetadata = new(StringComparer.InvariantCultureIgnoreCase);
     private static readonly Dictionary<BookId, BibleBookMetadata> s_bookIdToMetadata = [];
+    private static readonly Dictionary<string, BibleBookMetadata> s_bookFullNameToMetadata = new(StringComparer.InvariantCultureIgnoreCase);
 
     static BibleBookCodeUtilities()
     {
@@ -20,24 +21,31 @@ public static class BibleBookCodeUtilities
                 BookCode = bookId.ToString().Replace("Book", ""),
                 BookFullName = bookId.GetDisplayName()
             };
+
             s_bookCodeToMetadata.Add(bookId.ToString().Replace("Book", ""), metadata);
             s_bookIdToMetadata.Add(bookId, metadata);
+            s_bookFullNameToMetadata.Add(metadata.BookFullName, metadata);
         }
     }
 
     public static string CodeFromId(BookId bookId)
     {
-        return s_bookIdToMetadata.TryGetValue(bookId, out var obj) ? obj.BookCode : "";
+        return s_bookIdToMetadata.TryGetValue(bookId, out var metadata) ? metadata.BookCode : "";
     }
 
-    public static BookId IdFromCode(string stringValue)
+    public static BookId IdFromCode(string code)
     {
-        return s_bookCodeToMetadata.TryGetValue(stringValue.ToUpper(), out var obj) ? obj.BookId : BookId.None;
+        return s_bookCodeToMetadata.TryGetValue(code, out var metadata) ? metadata.BookId : BookId.None;
     }
 
     public static string FullNameFromId(BookId bookId)
     {
-        return s_bookIdToMetadata.TryGetValue(bookId, out var obj) ? obj.BookFullName : "";
+        return s_bookIdToMetadata.TryGetValue(bookId, out var metadata) ? metadata.BookFullName : "";
+    }
+
+    public static BookId IdFromFullName(string fullName)
+    {
+        return s_bookFullNameToMetadata.TryGetValue(fullName, out var metadata) ? metadata.BookId : BookId.None;
     }
 
     public static List<BibleBookMetadata> GetAll()
