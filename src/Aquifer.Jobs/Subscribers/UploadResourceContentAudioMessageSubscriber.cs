@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Aquifer.Common.Messages;
 using Aquifer.Common.Messages.Models;
+using Aquifer.Common.Services;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -17,9 +18,11 @@ namespace Aquifer.Jobs.Subscribers;
 public sealed class UploadResourceContentAudioMessageSubscriber
 {
     private readonly AquiferDbContext _dbContext;
+    private readonly IBlobStorageService _cdnBlobStorageService;
     private readonly ILogger<UploadResourceContentAudioMessageSubscriber> _logger;
     private readonly string _ffmpegFilePath;
 
+    // TODO move these to settings
     private const string CdnContainerName = "aquifer-content";
     private const string TempContainerName = "temp";
 
@@ -29,9 +32,11 @@ public sealed class UploadResourceContentAudioMessageSubscriber
     public UploadResourceContentAudioMessageSubscriber(
         FfmpegOptions ffmpegOptions,
         AquiferDbContext dbContext,
+        IBlobStorageService cdnBlobStorageService,
         ILogger<UploadResourceContentAudioMessageSubscriber> logger)
     {
         _dbContext = dbContext;
+        _cdnBlobStorageService = cdnBlobStorageService;
         _logger = logger;
 
         // Allow developers to specify a local workstation path but if running in Azure treat the passed setting as relative to
@@ -72,19 +77,74 @@ public sealed class UploadResourceContentAudioMessageSubscriber
             .FirstOrDefaultAsync(u => u.Id == message.UploadId, ct)
                 ?? throw new InvalidOperationException($"Upload with ID {message.UploadId} not found.");
 
+        // TODO should this use a different storage instance?
+        // download temp blob
+        var tempFilePath = Path.GetTempFileName();
+        await _cdnBlobStorageService.DownloadFileAsync(TempContainerName, message.TempContainerSourceBlobName, tempFilePath, ct);
+
+        // update upload status
         upload.Status = UploadStatus.Processing;
         await _dbContext.SaveChangesAsync(ct);
 
+        // TODO add ResourceContentVersion.Version to blob name
 
-
+        // Calculate CDN blob name format string. Full examples after formatting with audio file extension:
+        // * "mp3": "resources/FIA/HIN/audio/mp3/HIN_FIA_043_LUK_001_001_1.mp3"
+        // * "webm": "resources/FIAKeyTerms/ENG/audio/webm/ENG_FIAKeyTerms_angel-of-the-lord.webm"
         var code = resourceContent.Resource.ParentResource.Code != FiaLegacyCode
             ? resourceContent.Resource.ParentResource.Code
             : FiaCode;
         var language = resourceContent.Language.ISO6393Code.ToUpper();
 
+        var blobifiedResourceName = GetBlobifiedResourceName(resourceContent.Resource.EnglishLabel);
+
+        var cdnBlobDirectoryFormatString = $"resources/{code}/{language}/audio/{{0}}";
+        var cdnBlobFileNameFormatString
+            = $"{language}_{code}_{blobifiedResourceName}{(message.StepNumber != null ? $"_{message.StepNumber}" : "")}.{{0}}";
+
+        var cdnBlobFormatString = $"{cdnBlobDirectoryFormatString}/{cdnBlobFileNameFormatString}";
+
+        // compress to mp3
+        var mp3FilePath = Path.GetTempFileName();
+        await CompressToMp3Async(tempFilePath, mp3FilePath, ct);
+
+        // compress to webm
+        var webmFilePath = Path.GetTempFileName();
+        await CompressToWebmAsync(tempFilePath, webmFilePath, ct);
+
+        // upload files to CDN
+        await _cdnBlobStorageService.UploadFilesInParallelAsync(
+            CdnContainerName,
+            [
+                (string.Format(cdnBlobFormatString, "mp3"), mp3FilePath),
+                (string.Format(cdnBlobFormatString, "webm"), webmFilePath),
+            ],
+            ct);
+
+        // TODO update ResourceContentVersion.Content and potentially publish a new version
+
+        // update upload status
+        upload.Status = UploadStatus.Completed;
+        await _dbContext.SaveChangesAsync(ct);
+
+        // delete temp blob
+        await _cdnBlobStorageService.DeleteFileAsync(TempContainerName, message.TempContainerSourceBlobName, ct);
+
+        // TODO improve logging
+        _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: UploadResourceContentAudioAsync: Finish");
+
+        // TODO bonus: re-zip?
+        // 1. Download all files from CDN.
+        // 2. Create zip file with correct naming including Version suffix.
+        // 3. Upload zip file to CDN (will be unique per version); use `overwrite: false`.
+        // 4. Update content to include new ZIP file CDN URL.
+    }
+
+    private static string GetBlobifiedResourceName(string resourceEnglishLabel)
+    {
         // attempt to get the verse reference from English labels like "Fia Luke 1:1-4"
         (BookId BookId, int ChapterNumber, int VerseNumber)? bibleReference = null;
-        var possibleBibleReferenceStrings = resourceContent.Resource.EnglishLabel.Split(' ').TakeLast(2).ToList();
+        var possibleBibleReferenceStrings = resourceEnglishLabel.Split(' ').TakeLast(2).ToList();
         if (possibleBibleReferenceStrings.Count == 2)
         {
             var bookFullName = possibleBibleReferenceStrings[0];
@@ -104,44 +164,9 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         // get a name like "043_LUK_001_001" or "angel-of-the-lord"
         var blobifiedResourceName = bibleReference.HasValue
             ? $"{(int) bibleReference.Value.BookId:D3}_{BibleBookCodeUtilities.CodeFromId(bibleReference.Value.BookId)}_{bibleReference.Value.ChapterNumber:D3}_{bibleReference.Value.VerseNumber:D3}"
-            : resourceContent.Resource.EnglishLabel.ToKebabCase();
+            : resourceEnglishLabel.ToKebabCase();
 
-        var targetBlobDirectoryFormatString = $"resources/{code}/{language}/audio/{{0}}";
-
-        var targetBlobFileNameFormatString
-            = $"{language}_{code}_{blobifiedResourceName}{(message.StepNumber != null ? $"_{message.StepNumber}" : "")}.{{0}}";
-
-        // Full examples after formatting with extension:
-        // * "mp3": "resources/FIA/HIN/audio/mp3/HIN_FIA_043_LUK_001_001_1.mp3"
-        // * "webm": "resources/FIAKeyTerms/ENG/audio/webm/ENG_FIAKeyTerms_angel-of-the-lord.webm"
-        var targetBlobFormatString = $"{targetBlobDirectoryFormatString}/{targetBlobFileNameFormatString}";
-
-        using var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = _ffmpegFilePath,
-                Arguments = "-version",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            },
-        };
-
-        process.Start();
-        var ffmpegVersionOutput = await process.StandardOutput.ReadToEndAsync(ct);
-        await process.WaitForExitAsync(ct);
-
-        _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: UploadResourceContentAudioAsync: ffmpegVersion: {ffmpegVersion}", ffmpegVersionOutput);
-
-        // delete temp blob
-
-        // upload to CDN
-
-        upload.Status = UploadStatus.Completed;
-        await _dbContext.SaveChangesAsync(ct);
-
-        _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: UploadResourceContentAudioAsync: Finish");
+        return blobifiedResourceName;
     }
 
     private async Task CompressToMp3Async(string inputFilePath, string outputMp3FilePath, CancellationToken ct)

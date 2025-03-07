@@ -1,6 +1,7 @@
 using Aquifer.API.Common;
 using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Messages.Publishers;
+using Aquifer.Common.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -10,9 +11,13 @@ namespace Aquifer.API.Endpoints.Resources.Content.Uploads.Create;
 
 public class Endpoint(
     AquiferDbContext _dbContext,
+    IBlobStorageService _blobStorageService,
     IUploadResourceContentAudioMessagePublisher _uploadResourceContentAudioMessagePublisher)
     : Endpoint<Request, Response>
 {
+    // TODO move to app settings
+    private const string TempContainerName = "temp";
+
     public override void Configure()
     {
         Post("/resources/content/{resourceContentId}/uploads");
@@ -31,8 +36,16 @@ public class Endpoint(
             return;
         }
 
-        // TODO ensure resource content has steps
+        if (request.StepNumber.HasValue)
+        {
+            // TODO ensure ResourceContentVersion.Content has steps
+            ThrowError(x => x.StepNumber, "Resource Content Version does not have steps.", StatusCodes.Status400BadRequest);
+        }
 
+        if (request.File.ContentType != "audio/mpeg")
+        {
+            ThrowError(x => x.File, "File must be an mp3.", StatusCodes.Status400BadRequest);
+        }
 
         var uploadEntity = new UploadEntity
         {
@@ -41,9 +54,12 @@ public class Endpoint(
         _dbContext.Add(uploadEntity);
         await _dbContext.SaveChangesAsync(ct);
 
-        // TODO upload file to temp storage
-        var tempBlobName = $"uploads/{Guid.NewGuid()}";
-
+        // TODO refactor to unbuffered stream of request???
+        var tempBlobName = $"uploads/{Guid.NewGuid()}.mp3";
+        await using (var fileStream = request.File.OpenReadStream())
+        {
+            await _blobStorageService.UploadStreamAsync(TempContainerName, tempBlobName, fileStream, ct);
+        }
 
         await _uploadResourceContentAudioMessagePublisher.PublishUploadResourceContentAudioMessageAsync(
             new UploadResourceContentAudioMessage(
