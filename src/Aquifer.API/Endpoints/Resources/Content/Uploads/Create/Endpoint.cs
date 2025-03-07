@@ -30,17 +30,17 @@ public class Endpoint(
         await _dbContext.SaveChangesAsync(ct);
 
         _uploadResourceContentAudioMessagePublisher.PublishUploadResourceContentAudioMessageAsync(
-            new UploadResourceContentAudioMessage
-            {
-                UploadId = uploadEntity.Id,
-            },
+            new UploadResourceContentAudioMessage(
+                uploadEntity.Id,
+                request.ResourceContentId,
+                tempBlobName,
+                targetBlobName),
             ct);
-
 
         var response = new Response
         {
             ResourceContentId = request.ResourceContentId,
-            UploadId = 1,
+            UploadId = uploadEntity.Id,
         };
 
         await SendAsync(response, StatusCodes.Status202Accepted, ct);
