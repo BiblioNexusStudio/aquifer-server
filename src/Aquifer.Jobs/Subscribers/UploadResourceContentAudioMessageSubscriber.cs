@@ -8,12 +8,14 @@ using Microsoft.Extensions.Logging;
 
 namespace Aquifer.Jobs.Subscribers;
 
-public sealed class CompressAudioMessageSubscriber
+public sealed class UploadResourceContentAudioMessageSubscriber
 {
-    private readonly ILogger<CompressAudioMessageSubscriber> _logger;
+    private readonly ILogger<UploadResourceContentAudioMessageSubscriber> _logger;
     private readonly string _ffmpegFilePath;
 
-    public CompressAudioMessageSubscriber(FfmpegOptions ffmpegOptions, ILogger<CompressAudioMessageSubscriber> logger)
+    public UploadResourceContentAudioMessageSubscriber(
+        FfmpegOptions ffmpegOptions,
+        ILogger<UploadResourceContentAudioMessageSubscriber> logger)
     {
         _logger = logger;
 
@@ -25,23 +27,23 @@ public sealed class CompressAudioMessageSubscriber
             : ffmpegOptions.FfmpegFilePath;
     }
 
-    private const string CompressAudioMessageSubscriberFunctionName = "CompressAudioMessageSubscriber";
+    private const string CompressAudioMessageSubscriberFunctionName = "UploadResourceContentAudioMessageSubscriber";
 
     [Function(CompressAudioMessageSubscriberFunctionName)]
     public async Task CompressAudioAsync(
-        [QueueTrigger(Queues.CompressAudio)] QueueMessage queueMessage,
+        [QueueTrigger(Queues.UploadResourceContentAudio)] QueueMessage queueMessage,
         CancellationToken ct)
     {
-        await queueMessage.ProcessAsync<CompressAudioMessage, CompressAudioMessageSubscriber>(
+        await queueMessage.ProcessAsync<UploadResourceContentAudioMessage, UploadResourceContentAudioMessageSubscriber>(
             _logger,
             CompressAudioMessageSubscriberFunctionName,
             ProcessAsync,
             ct);
     }
 
-    private async Task ProcessAsync(QueueMessage queueMessage, CompressAudioMessage message, CancellationToken ct)
+    private async Task ProcessAsync(QueueMessage queueMessage, UploadResourceContentAudioMessage message, CancellationToken ct)
     {
-        _logger.LogInformation("CompressAudioMessageSubscriber: CompressAudioAsync: Start");
+        _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: CompressAudioAsync: Start");
 
         using var process = new Process
         {
@@ -59,8 +61,8 @@ public sealed class CompressAudioMessageSubscriber
         var ffmpegVersionOutput = await process.StandardOutput.ReadToEndAsync(ct);
         await process.WaitForExitAsync(ct);
 
-        _logger.LogInformation("CompressAudioMessageSubscriber: CompressAudioAsync: ffmpegVersion: {ffmpegVersion}", ffmpegVersionOutput);
+        _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: CompressAudioAsync: ffmpegVersion: {ffmpegVersion}", ffmpegVersionOutput);
 
-        _logger.LogInformation("CompressAudioMessageSubscriber: CompressAudioAsync: Finish");
+        _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: CompressAudioAsync: Finish");
     }
 }
