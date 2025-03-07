@@ -4,6 +4,7 @@ using Aquifer.Common.Messages.Publishers;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.Uploads.Create;
 
@@ -21,25 +22,41 @@ public class Endpoint(
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
+        var resourceContent = await _dbContext.ResourceContents
+            .FirstOrDefaultAsync(rc => rc.Id == request.ResourceContentId, ct);
+
+        if (resourceContent is null || resourceContent.MediaType != ResourceContentMediaType.Audio)
+        {
+            await SendNotFoundAsync(ct);
+            return;
+        }
+
+        // TODO ensure resource content has steps
+
+
         var uploadEntity = new UploadEntity
         {
             Status = UploadStatus.Pending,
         };
-
         _dbContext.Add(uploadEntity);
         await _dbContext.SaveChangesAsync(ct);
 
-        _uploadResourceContentAudioMessagePublisher.PublishUploadResourceContentAudioMessageAsync(
+        // TODO upload file to temp storage
+        var tempBlobName = $"uploads/{Guid.NewGuid()}";
+
+
+        await _uploadResourceContentAudioMessagePublisher.PublishUploadResourceContentAudioMessageAsync(
             new UploadResourceContentAudioMessage(
                 uploadEntity.Id,
                 request.ResourceContentId,
-                tempBlobName,
-                targetBlobName),
+                request.StepNumber,
+                tempBlobName),
             ct);
 
         var response = new Response
         {
             ResourceContentId = request.ResourceContentId,
+            StepNumber = request.StepNumber,
             UploadId = uploadEntity.Id,
         };
 
