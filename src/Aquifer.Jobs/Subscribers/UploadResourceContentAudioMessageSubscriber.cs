@@ -120,6 +120,8 @@ public sealed class UploadResourceContentAudioMessageSubscriber
                 (string.Format(cdnBlobFormatString, "webm"), webmFilePath),
             ],
             ct);
+        File.Delete(mp3FilePath);
+        File.Delete(webmFilePath);
 
         // TODO update ResourceContentVersion.Content and potentially publish a new version
 
@@ -128,6 +130,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         await _dbContext.SaveChangesAsync(ct);
 
         // delete temp blob
+        File.Delete(tempFilePath);
         await _cdnBlobStorageService.DeleteFileAsync(TempContainerName, message.TempContainerSourceBlobName, ct);
 
         // TODO improve logging
@@ -184,6 +187,8 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 
         process.Start();
         await process.WaitForExitAsync(ct);
+
+        // TODO check exit code like https://github.com/Azure-Samples/media-services-v3-dotnet-core-functions-integration/blob/4f0d6a3e0de03777d8ce49b4a7721cc0b6255ccc/Encoding/Encoding/VodFunctions/ffmpeg-encoding.cs#L143
     }
 
     private async Task CompressToWebmAsync(string inputFilePath, string outputWebmFilePath, CancellationToken ct)
