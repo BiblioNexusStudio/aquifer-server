@@ -1,23 +1,34 @@
 ﻿using Aquifer.API.Common;
 using Aquifer.Data;
 using FastEndpoints;
+using Microsoft.EntityFrameworkCore;
 
-namespace Aquifer.API.Endpoints.Resources.Content.Uploads.Get;
+namespace Aquifer.API.Endpoints.Uploads.Get;
 
 public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
-        Get("/resources/content/{resourceContentId}/uploads/{uploadId}");
+        Get("/uploads/{uploadId}");
         Permissions(PermissionName.CreateContent, PermissionName.CreateCommunityContent);
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
+        var upload = await _dbContext.Uploads
+            .FirstOrDefaultAsync(u => u.Id == req.UploadId, ct);
+
+        if (upload == null)
+        {
+            await SendNotFoundAsync(ct);
+            return;
+        }
+
         var response = new Response
         {
-            Id = 1,
-            Status = Response.UploadStatus.Pending,
+            UploadId = upload.Id,
+            Status = upload.Status,
+            Created = upload.Created,
         };
 
         await SendOkAsync(response, ct);

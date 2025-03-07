@@ -27,23 +27,23 @@ public sealed class UploadResourceContentAudioMessageSubscriber
             : ffmpegOptions.FfmpegFilePath;
     }
 
-    private const string CompressAudioMessageSubscriberFunctionName = "UploadResourceContentAudioMessageSubscriber";
+    private const string UploadResourceContentAudioMessageSubscriberName = "UploadResourceContentAudioMessageSubscriber";
 
-    [Function(CompressAudioMessageSubscriberFunctionName)]
-    public async Task CompressAudioAsync(
+    [Function(UploadResourceContentAudioMessageSubscriberName)]
+    public async Task UploadResourceContentAudioAsync(
         [QueueTrigger(Queues.UploadResourceContentAudio)] QueueMessage queueMessage,
         CancellationToken ct)
     {
         await queueMessage.ProcessAsync<UploadResourceContentAudioMessage, UploadResourceContentAudioMessageSubscriber>(
             _logger,
-            CompressAudioMessageSubscriberFunctionName,
+            UploadResourceContentAudioMessageSubscriberName,
             ProcessAsync,
             ct);
     }
 
     private async Task ProcessAsync(QueueMessage queueMessage, UploadResourceContentAudioMessage message, CancellationToken ct)
     {
-        _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: CompressAudioAsync: Start");
+        _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: UploadResourceContentAudioAsync: Start");
 
         using var process = new Process
         {
@@ -61,8 +61,8 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         var ffmpegVersionOutput = await process.StandardOutput.ReadToEndAsync(ct);
         await process.WaitForExitAsync(ct);
 
-        _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: CompressAudioAsync: ffmpegVersion: {ffmpegVersion}", ffmpegVersionOutput);
+        _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: UploadResourceContentAudioAsync: ffmpegVersion: {ffmpegVersion}", ffmpegVersionOutput);
 
-        _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: CompressAudioAsync: Finish");
+        _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: UploadResourceContentAudioAsync: Finish");
     }
 }
