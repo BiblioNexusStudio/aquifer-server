@@ -1,13 +1,17 @@
 ﻿using Azure.Core;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 
 namespace Aquifer.Common.Services;
 
 public interface IBlobStorageService
 {
-    Task UploadFileAsync(string containerName, string blobName, Stream fileStream, CancellationToken ct);
+    Task DeleteFileAsync(string containerName, string blobName, CancellationToken ct);
+    Task DownloadFileAsync(string containerName, string blobName, string filePath, CancellationToken ct);
+    Task DownloadStreamAsync(string containerName, string blobName, Stream stream, CancellationToken ct);
     Task UploadFileAsync(string containerName, string blobName, string filePath, CancellationToken ct);
     Task UploadFilesInParallelAsync(string containerName, IEnumerable<(string BlobName, string FilePath)> files, CancellationToken ct);
+    Task UploadStreamAsync(string containerName, string blobName, Stream fileStream, CancellationToken ct);
 }
 
 public sealed class BlobStorageService(string _connectionString, IAzureClientService _azureClientService): IBlobStorageService
@@ -25,12 +29,28 @@ public sealed class BlobStorageService(string _connectionString, IAzureClientSer
         },
     };
 
-    public async Task UploadFileAsync(string containerName, string blobName, Stream fileStream, CancellationToken ct)
+    public async Task DeleteFileAsync(string containerName, string blobName, CancellationToken ct)
     {
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
         var blobClient = containerClient.GetBlobClient(blobName);
 
-        await blobClient.UploadAsync(fileStream, overwrite: true, ct);
+        await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots, cancellationToken: ct);
+    }
+
+    public async Task DownloadFileAsync(string containerName, string blobName, string filePath, CancellationToken ct)
+    {
+        var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        var blobClient = containerClient.GetBlobClient(blobName);
+
+        await blobClient.DownloadToAsync(filePath, cancellationToken: ct);
+    }
+
+    public async Task DownloadStreamAsync(string containerName, string blobName, Stream stream, CancellationToken ct)
+    {
+        var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        var blobClient = containerClient.GetBlobClient(blobName);
+
+        await blobClient.DownloadToAsync(stream, cancellationToken: ct);
     }
 
     public async Task UploadFileAsync(string containerName, string blobName, string filePath, CancellationToken ct)
@@ -49,6 +69,14 @@ public sealed class BlobStorageService(string _connectionString, IAzureClientSer
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
 
         await Task.WhenAll(files.Select(f => UploadFileCoreAsync(containerClient.GetBlobClient(f.BlobName), f.FilePath, ct)));
+    }
+
+    public async Task UploadStreamAsync(string containerName, string blobName, Stream fileStream, CancellationToken ct)
+    {
+        var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        var blobClient = containerClient.GetBlobClient(blobName);
+
+        await blobClient.UploadAsync(fileStream, overwrite: true, ct);
     }
 
     private static async Task UploadFileCoreAsync(BlobClient blobClient, string filePath, CancellationToken cancellationToken)
