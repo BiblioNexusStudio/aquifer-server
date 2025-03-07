@@ -12,7 +12,8 @@ namespace Aquifer.API.Endpoints.Resources.Content.Uploads.Create;
 public class Endpoint(
     AquiferDbContext _dbContext,
     IBlobStorageService _blobStorageService,
-    IUploadResourceContentAudioMessagePublisher _uploadResourceContentAudioMessagePublisher)
+    IUploadResourceContentAudioMessagePublisher _uploadResourceContentAudioMessagePublisher,
+    ILogger<Endpoint> _logger)
     : Endpoint<Request, Response>
 {
     // TODO move to app settings
@@ -47,12 +48,11 @@ public class Endpoint(
             ThrowError(x => x.File, "File must be an mp3.", StatusCodes.Status400BadRequest);
         }
 
-        var uploadEntity = new UploadEntity
-        {
-            Status = UploadStatus.Pending,
-        };
-        _dbContext.Add(uploadEntity);
-        await _dbContext.SaveChangesAsync(ct);
+        _logger.LogInformation(
+            "Creating upload for Resource Content ID {ResourceContentId} and Step Number {StepNumber} from file \"{fileName}\".",
+            request.ResourceContentId,
+            request.StepNumber,
+            request.File.FileName);
 
         // TODO refactor to unbuffered stream of request???
         var tempBlobName = $"uploads/{Guid.NewGuid()}.mp3";
@@ -60,6 +60,13 @@ public class Endpoint(
         {
             await _blobStorageService.UploadStreamAsync(TempContainerName, tempBlobName, fileStream, ct);
         }
+
+        var uploadEntity = new UploadEntity
+        {
+            Status = UploadStatus.Pending,
+        };
+        _dbContext.Add(uploadEntity);
+        await _dbContext.SaveChangesAsync(ct);
 
         await _uploadResourceContentAudioMessagePublisher.PublishUploadResourceContentAudioMessageAsync(
             new UploadResourceContentAudioMessage(
