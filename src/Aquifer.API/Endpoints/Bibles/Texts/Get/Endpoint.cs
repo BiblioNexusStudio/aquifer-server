@@ -87,10 +87,10 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
         var maxVerseId = BibleUtilities.GetVerseId(bookId, maxChapter.Number, maxChapter.Verses.Last().Number);
         
         var versificationMap = await VersificationUtilities.ConvertVersificationRangeAsync(
-            CachingVersificationService.EngVersificationSchemeBibleId,
+            req.BibleId,
             minVerseId,
             maxVerseId,
-            req.BibleId,
+            CachingVersificationService.EngVersificationSchemeBibleId,
             versificationService,
             ct);
         
