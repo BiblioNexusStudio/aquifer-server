@@ -134,7 +134,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
             }
         }
         // catch start verse {VerseId} is invalid for bible {BibleId}
-        catch (ArgumentException e)
+        catch (ArgumentException)
         {
             // Ideally, we would be able to figure out that the verse does not exist in the target bible and still map the verse if a mapping
             // does exist in the source bible.
