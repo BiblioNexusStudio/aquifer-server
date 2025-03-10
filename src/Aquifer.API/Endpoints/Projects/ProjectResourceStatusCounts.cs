@@ -41,6 +41,9 @@ public class ProjectResourceStatusCounts
 
     internal static readonly List<ResourceContentStatus> RemainingStatuses =
     [
+        ResourceContentStatus.New,
+        ResourceContentStatus.TranslationAwaitingAiDraft,
+        ResourceContentStatus.AquiferizeAwaitingAiDraft,
         ResourceContentStatus.AquiferizeAiDraftComplete,
         ResourceContentStatus.AquiferizeEditorReview,
         ResourceContentStatus.TranslationEditorReview,
