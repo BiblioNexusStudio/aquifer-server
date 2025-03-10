@@ -4,4 +4,4 @@ public sealed record UploadResourceContentAudioMessage(
     int UploadId,
     int ResourceContentId,
     int? StepNumber,
-    string TempContainerSourceBlobName);
+    string TempUploadBlobName);

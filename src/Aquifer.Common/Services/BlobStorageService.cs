@@ -1,4 +1,5 @@
-﻿using Azure.Core;
+﻿using Aquifer.Common.Configuration;
+using Azure.Core;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
@@ -14,9 +15,13 @@ public interface IBlobStorageService
     Task UploadStreamAsync(string containerName, string blobName, Stream fileStream, CancellationToken ct);
 }
 
-public sealed class BlobStorageService(string _connectionString, IAzureClientService _azureClientService): IBlobStorageService
+public sealed class BlobStorageService(AzureStorageAccountOptions _azureStorageAccountOptions, IAzureClientService _azureClientService)
+    : IBlobStorageService
 {
-    private readonly BlobServiceClient _blobServiceClient = GetBlobServiceClient(_connectionString, _azureClientService);
+    private readonly BlobServiceClient _blobServiceClient = GetBlobServiceClient(
+        _azureStorageAccountOptions.BlobEndpoint,
+        _azureStorageAccountOptions.ConnectionStringOverride,
+        _azureClientService);
 
     private static readonly BlobClientOptions s_blobClientOptions = new()
     {
@@ -85,13 +90,20 @@ public sealed class BlobStorageService(string _connectionString, IAzureClientSer
         await blobClient.UploadAsync(fileStream, overwrite: true, cancellationToken);
     }
 
-    private static BlobServiceClient GetBlobServiceClient(string connectionString, IAzureClientService azureClientService)
+    private static BlobServiceClient GetBlobServiceClient(
+        Uri? blobEndpoint,
+        string? connectionStringOverride,
+        IAzureClientService azureClientService)
     {
-        return connectionString.StartsWith("http")
+        return string.IsNullOrEmpty(connectionStringOverride)
             ? new BlobServiceClient(
-                new Uri(connectionString),
+                blobEndpoint
+                    ?? throw new InvalidOperationException(
+                        $"The \"{nameof(AzureStorageAccountOptions.BlobEndpoint)}\" setting must be provided when \"{nameof(AzureStorageAccountOptions.ConnectionStringOverride)}\" is empty."),
                 azureClientService.GetCredential(),
                 s_blobClientOptions)
-            : new BlobServiceClient(connectionString);
+            : new BlobServiceClient(
+                connectionStringOverride,
+                s_blobClientOptions);
     }
 }

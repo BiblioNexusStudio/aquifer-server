@@ -18,12 +18,19 @@ using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
+
 var configuration = builder.Configuration.Get<ConfigurationOptions>() ??
     throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
 builder.Services
+    .AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
+
+builder.Services
+    .AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.AzureStorageAccount)
+    .AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.Upload)
     .AddAuthServices(configuration.JwtSettings)
     .AddCors()
     .AddOutputCache()
@@ -44,7 +51,8 @@ builder.Services
             logging.RequestBodyLogLimit = 4096;
             logging.ResponseBodyLogLimit = 4096;
         })
-    .AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount)
+    .AddSingleton<IBlobStorageService, BlobStorageService>()
+    .AddSingleton<IQueueClientFactory, QueueClientFactory>()
     .AddScoped<IUserService, UserService>()
     .AddScoped<IResourceHistoryService, ResourceHistoryService>()
     .AddScoped<IResourceContentSearchService, ResourceContentSearchService>()

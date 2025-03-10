@@ -1,4 +1,5 @@
 using Aquifer.API.Common;
+using Aquifer.Common.Configuration;
 using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Services;
@@ -10,15 +11,13 @@ using Microsoft.EntityFrameworkCore;
 namespace Aquifer.API.Endpoints.Resources.Content.Uploads.Create;
 
 public class Endpoint(
+    UploadOptions _uploadOptions,
     AquiferDbContext _dbContext,
     IBlobStorageService _blobStorageService,
     IUploadResourceContentAudioMessagePublisher _uploadResourceContentAudioMessagePublisher,
     ILogger<Endpoint> _logger)
     : Endpoint<Request, Response>
 {
-    // TODO move to app settings
-    private const string TempContainerName = "temp";
-
     public override void Configure()
     {
         Post("/resources/content/{resourceContentId}/uploads");
@@ -58,7 +57,7 @@ public class Endpoint(
         var tempBlobName = $"uploads/{Guid.NewGuid()}.mp3";
         await using (var fileStream = request.File.OpenReadStream())
         {
-            await _blobStorageService.UploadStreamAsync(TempContainerName, tempBlobName, fileStream, ct);
+            await _blobStorageService.UploadStreamAsync(_uploadOptions.TempStorageContainerName, tempBlobName, fileStream, ct);
         }
 
         var uploadEntity = new UploadEntity

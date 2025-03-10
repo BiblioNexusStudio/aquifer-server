@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Aquifer.Common.Configuration;
 using Aquifer.Common.Messages;
 using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Services;
@@ -6,36 +7,53 @@ using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
-using Aquifer.Jobs.Configuration;
 using Azure.Storage.Queues.Models;
 using CaseConverter;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Aquifer.Jobs.Subscribers;
 
+public sealed class CdnOptions
+{
+    public required string AquiferContentContainerName { get; init; }
+}
+
+public sealed class FfmpegOptions
+{
+    public required string FfmpegFilePath { get; init; }
+}
+
 public sealed class UploadResourceContentAudioMessageSubscriber
 {
+    public const string AzureCdnStorageAccountServiceKey = nameof(AzureCdnStorageAccountServiceKey);
+
+    private readonly CdnOptions _cdnOptions;
+    private readonly UploadOptions _uploadOptions;
     private readonly AquiferDbContext _dbContext;
+    private readonly IBlobStorageService _blobStorageService;
     private readonly IBlobStorageService _cdnBlobStorageService;
     private readonly ILogger<UploadResourceContentAudioMessageSubscriber> _logger;
     private readonly string _ffmpegFilePath;
-
-    // TODO move these to settings
-    private const string CdnContainerName = "aquifer-content";
-    private const string TempContainerName = "temp";
 
     private const string FiaLegacyCode = "CBBTER";
     private const string FiaCode = "FIA";
 
     public UploadResourceContentAudioMessageSubscriber(
         FfmpegOptions ffmpegOptions,
+        CdnOptions cdnOptions,
+        UploadOptions uploadOptions,
         AquiferDbContext dbContext,
-        IBlobStorageService cdnBlobStorageService,
+        IBlobStorageService blobStorageService,
+        [FromKeyedServices(AzureCdnStorageAccountServiceKey)] IBlobStorageService cdnBlobStorageService,
         ILogger<UploadResourceContentAudioMessageSubscriber> logger)
     {
+        _cdnOptions = cdnOptions;
+        _uploadOptions = uploadOptions;
         _dbContext = dbContext;
+        _blobStorageService = blobStorageService;
         _cdnBlobStorageService = cdnBlobStorageService;
         _logger = logger;
 
@@ -77,10 +95,9 @@ public sealed class UploadResourceContentAudioMessageSubscriber
             .FirstOrDefaultAsync(u => u.Id == message.UploadId, ct)
                 ?? throw new InvalidOperationException($"Upload with ID {message.UploadId} not found.");
 
-        // TODO should this use a different storage instance?
         // download temp blob
         var tempFilePath = Path.GetTempFileName();
-        await _cdnBlobStorageService.DownloadFileAsync(TempContainerName, message.TempContainerSourceBlobName, tempFilePath, ct);
+        await _blobStorageService.DownloadFileAsync(_uploadOptions.TempStorageContainerName, message.TempUploadBlobName, tempFilePath, ct);
 
         // update upload status
         upload.Status = UploadStatus.Processing;
@@ -114,7 +131,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 
         // upload files to CDN
         await _cdnBlobStorageService.UploadFilesInParallelAsync(
-            CdnContainerName,
+            _cdnOptions.AquiferContentContainerName,
             [
                 (string.Format(cdnBlobFormatString, "mp3"), mp3FilePath),
                 (string.Format(cdnBlobFormatString, "webm"), webmFilePath),
@@ -131,7 +148,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 
         // delete temp blob
         File.Delete(tempFilePath);
-        await _cdnBlobStorageService.DeleteFileAsync(TempContainerName, message.TempContainerSourceBlobName, ct);
+        await _blobStorageService.DeleteFileAsync(_uploadOptions.TempStorageContainerName, message.TempUploadBlobName, ct);
 
         // TODO improve logging
         _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: UploadResourceContentAudioAsync: Finish");
