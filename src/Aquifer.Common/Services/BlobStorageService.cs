@@ -12,8 +12,12 @@ public interface IBlobStorageService
     Task DeleteFileAsync(string containerName, string blobName, CancellationToken ct);
     Task DownloadFileAsync(string containerName, string blobName, string filePath, CancellationToken ct);
     Task DownloadStreamAsync(string containerName, string blobName, Stream stream, CancellationToken ct);
-    Task UploadFileAsync(string containerName, string blobName, string filePath, CancellationToken ct);
-    Task UploadFilesInParallelAsync(string containerName, IEnumerable<(string BlobName, string FilePath)> files, CancellationToken ct);
+    Task UploadFileAsync(string containerName, string blobName, string filePath, bool overwrite, CancellationToken ct);
+    Task UploadFilesInParallelAsync(
+        string containerName,
+        IEnumerable<(string BlobName, string FilePath)> files,
+        bool overwrite,
+        CancellationToken ct);
     Task UploadStreamAsync(string containerName, string blobName, Stream fileStream, CancellationToken ct);
 }
 
@@ -103,22 +107,24 @@ public sealed class BlobStorageService(
         }
     }
 
-    public async Task UploadFileAsync(string containerName, string blobName, string filePath, CancellationToken ct)
+    public async Task UploadFileAsync(string containerName, string blobName, string filePath, bool overwrite, CancellationToken ct)
     {
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
         var blobClient = containerClient.GetBlobClient(blobName);
 
-        await UploadFileCoreAsync(blobClient, filePath, ct);
+        await UploadFileCoreAsync(blobClient, filePath, overwrite, ct);
     }
 
     public async Task UploadFilesInParallelAsync(
         string containerName,
         IEnumerable<(string BlobName, string FilePath)> files,
+        bool overwrite,
         CancellationToken ct)
     {
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
 
-        await Task.WhenAll(files.Select(f => UploadFileCoreAsync(containerClient.GetBlobClient(f.BlobName), f.FilePath, ct)));
+        await Task.WhenAll(files.Select(f =>
+            UploadFileCoreAsync(containerClient.GetBlobClient(f.BlobName), f.FilePath, overwrite, ct)));
     }
 
     public async Task UploadStreamAsync(string containerName, string blobName, Stream fileStream, CancellationToken ct)
@@ -145,12 +151,13 @@ public sealed class BlobStorageService(
     private async Task UploadFileCoreAsync(
         BlobClient blobClient,
         string filePath,
+        bool overwrite,
         CancellationToken cancellationToken)
     {
         await using var fileStream = File.OpenRead(filePath);
         try
         {
-            await blobClient.UploadAsync(fileStream, overwrite: true, cancellationToken);
+            await blobClient.UploadAsync(fileStream, overwrite, cancellationToken);
         }
         catch (RequestFailedException rfe)
         {

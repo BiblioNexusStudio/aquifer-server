@@ -157,6 +157,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
                     (string.Format(cdnBlobFormatString, "mp3"), mp3FilePath),
                     (string.Format(cdnBlobFormatString, "webm"), webmFilePath),
                 ],
+                overwrite: true, // overwrite existing files in case this job has to be replayed
                 ct);
         }
         finally
