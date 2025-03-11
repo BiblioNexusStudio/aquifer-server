@@ -8,6 +8,7 @@ using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
+using Aquifer.Data.Schemas;
 using Azure.Storage.Queues.Models;
 using CaseConverter;
 using Microsoft.Azure.Functions.Worker;
@@ -107,10 +108,16 @@ public sealed class UploadResourceContentAudioMessageSubscriber
             return;
         }
 
+        var resourceContentVersion = await _dbContext.ResourceContentVersions
+            .AsTracking()
+            .Where(rcv => rcv.ResourceContentId == resourceContent.Id)
+            .OrderByDescending(rcv => rcv.Version)
+            .FirstAsync(ct);
+
+        var audioContent = JsonUtilities.DefaultDeserialize<ResourceContentAudioJsonSchema>(resourceContentVersion.Content);
+
         upload.Status = UploadStatus.Processing;
         await _dbContext.SaveChangesAsync(ct);
-
-        // TODO add ResourceContentVersion.Version to blob name
 
         // Calculate CDN blob name format string. Full examples after formatting with audio file extension:
         // * "mp3": "resources/FIA/HIN/audio/mp3/HIN_FIA_043_LUK_001_001_1.mp3"
@@ -124,7 +131,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 
         var cdnBlobDirectoryFormatString = $"resources/{code}/{language}/audio/{{0}}";
         var cdnBlobFileNameFormatString
-            = $"{language}_{code}_{blobifiedResourceName}{(message.StepNumber != null ? $"_{message.StepNumber}" : "")}.{{0}}";
+            = $"{language}_{code}_{blobifiedResourceName}{(message.StepNumber != null ? $"_{message.StepNumber}" : "")}_v{resourceContentVersion.Version:D3}.{{0}}";
 
         var cdnBlobFormatString = $"{cdnBlobDirectoryFormatString}/{cdnBlobFileNameFormatString}";
 
@@ -189,7 +196,36 @@ public sealed class UploadResourceContentAudioMessageSubscriber
             }
         }
 
-        // TODO update ResourceContentVersion.Content and potentially publish a new version
+        // update ResourceContentVersion.Content with new CDN URLs
+        if (message.StepNumber.HasValue)
+        {
+            var mp3Step = audioContent.Mp3?.Steps?.FirstOrDefault(s => s.StepNumber == message.StepNumber);
+            var webmStep = audioContent.Webm?.Steps?.FirstOrDefault(s => s.StepNumber == message.StepNumber);
+
+            if (mp3Step == null || webmStep == null)
+            {
+                throw new InvalidOperationException(
+                    $"Step number {message.StepNumber.Value} is missing in audio content for Resource Content ID {message.ResourceContentId} and Upload ID {message.UploadId}.");
+            }
+
+            mp3Step.Url = string.Format(cdnFormatString, "mp3");
+            webmStep.Url = string.Format(cdnFormatString, "webm");
+        }
+        else
+        {
+            if (audioContent.Mp3?.Steps?.Any() == true && audioContent.Webm?.Steps?.Any() == true)
+            {
+                throw new InvalidOperationException(
+                    $"Audio content has steps but no step number was passed for Resource Content ID {message.ResourceContentId} and Upload ID {message.UploadId}.");
+            }
+
+            audioContent.Mp3!.Url = string.Format(cdnFormatString, "mp3");
+            audioContent.Webm!.Url = string.Format(cdnFormatString, "webm");
+        }
+
+        resourceContentVersion.Content = JsonUtilities.DefaultSerialize(audioContent);
+
+        // TODO publish new version if necessary
 
         // update upload status
         upload.Status = UploadStatus.Completed;
