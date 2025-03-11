@@ -2,7 +2,6 @@ using System.Net;
 using Aquifer.AI;
 using Aquifer.Common.Clients;
 using Aquifer.Common.Clients.Http.IpAddressLookup;
-using Aquifer.Common.Configuration;
 using Aquifer.Common.Messages;
 using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Services;
@@ -33,19 +32,16 @@ var host = new HostBuilder()
         // This requires setting env var name AZURE_FUNCTIONS_ENVIRONMENT in Dev/QA and Prod
         var isDevelopment = context.HostingEnvironment.EnvironmentName == Environments.Development;
 
-        services.AddOptions<ConfigurationOptions>().Bind(context.Configuration);
-        services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.AzureStorageAccount);
-        services.AddKeyedSingleton(
-            UploadResourceContentAudioMessageSubscriber.AzureCdnStorageAccountServiceKey,
-            (cfg, _) => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.AzureCdnStorageAccount);
-        services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.Cdn);
-        services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.Ffmpeg);
-        services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.OpenAi);
-        services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.OpenAiTranslation);
-        services.AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.Upload);
-
         var configuration = context.Configuration.Get<ConfigurationOptions>() ??
             throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
+
+        services.AddOptions<ConfigurationOptions>().Bind(context.Configuration);
+        services.AddSingleton(cfg => cfg.GetRequiredService<IOptions<ConfigurationOptions>>().Value.AzureStorageAccount);
+        services.AddSingleton(cfg => cfg.GetRequiredService<IOptions<ConfigurationOptions>>().Value.Cdn);
+        services.AddSingleton(cfg => cfg.GetRequiredService<IOptions<ConfigurationOptions>>().Value.Ffmpeg);
+        services.AddSingleton(cfg => cfg.GetRequiredService<IOptions<ConfigurationOptions>>().Value.OpenAi);
+        services.AddSingleton(cfg => cfg.GetRequiredService<IOptions<ConfigurationOptions>>().Value.OpenAiTranslation);
+        services.AddSingleton(cfg => cfg.GetRequiredService<IOptions<ConfigurationOptions>>().Value.Upload);
 
         services.AddDbContext<AquiferDbContext>(options => options
             .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
@@ -59,8 +55,8 @@ var host = new HostBuilder()
         services.AddSingleton<IBlobStorageService, BlobStorageService>();
         services.AddKeyedSingleton<IBlobStorageService, BlobStorageService>(
             UploadResourceContentAudioMessageSubscriber.AzureCdnStorageAccountServiceKey,
-            (sp, key) => new BlobStorageService(
-                sp.GetRequiredKeyedService<AzureStorageAccountOptions>(key),
+            (sp, _) => new BlobStorageService(
+                configuration.AzureCdnStorageAccount,
                 sp.GetRequiredService<IAzureClientService>(),
                 sp.GetRequiredService<ILogger<BlobStorageService>>()));
         services.AddSingleton<IQueueClientFactory, QueueClientFactory>();
