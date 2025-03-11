@@ -13,8 +13,6 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.SqlServer.Server;
-using ReverseMarkdown.Converters;
 
 namespace Aquifer.Jobs.Subscribers;
 
@@ -85,7 +83,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 
     private async Task ProcessAsync(QueueMessage queueMessage, UploadResourceContentAudioMessage message, CancellationToken ct)
     {
-        _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: UploadResourceContentAudioAsync: Start");
+        _logger.LogInformation($"Beginning processing of {nameof(UploadResourceContentAudioMessage)}: {{Message}}", message);
 
         var resourceContent = await _dbContext.ResourceContents
             .Include(rc => rc.Language)
@@ -99,13 +97,12 @@ public sealed class UploadResourceContentAudioMessageSubscriber
             .FirstOrDefaultAsync(u => u.Id == message.UploadId, ct)
                 ?? throw new InvalidOperationException($"Upload with ID {message.UploadId} not found.");
 
+        upload.Status = UploadStatus.Processing;
+        await _dbContext.SaveChangesAsync(ct);
+
         // download temp blob
         var tempFilePath = Path.GetTempFileName();
         await _blobStorageService.DownloadFileAsync(_uploadOptions.TempStorageContainerName, message.TempUploadBlobName, tempFilePath, ct);
-
-        // update upload status
-        upload.Status = UploadStatus.Processing;
-        await _dbContext.SaveChangesAsync(ct);
 
         // TODO add ResourceContentVersion.Version to blob name
 
@@ -133,6 +130,8 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         var webmFilePath = Path.GetTempFileName();
         await CompressToWebmAsync(tempFilePath, webmFilePath, ct);
 
+        File.Delete(tempFilePath);
+
         // upload files to CDN
         await _cdnBlobStorageService.UploadFilesInParallelAsync(
             _cdnOptions.AquiferContentContainerName,
@@ -141,6 +140,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
                 (string.Format(cdnBlobFormatString, "webm"), webmFilePath),
             ],
             ct);
+
         File.Delete(mp3FilePath);
         File.Delete(webmFilePath);
 
@@ -150,18 +150,19 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         upload.Status = UploadStatus.Completed;
         await _dbContext.SaveChangesAsync(ct);
 
-        // delete temp blob
-        File.Delete(tempFilePath);
-        await _blobStorageService.DeleteFileAsync(_uploadOptions.TempStorageContainerName, message.TempUploadBlobName, ct);
-
-        // TODO improve logging
-        _logger.LogInformation("UploadResourceContentAudioMessageSubscriber: UploadResourceContentAudioAsync: Finish");
+        // delete temp blob (this is done last because replays are not possible if this file is missing)
+        await _blobStorageService.DeleteFileAsync(
+            _uploadOptions.TempStorageContainerName,
+            message.TempUploadBlobName,
+            CancellationToken.None);
 
         // TODO bonus: re-zip?
         // 1. Download all files from CDN.
         // 2. Create zip file with correct naming including Version suffix.
         // 3. Upload zip file to CDN (will be unique per version); use `overwrite: false`.
         // 4. Update content to include new ZIP file CDN URL.
+
+        _logger.LogInformation($"Finished processing of {nameof(UploadResourceContentAudioMessage)}: {{Message}}", message);
     }
 
     private static string GetBlobifiedResourceName(string resourceEnglishLabel)
