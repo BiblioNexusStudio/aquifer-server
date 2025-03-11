@@ -3,8 +3,10 @@ using Aquifer.Common.Configuration;
 using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Services;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Aquifer.Data.Schemas;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,15 +38,45 @@ public class Endpoint(
             return;
         }
 
-        if (request.StepNumber.HasValue)
-        {
-            // TODO ensure ResourceContentVersion.Content has steps
-            ThrowError(x => x.StepNumber, "Resource Content Version does not have steps.", StatusCodes.Status400BadRequest);
-        }
-
+        // we could change this in the future if desired and support additional audio types
         if (request.File.ContentType != "audio/mpeg")
         {
             ThrowError(x => x.File, "File must be an mp3.", StatusCodes.Status400BadRequest);
+        }
+
+        var resourceContentVersion = await _dbContext.ResourceContentVersions
+            .Where(rcv => rcv.ResourceContentId == request.ResourceContentId)
+            .OrderByDescending(rcv => rcv.Version)
+            .FirstAsync(ct);
+
+        var audioContent = JsonUtilities.DefaultDeserialize<ResourceContentAudioJsonSchema>(resourceContentVersion.Content);
+        var audioContentHasSteps = audioContent.Mp3?.Steps?.Any() == true && audioContent.Webm?.Steps?.Any() == true;
+
+        if (request.StepNumber.HasValue)
+        {
+            if (!audioContentHasSteps)
+            {
+                ThrowError(
+                    x => x.StepNumber,
+                    "The current Resource Content Version's Content does not have steps but a step number was passed.",
+                    StatusCodes.Status400BadRequest);
+            }
+            else if (audioContent.Mp3!.Steps!.All(s => s.StepNumber != request.StepNumber) ||
+                audioContent.Webm!.Steps!.All(s => s.StepNumber != request.StepNumber))
+            {
+                // in the future we could support new uploads but for now we only support replacing existing steps
+                ThrowError(
+                    x => x.StepNumber,
+                    $"The current Resource Content Version's Content does not include step number {request.StepNumber}.",
+                    StatusCodes.Status400BadRequest);
+            }
+        }
+        else if (audioContentHasSteps)
+        {
+            ThrowError(
+                x => x.StepNumber,
+                "The current Resource Content Version's Content has steps but no step number was passed.",
+                StatusCodes.Status400BadRequest);
         }
 
         _logger.LogInformation(
