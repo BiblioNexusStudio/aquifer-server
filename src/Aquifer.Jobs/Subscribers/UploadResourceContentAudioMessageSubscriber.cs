@@ -13,6 +13,8 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.SqlServer.Server;
+using ReverseMarkdown.Converters;
 
 namespace Aquifer.Jobs.Subscribers;
 
@@ -25,6 +27,8 @@ public sealed class FfmpegOptions
 {
     public required string FfmpegFilePath { get; init; }
 }
+
+public sealed class FfmpegException(string _message, Exception? _innerException = null) : Exception(_message, _innerException);
 
 public sealed class UploadResourceContentAudioMessageSubscriber
 {
@@ -191,37 +195,47 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 
     private async Task CompressToMp3Async(string inputFilePath, string outputMp3FilePath, CancellationToken ct)
     {
-        using var process = new Process();
-        process.StartInfo = new ProcessStartInfo
-        {
-            FileName = _ffmpegFilePath,
-            Arguments = $"-y -i \"{inputFilePath}\" -b:a 32k \"{outputMp3FilePath}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-
-        process.Start();
-        await process.WaitForExitAsync(ct);
-
-        // TODO check exit code like https://github.com/Azure-Samples/media-services-v3-dotnet-core-functions-integration/blob/4f0d6a3e0de03777d8ce49b4a7721cc0b6255ccc/Encoding/Encoding/VodFunctions/ffmpeg-encoding.cs#L143
+        // Compress source audio file to MP3 format at 32kbps.
+        await RunFfmpegAsync($"-y -i \"{inputFilePath}\" -b:a 32k \"{outputMp3FilePath}\"", ct);
     }
 
     private async Task CompressToWebmAsync(string inputFilePath, string outputWebmFilePath, CancellationToken ct)
     {
-        using var process = new Process();
-        process.StartInfo = new ProcessStartInfo
-        {
-            FileName = _ffmpegFilePath,
-            Arguments = $"-y -i \"{inputFilePath}\" -b:a 16k -c:a libopus \"{outputWebmFilePath}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
+        // Compress source audio file to WebM (Opus) format at 16kbps.
+        await RunFfmpegAsync($"-y -i \"{inputFilePath}\" -b:a 16k -c:a libopus \"{outputWebmFilePath}\"", ct);
+    }
 
-        process.Start();
-        await process.WaitForExitAsync(ct);
+    private async Task RunFfmpegAsync(string arguments, CancellationToken ct)
+    {
+        try
+        {
+            using var process = new Process();
+            process.StartInfo = new ProcessStartInfo
+            {
+                FileName = _ffmpegFilePath,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            process.OutputDataReceived += (_, e) => _logger.LogInformation("ffmpeg output: \"{Data}\"", e.Data);
+            process.ErrorDataReceived += (_, e) => _logger.LogError("ffmpeg error: \"{Error}\"", e.Data);
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            await process.WaitForExitAsync(ct);
+
+            if (process.ExitCode != 0)
+            {
+                throw new FfmpegException($"ffmpeg failed with exit code {process.ExitCode}.");
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new FfmpegException("ffmpeg process failed to run successfully.", ex);
+        }
     }
 }
