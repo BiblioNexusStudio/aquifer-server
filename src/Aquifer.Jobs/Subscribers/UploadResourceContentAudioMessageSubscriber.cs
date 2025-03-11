@@ -197,13 +197,13 @@ public sealed class UploadResourceContentAudioMessageSubscriber
     private async Task CompressToMp3Async(string inputFilePath, string outputMp3FilePath, CancellationToken ct)
     {
         // Compress source audio file to MP3 format at 32kbps.
-        await RunFfmpegAsync($"-y -i \"{inputFilePath}\" -b:a 32k \"{outputMp3FilePath}\"", ct);
+        await RunFfmpegAsync($"-y -i \"{inputFilePath}\" -b:a 32k -f mp3 \"{outputMp3FilePath}\"", ct);
     }
 
     private async Task CompressToWebmAsync(string inputFilePath, string outputWebmFilePath, CancellationToken ct)
     {
         // Compress source audio file to WebM (Opus) format at 16kbps.
-        await RunFfmpegAsync($"-y -i \"{inputFilePath}\" -b:a 16k -c:a libopus \"{outputWebmFilePath}\"", ct);
+        await RunFfmpegAsync($"-y -i \"{inputFilePath}\" -b:a 16k -c:a libopus -f webm \"{outputWebmFilePath}\"", ct);
     }
 
     private async Task RunFfmpegAsync(string arguments, CancellationToken ct)
@@ -234,7 +234,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
                 throw new FfmpegException($"ffmpeg failed with exit code {process.ExitCode}.");
             }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not FfmpegException or OperationCanceledException)
         {
             throw new FfmpegException("ffmpeg process failed to run successfully.", ex);
         }
