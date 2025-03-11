@@ -110,16 +110,6 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         upload.Status = UploadStatus.Processing;
         await _dbContext.SaveChangesAsync(ct);
 
-        // download temp blob
-        var tempAudioFilePath = Path.GetTempFileName();
-        await _blobStorageService.DownloadFileAsync(_uploadOptions.TempStorageContainerName, message.TempUploadBlobName, tempAudioFilePath, ct);
-
-        // normalize audio file
-        var normalizedAudioFilePath = Path.GetTempFileName();
-        await NormalizeAudioFileAsync(tempAudioFilePath, normalizedAudioFilePath, ct);
-
-        File.Delete(tempAudioFilePath);
-
         // TODO add ResourceContentVersion.Version to blob name
 
         // Calculate CDN blob name format string. Full examples after formatting with audio file extension:
@@ -138,27 +128,65 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 
         var cdnBlobFormatString = $"{cdnBlobDirectoryFormatString}/{cdnBlobFileNameFormatString}";
 
-        // compress to mp3
-        var mp3FilePath = Path.GetTempFileName();
-        await CompressToMp3Async(tempAudioFilePath, mp3FilePath, ct);
+        // Process audio file.
+        string tempAudioFilePath = null!;
+        string normalizedAudioFilePath = null!;
+        string mp3FilePath = null!;
+        string webmFilePath = null!;
+        try
+        {
+            // download temp blob (keeping the same file name and extension)
+            tempAudioFilePath = GetTempFilePath(Path.GetFileName(message.TempUploadBlobName));
+            await _blobStorageService.DownloadFileAsync(
+                _uploadOptions.TempStorageContainerName,
+                message.TempUploadBlobName,
+                tempAudioFilePath,
+                ct);
 
-        // compress to webm
-        var webmFilePath = Path.GetTempFileName();
-        await CompressToWebmAsync(tempAudioFilePath, webmFilePath, ct);
+            // normalize audio file
+            normalizedAudioFilePath = await NormalizeAudioFileAsync(tempAudioFilePath, ct);
 
-        File.Delete(normalizedAudioFilePath);
+            // compress to output formats
+            mp3FilePath = await CompressToMp3Async(normalizedAudioFilePath, ct);
+            webmFilePath = await CompressToWebmAsync(normalizedAudioFilePath, ct);
 
-        // upload files to CDN
-        await _cdnBlobStorageService.UploadFilesInParallelAsync(
-            _cdnOptions.AquiferContentContainerName,
-            [
-                (string.Format(cdnBlobFormatString, "mp3"), mp3FilePath),
-                (string.Format(cdnBlobFormatString, "webm"), webmFilePath),
-            ],
-            ct);
+            // upload files to CDN
+            await _cdnBlobStorageService.UploadFilesInParallelAsync(
+                _cdnOptions.AquiferContentContainerName,
+                [
+                    (string.Format(cdnBlobFormatString, "mp3"), mp3FilePath),
+                    (string.Format(cdnBlobFormatString, "webm"), webmFilePath),
+                ],
+                ct);
+        }
+        finally
+        {
+            // ensure we delete all the temp files
+            SafeDelete(tempAudioFilePath);
+            SafeDelete(normalizedAudioFilePath);
+            SafeDelete(mp3FilePath);
+            SafeDelete(webmFilePath);
 
-        File.Delete(mp3FilePath);
-        File.Delete(webmFilePath);
+            static void SafeDelete(string? filePath)
+            {
+                if (filePath == null)
+                {
+                    return;
+                }
+
+                try
+                {
+                    if (File.Exists(filePath))
+                    {
+                        File.Delete(filePath);
+                    }
+                }
+                catch
+                {
+                    // ignore errors deleting temp files
+                }
+            }
+        }
 
         // TODO update ResourceContentVersion.Content and potentially publish a new version
 
@@ -172,11 +200,11 @@ public sealed class UploadResourceContentAudioMessageSubscriber
             message.TempUploadBlobName,
             CancellationToken.None);
 
-        // TODO bonus: re-zip?
-        // 1. Download all files from CDN.
+        // Future improvement: re-zip for Bible Well consumption (probably in another subscriber).
+        // 1. Download all step audio files from CDN.
         // 2. Create zip file with correct naming including Version suffix.
         // 3. Upload zip file to CDN (will be unique per version); use `overwrite: false`.
-        // 4. Update content to include new ZIP file CDN URL.
+        // 4. Update resource content version content to include the new ZIP file CDN URL.
 
         _logger.LogInformation("Finished processing of {Message}.", message);
     }
@@ -210,22 +238,56 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         return blobifiedResourceName;
     }
 
+    private static string GetTempFilePath(string fileName)
+    {
+        // putting these into the temp path ensures that these get cleaned up eventually if needed.
+        return Path.Combine(Path.GetTempPath(), fileName);
+    }
+
+    private async Task<string> NormalizeAudioFileAsync(string inputFilePath, CancellationToken ct)
+    {
+        // ffmpeg only supports writing to a different output file. It also requires either (a) a meaningful file extension or
+        // (b) a format specifier like "mp3" or "webm" to determine the output format. In this case we want to be agnostic about the
+        // input audio file's format so we need to make a temporary output file using the same extension as the input file.
+        var normalizedAudioFilePath = GetTempFilePath(
+            $"{Path.GetFileNameWithoutExtension(inputFilePath)}-normalized{Path.GetExtension(inputFilePath)}");
+        await NormalizeAudioFileAsync(inputFilePath, normalizedAudioFilePath, ct);
+
+        return normalizedAudioFilePath;
+    }
+
     private async Task NormalizeAudioFileAsync(string inputFilePath, string outputFilePath, CancellationToken ct)
     {
         // Trim leading/trailing silence and apply speech normalization.
         await RunFfmpegAsync($"-y -i \"{inputFilePath}\" -af \"speechnorm=e=3:r=0.00001:l=1,areverse,atrim=start=0.2,silenceremove=start_periods=0.75:start_silence=0.75:start_threshold=0.03,areverse,atrim=start=0.2,silenceremove=start_periods=1:start_silence=0.75:start_threshold=0.05\" \"{outputFilePath}\"", ct);
     }
 
-    private async Task CompressToMp3Async(string inputFilePath, string outputMp3FilePath, CancellationToken ct)
+    private async Task<string> CompressToMp3Async(string inputFilePath, CancellationToken ct)
     {
-        // Compress source audio file to MP3 format at 32kbps.
-        await RunFfmpegAsync($"-y -i \"{inputFilePath}\" -b:a 32k -f mp3 \"{outputMp3FilePath}\"", ct);
+        var outputFilePath = GetTempFilePath($"{Path.GetFileNameWithoutExtension(inputFilePath)}-compressed.mp3");
+        await CompressToMp3Async(inputFilePath, outputFilePath, ct);
+
+        return outputFilePath;
     }
 
-    private async Task CompressToWebmAsync(string inputFilePath, string outputWebmFilePath, CancellationToken ct)
+    private async Task CompressToMp3Async(string inputFilePath, string outputFilePath, CancellationToken ct)
+    {
+        // Compress source audio file to MP3 format at 32kbps.
+        await RunFfmpegAsync($"-y -i \"{inputFilePath}\" -b:a 32k -f mp3 \"{outputFilePath}\"", ct);
+    }
+
+    private async Task<string> CompressToWebmAsync(string inputFilePath, CancellationToken ct)
+    {
+        var outputFilePath = GetTempFilePath($"{Path.GetFileNameWithoutExtension(inputFilePath)}-compressed.webm");
+        await CompressToWebmAsync(inputFilePath, outputFilePath, ct);
+
+        return outputFilePath;
+    }
+
+    private async Task CompressToWebmAsync(string inputFilePath, string outputFilePath, CancellationToken ct)
     {
         // Compress source audio file to WebM (Opus) format at 16kbps.
-        await RunFfmpegAsync($"-y -i \"{inputFilePath}\" -b:a 16k -c:a libopus -f webm \"{outputWebmFilePath}\"", ct);
+        await RunFfmpegAsync($"-y -i \"{inputFilePath}\" -b:a 16k -c:a libopus -f webm \"{outputFilePath}\"", ct);
     }
 
     private async Task RunFfmpegAsync(string arguments, CancellationToken ct)
