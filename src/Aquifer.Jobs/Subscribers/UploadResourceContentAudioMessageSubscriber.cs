@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using Aquifer.Common.Configuration;
 using Aquifer.Common.Messages;
 using Aquifer.Common.Messages.Models;
@@ -210,6 +211,8 @@ public sealed class UploadResourceContentAudioMessageSubscriber
     {
         try
         {
+            var errors = new StringBuilder();
+
             using var process = new Process();
             process.StartInfo = new ProcessStartInfo
             {
@@ -221,7 +224,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
                 CreateNoWindow = true,
             };
             process.OutputDataReceived += (_, e) => _logger.LogInformation("ffmpeg output: \"{Data}\"", e.Data);
-            process.ErrorDataReceived += (_, e) => _logger.LogError("ffmpeg error: \"{Error}\"", e.Data);
+            process.ErrorDataReceived += (_, e) => errors.Append(e.Data);
 
             process.Start();
             process.BeginOutputReadLine();
@@ -231,7 +234,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 
             if (process.ExitCode != 0)
             {
-                throw new FfmpegException($"ffmpeg failed with exit code {process.ExitCode}.");
+                throw new FfmpegException($"ffmpeg failed with exit code {process.ExitCode}. Errors: {errors}.");
             }
         }
         catch (Exception ex) when (ex is not FfmpegException or OperationCanceledException)
