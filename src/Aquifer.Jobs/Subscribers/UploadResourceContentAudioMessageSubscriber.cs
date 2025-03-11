@@ -84,7 +84,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 
     private async Task ProcessAsync(QueueMessage queueMessage, UploadResourceContentAudioMessage message, CancellationToken ct)
     {
-        _logger.LogInformation($"Beginning processing of {nameof(UploadResourceContentAudioMessage)}: {{Message}}", message);
+        _logger.LogInformation("Beginning processing of {Message}.", message);
 
         var resourceContent = await _dbContext.ResourceContents
             .Include(rc => rc.Language)
@@ -97,6 +97,15 @@ public sealed class UploadResourceContentAudioMessageSubscriber
             .AsTracking()
             .FirstOrDefaultAsync(u => u.Id == message.UploadId, ct)
                 ?? throw new InvalidOperationException($"Upload with ID {message.UploadId} not found.");
+
+        if (upload.Status == UploadStatus.Completed)
+        {
+            _logger.LogInformation(
+                "Upload status is already {UploadStatus}. Gracefully skipping processing. Message: {Message}.",
+                upload.Status,
+                message);
+            return;
+        }
 
         upload.Status = UploadStatus.Processing;
         await _dbContext.SaveChangesAsync(ct);
@@ -169,7 +178,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         // 3. Upload zip file to CDN (will be unique per version); use `overwrite: false`.
         // 4. Update content to include new ZIP file CDN URL.
 
-        _logger.LogInformation($"Finished processing of {nameof(UploadResourceContentAudioMessage)}: {{Message}}", message);
+        _logger.LogInformation("Finished processing of {Message}.", message);
     }
 
     private static string GetBlobifiedResourceName(string resourceEnglishLabel)
