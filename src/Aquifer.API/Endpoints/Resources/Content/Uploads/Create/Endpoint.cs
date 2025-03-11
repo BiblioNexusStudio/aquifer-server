@@ -53,7 +53,9 @@ public class Endpoint(
             request.StepNumber,
             request.File.FileName);
 
-        // TODO refactor to unbuffered stream of request???
+        // Note: FastEndpoints also supports unbuffered stream processing
+        // (see https://fast-endpoints.com/docs/file-handling#handling-large-file-uploads).
+        // We could switch to that if buffering consumes too many server resources.
         var tempBlobName = $"uploads/{Guid.NewGuid()}.mp3";
         await using (var fileStream = request.File.OpenReadStream())
         {
