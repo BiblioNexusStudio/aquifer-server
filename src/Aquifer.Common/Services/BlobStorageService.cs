@@ -1,7 +1,9 @@
 ﻿using Aquifer.Common.Configuration;
+using Azure;
 using Azure.Core;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Aquifer.Common.Services;
 
@@ -15,7 +17,10 @@ public interface IBlobStorageService
     Task UploadStreamAsync(string containerName, string blobName, Stream fileStream, CancellationToken ct);
 }
 
-public sealed class BlobStorageService(AzureStorageAccountOptions _azureStorageAccountOptions, IAzureClientService _azureClientService)
+public sealed class BlobStorageService(
+    AzureStorageAccountOptions _azureStorageAccountOptions,
+    IAzureClientService _azureClientService,
+    ILogger<BlobStorageService> _logger)
     : IBlobStorageService
 {
     private readonly BlobServiceClient _blobServiceClient = GetBlobServiceClient(
@@ -39,7 +44,20 @@ public sealed class BlobStorageService(AzureStorageAccountOptions _azureStorageA
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
         var blobClient = containerClient.GetBlobClient(blobName);
 
-        await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots, cancellationToken: ct);
+        try
+        {
+            await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots, cancellationToken: ct);
+        }
+        catch (RequestFailedException rfe)
+        {
+            _logger.LogError(
+                rfe,
+                "Failed to delete blob \"{BlobName}\" from container \"{ContainerName}\" in storage account \"{StorageAccountName}\".",
+                blobName,
+                containerName,
+                blobClient.AccountName);
+            throw;
+        }
     }
 
     public async Task DownloadFileAsync(string containerName, string blobName, string filePath, CancellationToken ct)
@@ -47,7 +65,21 @@ public sealed class BlobStorageService(AzureStorageAccountOptions _azureStorageA
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
         var blobClient = containerClient.GetBlobClient(blobName);
 
-        await blobClient.DownloadToAsync(filePath, cancellationToken: ct);
+        try
+        {
+            await blobClient.DownloadToAsync(filePath, cancellationToken: ct);
+        }
+        catch (RequestFailedException rfe)
+        {
+            _logger.LogError(
+                rfe,
+                "Failed to download blob \"{BlobName}\" from container \"{ContainerName}\" in storage account \"{StorageAccountName}\" to file \"{FilePath}\".",
+                blobName,
+                containerName,
+                blobClient.AccountName,
+                filePath);
+            throw;
+        }
     }
 
     public async Task DownloadStreamAsync(string containerName, string blobName, Stream stream, CancellationToken ct)
@@ -55,7 +87,20 @@ public sealed class BlobStorageService(AzureStorageAccountOptions _azureStorageA
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
         var blobClient = containerClient.GetBlobClient(blobName);
 
-        await blobClient.DownloadToAsync(stream, cancellationToken: ct);
+        try
+        {
+            await blobClient.DownloadToAsync(stream, cancellationToken: ct);
+        }
+        catch (RequestFailedException rfe)
+        {
+            _logger.LogError(
+                rfe,
+                "Failed to download blob \"{BlobName}\" from container \"{ContainerName}\" in storage account \"{StorageAccountName}\" to stream.",
+                blobName,
+                containerName,
+                blobClient.AccountName);
+            throw;
+        }
     }
 
     public async Task UploadFileAsync(string containerName, string blobName, string filePath, CancellationToken ct)
@@ -81,13 +126,43 @@ public sealed class BlobStorageService(AzureStorageAccountOptions _azureStorageA
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
         var blobClient = containerClient.GetBlobClient(blobName);
 
-        await blobClient.UploadAsync(fileStream, overwrite: true, ct);
+        try
+        {
+            await blobClient.UploadAsync(fileStream, overwrite: true, ct);
+        }
+        catch (RequestFailedException rfe)
+        {
+            _logger.LogError(
+                rfe,
+                "Failed to upload stream to blob \"{BlobName}\" in container \"{ContainerName}\" in storage account \"{StorageAccountName}\".",
+                blobName,
+                containerName,
+                blobClient.AccountName);
+            throw;
+        }
     }
 
-    private static async Task UploadFileCoreAsync(BlobClient blobClient, string filePath, CancellationToken cancellationToken)
+    private async Task UploadFileCoreAsync(
+        BlobClient blobClient,
+        string filePath,
+        CancellationToken cancellationToken)
     {
         await using var fileStream = File.OpenRead(filePath);
-        await blobClient.UploadAsync(fileStream, overwrite: true, cancellationToken);
+        try
+        {
+            await blobClient.UploadAsync(fileStream, overwrite: true, cancellationToken);
+        }
+        catch (RequestFailedException rfe)
+        {
+            _logger.LogError(
+                rfe,
+                "Failed to upload file \"{FilePath}\" to blob \"{BlobName}\" in container \"{ContainerName}\" in storage account \"{StorageAccountName}\".",
+                filePath,
+                blobClient.Name,
+                blobClient.BlobContainerName,
+                blobClient.AccountName);
+            throw;
+        }
     }
 
     private static BlobServiceClient GetBlobServiceClient(

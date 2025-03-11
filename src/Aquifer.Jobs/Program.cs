@@ -61,7 +61,8 @@ var host = new HostBuilder()
             UploadResourceContentAudioMessageSubscriber.AzureCdnStorageAccountServiceKey,
             (sp, key) => new BlobStorageService(
                 sp.GetRequiredKeyedService<AzureStorageAccountOptions>(key),
-                sp.GetRequiredService<IAzureClientService>()));
+                sp.GetRequiredService<IAzureClientService>(),
+                sp.GetRequiredService<ILogger<BlobStorageService>>()));
         services.AddSingleton<IQueueClientFactory, QueueClientFactory>();
         services.AddTranslationProcessingServices();
 
