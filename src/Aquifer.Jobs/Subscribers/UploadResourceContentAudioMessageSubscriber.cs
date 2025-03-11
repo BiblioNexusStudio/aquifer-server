@@ -102,8 +102,14 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         await _dbContext.SaveChangesAsync(ct);
 
         // download temp blob
-        var tempFilePath = Path.GetTempFileName();
-        await _blobStorageService.DownloadFileAsync(_uploadOptions.TempStorageContainerName, message.TempUploadBlobName, tempFilePath, ct);
+        var tempAudioFilePath = Path.GetTempFileName();
+        await _blobStorageService.DownloadFileAsync(_uploadOptions.TempStorageContainerName, message.TempUploadBlobName, tempAudioFilePath, ct);
+
+        // normalize audio file
+        var normalizedAudioFilePath = Path.GetTempFileName();
+        await NormalizeAudioFileAsync(tempAudioFilePath, normalizedAudioFilePath, ct);
+
+        File.Delete(tempAudioFilePath);
 
         // TODO add ResourceContentVersion.Version to blob name
 
@@ -125,13 +131,13 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 
         // compress to mp3
         var mp3FilePath = Path.GetTempFileName();
-        await CompressToMp3Async(tempFilePath, mp3FilePath, ct);
+        await CompressToMp3Async(tempAudioFilePath, mp3FilePath, ct);
 
         // compress to webm
         var webmFilePath = Path.GetTempFileName();
-        await CompressToWebmAsync(tempFilePath, webmFilePath, ct);
+        await CompressToWebmAsync(tempAudioFilePath, webmFilePath, ct);
 
-        File.Delete(tempFilePath);
+        File.Delete(normalizedAudioFilePath);
 
         // upload files to CDN
         await _cdnBlobStorageService.UploadFilesInParallelAsync(
@@ -193,6 +199,12 @@ public sealed class UploadResourceContentAudioMessageSubscriber
             : resourceEnglishLabel.ToKebabCase();
 
         return blobifiedResourceName;
+    }
+
+    private async Task NormalizeAudioFileAsync(string inputFilePath, string outputFilePath, CancellationToken ct)
+    {
+        // Trim leading/trailing silence and apply speech normalization.
+        await RunFfmpegAsync($"-y -i \"{inputFilePath}\" -af \"speechnorm=e=3:r=0.00001:l=1,areverse,atrim=start=0.2,silenceremove=start_periods=0.75:start_silence=0.75:start_threshold=0.03,areverse,atrim=start=0.2,silenceremove=start_periods=1:start_silence=0.75:start_threshold=0.05\" \"{outputFilePath}\"", ct);
     }
 
     private async Task CompressToMp3Async(string inputFilePath, string outputMp3FilePath, CancellationToken ct)
