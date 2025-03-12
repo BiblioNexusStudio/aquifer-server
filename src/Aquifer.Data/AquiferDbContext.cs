@@ -40,6 +40,7 @@ public class AquiferDbContext : DbContext
 
     public bool IsReadOnly { get; }
 
+    public DbSet<AllowedReportRolesEntity> AllowedReportRoles { get; set; }
     public DbSet<ApiKeyEntity> ApiKeys { get; set; }
     public DbSet<AssociatedResourceEntity> AssociatedResources { get; set; }
     public DbSet<BibleBookContentEntity> BibleBookContents { get; set; }
