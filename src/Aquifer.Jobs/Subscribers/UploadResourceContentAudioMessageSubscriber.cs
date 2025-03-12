@@ -9,6 +9,7 @@ using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Enums;
 using Aquifer.Data.Schemas;
+using Aquifer.Data.Services;
 using Azure.Storage.Queues.Models;
 using CaseConverter;
 using Microsoft.Azure.Functions.Worker;
@@ -40,6 +41,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
     private readonly AquiferDbContext _dbContext;
     private readonly IBlobStorageService _blobStorageService;
     private readonly IBlobStorageService _cdnBlobStorageService;
+    private readonly IResourceHistoryService _resourceHistoryService;
     private readonly ILogger<UploadResourceContentAudioMessageSubscriber> _logger;
     private readonly string _ffmpegFilePath;
 
@@ -53,6 +55,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         AquiferDbContext dbContext,
         IBlobStorageService blobStorageService,
         [FromKeyedServices(AzureCdnStorageAccountServiceKey)] IBlobStorageService cdnBlobStorageService,
+        IResourceHistoryService resourceHistoryService,
         ILogger<UploadResourceContentAudioMessageSubscriber> logger)
     {
         _cdnOptions = cdnOptions;
@@ -60,6 +63,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         _dbContext = dbContext;
         _blobStorageService = blobStorageService;
         _cdnBlobStorageService = cdnBlobStorageService;
+        _resourceHistoryService = resourceHistoryService;
         _logger = logger;
 
         // Allow developers to specify a local workstation path but if running in Azure treat the passed setting as relative to
@@ -89,6 +93,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         _logger.LogInformation("Beginning processing of {Message}.", message);
 
         var resourceContent = await _dbContext.ResourceContents
+            .AsTracking()
             .Include(rc => rc.Language)
             .Include(rc => rc.Resource)
             .ThenInclude(r => r.ParentResource)
@@ -127,12 +132,13 @@ public sealed class UploadResourceContentAudioMessageSubscriber
             ? resourceContent.Resource.ParentResource.Code
             : FiaCode;
         var language = resourceContent.Language.ISO6393Code.ToUpper();
+        var newVersionNumber = resourceContentVersion.Version + 1;
 
         var blobifiedResourceName = GetBlobifiedResourceName(resourceContent.Resource.EnglishLabel);
 
         var cdnBlobDirectoryFormatString = $"resources/{code}/{language}/audio/{{0}}";
         var cdnBlobFileNameFormatString
-            = $"{language}_{code}_{blobifiedResourceName}{(message.StepNumber != null ? $"_{message.StepNumber}" : "")}_v{resourceContentVersion.Version:D3}.{{0}}";
+            = $"{language}_{code}_{blobifiedResourceName}{(message.StepNumber != null ? $"_{message.StepNumber}" : "")}_v{newVersionNumber:D3}.{{0}}";
 
         var cdnBlobFormatString = $"{cdnBlobDirectoryFormatString}/{cdnBlobFileNameFormatString}";
 
@@ -140,7 +146,9 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         string tempAudioFilePath = null!;
         string normalizedAudioFilePath = null!;
         string mp3FilePath = null!;
+        int mp3FileSize;
         string webmFilePath = null!;
+        int webmFileSize;
         try
         {
             // download temp blob (keeping the same file name and extension)
@@ -156,7 +164,10 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 
             // compress to output formats
             mp3FilePath = await CompressToMp3Async(normalizedAudioFilePath, ct);
+            mp3FileSize = (int)new FileInfo(mp3FilePath).Length;
+
             webmFilePath = await CompressToWebmAsync(normalizedAudioFilePath, ct);
+            webmFileSize = (int)new FileInfo(webmFilePath).Length;
 
             // upload files to CDN
             await _cdnBlobStorageService.UploadFilesInParallelAsync(
@@ -199,7 +210,8 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 
         var cdnUrlFormatString = $"{_cdnOptions.CdnBaseUri}{_cdnOptions.AquiferContentContainerName}/{cdnBlobFormatString}";
 
-        // update ResourceContentVersion.Content with new CDN URLs
+        // Update ResourceContentVersion.Content with new CDN URLs.
+        var hasSteps = audioContent.Mp3?.Steps?.Any() == true && audioContent.Webm?.Steps?.Any() == true;
         if (message.StepNumber.HasValue)
         {
             var mp3Step = audioContent.Mp3?.Steps?.FirstOrDefault(s => s.StepNumber == message.StepNumber);
@@ -213,25 +225,65 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 
             mp3Step.Url = string.Format(cdnUrlFormatString, "mp3");
             webmStep.Url = string.Format(cdnUrlFormatString, "webm");
+
+            // Zip files are ignored for now because they are being retired in favor of individual step audio files.
+            //audioContent.Mp3!.Size = mp3ZipFileSize;
+            //audioContent.Webm!.Size = webmZipFileSize;
         }
         else
         {
-            if (audioContent.Mp3?.Steps?.Any() == true && audioContent.Webm?.Steps?.Any() == true)
+            if (hasSteps)
             {
                 throw new InvalidOperationException(
                     $"Audio content has steps but no step number was passed for Resource Content ID {message.ResourceContentId} and Upload ID {message.UploadId}.");
             }
 
             audioContent.Mp3!.Url = string.Format(cdnUrlFormatString, "mp3");
+            audioContent.Mp3!.Size = mp3FileSize;
+
             audioContent.Webm!.Url = string.Format(cdnUrlFormatString, "webm");
+            audioContent.Webm!.Size = webmFileSize;
         }
 
-        resourceContentVersion.Content = JsonUtilities.DefaultSerialize(audioContent);
+        var newContent = JsonUtilities.DefaultSerialize(audioContent);
 
-        // TODO publish new version if necessary
+        // The content text size was updated but the content size is based upon either the size of the individual webm file (if no steps)
+        // or the size of the zip file (if steps).  We are ignoring the zip file for now and thus will use the previous content size
+        // for content with steps as the zip file has not changed.
+        var newContentSize = hasSteps ? resourceContentVersion.ContentSize : webmFileSize;
 
-        // update upload status
+        // create new resource content version and status history
+        var newResourceContentVersion = new ResourceContentVersionEntity
+        {
+            AssignedReviewerUserId = resourceContentVersion.AssignedReviewerUserId,
+            AssignedUserId = resourceContentVersion.AssignedUserId,
+            Content = newContent,
+            ContentSize = newContentSize,
+            DisplayName = resourceContentVersion.DisplayName,
+            InlineMediaSize = resourceContentVersion.InlineMediaSize,
+            IsDraft = false,
+            IsPublished = resourceContentVersion.IsPublished,
+            ReviewLevel = resourceContentVersion.ReviewLevel,
+            SourceWordCount = resourceContentVersion.SourceWordCount,
+            Version = newVersionNumber,
+            WordCount = resourceContentVersion.WordCount,
+        };
+
+        resourceContent.Versions.Add(newResourceContentVersion);
+
+        // this is a somewhat redundant status history as it's the same as the previous status, but it records who uploaded the file
+        await _resourceHistoryService.AddStatusHistoryAsync(
+            newResourceContentVersion,
+            resourceContent.Status,
+            message.StartedByUserId,
+            ct);
+
+        // unpublish the previous version
+        resourceContentVersion.IsDraft = false;
+        resourceContentVersion.IsPublished = false;
+
         upload.Status = UploadStatus.Completed;
+
         await _dbContext.SaveChangesAsync(ct);
 
         // delete temp blob (this is done last because replays are not possible if this file is missing)
@@ -245,6 +297,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         // 2. Create zip file with correct naming including Version suffix.
         // 3. Upload zip file to CDN (will be unique per version); use `overwrite: false`.
         // 4. Update resource content version content to include the new ZIP file CDN URL.
+        // 5. Update resource content version content size to be the size of the ZIP file.
 
         _logger.LogInformation("Finished processing of {Message}.", message);
     }

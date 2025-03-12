@@ -1,4 +1,5 @@
 using Aquifer.API.Common;
+using Aquifer.API.Services;
 using Aquifer.Common.Configuration;
 using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Messages.Publishers;
@@ -17,6 +18,7 @@ public class Endpoint(
     AquiferDbContext _dbContext,
     IBlobStorageService _blobStorageService,
     IUploadResourceContentAudioMessagePublisher _uploadResourceContentAudioMessagePublisher,
+    IUserService _userService,
     ILogger<Endpoint> _logger)
     : Endpoint<Request, Response>
 {
@@ -29,6 +31,8 @@ public class Endpoint(
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
+        var user = await _userService.GetUserFromJwtAsync(ct);
+
         var resourceContent = await _dbContext.ResourceContents
             .FirstOrDefaultAsync(rc => rc.Id == request.ResourceContentId, ct);
 
@@ -106,7 +110,8 @@ public class Endpoint(
                 uploadEntity.Id,
                 request.ResourceContentId,
                 request.StepNumber,
-                tempBlobName),
+                tempBlobName,
+                user.Id),
             ct);
 
         var response = new Response
