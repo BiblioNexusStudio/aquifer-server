@@ -126,8 +126,8 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         await _dbContext.SaveChangesAsync(ct);
 
         // Calculate CDN blob name format string. Full examples after formatting with audio file extension:
-        // * "mp3": "resources/FIA/HIN/audio/mp3/HIN_FIA_043_LUK_001_001_1.mp3"
-        // * "webm": "resources/FIAKeyTerms/ENG/audio/webm/ENG_FIAKeyTerms_angel-of-the-lord.webm"
+        // * "mp3": "resources/FIA/HIN/audio/mp3/HIN_FIA_043_LUK_001_001_1_v003.mp3"
+        // * "webm": "resources/FIAKeyTerms/ENG/audio/webm/ENG_FIAKeyTerms_angel-of-the-lord_v011.webm"
         var code = resourceContent.Resource.ParentResource.Code != FiaLegacyCode
             ? resourceContent.Resource.ParentResource.Code
             : FiaCode;
