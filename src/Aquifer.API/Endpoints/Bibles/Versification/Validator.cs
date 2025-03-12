@@ -9,7 +9,7 @@ public class Validator : Validator<Request>
     {
         RuleFor(x => x.BookId).NotEmpty();
         RuleFor(x => x.StartChapter).NotEmpty().When(x => x.EndChapter.HasValue);
-        RuleFor(x => x.StartChapter).LessThanOrEqualTo(x => x.EndChapter); 
-        RuleFor(x => x.StartVerse).LessThanOrEqualTo(x => x.EndVerse).When(x => x.StartChapter == x.EndChapter);
+        RuleFor(x => x.StartChapter).LessThanOrEqualTo(x => x.EndChapter).When(x => x.EndChapter.HasValue);
+        RuleFor(x => x.StartVerse).LessThanOrEqualTo(x => x.EndVerse).When(x => x.StartChapter == x.EndChapter && x.EndVerse.HasValue);
     }
 }

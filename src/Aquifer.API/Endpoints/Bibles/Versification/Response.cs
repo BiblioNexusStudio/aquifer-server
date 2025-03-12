@@ -17,8 +17,3 @@ public class VerseMapping
     public required VerseReference TargetBibleVerse { get; set; }
     public required VerseReference SourceBibleVerse { get; set; }
 }
-
-public class ErrorResponse
-{
-    public string Message { get; set; } = string.Empty;
-}
