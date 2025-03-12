@@ -9,5 +9,4 @@ public class Request
     public int StartVerse { get; set; }
     public int EndChapter { get; set; } = 999;
     public int EndVerse { get; set; } = 999;
-    public bool IncludeVersification { get; set; } = false;
 }
