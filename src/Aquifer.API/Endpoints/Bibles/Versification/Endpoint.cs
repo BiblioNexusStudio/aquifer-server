@@ -52,9 +52,10 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
             {
                 SourceBibleVerse = new VerseReference
                 {
-                    BookName = BibleBookCodeUtilities.FullNameFromId(sourceBookId),
-                    ChapterNumber = sourceChapter,
-                    VerseNumber = sourceVerse
+                    VerseId = mapping.Key,
+                    Book = BibleBookCodeUtilities.FullNameFromId(sourceBookId),
+                    Chapter = sourceChapter,
+                    Verse = sourceVerse
                 },
                 TargetBibleVerse = mapping.Value
             });
@@ -163,9 +164,10 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
         
         return new VerseReference
         {
-            BookName = targetBookName,
-            ChapterNumber = targetChapter,
-            VerseNumber = targetVerse
+            VerseId = mappedVerseId,
+            Book = targetBookName,
+            Chapter = targetChapter,
+            Verse = targetVerse
         };
     }
 

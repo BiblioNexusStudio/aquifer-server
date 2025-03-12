@@ -7,9 +7,10 @@ public class Response
 
 public class VerseReference
 {
-    public required string BookName { get; set; }
-    public required int ChapterNumber { get; set; }
-    public required int VerseNumber { get; set; }
+    public required int VerseId { get; set; }
+    public required string Book { get; set; }
+    public required int Chapter { get; set; }
+    public required int Verse { get; set; }
 }
 
 public class VerseMapping
