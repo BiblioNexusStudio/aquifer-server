@@ -21,6 +21,7 @@ namespace Aquifer.Jobs.Subscribers;
 public sealed class CdnOptions
 {
     public required string AquiferContentContainerName { get; init; }
+    public required string CdnBaseUri { get; init; }
 }
 
 public sealed class FfmpegOptions
@@ -196,6 +197,8 @@ public sealed class UploadResourceContentAudioMessageSubscriber
             }
         }
 
+        var cdnUrlFormatString = $"{_cdnOptions.CdnBaseUri}{_cdnOptions.AquiferContentContainerName}/{cdnBlobFormatString}";
+
         // update ResourceContentVersion.Content with new CDN URLs
         if (message.StepNumber.HasValue)
         {
@@ -208,8 +211,8 @@ public sealed class UploadResourceContentAudioMessageSubscriber
                     $"Step number {message.StepNumber.Value} is missing in audio content for Resource Content ID {message.ResourceContentId} and Upload ID {message.UploadId}.");
             }
 
-            mp3Step.Url = string.Format(cdnFormatString, "mp3");
-            webmStep.Url = string.Format(cdnFormatString, "webm");
+            mp3Step.Url = string.Format(cdnUrlFormatString, "mp3");
+            webmStep.Url = string.Format(cdnUrlFormatString, "webm");
         }
         else
         {
@@ -219,8 +222,8 @@ public sealed class UploadResourceContentAudioMessageSubscriber
                     $"Audio content has steps but no step number was passed for Resource Content ID {message.ResourceContentId} and Upload ID {message.UploadId}.");
             }
 
-            audioContent.Mp3!.Url = string.Format(cdnFormatString, "mp3");
-            audioContent.Webm!.Url = string.Format(cdnFormatString, "webm");
+            audioContent.Mp3!.Url = string.Format(cdnUrlFormatString, "mp3");
+            audioContent.Webm!.Url = string.Format(cdnUrlFormatString, "webm");
         }
 
         resourceContentVersion.Content = JsonUtilities.DefaultSerialize(audioContent);
