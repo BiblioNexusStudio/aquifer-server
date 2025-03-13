@@ -7,6 +7,14 @@ public class UploadEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
 
+    public string BlobName { get; set; } = null!;
+    public string FileName { get; set; } = null!;
+    public long FileSize { get; set; }
+    public ResourceContentEntity? ResourceContent { get; set; }
+    public int? ResourceContentId { get; set; }
+    public int? StepNumber { get; set; }
+    public UserEntity StartedByUser { get; set; } = null!;
+    public int StartedByUserId { get; set; }
     public UploadStatus Status { get; set; }
 
     [SqlDefaultValue("getutcdate()")]

@@ -101,6 +101,12 @@ public class Endpoint(
 
         var uploadEntity = new UploadEntity
         {
+            BlobName = tempBlobName,
+            FileName = request.File.FileName,
+            FileSize = request.File.Length,
+            ResourceContentId = resourceContentVersion.ResourceContentId,
+            StartedByUserId = user.Id,
+            StepNumber = request.StepNumber,
             Status = UploadStatus.Pending,
         };
         _dbContext.Uploads.Add(uploadEntity);
