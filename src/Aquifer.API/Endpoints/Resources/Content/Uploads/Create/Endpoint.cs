@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Common.Configuration;
@@ -22,6 +23,34 @@ public class Endpoint(
     ILogger<Endpoint> _logger)
     : Endpoint<Request, Response>
 {
+    // we could potentially add more to this list if needed as ffmpeg supports most audio types
+    private static readonly ReadOnlySet<string> s_supportedAudioMimeTypes = new(
+        new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+        {
+            "audio/aac",
+            "audio/flac",
+            "audio/mp3",
+            "audio/mpeg",
+            "audio/ogg",
+            "audio/opus",
+            "audio/speex",
+            "audio/vorbis",
+            "audio/wav",
+            "audio/webm",
+            "audio/x-aac",
+            "audio/x-flac",
+            "audio/x-mp3",
+            "audio/x-mpeg",
+            "audio/x-ms-wma",
+            "audio/x-ogg",
+            "audio/x-ogg-flac",
+            "audio/x-ogg-pcm",
+            "audio/x-oggflac",
+            "audio/x-oggpcm",
+            "audio/x-speex",
+            "audio/x-wav",
+        });
+
     public override void Configure()
     {
         Post("/resources/content/{resourceContentId}/uploads");
@@ -43,9 +72,9 @@ public class Endpoint(
         }
 
         // we could change this in the future if desired and support additional audio types
-        if (request.File.ContentType != "audio/mpeg")
+        if (!s_supportedAudioMimeTypes.Contains(request.File.ContentType))
         {
-            ThrowError(x => x.File, "File must be an mp3.", StatusCodes.Status400BadRequest);
+            ThrowError(x => x.File, $"Unsupported MIME type: {request.File.ContentType}", StatusCodes.Status400BadRequest);
         }
 
         var resourceContentVersion = await _dbContext.ResourceContentVersions
@@ -92,7 +121,7 @@ public class Endpoint(
         // Note: FastEndpoints also supports unbuffered stream processing
         // (see https://fast-endpoints.com/docs/file-handling#handling-large-file-uploads).
         // We could switch to that if buffering consumes too many server resources.
-        var tempBlobName = $"uploads/{Guid.NewGuid()}.mp3";
+        var tempBlobName = $"uploads/{Guid.NewGuid()}{Path.GetExtension(request.File.FileName)}";
         await using (var fileStream = request.File.OpenReadStream())
         {
             await _blobStorageService.UploadStreamAsync(_uploadOptions.TempStorageContainerName, tempBlobName, fileStream, ct);
