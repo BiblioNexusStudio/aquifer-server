@@ -35,6 +35,8 @@ public class ReportEntity : IHasUpdatedTimestamp
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
+
+    public string AllowedRoles { get; set; } = null!;
 }
 
 public enum ReportType

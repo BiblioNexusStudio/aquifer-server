@@ -1350,6 +1350,10 @@ namespace Aquifer.Data.Migrations
                     b.Property<bool>("AcceptsParentResource")
                         .HasColumnType("bit");
 
+                    b.Property<string>("AllowedRoles")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
