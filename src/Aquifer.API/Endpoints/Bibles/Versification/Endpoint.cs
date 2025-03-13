@@ -48,7 +48,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
             .Where(mapping => mapping.Value.HasValue && mapping.Value.Value != mapping.Key)
             .ToDictionary(
                 mapping => mapping.Key,
-                mapping => FormatBaseBookChapterVerseMapping(mapping.Value!.Value));
+                mapping => MapToVerseReference(mapping.Value!.Value));
         
         var verseMappings = new List<VerseMapping>();
         foreach (var mapping in sourceBibleVerseMappings)
@@ -164,7 +164,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
                 BibleUtilities.GetVerseId((BookId)req.BookId, maxChapterNumber, maxVerse));
     }
     
-    private static VerseReference FormatBaseBookChapterVerseMapping(int mappedVerseId)
+    private static VerseReference MapToVerseReference(int mappedVerseId)
     {
         var (targetBookId, targetChapter, targetVerse) = BibleUtilities.TranslateVerseId(mappedVerseId);
         var targetBookName = BibleBookCodeUtilities.FullNameFromId(targetBookId);
