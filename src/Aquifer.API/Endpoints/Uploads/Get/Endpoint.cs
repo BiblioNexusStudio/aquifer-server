@@ -10,7 +10,7 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
     public override void Configure()
     {
         Get("/uploads/{uploadId}");
-        Permissions(PermissionName.CreateContent, PermissionName.CreateCommunityContent);
+        Permissions(PermissionName.CreateContent);
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)

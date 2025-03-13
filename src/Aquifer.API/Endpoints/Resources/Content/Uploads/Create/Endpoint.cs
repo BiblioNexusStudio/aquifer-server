@@ -26,7 +26,7 @@ public class Endpoint(
     {
         Post("/resources/content/{resourceContentId}/uploads");
         AllowFileUploads();
-        Permissions(PermissionName.CreateContent, PermissionName.CreateCommunityContent);
+        Permissions(PermissionName.CreateContent);
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
