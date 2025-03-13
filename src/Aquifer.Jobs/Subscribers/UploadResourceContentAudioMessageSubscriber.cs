@@ -125,166 +125,188 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         upload.Status = UploadStatus.Processing;
         await _dbContext.SaveChangesAsync(ct);
 
-        // Calculate CDN blob name format string. Full examples after formatting with audio file extension:
-        // * "mp3": "resources/FIA/HIN/audio/mp3/HIN_FIA_043_LUK_001_001_1_v003.mp3"
-        // * "webm": "resources/FIAKeyTerms/ENG/audio/webm/ENG_FIAKeyTerms_angel-of-the-lord_v011.webm"
-        var code = resourceContent.Resource.ParentResource.Code != FiaLegacyCode
-            ? resourceContent.Resource.ParentResource.Code
-            : FiaCode;
-        var language = resourceContent.Language.ISO6393Code.ToUpper();
-        var newVersionNumber = resourceContentVersion.Version + 1;
-
-        var blobifiedResourceName = GetBlobifiedResourceName(resourceContent.Resource.EnglishLabel);
-
-        var cdnBlobDirectoryFormatString = $"resources/{code}/{language}/audio/{{0}}";
-        var cdnBlobFileNameFormatString
-            = $"{language}_{code}_{blobifiedResourceName}{(message.StepNumber != null ? $"_{message.StepNumber}" : "")}_v{newVersionNumber:D3}.{{0}}";
-
-        var cdnBlobFormatString = $"{cdnBlobDirectoryFormatString}/{cdnBlobFileNameFormatString}";
-
-        // Process audio file.
-        string tempAudioFilePath = null!;
-        string normalizedAudioFilePath = null!;
-        string mp3FilePath = null!;
-        int mp3FileSize;
-        string webmFilePath = null!;
-        int webmFileSize;
         try
         {
-            // download temp blob (keeping the same file name and extension)
-            tempAudioFilePath = GetTempFilePath(Path.GetFileName(message.TempUploadBlobName));
-            await _blobStorageService.DownloadFileAsync(
-                _uploadOptions.TempStorageContainerName,
-                message.TempUploadBlobName,
-                tempAudioFilePath,
-                ct);
+            // Calculate CDN blob name format string. Full examples after formatting with audio file extension:
+            // * "mp3": "resources/FIA/HIN/audio/mp3/HIN_FIA_043_LUK_001_001_1_v003.mp3"
+            // * "webm": "resources/FIAKeyTerms/ENG/audio/webm/ENG_FIAKeyTerms_angel-of-the-lord_v011.webm"
+            var code = resourceContent.Resource.ParentResource.Code != FiaLegacyCode
+                ? resourceContent.Resource.ParentResource.Code
+                : FiaCode;
+            var language = resourceContent.Language.ISO6393Code.ToUpper();
+            var newVersionNumber = resourceContentVersion.Version + 1;
 
-            // normalize audio file
-            normalizedAudioFilePath = await NormalizeAudioFileAsync(tempAudioFilePath, ct);
+            var blobifiedResourceName = GetBlobifiedResourceName(resourceContent.Resource.EnglishLabel);
 
-            // compress to output formats
-            mp3FilePath = await CompressToMp3Async(normalizedAudioFilePath, ct);
-            mp3FileSize = (int)new FileInfo(mp3FilePath).Length;
+            var cdnBlobDirectoryFormatString = $"resources/{code}/{language}/audio/{{0}}";
+            var cdnBlobFileNameFormatString
+                = $"{language}_{code}_{blobifiedResourceName}{(message.StepNumber != null ? $"_{message.StepNumber}" : "")}_v{newVersionNumber:D3}.{{0}}";
 
-            webmFilePath = await CompressToWebmAsync(normalizedAudioFilePath, ct);
-            webmFileSize = (int)new FileInfo(webmFilePath).Length;
+            var cdnBlobFormatString = $"{cdnBlobDirectoryFormatString}/{cdnBlobFileNameFormatString}";
 
-            // upload files to CDN
-            await _cdnBlobStorageService.UploadFilesInParallelAsync(
-                _cdnOptions.AquiferContentContainerName,
-                [
-                    (string.Format(cdnBlobFormatString, "mp3"), mp3FilePath),
-                    (string.Format(cdnBlobFormatString, "webm"), webmFilePath),
-                ],
-                overwrite: true, // overwrite existing files in case this job has to be replayed
-                ct);
-        }
-        finally
-        {
-            // ensure we delete all the temp files
-            SafeDelete(tempAudioFilePath);
-            SafeDelete(normalizedAudioFilePath);
-            SafeDelete(mp3FilePath);
-            SafeDelete(webmFilePath);
-
-            static void SafeDelete(string? filePath)
+            // Process audio file.
+            string tempAudioFilePath = null!;
+            string normalizedAudioFilePath = null!;
+            string mp3FilePath = null!;
+            int mp3FileSize;
+            string webmFilePath = null!;
+            int webmFileSize;
+            try
             {
-                if (filePath == null)
-                {
-                    return;
-                }
+                // download temp blob (keeping the same file name and extension)
+                tempAudioFilePath = GetTempFilePath(Path.GetFileName(message.TempUploadBlobName));
+                await _blobStorageService.DownloadFileAsync(
+                    _uploadOptions.TempStorageContainerName,
+                    message.TempUploadBlobName,
+                    tempAudioFilePath,
+                    ct);
 
-                try
+                // normalize audio file
+                normalizedAudioFilePath = await NormalizeAudioFileAsync(tempAudioFilePath, ct);
+
+                // compress to output formats
+                mp3FilePath = await CompressToMp3Async(normalizedAudioFilePath, ct);
+                mp3FileSize = (int)new FileInfo(mp3FilePath).Length;
+
+                webmFilePath = await CompressToWebmAsync(normalizedAudioFilePath, ct);
+                webmFileSize = (int)new FileInfo(webmFilePath).Length;
+
+                // upload files to CDN
+                await _cdnBlobStorageService.UploadFilesInParallelAsync(
+                    _cdnOptions.AquiferContentContainerName,
+                    [
+                        (string.Format(cdnBlobFormatString, "mp3"), mp3FilePath),
+                        (string.Format(cdnBlobFormatString, "webm"), webmFilePath),
+                    ],
+                    overwrite: true, // overwrite existing files in case this job has to be replayed
+                    ct);
+            }
+            finally
+            {
+                // ensure we delete all the temp files
+                SafeDelete(tempAudioFilePath);
+                SafeDelete(normalizedAudioFilePath);
+                SafeDelete(mp3FilePath);
+                SafeDelete(webmFilePath);
+
+                static void SafeDelete(string? filePath)
                 {
-                    if (File.Exists(filePath))
+                    if (filePath == null)
                     {
-                        File.Delete(filePath);
+                        return;
+                    }
+
+                    try
+                    {
+                        if (File.Exists(filePath))
+                        {
+                            File.Delete(filePath);
+                        }
+                    }
+                    catch
+                    {
+                        // ignore errors deleting temp files
                     }
                 }
-                catch
+            }
+
+            var cdnUrlFormatString = $"{_cdnOptions.CdnBaseUri}{_cdnOptions.AquiferContentContainerName}/{cdnBlobFormatString}";
+
+            // Update ResourceContentVersion.Content with new CDN URLs.
+            var hasSteps = audioContent.Mp3?.Steps?.Any() == true && audioContent.Webm?.Steps?.Any() == true;
+            if (message.StepNumber.HasValue)
+            {
+                var mp3Step = audioContent.Mp3?.Steps?.FirstOrDefault(s => s.StepNumber == message.StepNumber);
+                var webmStep = audioContent.Webm?.Steps?.FirstOrDefault(s => s.StepNumber == message.StepNumber);
+
+                if (mp3Step == null || webmStep == null)
                 {
-                    // ignore errors deleting temp files
+                    throw new InvalidOperationException(
+                        $"Step number {message.StepNumber.Value} is missing in audio content for Resource Content ID {message.ResourceContentId} and Upload ID {message.UploadId}.");
                 }
+
+                mp3Step.Url = string.Format(cdnUrlFormatString, "mp3");
+                webmStep.Url = string.Format(cdnUrlFormatString, "webm");
+
+                // Zip files are ignored for now because they are being retired in favor of individual step audio files.
+                //audioContent.Mp3!.Size = mp3ZipFileSize;
+                //audioContent.Webm!.Size = webmZipFileSize;
             }
-        }
-
-        var cdnUrlFormatString = $"{_cdnOptions.CdnBaseUri}{_cdnOptions.AquiferContentContainerName}/{cdnBlobFormatString}";
-
-        // Update ResourceContentVersion.Content with new CDN URLs.
-        var hasSteps = audioContent.Mp3?.Steps?.Any() == true && audioContent.Webm?.Steps?.Any() == true;
-        if (message.StepNumber.HasValue)
-        {
-            var mp3Step = audioContent.Mp3?.Steps?.FirstOrDefault(s => s.StepNumber == message.StepNumber);
-            var webmStep = audioContent.Webm?.Steps?.FirstOrDefault(s => s.StepNumber == message.StepNumber);
-
-            if (mp3Step == null || webmStep == null)
+            else
             {
-                throw new InvalidOperationException(
-                    $"Step number {message.StepNumber.Value} is missing in audio content for Resource Content ID {message.ResourceContentId} and Upload ID {message.UploadId}.");
+                if (hasSteps)
+                {
+                    throw new InvalidOperationException(
+                        $"Audio content has steps but no step number was passed for Resource Content ID {message.ResourceContentId} and Upload ID {message.UploadId}.");
+                }
+
+                audioContent.Mp3!.Url = string.Format(cdnUrlFormatString, "mp3");
+                audioContent.Mp3!.Size = mp3FileSize;
+
+                audioContent.Webm!.Url = string.Format(cdnUrlFormatString, "webm");
+                audioContent.Webm!.Size = webmFileSize;
             }
 
-            mp3Step.Url = string.Format(cdnUrlFormatString, "mp3");
-            webmStep.Url = string.Format(cdnUrlFormatString, "webm");
+            var newContent = JsonUtilities.DefaultSerialize(audioContent);
 
-            // Zip files are ignored for now because they are being retired in favor of individual step audio files.
-            //audioContent.Mp3!.Size = mp3ZipFileSize;
-            //audioContent.Webm!.Size = webmZipFileSize;
-        }
-        else
-        {
-            if (hasSteps)
+            // The content text size was updated but the content size is based upon either the size of the individual webm file (if no steps)
+            // or the size of the zip file (if steps).  We are ignoring the zip file for now and thus will use the previous content size
+            // for content with steps as the zip file has not changed.
+            var newContentSize = hasSteps ? resourceContentVersion.ContentSize : webmFileSize;
+
+            // create new resource content version and status history
+            var newResourceContentVersion = new ResourceContentVersionEntity
             {
-                throw new InvalidOperationException(
-                    $"Audio content has steps but no step number was passed for Resource Content ID {message.ResourceContentId} and Upload ID {message.UploadId}.");
+                AssignedReviewerUserId = resourceContentVersion.AssignedReviewerUserId,
+                AssignedUserId = resourceContentVersion.AssignedUserId,
+                Content = newContent,
+                ContentSize = newContentSize,
+                DisplayName = resourceContentVersion.DisplayName,
+                InlineMediaSize = resourceContentVersion.InlineMediaSize,
+                IsDraft = false,
+                IsPublished = resourceContentVersion.IsPublished,
+                ReviewLevel = resourceContentVersion.ReviewLevel,
+                SourceWordCount = resourceContentVersion.SourceWordCount,
+                Version = newVersionNumber,
+                WordCount = resourceContentVersion.WordCount,
+            };
+
+            resourceContent.Versions.Add(newResourceContentVersion);
+
+            // this is a somewhat redundant status history as it's the same as the previous status, but it records who uploaded the file
+            await _resourceHistoryService.AddStatusHistoryAsync(
+                newResourceContentVersion,
+                resourceContent.Status,
+                message.StartedByUserId,
+                ct);
+
+            // unpublish the previous version
+            resourceContentVersion.IsDraft = false;
+            resourceContentVersion.IsPublished = false;
+
+            upload.Status = UploadStatus.Completed;
+
+            await _dbContext.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            const UploadStatus failedStatus = UploadStatus.Failed;
+
+            _logger.LogWarning("Error during processing of {Message}. Marking upload as \"{Status}\".", message, failedStatus);
+
+            try
+            {
+                upload.Status = failedStatus;
+                await _dbContext.SaveChangesAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                // don't allow a failure in this catch block to prevent the original exception from being thrown
+                _logger.LogError(ex, "Error during processing of {Message} when attempting to mark upload as \"{Status}\". This error will be gracefully ignored and the upload will remain in its previous status.", message, failedStatus);
             }
 
-            audioContent.Mp3!.Url = string.Format(cdnUrlFormatString, "mp3");
-            audioContent.Mp3!.Size = mp3FileSize;
-
-            audioContent.Webm!.Url = string.Format(cdnUrlFormatString, "webm");
-            audioContent.Webm!.Size = webmFileSize;
+            throw;
         }
-
-        var newContent = JsonUtilities.DefaultSerialize(audioContent);
-
-        // The content text size was updated but the content size is based upon either the size of the individual webm file (if no steps)
-        // or the size of the zip file (if steps).  We are ignoring the zip file for now and thus will use the previous content size
-        // for content with steps as the zip file has not changed.
-        var newContentSize = hasSteps ? resourceContentVersion.ContentSize : webmFileSize;
-
-        // create new resource content version and status history
-        var newResourceContentVersion = new ResourceContentVersionEntity
-        {
-            AssignedReviewerUserId = resourceContentVersion.AssignedReviewerUserId,
-            AssignedUserId = resourceContentVersion.AssignedUserId,
-            Content = newContent,
-            ContentSize = newContentSize,
-            DisplayName = resourceContentVersion.DisplayName,
-            InlineMediaSize = resourceContentVersion.InlineMediaSize,
-            IsDraft = false,
-            IsPublished = resourceContentVersion.IsPublished,
-            ReviewLevel = resourceContentVersion.ReviewLevel,
-            SourceWordCount = resourceContentVersion.SourceWordCount,
-            Version = newVersionNumber,
-            WordCount = resourceContentVersion.WordCount,
-        };
-
-        resourceContent.Versions.Add(newResourceContentVersion);
-
-        // this is a somewhat redundant status history as it's the same as the previous status, but it records who uploaded the file
-        await _resourceHistoryService.AddStatusHistoryAsync(
-            newResourceContentVersion,
-            resourceContent.Status,
-            message.StartedByUserId,
-            ct);
-
-        // unpublish the previous version
-        resourceContentVersion.IsDraft = false;
-        resourceContentVersion.IsPublished = false;
-
-        upload.Status = UploadStatus.Completed;
-
-        await _dbContext.SaveChangesAsync(ct);
 
         // delete temp blob (this is done last because replays are not possible if this file is missing)
         await _blobStorageService.DeleteFileAsync(

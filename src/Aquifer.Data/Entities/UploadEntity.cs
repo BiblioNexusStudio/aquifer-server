@@ -28,4 +28,7 @@ public enum UploadStatus
 
     [Display(Name = "Completed")]
     Completed = 3,
+
+    [Display(Name = "Failed")]
+    Failed = 4,
 }
