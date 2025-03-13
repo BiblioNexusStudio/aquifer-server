@@ -2,7 +2,6 @@ using Aquifer.API.Helpers;
 using Aquifer.Common.Services.Caching;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
-using Aquifer.Data.Enums;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,24 +16,45 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
         AllowAnonymous();
     }
 
-    public override async Task HandleAsync(Request req, CancellationToken cancellationToken)
+    public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        if (!IsRequestedBookIdValid(req.BookId))
+        if (!BibleBookCodeUtilities.TryCastBookId(req.BookId, out var bookId))
         {
             AddError($"Invalid book id: {req.BookId}.");
-            await SendErrorsAsync(cancellation: cancellationToken, statusCode: 404);
+            await SendErrorsAsync(cancellation: ct, statusCode: 404);
             return;
         }
         
         if (!await IsRequestedBibleIdValidAsync(req.TargetBibleId))
         {
             AddError($"Invalid bible id: {req.TargetBibleId}.");
-            await SendErrorsAsync(cancellation: cancellationToken, statusCode: 404);
+            await SendErrorsAsync(cancellation: ct, statusCode: 404);
             return;
         }
         
-        // We have ensured that the values returned here will always be valid 
-        var (minVerseId, maxVerseId) = await GetMinAndMaxVerseIdFromRequestAsync(req, cancellationToken);
+        var maxChapterNumberAndVerseNumbersByBookIdMap = await versificationService.GetMaxChapterNumberAndVerseNumbersByBookIdMapAsync(
+            CachingVersificationService.EngVersificationSchemeBibleId,
+            ct);
+        
+        var (maxChapterNumber, maxVerseNumberByChapterNumberMap) = maxChapterNumberAndVerseNumbersByBookIdMap[bookId];
+        
+        // 1 is assumed for Start Chapter and Start Verse for ENG bible only. Will need updated for passing a source bible.
+        var startChapter = req.StartChapter is >= 1 && req.StartChapter.Value <= maxChapterNumber 
+            ? req.StartChapter.Value 
+            : 1;
+        var endChapter = req.EndChapter is >= 1 && req.EndChapter.Value <= maxChapterNumber 
+            ? req.EndChapter.Value 
+            : maxChapterNumber;
+        
+        var startVerse = req.StartVerse is >= 1 && req.StartVerse.Value <= maxVerseNumberByChapterNumberMap[startChapter] 
+            ? req.StartVerse.Value 
+            : 1;
+        var endVerse = req.EndVerse is >= 1 && req.EndVerse.Value <= maxVerseNumberByChapterNumberMap[endChapter] 
+            ? req.EndVerse.Value 
+            : maxVerseNumberByChapterNumberMap[endChapter];
+        
+        var minVerseId = BibleUtilities.GetVerseId(bookId, startChapter, startVerse);
+        var maxVerseId = BibleUtilities.GetVerseId(bookId, endChapter, endVerse);
         
         var versificationMap = await VersificationUtilities.ConvertVersificationRangeAsync(
             CachingVersificationService.EngVersificationSchemeBibleId,
@@ -42,13 +62,13 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
             maxVerseId,
             req.TargetBibleId,
             versificationService,
-            cancellationToken);
+            ct);
             
         var sourceBibleVerseMappings = versificationMap
-            .Where(mapping => mapping.Value.HasValue && mapping.Value.Value != mapping.Key)
+            .Where(mapping => mapping.Value != mapping.Key)
             .ToDictionary(
                 mapping => mapping.Key,
-                mapping => MapToVerseReference(mapping.Value!.Value));
+                mapping => mapping.Value.HasValue ? MapToVerseReference(mapping.Value.Value) : null);
         
         var verseMappings = new List<VerseMapping>();
         foreach (var mapping in sourceBibleVerseMappings)
@@ -70,98 +90,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
 
         var response = new Response() { VerseMappings = verseMappings };
         
-        await SendOkAsync(response, cancellationToken);
-    }
-    
-     private async Task<(int, int)> GetMinAndMaxChapterNumberFromRequestAsync(Request req, CancellationToken ct)
-     {
-         var isRequestedStartChapterValid = false;
-         var isRequestedEndChapterValid = false;
-         
-        if (req.StartChapter.HasValue)
-        {
-            isRequestedStartChapterValid = await IsChapterValidForBookAsync(req.StartChapter.Value, req.BookId, ct);
-        }
-
-        if (req.EndChapter.HasValue)
-        {
-            isRequestedEndChapterValid = await IsChapterValidForBookAsync(req.EndChapter.Value, req.BookId, ct);
-        }
-
-        if (isRequestedStartChapterValid && isRequestedEndChapterValid)
-        {
-            return (req.StartChapter!.Value, req.EndChapter!.Value);
-        }
-        
-        var maxChapter = await dbContext.BookChapters
-            .Where(bc => bc.BookId == (BookId)req.BookId)
-            .MaxAsync(bc => bc.Number, ct);
-        
-        if (isRequestedStartChapterValid && !isRequestedEndChapterValid)
-        {
-            return (req.StartChapter!.Value, maxChapter);
-        }
-        
-        var minChapter = await dbContext.BookChapters
-            .Where(bc => bc.BookId == (BookId)req.BookId)
-            .MinAsync(bc => bc.Number, ct);
-
-        if (!isRequestedStartChapterValid && isRequestedEndChapterValid)
-        {
-            return (minChapter, req.EndChapter!.Value);
-        }
-        
-        return (minChapter, maxChapter);
-    }
-    
-    private async Task<(int, int)> GetMinAndMaxVerseIdFromRequestAsync(Request req, CancellationToken ct)
-    {
-        var (minChapterNumber, maxChapterNumber) = await GetMinAndMaxChapterNumberFromRequestAsync(req, ct);
-        
-        var isRequestedStartVerseValid = false;
-        var isRequestedEndVerseValid = false;
-
-        if (req.StartVerse.HasValue)
-        {
-            isRequestedStartVerseValid = await IsVerseValidForBookAndChapterAsync(req.StartVerse.Value, minChapterNumber, req.BookId, ct);
-        }
-
-        if (req.EndVerse.HasValue)
-        {
-            isRequestedEndVerseValid = await IsVerseValidForBookAndChapterAsync(req.EndVerse.Value, minChapterNumber, req.BookId, ct);
-        }
-        
-        if (isRequestedStartVerseValid && isRequestedEndVerseValid)
-        {
-            return (BibleUtilities.GetVerseId((BookId)req.BookId, minChapterNumber, req.StartVerse!.Value),
-                    BibleUtilities.GetVerseId((BookId)req.BookId, maxChapterNumber, req.EndVerse!.Value));
-        }
-        
-        var maxVerse = await dbContext.BookChapters
-            .Where(bc => bc.BookId == (BookId)req.BookId && bc.Number == maxChapterNumber)
-            .Select(bc => bc.MaxVerseNumber)
-            .FirstOrDefaultAsync(ct);
-        
-        if (isRequestedStartVerseValid && !isRequestedEndVerseValid)
-        {
-            return (BibleUtilities.GetVerseId((BookId)req.BookId, minChapterNumber, req.StartVerse!.Value),
-                    BibleUtilities.GetVerseId((BookId)req.BookId, maxChapterNumber, maxVerse));
-        }
-        
-        var minVerse = await dbContext.BibleTexts
-            .Where(bt => bt.BookId == (BookId)req.BookId && bt.ChapterNumber == minChapterNumber)
-            .OrderBy(bt => bt.VerseNumber)
-            .Select(bt => bt.VerseNumber)
-            .FirstOrDefaultAsync(ct);
-
-        if (!isRequestedStartVerseValid && isRequestedEndVerseValid)
-        {
-            return (BibleUtilities.GetVerseId((BookId)req.BookId, minChapterNumber, minVerse),
-                    BibleUtilities.GetVerseId((BookId)req.BookId, maxChapterNumber, req.EndVerse!.Value));
-        }
-        
-        return (BibleUtilities.GetVerseId((BookId)req.BookId, minChapterNumber, minVerse),
-                BibleUtilities.GetVerseId((BookId)req.BookId, maxChapterNumber, maxVerse));
+        await SendOkAsync(response, ct);
     }
     
     private static VerseReference MapToVerseReference(int mappedVerseId)
@@ -176,25 +105,6 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
             Chapter = chapter,
             Verse = verse
         };
-    }
-
-    private static bool IsRequestedBookIdValid(int bookId)
-    {
-        return Enum.IsDefined(typeof(BookId), bookId);
-    }
-
-    private async Task<bool> IsChapterValidForBookAsync(int bookId, int chapterNumber, CancellationToken ct)
-    {
-        return await dbContext.BookChapters
-            .Where(bc => bc.BookId == (BookId)bookId && bc.Number == chapterNumber)
-            .AnyAsync(ct);
-    }
-
-    private async Task<bool> IsVerseValidForBookAndChapterAsync(int bookId, int chapterNumber, int verseNumber, CancellationToken ct)
-    {
-        return await dbContext.BibleTexts
-            .Where(bt => bt.BookId == (BookId)bookId && bt.ChapterNumber == chapterNumber && bt.VerseNumber == verseNumber)
-            .AnyAsync(ct);
     }
 
     private async Task<bool> IsRequestedBibleIdValidAsync(int bibleId)
