@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Aquifer.Data.EventHandlers;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,6 +37,7 @@ public class ReportEntity : IHasUpdatedTimestamp
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 
+    [MaxLength(32)]
     public string? AllowedRoles { get; set; }
 }
 

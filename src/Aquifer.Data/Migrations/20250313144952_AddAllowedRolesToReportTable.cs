@@ -13,7 +13,8 @@ namespace Aquifer.Data.Migrations
             migrationBuilder.AddColumn<string>(
                 name: "AllowedRoles",
                 table: "Reports",
-                type: "nvarchar(max)",
+                type: "nvarchar(32)",
+                maxLength: 32,
                 nullable: true);
         }
 

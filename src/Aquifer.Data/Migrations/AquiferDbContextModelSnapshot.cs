@@ -1329,7 +1329,8 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("AllowedRoles")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
 
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    [Migration("20250313143948_AddAllowedRolesToReportTable")]
+    [Migration("20250313144952_AddAllowedRolesToReportTable")]
     partial class AddAllowedRolesToReportTable
     {
         /// <inheritdoc />
@@ -1332,7 +1332,8 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("AllowedRoles")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
 
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
