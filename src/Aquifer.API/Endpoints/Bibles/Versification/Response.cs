@@ -15,6 +15,6 @@ public class VerseReference
 
 public class VerseMapping
 {
-    public required VerseReference? TargetVerse { get; set; }
     public required VerseReference SourceVerse { get; set; }
+    public required VerseReference? TargetVerse { get; set; }
 }
