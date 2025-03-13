@@ -15,6 +15,6 @@ public class VerseReference
 
 public class VerseMapping
 {
-    public required VerseReference TargetBibleVerse { get; set; }
-    public required VerseReference SourceBibleVerse { get; set; }
+    public required VerseReference TargetVerse { get; set; }
+    public required VerseReference SourceVerse { get; set; }
 }

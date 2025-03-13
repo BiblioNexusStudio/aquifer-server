@@ -57,14 +57,14 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
             
             verseMappings.Add(new VerseMapping
             {
-                SourceBibleVerse = new VerseReference
+                SourceVerse = new VerseReference
                 {
                     VerseId = mapping.Key,
                     Book = BibleBookCodeUtilities.FullNameFromId(sourceBookId),
                     Chapter = sourceChapter,
                     Verse = sourceVerse
                 },
-                TargetBibleVerse = mapping.Value
+                TargetVerse = mapping.Value
             });
         }
 
