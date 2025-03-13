@@ -62,10 +62,15 @@ public class Endpoint(
     {
         var user = await _userService.GetUserFromJwtAsync(ct);
 
-        var resourceContent = await _dbContext.ResourceContents
-            .FirstOrDefaultAsync(rc => rc.Id == request.ResourceContentId, ct);
+        // only audio is supported for now
+        var resourceContentVersion = await _dbContext.ResourceContentVersions
+            .Where(rcv =>
+                rcv.ResourceContentId == request.ResourceContentId &&
+                rcv.ResourceContent.MediaType == ResourceContentMediaType.Audio)
+            .OrderByDescending(rcv => rcv.Version)
+            .FirstOrDefaultAsync(ct);
 
-        if (resourceContent is null || resourceContent.MediaType != ResourceContentMediaType.Audio)
+        if (resourceContentVersion is null)
         {
             await SendNotFoundAsync(ct);
             return;
@@ -76,11 +81,6 @@ public class Endpoint(
         {
             ThrowError(x => x.File, $"Unsupported MIME type: {request.File.ContentType}", StatusCodes.Status400BadRequest);
         }
-
-        var resourceContentVersion = await _dbContext.ResourceContentVersions
-            .Where(rcv => rcv.ResourceContentId == request.ResourceContentId)
-            .OrderByDescending(rcv => rcv.Version)
-            .FirstAsync(ct);
 
         ValidateContentReferencesStep(request.StepNumber, resourceContentVersion.Content);
 
