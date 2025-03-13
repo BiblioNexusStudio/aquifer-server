@@ -18,7 +18,7 @@ public class Endpoint(AquiferDbContext _dbContext) : Endpoint<Request, Response>
         var upload = await _dbContext.Uploads
             .FirstOrDefaultAsync(u => u.Id == req.UploadId, ct);
 
-        if (upload == null)
+        if (upload is null)
         {
             await SendNotFoundAsync(ct);
             return;
