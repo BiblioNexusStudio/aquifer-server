@@ -14,12 +14,18 @@ using FastEndpoints;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
+
 var configuration = builder.Configuration.Get<ConfigurationOptions>() ??
     throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
 builder.Services
+    .AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
+
+builder.Services
+    .AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.AzureStorageAccount)
     .AddDbContext<AquiferDbReadOnlyContext>(
         options => options
             .UseAzureSql(configuration.ConnectionStrings.BiblioNexusReadOnlyDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
@@ -30,7 +36,8 @@ builder.Services
     .AddFastEndpoints()
     .AddMemoryCache()
     .AddCachingServices()
-    .AddQueueServices(configuration.ConnectionStrings.AzureStorageAccount)
+    .AddSingleton<IBlobStorageService, BlobStorageService>()
+    .AddSingleton<IQueueClientFactory, QueueClientFactory>()
     .AddTrackResourceContentRequestServices()
     .AddSingleton<ITelemetryInitializer, RequestTelemetryInitializer>()
     .AddAzureClient(builder.Environment.IsDevelopment())

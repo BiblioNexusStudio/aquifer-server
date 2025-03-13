@@ -1,8 +1,8 @@
-﻿using Aquifer.API.Modules.Resources;
-using Aquifer.Common.Messages.Publishers;
+﻿using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Aquifer.Data.Schemas;
 using FastEndpoints;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
