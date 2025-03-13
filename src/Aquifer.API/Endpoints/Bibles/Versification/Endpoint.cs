@@ -25,7 +25,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
             return;
         }
         
-        if (!await IsRequestedBibleIdValidAsync(req.TargetBibleId))
+        if (!await IsRequestedBibleIdValidAsync(req.TargetBibleId, ct))
         {
             AddError($"Invalid bible id: {req.TargetBibleId}.");
             await SendErrorsAsync(cancellation: ct, statusCode: 404);
@@ -107,8 +107,8 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
         };
     }
 
-    private async Task<bool> IsRequestedBibleIdValidAsync(int bibleId)
+    private async Task<bool> IsRequestedBibleIdValidAsync(int bibleId, CancellationToken ct)
     {
-        return await dbContext.Bibles.Where(b => b.Id == bibleId).AnyAsync();
+        return await dbContext.Bibles.Where(b => b.Id == bibleId).AnyAsync(ct);
     }
 }
