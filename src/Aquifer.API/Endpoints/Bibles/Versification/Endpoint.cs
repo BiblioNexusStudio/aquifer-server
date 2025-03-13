@@ -166,15 +166,15 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
     
     private static VerseReference MapToVerseReference(int mappedVerseId)
     {
-        var (targetBookId, targetChapter, targetVerse) = BibleUtilities.TranslateVerseId(mappedVerseId);
-        var targetBookName = BibleBookCodeUtilities.FullNameFromId(targetBookId);
+        var (bookId, chapter, verse) = BibleUtilities.TranslateVerseId(mappedVerseId);
+        var bookName = BibleBookCodeUtilities.FullNameFromId(bookId);
         
         return new VerseReference
         {
             VerseId = mappedVerseId,
-            Book = targetBookName,
-            Chapter = targetChapter,
-            Verse = targetVerse
+            Book = bookName,
+            Chapter = chapter,
+            Verse = verse
         };
     }
 
