@@ -82,35 +82,7 @@ public class Endpoint(
             .OrderByDescending(rcv => rcv.Version)
             .FirstAsync(ct);
 
-        var audioContent = JsonUtilities.DefaultDeserialize<ResourceContentAudioJsonSchema>(resourceContentVersion.Content);
-        var audioContentHasSteps = audioContent.Mp3?.Steps?.Any() == true && audioContent.Webm?.Steps?.Any() == true;
-
-        if (request.StepNumber.HasValue)
-        {
-            if (!audioContentHasSteps)
-            {
-                ThrowError(
-                    x => x.StepNumber,
-                    "The current Resource Content Version's Content does not have steps but a step number was passed.",
-                    StatusCodes.Status400BadRequest);
-            }
-            else if (audioContent.Mp3!.Steps!.All(s => s.StepNumber != request.StepNumber) ||
-                audioContent.Webm!.Steps!.All(s => s.StepNumber != request.StepNumber))
-            {
-                // in the future we could support new uploads but for now we only support replacing existing steps
-                ThrowError(
-                    x => x.StepNumber,
-                    $"The current Resource Content Version's Content does not include step number {request.StepNumber}.",
-                    StatusCodes.Status400BadRequest);
-            }
-        }
-        else if (audioContentHasSteps)
-        {
-            ThrowError(
-                x => x.StepNumber,
-                "The current Resource Content Version's Content has steps but no step number was passed.",
-                StatusCodes.Status400BadRequest);
-        }
+        ValidateContentReferencesStep(request.StepNumber, resourceContentVersion.Content);
 
         _logger.LogInformation(
             "Creating upload for Resource Content ID {ResourceContentId} and Step Number {StepNumber} from file \"{fileName}\".",
@@ -151,5 +123,38 @@ public class Endpoint(
         };
 
         await SendAsync(response, StatusCodes.Status202Accepted, ct);
+    }
+
+    private void ValidateContentReferencesStep(int? stepNumber, string content)
+    {
+        var audioContent = JsonUtilities.DefaultDeserialize<ResourceContentAudioJsonSchema>(content);
+        var audioContentHasSteps = audioContent.Mp3?.Steps?.Any() == true && audioContent.Webm?.Steps?.Any() == true;
+
+        if (stepNumber.HasValue)
+        {
+            if (!audioContentHasSteps)
+            {
+                ThrowError(
+                    x => x.StepNumber,
+                    "The current Resource Content Version's Content does not have steps but a step number was passed.",
+                    StatusCodes.Status400BadRequest);
+            }
+            else if (audioContent.Mp3!.Steps!.All(s => s.StepNumber != stepNumber) ||
+                audioContent.Webm!.Steps!.All(s => s.StepNumber != stepNumber))
+            {
+                // in the future we could support new uploads but for now we only support replacing existing steps
+                ThrowError(
+                    x => x.StepNumber,
+                    $"The current Resource Content Version's Content does not include step number {stepNumber}.",
+                    StatusCodes.Status400BadRequest);
+            }
+        }
+        else if (audioContentHasSteps)
+        {
+            ThrowError(
+                x => x.StepNumber,
+                "The current Resource Content Version's Content has steps but no step number was passed.",
+                StatusCodes.Status400BadRequest);
+        }
     }
 }
