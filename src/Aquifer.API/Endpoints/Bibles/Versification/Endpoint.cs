@@ -64,45 +64,29 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
             versificationService,
             ct);
             
-        var sourceBibleVerseMappings = versificationMap
+        var verseMappings = versificationMap
             .Where(mapping => mapping.Value != mapping.Key)
-            .ToDictionary(
-                mapping => mapping.Key,
-                mapping => mapping.Value.HasValue ? MapToVerseReference(mapping.Value.Value) : null);
-
-        var verseMappings = sourceBibleVerseMappings
             .Select(
-                mapping =>
+                mapping => new VerseMapping
                 {
-                    var (sourceBookId, sourceChapter, sourceVerse) = BibleUtilities.TranslateVerseId(mapping.Key);
-                    
-                    return new VerseMapping
-                    {
-                        SourceVerse = new VerseReference
-                        {
-                            VerseId = mapping.Key,
-                            Book = BibleBookCodeUtilities.FullNameFromId(sourceBookId),
-                            Chapter = sourceChapter,
-                            Verse = sourceVerse
-                        },
-                        TargetVerse = mapping.Value
-                    };
+                    SourceVerse = MapToVerseReference(mapping.Key),
+                    TargetVerse = mapping.Value.HasValue ? MapToVerseReference(mapping.Value.Value) : null
                 })
             .ToList();
 
-        var response = new Response() { VerseMappings = verseMappings };
+        var response = new Response { VerseMappings = verseMappings };
         
         await SendOkAsync(response, ct);
     }
     
-    private static VerseReference MapToVerseReference(int mappedVerseId)
+    private static VerseReference MapToVerseReference(int verseId)
     {
-        var (bookId, chapter, verse) = BibleUtilities.TranslateVerseId(mappedVerseId);
+        var (bookId, chapter, verse) = BibleUtilities.TranslateVerseId(verseId);
         var bookName = BibleBookCodeUtilities.FullNameFromId(bookId);
         
         return new VerseReference
         {
-            VerseId = mappedVerseId,
+            VerseId = verseId,
             Book = bookName,
             Chapter = chapter,
             Verse = verse
