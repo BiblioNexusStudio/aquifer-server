@@ -22,28 +22,6 @@ namespace Aquifer.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Aquifer.Data.Entities.AllowedReportRolesEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ReportId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Role")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ReportId", "Role")
-                        .IsUnique();
-
-                    b.ToTable("AllowedReportRoles");
-                });
-
             modelBuilder.Entity("Aquifer.Data.Entities.ApiKeyEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -1351,7 +1329,6 @@ namespace Aquifer.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("AllowedRoles")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("Created")
@@ -2103,17 +2080,6 @@ namespace Aquifer.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("VersificationMappings");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.AllowedReportRolesEntity", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.ReportEntity", "Report")
-                        .WithMany()
-                        .HasForeignKey("ReportId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Report");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.AssociatedResourceEntity", b =>
