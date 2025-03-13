@@ -1,13 +1,11 @@
-﻿using Aquifer.API.Helpers;
-using Aquifer.Common.Services.Caching;
-using Aquifer.Common.Utilities;
+using Aquifer.API.Helpers;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Bibles.Texts.Get;
 
-public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService versificationService) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -53,60 +51,8 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
                         }).ToList()
                 })
                 .ToListAsync(ct);
-            
-            await MapVersificationDifferencesToResponseVersesAsync(req, response, ct);
         }
 
         await (response is null ? SendNotFoundAsync(ct) : SendOkAsync(response, ct));
-    }
-
-    private static VerseReference FormatBaseBookChapterVerseMapping(int mappedVerseId)
-    {
-        var (targetBookId, targetChapter, targetVerse) = BibleUtilities.TranslateVerseId(mappedVerseId);
-        var targetBookName = BibleBookCodeUtilities.FullNameFromId(targetBookId);
-        
-        return new VerseReference
-        {
-            BookName = targetBookName,
-            ChapterNumber = targetChapter,
-            VerseNumber = targetVerse
-        };
-    }
-
-    private async Task MapVersificationDifferencesToResponseVersesAsync(Request req, Response response, CancellationToken ct)
-    {
-        if (!response.Chapters.Any())
-        {
-            return;
-        }
-
-        var bookId = BibleBookCodeUtilities.IdFromCode(response.BookCode);
-        var minChapter = response.Chapters.First();  
-        var minVerseId = BibleUtilities.GetVerseId(bookId, minChapter.Number, minChapter.Verses.First().Number);  
-        var maxChapter = response.Chapters.Last();  
-        var maxVerseId = BibleUtilities.GetVerseId(bookId, maxChapter.Number, maxChapter.Verses.Last().Number);
-        
-        var versificationMap = await VersificationUtilities.ConvertVersificationRangeAsync(
-            req.BibleId,
-            minVerseId,
-            maxVerseId,
-            CachingVersificationService.EngVersificationSchemeBibleId,
-            versificationService,
-            ct);
-        
-        var baseBibleVerseMappings = versificationMap
-            .Where(mapping => mapping.Value.HasValue && mapping.Value.Value != mapping.Key)
-            .ToDictionary(
-                mapping => mapping.Key,
-                mapping => FormatBaseBookChapterVerseMapping(mapping.Value!.Value));
-        
-        foreach (var chapter in response.Chapters)
-        {
-            foreach (var verse in chapter.Verses)
-            {
-                var verseId = BibleUtilities.GetVerseId(bookId, chapter.Number, verse.Number);
-                verse.SourceTextVerseReference = baseBibleVerseMappings.GetValueOrDefault(verseId);
-            }
-        }
     }
 }

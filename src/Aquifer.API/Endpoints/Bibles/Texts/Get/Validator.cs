@@ -10,6 +10,6 @@ public class Validator : Validator<Request>
         RuleFor(x => x.BookCode).NotEmpty().When(x => x.BookNumber is null);
         RuleFor(x => x.BookNumber).NotEmpty().When(x => x.BookCode is null);
         RuleFor(x => x.StartChapter).LessThanOrEqualTo(x => x.EndChapter);
-        RuleFor(x => x.StartVerse).LessThanOrEqualTo(x => x.EndVerse);
+        RuleFor(x => x.StartVerse).LessThanOrEqualTo(x => x.EndVerse).When(x => x.StartChapter == x.EndChapter);
     }
 }
