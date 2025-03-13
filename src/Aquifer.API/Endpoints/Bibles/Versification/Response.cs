@@ -2,7 +2,7 @@ namespace Aquifer.API.Endpoints.Bibles.Versification;
 
 public class Response
 {
-    public IEnumerable<VerseMapping> VerseMappings { get; set; } = [];
+    public required IReadOnlyList<VerseMapping> VerseMappings { get; set; }
 }
 
 public class VerseReference
