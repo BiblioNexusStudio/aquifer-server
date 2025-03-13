@@ -69,24 +69,26 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
             .ToDictionary(
                 mapping => mapping.Key,
                 mapping => mapping.Value.HasValue ? MapToVerseReference(mapping.Value.Value) : null);
-        
-        var verseMappings = new List<VerseMapping>();
-        foreach (var mapping in sourceBibleVerseMappings)
-        {
-            var (sourceBookId, sourceChapter, sourceVerse) = BibleUtilities.TranslateVerseId(mapping.Key);
-            
-            verseMappings.Add(new VerseMapping
-            {
-                SourceVerse = new VerseReference
+
+        var verseMappings = sourceBibleVerseMappings
+            .Select(
+                mapping =>
                 {
-                    VerseId = mapping.Key,
-                    Book = BibleBookCodeUtilities.FullNameFromId(sourceBookId),
-                    Chapter = sourceChapter,
-                    Verse = sourceVerse
-                },
-                TargetVerse = mapping.Value
-            });
-        }
+                    var (sourceBookId, sourceChapter, sourceVerse) = BibleUtilities.TranslateVerseId(mapping.Key);
+                    
+                    return new VerseMapping
+                    {
+                        SourceVerse = new VerseReference
+                        {
+                            VerseId = mapping.Key,
+                            Book = BibleBookCodeUtilities.FullNameFromId(sourceBookId),
+                            Chapter = sourceChapter,
+                            Verse = sourceVerse
+                        },
+                        TargetVerse = mapping.Value
+                    };
+                })
+            .ToList();
 
         var response = new Response() { VerseMappings = verseMappings };
         
