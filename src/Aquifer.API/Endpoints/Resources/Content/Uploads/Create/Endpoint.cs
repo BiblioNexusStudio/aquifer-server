@@ -103,7 +103,7 @@ public class Endpoint(
         {
             Status = UploadStatus.Pending,
         };
-        _dbContext.Add(uploadEntity);
+        _dbContext.Uploads.Add(uploadEntity);
         await _dbContext.SaveChangesAsync(ct);
 
         await _uploadResourceContentAudioMessagePublisher.PublishUploadResourceContentAudioMessageAsync(
