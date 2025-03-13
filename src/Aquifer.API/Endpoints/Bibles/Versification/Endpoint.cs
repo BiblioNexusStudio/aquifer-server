@@ -183,14 +183,14 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
         return Enum.IsDefined(typeof(BookId), bookId);
     }
 
-    private async Task<bool> IsChapterValidForBookAsync(int chapterNumber, int bookId, CancellationToken ct)
+    private async Task<bool> IsChapterValidForBookAsync(int bookId, int chapterNumber, CancellationToken ct)
     {
         return await dbContext.BookChapters
             .Where(bc => bc.BookId == (BookId)bookId && bc.Number == chapterNumber)
             .AnyAsync(ct);
     }
 
-    private async Task<bool> IsVerseValidForBookAndChapterAsync(int verseNumber, int chapterNumber, int bookId, CancellationToken ct)
+    private async Task<bool> IsVerseValidForBookAndChapterAsync(int bookId, int chapterNumber, int verseNumber, CancellationToken ct)
     {
         return await dbContext.BibleTexts
             .Where(bt => bt.BookId == (BookId)bookId && bt.ChapterNumber == chapterNumber && bt.VerseNumber == verseNumber)
