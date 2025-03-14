@@ -11,6 +11,12 @@ namespace Aquifer.API.Endpoints.Resources.Content.List;
 public class Endpoint(IResourceContentSearchService _resourceContentSearchService, ICachingLanguageService _cachingLanguageService)
     : Endpoint<Request, Response>
 {
+    private static readonly IReadOnlyList<ResourceContentStatus> s_notApplicableResourceContentStatuses =
+    [
+        ResourceContentStatus.TranslationNotApplicable,
+        ResourceContentStatus.CompleteNotApplicable,
+    ];
+
     public override void Configure()
     {
         Get("/resources/content");
@@ -21,8 +27,6 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
     {
         var verseRange = BibleUtilities.VerseRangeForBookAndChapters(req.BookCode, req.StartChapter, req.EndChapter);
 
-        // The opposite of IsPublished == true is not IsDraft == true (because the most recent ResourceContentVersion for a ResourceContent
-        // can be neither of those statuses) but that logic is used here because consumers expect it.
         var (total, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
             ResourceContentSearchIncludeFlags.ResourceContentVersions |
                 ResourceContentSearchIncludeFlags.HasAudioForLanguage |
@@ -33,9 +37,13 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
                 ResourceEnglishLabelQuery = req.SearchQuery,
                 LanguageId = req.LanguageId,
                 ExcludeContentMediaTypes = [ResourceContentMediaType.Audio],
-                ExcludeContentStatuses = [ResourceContentStatus.TranslationNotApplicable, ResourceContentStatus.CompleteNotApplicable],
-                IsPublished = req.IsPublished.HasValue && req.IsPublished.Value ? true : null,
-                IsDraft = req.IsPublished.HasValue && !req.IsPublished.Value ? true : null,
+                ExcludeContentStatuses = req.IsNotApplicable == true
+                    ? null
+                    : s_notApplicableResourceContentStatuses,
+                IncludeContentStatuses = req.IsNotApplicable == true
+                    ? s_notApplicableResourceContentStatuses
+                    : null,
+                IsPublished = req.IsPublished,
                 VerseIdRanges = verseRange.HasValue ? [new VerseIdRange(verseRange.Value)] : null,
                 HasAudio = req.HasAudio,
                 HasUnresolvedCommentThreads = req.HasUnresolvedCommentThreads,
