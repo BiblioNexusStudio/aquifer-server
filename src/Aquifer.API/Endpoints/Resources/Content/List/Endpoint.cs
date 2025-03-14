@@ -37,10 +37,10 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
                 ResourceEnglishLabelQuery = req.SearchQuery,
                 LanguageId = req.LanguageId,
                 ExcludeContentMediaTypes = [ResourceContentMediaType.Audio],
-                ExcludeContentStatuses = req.IsNotApplicable.HasValue && req.IsNotApplicable.Value
+                ExcludeContentStatuses = req.IsNotApplicable == true
                     ? null
                     : s_notApplicableResourceContentStatuses,
-                IncludeContentStatuses = req.IsNotApplicable.HasValue && req.IsNotApplicable.Value
+                IncludeContentStatuses = req.IsNotApplicable == true
                     ? s_notApplicableResourceContentStatuses
                     : null,
                 IsPublished = req.IsPublished,
