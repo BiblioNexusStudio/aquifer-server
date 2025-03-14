@@ -1,4 +1,5 @@
 using Aquifer.API.Common;
+using Aquifer.API.Services;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.Data.SqlClient;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Reports.Dynamic.Get;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -22,6 +23,13 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         {
             await SendNotFoundAsync(ct);
             return;
+        }
+
+        var user = await userService.GetUserFromJwtAsync(ct);
+
+        if (!ReportRoleHelper.RoleIsAllowedForReport(report.AllowedRoles, user.Role))
+        {
+            await SendForbiddenAsync(ct);
         }
 
         await using var connection = dbContext.Database.GetDbConnection();
