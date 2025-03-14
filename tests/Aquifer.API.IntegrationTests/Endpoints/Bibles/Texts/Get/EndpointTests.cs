@@ -26,13 +26,16 @@ public sealed class EndpointTests(App _app) : TestBase<App>
 
         result.BibleId.Should().Be(request.BibleId);
         result.BibleAbbreviation.Should().Be("BSB");
+
         result.BookCode.Should().Be(request.BookCode);
         result.BookNumber.Should().Be(42);
         result.BookName.Should().Be("Mark");
+
         result.Chapters.Should().HaveCount(1);
         var chapter = result.Chapters.First();
         chapter.Number.Should().Be(request.StartChapter);
         chapter.Verses.Should().HaveCount(1);
+
         var verse = chapter.Verses.First();
         verse.Number.Should().Be(request.StartVerse);
         verse.Text.Should().NotBeNullOrEmpty();
