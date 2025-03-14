@@ -33,8 +33,13 @@ public class Validator : Validator<Request>
             .WithMessage("SearchQuery must be non-empty if specified.");
 
         RuleFor(x => x)
-            .Must(x => x.LanguageId.HasValue || x.ParentResourceId.HasValue ||
-                       x.BookCode != null || x.IsPublished.HasValue || x.SearchQuery != null)
+            .Must(x =>
+                x.LanguageId.HasValue ||
+                x.ParentResourceId.HasValue ||
+                x.BookCode != null ||
+                x.IsNotApplicable.HasValue ||
+                x.IsPublished.HasValue ||
+                x.SearchQuery != null)
             .WithMessage("At least one parameter must be specified.");
     }
 }

@@ -10,6 +10,7 @@ public record Request
     public string? BookCode { get; set; }
     public int? StartChapter { get; set; }
     public int? EndChapter { get; set; }
+    public bool? IsNotApplicable { get; set; }
     public bool? IsPublished { get; set; }
     public bool? HasAudio { get; set; }
     public bool? HasUnresolvedCommentThreads { get; set; }
