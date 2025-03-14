@@ -35,6 +35,15 @@ builder.Services
             .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
             .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
+    .AddDbContext<AquiferDbReadOnlyContext>(
+        options => options
+            .UseAzureSql(configuration.ConnectionStrings.BiblioNexusReadOnlyDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
+            .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
+            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
+    // if the user is authenticated (i.e. CMS) then use the read-write DB context, otherwise (i.e. BibleWell) use the read-only DB context
+    .AddScoped<AquiferDbContext>(sp => sp.GetRequiredService<IHttpContextAccessor>().HttpContext?.Request.Headers.Authorization.Count > 0
+        ? new AquiferDbContext(sp.GetRequiredService<DbContextOptions<AquiferDbContext>>())
+        : sp.GetRequiredService<AquiferDbReadOnlyContext>())
     .RegisterModules()
     .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))
     .AddHttpLogging(
@@ -57,7 +66,8 @@ builder.Services
     .AddFastEndpoints()
     .AddResponseCaching()
     .AddHealthChecks()
-    .AddDbContextCheck<AquiferDbContext>();
+    .AddDbContextCheck<AquiferDbContext>()
+    .AddDbContextCheck<AquiferDbReadOnlyContext>();
 
 if (builder.Environment.IsDevelopment())
 {
