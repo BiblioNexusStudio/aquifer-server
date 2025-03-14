@@ -44,6 +44,18 @@ public static class BibleBookCodeUtilities
     {
         return s_bookIdToMetadata.Select(x => x.Value).Skip(1).ToList();
     }
+    
+    public static bool TryCastBookId(int value, out BookId bookId)
+    {
+        if (Enum.IsDefined(typeof(BookId), value))
+        {
+            bookId = (BookId)value;
+            return true;
+        }
+
+        bookId = BookId.None;
+        return false;
+    }
 
     public record BibleBookMetadata
     {
