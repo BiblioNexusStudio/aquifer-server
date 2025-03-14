@@ -43,7 +43,7 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
                 IncludeContentStatuses = req.IsNotApplicable.HasValue && req.IsNotApplicable.Value
                     ? s_notApplicableResourceContentStatuses
                     : null,
-                IsPublished = req.IsPublished.HasValue && req.IsPublished.Value ? true : null,
+                IsPublished = req.IsPublished,
                 VerseIdRanges = verseRange.HasValue ? [new VerseIdRange(verseRange.Value)] : null,
                 HasAudio = req.HasAudio,
                 HasUnresolvedCommentThreads = req.HasUnresolvedCommentThreads,
