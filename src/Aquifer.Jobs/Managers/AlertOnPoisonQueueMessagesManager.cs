@@ -1,15 +1,21 @@
 ﻿using Aquifer.Common.Messages;
+using Aquifer.Data;
+using Aquifer.Data.Enums;
 using Aquifer.Jobs.Common;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Aquifer.Jobs.Managers;
 
 public sealed class AlertOnPoisonQueueMessagesManager(
+    AquiferDbContext _dbContext,
     IQueueClientFactory _queueClientFactory,
     ILogger<AlertOnPoisonQueueMessagesManager> logger)
     : ManagerBase<AlertOnPoisonQueueMessagesManager>(logger)
 {
+    private const int MaxMessagesToFetch = 11;
+
     private readonly ILogger<AlertOnPoisonQueueMessagesManager> _logger = logger;
 
     [Function(nameof(AlertOnPoisonQueueMessagesManager))]
@@ -21,17 +27,46 @@ public sealed class AlertOnPoisonQueueMessagesManager(
 
     protected override async Task RunCoreAsync(CancellationToken ct)
     {
+        var jobHistory = await _dbContext.JobHistory
+            .AsTracking()
+            .SingleAsync(jh => jh.JobId == JobId.AlertOnPoisonQueueMessages, ct);
+
+        var now = DateTime.UtcNow;
+
+        var isHealthy = true;
         foreach (var poisonQueue in Queues.AllPoisonQueues)
         {
             var client = await _queueClientFactory.GetQueueClientAsync(poisonQueue, ct);
-            var poisonQueueMessages = await client.PeekMessagesAsync(maxMessages: 32, ct);
-            if (poisonQueueMessages?.Value.Length > 0)
+            var poisonQueueMessages = await client.PeekMessagesAsync(MaxMessagesToFetch, ct);
+            var poisonQueueMessagesSinceLastJobRun = poisonQueueMessages
+                    ?.Value
+                    .Where(pqm =>
+                        !pqm.InsertedOn.HasValue ||
+                        (pqm.InsertedOn.Value.UtcDateTime > jobHistory.LastProcessed && pqm.InsertedOn.Value.UtcDateTime <= now))
+                    .ToList()
+                ?? [];
+
+            if (poisonQueueMessagesSinceLastJobRun.Count > 0)
             {
+                isHealthy = false;
+
                 _logger.LogError(
-                    "Poison Queue has {NumberOfMessages} messages: \"{PoisonQueue}\".",
-                    poisonQueueMessages.Value.Length,
+                    "Poison Queue \"{PoisonQueue}\" has {NumberOfMessages} new message(s) since {LastJobRun}.",
+                    poisonQueueMessagesSinceLastJobRun.Count < MaxMessagesToFetch
+                        ? poisonQueueMessagesSinceLastJobRun.Count
+                        : "more than 10",
+                    jobHistory.LastProcessed,
                     poisonQueue);
             }
         }
+
+        if (isHealthy)
+        {
+            _logger.LogInformation($"{nameof(AlertOnPoisonQueueMessagesManager)}: No poison queue messages detected since {{LastJobRun}}.",
+                jobHistory.LastProcessed);
+        }
+
+        jobHistory.LastProcessed = now;
+        await _dbContext.SaveChangesAsync(CancellationToken.None);
     }
 }
