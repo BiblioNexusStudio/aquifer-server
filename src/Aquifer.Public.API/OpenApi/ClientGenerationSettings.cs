@@ -10,6 +10,8 @@ namespace Aquifer.Public.API.OpenApi;
 /// </summary>
 public static class ClientGenerationSettings
 {
+    public const string ClientGenerationOutputCacheTag = "client-generation";
+
     private const string ClientsRouteName = "clients";
 
     public static IEndpointRouteBuilder ConfigureClientGeneration(
@@ -30,7 +32,7 @@ public static class ClientGenerationSettings
             },
             o =>
             {
-                o.CacheOutput(p => p.Expire(clientZipCacheDuration));
+                o.CacheOutput(p => p.Expire(clientZipCacheDuration).Tag(ClientGenerationOutputCacheTag));
                 o.WithTags("Clients");
                 o.WithSummary("Download C# client.");
                 o.WithDescription(""""
@@ -155,7 +157,7 @@ public static class ClientGenerationSettings
             },
             o =>
             {
-                o.CacheOutput(p => p.Expire(clientZipCacheDuration));
+                o.CacheOutput(p => p.Expire(clientZipCacheDuration).Tag(ClientGenerationOutputCacheTag));
                 o.WithTags("Clients");
                 o.WithSummary("Download Java client.");
                 o.WithDescription("""
@@ -183,7 +185,7 @@ public static class ClientGenerationSettings
             },
             o =>
             {
-                o.CacheOutput(p => p.Expire(clientZipCacheDuration));
+                o.CacheOutput(p => p.Expire(clientZipCacheDuration).Tag(ClientGenerationOutputCacheTag));
                 o.WithTags("Clients");
                 o.WithSummary("Download Python client.");
                 o.WithDescription("""
@@ -210,7 +212,7 @@ public static class ClientGenerationSettings
             },
             o =>
             {
-                o.CacheOutput(p => p.Expire(clientZipCacheDuration));
+                o.CacheOutput(p => p.Expire(clientZipCacheDuration).Tag(ClientGenerationOutputCacheTag));
                 o.WithTags("Clients");
                 o.WithSummary("Download TypeScript client.");
                 o.WithDescription("""
