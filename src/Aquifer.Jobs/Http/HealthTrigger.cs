@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using System.Reflection;
 using Aquifer.Common.Messages;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -14,13 +13,8 @@ public class HealthTrigger(IQueueClientFactory _queueClientFactory, ILogger<Heal
         [HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req,
         CancellationToken ct)
     {
-        var queueNames = typeof(Queues).GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-            .Where(qn => qn is { IsLiteral: true, IsInitOnly: false } && qn.FieldType == typeof(string))
-            .Select(qn => (string)qn.GetRawConstantValue()!)
-            .ToList();
-
         var isHealthy = true;
-        foreach (var queue in queueNames)
+        foreach (var queue in Queues.AllQueues)
         {
             var client = await _queueClientFactory.GetQueueClientAsync(queue, ct);
             var topMessage = await client.PeekMessageAsync(ct);

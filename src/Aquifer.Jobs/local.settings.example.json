@@ -8,6 +8,9 @@
 
         // The below settings are optional and only for local development (disabling jobs can help reduce noise).
 
+        // alerting jobs
+        "AzureWebJobs.AlertOnPoisonQueueMessagesManager.Disabled": false,
+
         // email jobs (suggest leaving disabled unless doing email testing)
         "AzureWebJobs.SendEmailMessageSubscriber.Disabled": true,
         "AzureWebJobs.SendTemplatedEmailMessageSubscriber.Disabled": true,
