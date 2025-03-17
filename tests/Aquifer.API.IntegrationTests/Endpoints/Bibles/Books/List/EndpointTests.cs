@@ -1,6 +1,6 @@
-﻿using FastEndpoints;
-using System.Net;
+﻿using System.Net;
 using Aquifer.API.Endpoints.BibleBooks.List;
+using FastEndpoints;
 using FastEndpoints.Testing;
 
 namespace Aquifer.API.IntegrationTests.Endpoints.Bibles.Books.List;
