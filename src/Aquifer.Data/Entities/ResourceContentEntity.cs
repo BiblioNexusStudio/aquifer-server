@@ -5,33 +5,29 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
-[EntityTypeConfiguration(typeof(ResourceContentEntityConfiguration))]
-[Index(nameof(ResourceId),
-    nameof(LanguageId),
-    nameof(MediaType),
-    IsUnique = true)]
+[EntityTypeConfiguration(typeof(ResourceContentEntityConfiguration)),
+ Index(nameof(ResourceId), nameof(LanguageId), nameof(MediaType), IsUnique = true)]
 public class ResourceContentEntity : IHasUpdatedTimestamp
 {
+    public int Id { get; set; }
     public int ResourceId { get; set; }
     public int LanguageId { get; set; }
     public bool Trusted { get; set; }
     public ResourceContentMediaType MediaType { get; set; }
+    public ResourceContentStatus Status { get; set; }
+    public string? ExternalVersion { get; set; }
+    public DateTime? ContentUpdated { get; set; }
 
-    public ICollection<ResourceContentVersionEntity> Versions { get; set; } = [];
+    [MaxLength(256)]
+    public string? NotApplicableReason { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
     public LanguageEntity Language { get; set; } = null!;
     public ResourceEntity Resource { get; set; } = null!;
-
+    public ICollection<ResourceContentVersionEntity> Versions { get; set; } = [];
     public ICollection<ProjectResourceContentEntity> ProjectResourceContents { get; set; } = [];
-    public int Id { get; set; }
-    public ResourceContentStatus Status { get; set; }
-
-    public string? ExternalVersion { get; set; }
-
-    public DateTime? ContentUpdated { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
@@ -41,11 +37,30 @@ public class ResourceContentEntityConfiguration : IEntityTypeConfiguration<Resou
 {
     public void Configure(EntityTypeBuilder<ResourceContentEntity> builder)
     {
-        builder.HasIndex(e => new { e.LanguageId, e.MediaType, e.Status })
-            .IncludeProperties(e => new { e.Created, e.ResourceId, e.Updated, e.ContentUpdated });
+        builder.HasIndex(
+                e => new
+                {
+                    e.LanguageId,
+                    e.MediaType,
+                    e.Status
+                })
+            .IncludeProperties(
+                e => new
+                {
+                    e.Created,
+                    e.ResourceId,
+                    e.Updated,
+                    e.ContentUpdated
+                });
 
         builder.HasIndex(e => new { e.Status })
-            .IncludeProperties(e => new { e.ContentUpdated, e.LanguageId, e.ResourceId });
+        .IncludeProperties(
+            e => new
+            {
+                e.ContentUpdated,
+                e.LanguageId,
+                e.ResourceId
+            });
     }
 }
 
