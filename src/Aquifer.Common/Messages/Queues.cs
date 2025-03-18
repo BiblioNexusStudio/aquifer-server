@@ -1,4 +1,6 @@
-﻿namespace Aquifer.Common.Messages;
+﻿using System.Reflection;
+
+namespace Aquifer.Common.Messages;
 
 public static class Queues
 {
@@ -22,6 +24,16 @@ public static class Queues
 
     // similarities
     public const string GenerateResourceContentSimilarityScore = "generate-resource-content-similarity-score";
+
+    public static IReadOnlyList<string> AllQueues { get; } = typeof(Queues)
+        .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+        .Where(qn => qn is { IsLiteral: true, IsInitOnly: false } && qn.FieldType == typeof(string))
+        .Select(qn => (string)qn.GetRawConstantValue()!)
+        .ToList();
+
+    public static IReadOnlyList<string> AllPoisonQueues { get; } = AllQueues
+        .Select(GetPoisonQueueName)
+        .ToList();
 
     public static string GetPoisonQueueName(string queueName)
     {
