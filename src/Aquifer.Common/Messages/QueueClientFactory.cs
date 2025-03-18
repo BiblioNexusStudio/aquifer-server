@@ -55,9 +55,11 @@ public sealed class QueueClientFactory(AzureStorageAccountOptions _azureStorageA
     {
         var client = string.IsNullOrEmpty(_azureStorageAccountOptions.ConnectionStringOverride)
             ? new QueueClient(
-                _azureStorageAccountOptions.QueueEndpoint
-                    ?? throw new InvalidOperationException(
-                        $"The \"{nameof(AzureStorageAccountOptions.QueueEndpoint)}\" setting must be provided when \"{nameof(AzureStorageAccountOptions.ConnectionStringOverride)}\" is empty."),
+                new Uri(
+                    _azureStorageAccountOptions.QueueEndpoint
+                        ?? throw new InvalidOperationException(
+                            $"The \"{nameof(AzureStorageAccountOptions.QueueEndpoint)}\" setting must be provided when \"{nameof(AzureStorageAccountOptions.ConnectionStringOverride)}\" is empty."),
+                    queueName),
                 _azureClientService.GetCredential(),
                 s_clientOptions)
             : new QueueClient(
