@@ -52,11 +52,11 @@ public sealed class AlertOnPoisonQueueMessagesManager(
 
                 _logger.LogError(
                     "Poison Queue \"{PoisonQueue}\" has {NumberOfMessages} new message(s) since {LastJobRun}.",
+                    poisonQueue,
                     poisonQueueMessagesSinceLastJobRun.Count < MaxMessagesToFetch
                         ? poisonQueueMessagesSinceLastJobRun.Count
                         : "more than 10",
-                    jobHistory.LastProcessed,
-                    poisonQueue);
+                    jobHistory.LastProcessed);
             }
         }
 
