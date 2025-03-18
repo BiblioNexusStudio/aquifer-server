@@ -1,30 +1,41 @@
-﻿using Azure.Identity;
+﻿using Azure.Core;
+using Azure.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aquifer.Common.Services;
 
 public interface IAzureClientService
 {
-    DefaultAzureCredential GetCredential();
+    TokenCredential GetCredential();
 }
 
-public class AzureClientService(bool useCliCredential) : IAzureClientService
+public class AzureClientService : IAzureClientService
 {
-    private readonly DefaultAzureCredential _credential = new(new DefaultAzureCredentialOptions
-    {
-        ExcludeManagedIdentityCredential = useCliCredential,
-        ExcludeAzureCliCredential = !useCliCredential,
-        ExcludeVisualStudioCodeCredential = true,
-        ExcludeVisualStudioCredential = true,
-        ExcludeEnvironmentCredential = true,
-        ExcludeInteractiveBrowserCredential = true,
-        ExcludeWorkloadIdentityCredential = true,
-        ExcludeAzureDeveloperCliCredential = true,
-        ExcludeAzurePowerShellCredential = true,
-        ExcludeSharedTokenCacheCredential = true
-    });
+    private readonly TokenCredential _credential;
 
-    public DefaultAzureCredential GetCredential()
+    public AzureClientService(bool useCliCredential)
+    {
+        _credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+        {
+            ExcludeManagedIdentityCredential = useCliCredential,
+            ExcludeAzureCliCredential = !useCliCredential,
+            ExcludeVisualStudioCodeCredential = true,
+            ExcludeVisualStudioCredential = true,
+            ExcludeEnvironmentCredential = true,
+            ExcludeInteractiveBrowserCredential = true,
+            ExcludeWorkloadIdentityCredential = true,
+            ExcludeAzureDeveloperCliCredential = true,
+            ExcludeAzurePowerShellCredential = true,
+            ExcludeSharedTokenCacheCredential = true
+        });
+    }
+
+    public AzureClientService(TokenCredential credential)
+    {
+        _credential = credential;
+    }
+
+    public TokenCredential GetCredential()
     {
         return _credential;
     }

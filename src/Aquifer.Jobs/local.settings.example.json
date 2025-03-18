@@ -20,15 +20,20 @@
 
         // notification jobs
         "AzureWebJobs.SendProjectStartedNotificationMessageSubscriber.Disabled": false,
-        "AzureWebJobs.SendResourceCommentCreatedNotificationMessageSubscriber.Disabled": false,
         "AzureWebJobs.SendResourceAssignmentNotificationsManager.Disabled": false,
 
         // resource tracking jobs
         "AzureWebJobs.TrackResourceContentRequestMessageSubscriber.Disabled": false,
 
+        // similarity jobs
+        "AzureWebJobs.ScoreResourceContentVersionSimilarityMessageSubscriber.Disabled": false,
+
         // translation jobs
         "AzureWebJobs.TranslateLanguageResourcesMessageSubscriber.Disabled": false,
         "AzureWebJobs.TranslateProjectResourcesMessageSubscriber.Disabled": false,
-        "AzureWebJobs.TranslateResourceMessageSubscriber.Disabled": false
+        "AzureWebJobs.TranslateResourceMessageSubscriber.Disabled": false,
+
+        // upload jobs
+        "AzureWebJobs.UploadResourceContentAudioMessageSubscriber.Disabled": false
     }
 }
