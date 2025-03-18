@@ -40,7 +40,7 @@ public class CachingApiKeyService(AquiferDbContext _dbContext, IMemoryCache _mem
                 ApiKeysCacheKey,
                 async cacheEntry =>
                 {
-                    cacheEntry.SlidingExpiration = s_cacheLifetime;
+                    cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
                     return await _dbContext.ApiKeys.Select(x => new CachedApiKey(x.Id, x.ApiKey, x.Scope, x.Organization)).ToListAsync(ct);
                 }) ??

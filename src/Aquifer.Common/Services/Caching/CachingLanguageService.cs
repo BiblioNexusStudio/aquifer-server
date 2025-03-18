@@ -87,7 +87,7 @@ public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryC
             LanguageDictionariesCacheKey,
             async cacheEntry =>
             {
-                cacheEntry.SlidingExpiration = s_cacheLifetime;
+                cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
                 var languageByIdMap = (await _dbContext.Languages
                         .ToListAsync(ct))
