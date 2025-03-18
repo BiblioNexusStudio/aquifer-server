@@ -28,7 +28,7 @@ public static class ClientGenerationSettings
                 c.ClientNamespaceName = "BiblioNexus.Aquifer.API.Client";
                 c.ClientClassName = "AquiferClient";
                 c.OutputPath = Path.Combine(c.OutputPath, "cs", Path.GetRandomFileName());
-                c.ExcludePatterns = [$"**/{ClientsRouteName}/**"];
+                c.ExcludePatterns = [$"**/{ClientsRouteName}/**", "**/admin/**"];
             },
             o =>
             {

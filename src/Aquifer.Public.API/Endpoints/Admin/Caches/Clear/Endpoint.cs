@@ -11,6 +11,7 @@ public class Endpoint(IMemoryCache _memoryCache, IOutputCacheStore _outputCacheS
     public override void Configure()
     {
         Post("/admin/caches/clear");
+        Tags(EndpointHelpers.EndpointTags.ExcludeFromSwaggerDocument);
         AllowAnonymous();
     }
 
