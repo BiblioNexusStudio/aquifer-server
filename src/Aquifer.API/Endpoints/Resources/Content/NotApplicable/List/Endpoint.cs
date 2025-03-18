@@ -18,14 +18,18 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     {
         Response = await dbContext.ResourceContents
             .Where(x => x.Status == ResourceContentStatus.TranslationNotApplicable)
-            .Select(x => new Response
-            {
-                Id = x.Id,
-                Title = x.Resource.EnglishLabel,
-                ParentResourceName = x.Resource.ParentResource.DisplayName,
-                Language = x.Language.EnglishDisplay,
-                ProjectName = x.ProjectResourceContents.SingleOrDefault() == null ? null : x.ProjectResourceContents.Single().Project.Name
-            })
+            .Select(
+                x => new Response
+                {
+                    Id = x.Id,
+                    Title = x.Resource.EnglishLabel,
+                    NotApplicableReason = x.NotApplicableReason,
+                    ParentResourceName = x.Resource.ParentResource.DisplayName,
+                    Language = x.Language.EnglishDisplay,
+                    ProjectName = x.ProjectResourceContents.SingleOrDefault() == null
+                        ? null
+                        : x.ProjectResourceContents.Single().Project.Name
+                })
             .ToListAsync(ct);
     }
 }

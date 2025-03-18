@@ -41,6 +41,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         content.AssignedUserId = null;
         content.ResourceContent.Status = ResourceContentStatus.TranslationNotApplicable;
+        content.ResourceContent.NotApplicableReason = request.NotApplicableReason;
+
         await historyService.AddAssignedUserHistoryAsync(content, null, user.Id, ct);
         await historyService.AddStatusHistoryAsync(content, ResourceContentStatus.TranslationNotApplicable, user.Id, ct);
         await dbContext.SaveChangesAsync(ct);
