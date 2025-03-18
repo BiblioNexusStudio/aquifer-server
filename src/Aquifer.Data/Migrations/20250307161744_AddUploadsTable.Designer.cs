@@ -4,6 +4,7 @@ using Aquifer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aquifer.Data.Migrations
 {
     [DbContext(typeof(AquiferDbContext))]
-    partial class AquiferDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250307161744_AddUploadsTable")]
+    partial class AddUploadsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1328,10 +1331,6 @@ namespace Aquifer.Data.Migrations
                     b.Property<bool>("AcceptsParentResource")
                         .HasColumnType("bit");
 
-                    b.Property<string>("AllowedRoles")
-                        .HasMaxLength(32)
-                        .HasColumnType("nvarchar(32)");
-
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -1399,10 +1398,6 @@ namespace Aquifer.Data.Migrations
 
                     b.Property<int>("MediaType")
                         .HasColumnType("int");
-
-                    b.Property<string>("NotApplicableReason")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
 
                     b.Property<int>("ResourceId")
                         .HasColumnType("int");
@@ -1947,32 +1942,12 @@ namespace Aquifer.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("BlobName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("getutcdate()");
 
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long>("FileSize")
-                        .HasColumnType("bigint");
-
-                    b.Property<int?>("ResourceContentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StartedByUserId")
-                        .HasColumnType("int");
-
                     b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("StepNumber")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Updated")
@@ -2826,23 +2801,6 @@ namespace Aquifer.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Language");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.UploadEntity", b =>
-                {
-                    b.HasOne("Aquifer.Data.Entities.ResourceContentEntity", "ResourceContent")
-                        .WithMany()
-                        .HasForeignKey("ResourceContentId");
-
-                    b.HasOne("Aquifer.Data.Entities.UserEntity", "StartedByUser")
-                        .WithMany()
-                        .HasForeignKey("StartedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ResourceContent");
-
-                    b.Navigation("StartedByUser");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.UserEntity", b =>

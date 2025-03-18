@@ -9,9 +9,10 @@ public static class QueueMessagePublisherServices
     {
         services
             .AddTrackResourceContentRequestServices()
+            .AddSingleton<IUploadResourceContentAudioMessagePublisher, UploadResourceContentAudioMessagePublisher>()
             .AddSingleton<INotificationMessagePublisher, NotificationMessagePublisher>()
-            .AddSingleton<ITranslationMessagePublisher, TranslationMessagePublisher>()
-            .AddSingleton<IResourceContentVersionSimilarityMessagePublisher, ResourceContentVersionSimilarityMessagePublisher>();
+            .AddSingleton<IResourceContentVersionSimilarityMessagePublisher, ResourceContentVersionSimilarityMessagePublisher>()
+            .AddSingleton<ITranslationMessagePublisher, TranslationMessagePublisher>();
 
         return services;
     }

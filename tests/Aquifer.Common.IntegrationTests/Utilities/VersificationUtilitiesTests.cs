@@ -74,9 +74,9 @@ public sealed class VersificationUtilitiesTests(App _app) : TestBase<App>
         "the source and target Bibles are the same (with versification mappings) so the source and target verse IDs should be the same")]
     [InlineData(EngVersificationSchemeBibleId, BsbBibleId, 1041017021, null,
         "the target (BSB) does not have the given verse")]
-    [InlineData(BsbBibleId, RsbBibleId, 1001003001, 1001003003,
+    [InlineData(BsbBibleId, RsbBibleId, 1019010007, 1019009028,
         "the RSB has a different versification than the BSB for the given verse")]
-    [InlineData(RsbBibleId, BsbBibleId, 1001003003, 1001003001,
+    [InlineData(RsbBibleId, BsbBibleId, 1019009028, 1019010007,
         "the RSB has a different versification than the BSB for the given verse")]
     [InlineData(BsbBibleId, RsbBibleId, 1016007067, 1016007068,
         "the RSB has a different versification than the BSB for the given verse with an ignored optional base verse part")]
