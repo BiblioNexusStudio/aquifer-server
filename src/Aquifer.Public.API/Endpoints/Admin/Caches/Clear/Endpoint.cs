@@ -1,3 +1,5 @@
+using Aquifer.Common.Services.Caching;
+using Aquifer.Data.Entities;
 using Aquifer.Public.API.Helpers;
 using Aquifer.Public.API.OpenApi;
 using FastEndpoints;
@@ -6,17 +8,24 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Aquifer.Public.API.Endpoints.Admin.Caches.Clear;
 
-public class Endpoint(IMemoryCache _memoryCache, IOutputCacheStore _outputCacheStore) : Endpoint<Request>
+public class Endpoint(ICachingApiKeyService _cachingApiKeyService, IMemoryCache _memoryCache, IOutputCacheStore _outputCacheStore)
+    : Endpoint<Request>
 {
     public override void Configure()
     {
         Post("/admin/caches/clear");
         Tags(EndpointHelpers.EndpointTags.ExcludeFromSwaggerDocument);
-        AllowAnonymous();
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
+        var apiKey = _cachingApiKeyService.CurrentApiKey;
+        if (!apiKey.HasScope(ApiKeyScope.Admin))
+        {
+            await SendUnauthorizedAsync(ct);
+            return;
+        }
+
         if (request.ShouldClearMemoryCache)
         {
             // The IMemoryCache interface is normally injected into constructors, but it doesn't support clearing the entire cache.
