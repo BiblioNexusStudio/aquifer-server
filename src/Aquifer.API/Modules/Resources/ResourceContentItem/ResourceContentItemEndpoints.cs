@@ -1,6 +1,7 @@
 ﻿using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Aquifer.Data.Schemas;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
