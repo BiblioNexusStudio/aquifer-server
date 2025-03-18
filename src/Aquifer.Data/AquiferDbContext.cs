@@ -103,6 +103,7 @@ public class AquiferDbContext : DbContext
     public DbSet<VersificationMappingEntity> VersificationMappings { get; set; }
     public DbSet<VersificationExclusionEntity> VersificationExclusions { get; set; }
     public DbSet<TranslationPairEntity> TranslationPairs { get; set; }
+    public DbSet<UploadEntity> Uploads { get; set; }
     public DbSet<CompanyLanguageEntity> CompanyLanguages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)

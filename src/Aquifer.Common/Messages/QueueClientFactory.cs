@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using Aquifer.Common.Configuration;
 using Aquifer.Common.Services;
 using Azure.Core;
 using Azure.Storage.Queues;
@@ -10,7 +11,7 @@ public interface IQueueClientFactory
     Task<QueueClient> GetQueueClientAsync(string queueName, CancellationToken ct);
 }
 
-public sealed class QueueClientFactory(QueueConfigurationOptions _queueConfigurationOptions, IAzureClientService _azureClientService)
+public sealed class QueueClientFactory(AzureStorageAccountOptions _azureStorageAccountOptions, IAzureClientService _azureClientService)
     : IQueueClientFactory
 {
     private static readonly QueueClientOptions s_clientOptions = new()
@@ -52,13 +53,15 @@ public sealed class QueueClientFactory(QueueConfigurationOptions _queueConfigura
     // Note: This method creates the queue if it doesn't yet exist.
     private async Task<QueueClient> GetQueueClientCoreAsync(string queueName, CancellationToken ct)
     {
-        var client = _queueConfigurationOptions.AzureQueueStorageConnectionString.StartsWith("http")
+        var client = string.IsNullOrEmpty(_azureStorageAccountOptions.ConnectionStringOverride)
             ? new QueueClient(
-                new Uri($"{_queueConfigurationOptions.AzureQueueStorageConnectionString}/{queueName}"),
+                _azureStorageAccountOptions.QueueEndpoint
+                    ?? throw new InvalidOperationException(
+                        $"The \"{nameof(AzureStorageAccountOptions.QueueEndpoint)}\" setting must be provided when \"{nameof(AzureStorageAccountOptions.ConnectionStringOverride)}\" is empty."),
                 _azureClientService.GetCredential(),
                 s_clientOptions)
             : new QueueClient(
-                _queueConfigurationOptions.AzureQueueStorageConnectionString,
+                _azureStorageAccountOptions.ConnectionStringOverride,
                 queueName,
                 s_clientOptions);
 

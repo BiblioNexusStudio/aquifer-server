@@ -65,7 +65,7 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
                 cacheKey,
                 async cacheEntry =>
                 {
-                    cacheEntry.SlidingExpiration = s_cacheLifetime;
+                    cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
                     return (await _dbContext.BookChapters
                             .Select(bc => new
@@ -97,7 +97,7 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
             cacheKey,
             async cacheEntry =>
             {
-                cacheEntry.SlidingExpiration = s_cacheLifetime;
+                cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
                 return (await _dbContext.BibleTexts
                         .Where(x => x.BibleId == bibleId)
@@ -140,7 +140,7 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
             BaseVerseIdByBibleVerseIdMapsCacheKey,
             async cacheEntry =>
             {
-                cacheEntry.SlidingExpiration = s_cacheLifetime;
+                cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
                 // Verse part handling:
                 // 1. Ignore BibleVerseIdPart because consumers don't care about parts when passing verse IDs.
@@ -174,7 +174,7 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
             BibleVerseIdByBaseVerseIdMapsCacheKey,
             async cacheEntry =>
             {
-                cacheEntry.SlidingExpiration = s_cacheLifetime;
+                cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
                 // When inverting the bibleVerseId -> baseVerseIdWithOptionalPart map, there may be multiple Bible verse IDs that map to
                 // the same base verse ID with optional part.  In that case, take the first entry ordered by
@@ -200,7 +200,7 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
             ExcludedVerseIdsByBibleIdMapCacheKey,
             async cacheEntry =>
             {
-                cacheEntry.SlidingExpiration = s_cacheLifetime;
+                cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
                 return (await _dbContext.VersificationExclusions
                         .GroupBy(x => x.BibleId)
