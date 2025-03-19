@@ -24,66 +24,60 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
             await SendErrorsAsync(cancellation: ct, statusCode: 404);
             return;
         }
-        
+
         if (!await IsRequestedBibleIdValidAsync(req.TargetBibleId, ct))
         {
             AddError($"Invalid bible id: {req.TargetBibleId}.");
             await SendErrorsAsync(cancellation: ct, statusCode: 404);
             return;
         }
-        
-        var maxChapterNumberAndVerseNumbersByBookIdMap = await versificationService.GetMaxChapterNumberAndVerseNumbersByBookIdMapAsync(
+
+        var verseRange = await VersificationUtilities.GetValidVerseIdRangeAsync(
             CachingVersificationService.EngVersificationSchemeBibleId,
-            ct);
-        
-        var (maxChapterNumber, maxVerseNumberByChapterNumberMap) = maxChapterNumberAndVerseNumbersByBookIdMap[bookId];
-        
-        // 1 is assumed for Start Chapter and Start Verse for ENG bible only. Will need updated for passing a source bible.
-        var startChapter = req.StartChapter is >= 1 && req.StartChapter.Value <= maxChapterNumber 
-            ? req.StartChapter.Value 
-            : 1;
-        var endChapter = req.EndChapter is >= 1 && req.EndChapter.Value <= maxChapterNumber 
-            ? req.EndChapter.Value 
-            : maxChapterNumber;
-        
-        var startVerse = req.StartVerse is >= 1 && req.StartVerse.Value <= maxVerseNumberByChapterNumberMap[startChapter] 
-            ? req.StartVerse.Value 
-            : 1;
-        var endVerse = req.EndVerse is >= 1 && req.EndVerse.Value <= maxVerseNumberByChapterNumberMap[endChapter] 
-            ? req.EndVerse.Value 
-            : maxVerseNumberByChapterNumberMap[endChapter];
-        
-        var minVerseId = BibleUtilities.GetVerseId(bookId, startChapter, startVerse);
-        var maxVerseId = BibleUtilities.GetVerseId(bookId, endChapter, endVerse);
-        
-        var versificationMap = await VersificationUtilities.ConvertVersificationRangeAsync(
-            CachingVersificationService.EngVersificationSchemeBibleId,
-            minVerseId,
-            maxVerseId,
-            req.TargetBibleId,
+            bookId,
+            req.StartChapter,
+            req.StartVerse,
+            req.EndChapter,
+            req.EndVerse,
             versificationService,
             ct);
-            
-        var verseMappings = versificationMap
-            .Where(mapping => mapping.Value != mapping.Key)
-            .Select(
-                mapping => new VerseMapping
-                {
-                    SourceVerse = MapToVerseReference(mapping.Key),
-                    TargetVerse = mapping.Value.HasValue ? MapToVerseReference(mapping.Value.Value) : null
-                })
-            .ToList();
+
+        IReadOnlyList<VerseMapping> verseMappings;
+        if (!verseRange.HasValue)
+        {
+            verseMappings = [];
+        }
+        else
+        {
+            var versificationMap = await VersificationUtilities.ConvertVersificationRangeAsync(
+                CachingVersificationService.EngVersificationSchemeBibleId,
+                verseRange.Value.StartVerseId,
+                verseRange.Value.EndVerseId,
+                req.TargetBibleId,
+                versificationService,
+                ct);
+
+            verseMappings = versificationMap
+                .Where(mapping => mapping.Value != mapping.Key)
+                .Select(
+                    mapping => new VerseMapping
+                    {
+                        SourceVerse = MapToVerseReference(mapping.Key),
+                        TargetVerse = mapping.Value.HasValue ? MapToVerseReference(mapping.Value.Value) : null
+                    })
+                .ToList();
+        }
 
         var response = new Response { VerseMappings = verseMappings };
-        
+
         await SendOkAsync(response, ct);
     }
-    
+
     private static VerseReference MapToVerseReference(int verseId)
     {
         var (bookId, chapter, verse) = BibleUtilities.TranslateVerseId(verseId);
         var bookName = BibleBookCodeUtilities.FullNameFromId(bookId);
-        
+
         return new VerseReference
         {
             VerseId = verseId,
