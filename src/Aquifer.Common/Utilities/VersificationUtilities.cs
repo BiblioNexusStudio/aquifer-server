@@ -6,6 +6,9 @@ namespace Aquifer.Common.Utilities;
 
 public static class VersificationUtilities
 {
+    // Assumption: The minimum chapter number in a book is always 1.  As of 2025-03-25, this is true for all imported Bibles.
+    private const int MinChapterNumber = 1;
+
     /// <summary>
     /// Returns <c>true</c> if the given verse ID is valid and is contained in the given Bible, <c>false</c> otherwise.
     /// </summary>
@@ -29,28 +32,130 @@ public static class VersificationUtilities
             return false;
         }
 
-        var maxChapterNumberAndVerseNumbersByBookIdMap =
-            await versificationService.GetMaxChapterNumberAndVerseNumbersByBookIdMapAsync(bibleId, ct);
+        var maxChapterNumberAndBookendVerseNumbersByBookIdMap =
+            await versificationService.GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(bibleId, ct);
 
         // Bibles often don't include every possible book.
-        if (!maxChapterNumberAndVerseNumbersByBookIdMap.TryGetValue(verse.bookId, out var maxChapterNumberAndVerseNumbers))
+        if (!maxChapterNumberAndBookendVerseNumbersByBookIdMap.TryGetValue(verse.bookId, out var maxChapterNumberAndBookendVerseNumbers))
         {
             return false;
         }
 
-        if (verse.chapter > maxChapterNumberAndVerseNumbers.MaxChapterNumber)
+        if (verse.chapter > maxChapterNumberAndBookendVerseNumbers.MaxChapterNumber)
         {
             return false;
         }
 
         // Edge Case: It's theoretically possible that a Bible could be missing an entire chapter.
-        if (!maxChapterNumberAndVerseNumbers.MaxVerseNumberByChapterNumberMap
-                .TryGetValue(verse.chapter, out var maxVerseNumber))
+        if (!maxChapterNumberAndBookendVerseNumbers.BookendVerseNumbersByChapterNumberMap
+                .TryGetValue(verse.chapter, out var bookendVerseNumbers))
         {
             return false;
         }
 
-        return verse.verse <= maxVerseNumber;
+        return bookendVerseNumbers.MinVerseNumber <= verse.verse && verse.verse <= bookendVerseNumbers.MaxVerseNumber;
+    }
+
+    /// <summary>
+    /// Returns <c>null</c> if the <paramref name="bibleId"/> or the relevant book do not contain text.  Also returns <c>null</c>
+    /// if the two verse IDs refer to different books.
+    /// Otherwise, if the given start and end chapter and verse numbers are not valid for the given Bible and Book then the range will be
+    /// adjusted to the nearest valid chapter and verse numbers for the given Bible and Book based upon the text.
+    /// </summary>
+    public static async Task<(int StartVerseId, int EndVerseId)?> GetValidVerseIdRangeAsync(
+        int bibleId,
+        int startVerseId,
+        int endVerseId,
+        ICachingVersificationService versificationService,
+        CancellationToken ct)
+    {
+        var startVerse = BibleUtilities.TranslateVerseId(startVerseId);
+        var endVerse = BibleUtilities.TranslateVerseId(endVerseId);
+
+        if (startVerse.bookId != endVerse.bookId)
+        {
+            return null;
+        }
+
+        return await GetValidVerseIdRangeAsync(
+            bibleId,
+            startVerse.bookId,
+            startVerse.chapter,
+            startVerse.verse,
+            endVerse.chapter,
+            endVerse.verse,
+            versificationService,
+            ct);
+    }
+
+    /// <summary>
+    /// Returns <c>null</c> if the <paramref name="bibleId"/> or <paramref name="bookId"/> do not contain text.
+    /// Otherwise, if the given start and end chapter and verse numbers are not valid for the given Bible and Book then the range will be
+    /// adjusted to the nearest valid chapter and verse numbers for the given Bible and Book based upon the text.
+    /// </summary>
+    public static async Task<(int StartVerseId, int EndVerseId)?> GetValidVerseIdRangeAsync(
+        int bibleId,
+        BookId bookId,
+        int? startChapterNumber,
+        int? startVerseNumber,
+        int? endChapterNumber,
+        int? endVerseNumber,
+        ICachingVersificationService versificationService,
+        CancellationToken ct)
+    {
+        var maxChapterNumberAndBookendVerseNumbersByBookIdMap =
+            await versificationService.GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(bibleId, ct);
+
+        if (!maxChapterNumberAndBookendVerseNumbersByBookIdMap.TryGetValue(bookId, out var maxChapterNumberAndBookendVerseNumbers))
+        {
+            return null;
+        }
+
+        var (maxChapterNumber, bookendVerseNumbersByChapterNumberMap) = maxChapterNumberAndBookendVerseNumbers;
+
+        // Assumption: There are no missing chapters in any Bibles.
+        var adjustedStartChapterNumber = startChapterNumber is >= MinChapterNumber && startChapterNumber.Value <= maxChapterNumber
+            ? startChapterNumber.Value
+            : MinChapterNumber;
+        var adjustedEndChapterNumber = endChapterNumber is >= MinChapterNumber && endChapterNumber.Value <= maxChapterNumber
+            ? endChapterNumber.Value
+            : maxChapterNumber;
+
+        var (minVerseNumberForStartChapter, maxVerseNumberForStartChapter) =
+            bookendVerseNumbersByChapterNumberMap[adjustedStartChapterNumber];
+        var adjustedStartVerseNumber = startVerseNumber >= minVerseNumberForStartChapter && startVerseNumber.Value <= maxVerseNumberForStartChapter
+            ? startVerseNumber.Value
+            : minVerseNumberForStartChapter;
+
+        var (minVerseNumberForEndChapter, maxVerseNumberForEndChapter) =
+            bookendVerseNumbersByChapterNumberMap[adjustedEndChapterNumber];
+        var adjustedEndVerseNumber = endVerseNumber >= minVerseNumberForEndChapter && endVerseNumber.Value <= maxVerseNumberForEndChapter
+            ? endVerseNumber.Value
+            : maxVerseNumberForEndChapter;
+
+        var minVerseId = BibleUtilities.GetVerseId(bookId, adjustedStartChapterNumber, adjustedStartVerseNumber);
+        var maxVerseId = BibleUtilities.GetVerseId(bookId, adjustedEndChapterNumber, adjustedEndVerseNumber);
+
+        // the min/max verse IDs are within the valid chapter ranges but there's no guarantee that the verses are not excluded
+        return (await GetNearestNonExcludedVerseIdAsync(bibleId, minVerseId, versificationService, ct),
+            await GetNearestNonExcludedVerseIdAsync(bibleId, maxVerseId, versificationService, ct));
+
+        static async Task<int> GetNearestNonExcludedVerseIdAsync(
+            int bibleId,
+            int verseId,
+            ICachingVersificationService versificationService,
+            CancellationToken ct)
+        {
+            var excludedVerseIds = await versificationService.GetExcludedVerseIdsAsync(bibleId, ct);
+
+            var adjustedVerseId = verseId;
+            while (excludedVerseIds.Contains(adjustedVerseId))
+            {
+                adjustedVerseId++;
+            }
+
+            return adjustedVerseId;
+        }
     }
 
     /// <summary>
@@ -95,8 +200,8 @@ public static class VersificationUtilities
         var startVerse = BibleUtilities.TranslateVerseId(startVerseId);
         var endVerse = BibleUtilities.TranslateVerseId(endVerseId);
 
-        var maxChapterNumberAndVerseNumbersByBookIdMap =
-            await versificationService.GetMaxChapterNumberAndVerseNumbersByBookIdMapAsync(bibleId, ct);
+        var maxChapterNumberAndBookendVerseNumbersByBookIdMap =
+            await versificationService.GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(bibleId, ct);
 
         var excludedVerseIds = await versificationService.GetExcludedVerseIdsAsync(bibleId, ct);
 
@@ -104,33 +209,33 @@ public static class VersificationUtilities
         for (var bookId = startVerse.bookId; bookId <= endVerse.bookId; bookId++)
         {
             // Bibles often don't include every possible book.
-            if (!maxChapterNumberAndVerseNumbersByBookIdMap.TryGetValue(bookId, out var maxChapterNumberAndVerseNumbers))
+            if (!maxChapterNumberAndBookendVerseNumbersByBookIdMap.TryGetValue(bookId, out var maxChapterNumberAndBookendVerseNumbers))
             {
                 continue;
             }
 
             var startChapterNumber = bookId == startVerse.bookId
                 ? startVerse.chapter
-                : 1;
+                : MinChapterNumber;
             var endChapterNumber = bookId == endVerse.bookId
                 ? endVerse.chapter
-                : maxChapterNumberAndVerseNumbers.MaxChapterNumber;
+                : maxChapterNumberAndBookendVerseNumbers.MaxChapterNumber;
 
             for (var chapterNumber = startChapterNumber; chapterNumber <= endChapterNumber; chapterNumber++)
             {
                 // Edge Case: It's theoretically possible that a Bible could be missing an entire chapter.
-                if (!maxChapterNumberAndVerseNumbers.MaxVerseNumberByChapterNumberMap
-                        .TryGetValue(chapterNumber, out var maxVerseNumber))
+                if (!maxChapterNumberAndBookendVerseNumbers.BookendVerseNumbersByChapterNumberMap
+                        .TryGetValue(chapterNumber, out var bookendVerseNumbers))
                 {
                     continue;
                 }
 
                 var startVerseNumber = bookId == startVerse.bookId && chapterNumber == startVerse.chapter
                     ? startVerse.verse
-                    : 1;
+                    : bookendVerseNumbers.MinVerseNumber;
                 var endVerseNumber = bookId == endVerse.bookId && chapterNumber == endVerse.chapter
                     ? endVerse.verse
-                    : maxVerseNumber;
+                    : bookendVerseNumbers.MaxVerseNumber;
 
                 for (var verseNumber = startVerseNumber; verseNumber <= endVerseNumber; verseNumber++)
                 {
