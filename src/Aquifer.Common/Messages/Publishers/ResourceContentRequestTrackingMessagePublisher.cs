@@ -33,7 +33,8 @@ public interface IResourceContentRequestTrackingMessagePublisher
 /// queues where it is acceptable to drop messages on rare occasions.
 /// </summary>
 public class ResourceContentRequestTrackingMessagePublisher(
-    Channel<TrackResourceContentRequestMessage> _channel)
+    Channel<TrackResourceContentRequestMessage> _channel,
+    ICachingApiKeyService _cachingApiKeyService)
     : IResourceContentRequestTrackingMessagePublisher
 {
     public async Task PublishTrackResourceContentRequestMessageAsync(
@@ -71,13 +72,12 @@ public class ResourceContentRequestTrackingMessagePublisher(
         }
 
         var sourceHeader = httpContext.Request.Headers["bn-source"].ToString();
-        httpContext.Items.TryGetValue(Constants.HttpContextItemCachedApiKey, out var maybeCachedApiKey);
 
         var message = new TrackResourceContentRequestMessage
         {
             Source = string.IsNullOrEmpty(sourceHeader) ? source : sourceHeader,
             IpAddress = GetClientIp(httpContext),
-            SubscriptionName = maybeCachedApiKey is CachedApiKey cachedApiKey ? cachedApiKey.Organization : null,
+            SubscriptionName = _cachingApiKeyService.CurrentApiKey.Organization,
             EndpointId = endpointId,
             UserId = httpContext.Request.Headers["bn-user-id"],
             ResourceContentIds = resourceContentIds
