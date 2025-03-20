@@ -110,26 +110,42 @@ public static class BibleUtilities
         return (LowerBoundOfBook(bookId), UpperBoundOfBook(bookId));
     }
 
-    public static (int StartVerseId, int EndVerseId) GetVerseIds(string bookCode,
-        int startChapter,
-        int endChapter,
-        int startVerse,
-        int endVerse)
+    public static (int StartVerseId, int EndVerseId) GetVerseIds(
+        string bookCode,
+        int? startChapter,
+        int? endChapter,
+        int? startVerse,
+        int? endVerse)
     {
         var bookId = BibleBookCodeUtilities.IdFromCode(bookCode);
 
-        if (startChapter == 0 && endChapter == 0)
+        if (startVerse != null && startChapter == null)
         {
-            return (LowerBoundOfBook(bookId), UpperBoundOfBook(bookId));
+            throw new ArgumentException(
+                $"{nameof(startChapter)} must be specified when {nameof(startVerse)} is specified.",
+                nameof(startChapter));
         }
 
-        if (startVerse == 0 && endVerse == 0)
+        if (endVerse != null && endChapter == null)
         {
-            return (LowerBoundOfChapter(bookId, startChapter), UpperBoundOfChapter(bookId, endChapter));
+            throw new ArgumentException(
+                $"{nameof(endChapter)} must be specified when {nameof(endVerse)} is specified.",
+                nameof(endChapter));
         }
 
-        var bookNumber = (int)bookId;
-        return (GetVerseId(bookNumber, startChapter, startVerse), GetVerseId(bookNumber, endChapter, endVerse));
+        var startVerseId = startChapter == null
+            ? LowerBoundOfBook(bookId)
+            : startVerse == null
+                ? LowerBoundOfChapter(bookId, startChapter.Value)
+                : GetVerseId(bookId, startChapter.Value, startVerse.Value);
+
+        var endVerseId = endChapter == null
+            ? UpperBoundOfBook(bookId)
+            : endVerse == null
+                ? UpperBoundOfChapter(bookId, endChapter.Value)
+                : GetVerseId(bookId, endChapter.Value, endVerse.Value);
+
+        return (startVerseId, endVerseId);
     }
 
     public static string PadVerseId(int value)

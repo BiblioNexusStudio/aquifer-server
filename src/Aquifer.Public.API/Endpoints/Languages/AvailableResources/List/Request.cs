@@ -13,26 +13,22 @@ public record Request
     /// <summary>
     ///     Optional start chapter to search from. If included, must also provide an end chapter. Required with verses.
     /// </summary>
-    [DefaultValue(0)]
-    public int StartChapter { get; init; }
+    public int? StartChapter { get; init; }
 
     /// <summary>
     ///     Optional end chapter to search from. Required with start chapter and verses.
     /// </summary>
-    [DefaultValue(0)]
-    public int EndChapter { get; init; }
+    public int? EndChapter { get; init; }
 
     /// <summary>
     ///     Optional start verse to search from. If included, must also provide an end verse and chapters.
     /// </summary>
-    [DefaultValue(0)]
-    public int StartVerse { get; init; }
+    public int? StartVerse { get; init; }
 
     /// <summary>
     ///     Optional end verse to search from. Required with start verse.
     /// </summary>
-    [DefaultValue(0)]
-    public int EndVerse { get; init; }
+    public int? EndVerse { get; init; }
 
     /// <summary>
     ///     Optional list of language codes to filter the results to.<br></br>
