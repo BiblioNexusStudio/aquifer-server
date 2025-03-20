@@ -1,11 +1,14 @@
 ﻿using Aquifer.API.Helpers;
+using Aquifer.Common.Services.Caching;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Bibles.Book.List;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Response>>
+public class Endpoint(AquiferDbContext _dbContext, ICachingVersificationService _cachingVersificationService)
+    : Endpoint<Request, IReadOnlyList<Response>>
 {
     public override void Configure()
     {
@@ -16,23 +19,41 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var response = await dbContext.BibleBookContents
-            .Where(bbc => bbc.Bible.Enabled && bbc.BibleId == req.BibleId)
-            .Select(bbc => new Response
-            {
-                Code = bbc.Book.Code,
-                Number = (int)bbc.BookId,
-                LocalizedName = bbc.DisplayName,
-                TotalChapters = bbc.ChapterCount,
+        var maxChapterNumberAndBookendVerseNumbersByBookIdMap =
+            await _cachingVersificationService.GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(req.BibleId, ct);
 
-                // TODO TotalVerses here should come from actual Bible data, not the standard BookChapters English versification data.
-                // After this usage of Book.Chapters is removed we should also delete that association altogether.
-                Chapters = bbc.Book.Chapters.OrderBy(c => c.Number).Select(c => new ResponseChapter
+        var response = (await _dbContext.BibleBookContents
+                .Where(bbc => bbc.Bible.Enabled && bbc.BibleId == req.BibleId)
+                .Select(
+                    bbc => new
+                    {
+                        bbc.BookId,
+                        bbc.Book.Code,
+                        bbc.DisplayName,
+                        bbc.ChapterCount,
+                    })
+                .ToListAsync(ct))
+            .Select(
+                x => new Response
                 {
-                    Number = c.Number,
-                    TotalVerses = c.MaxVerseNumber
+                    Code = x.Code,
+                    Number = (int)x.BookId,
+                    LocalizedName = x.DisplayName,
+                    TotalChapters = x.ChapterCount,
+                    Chapters = maxChapterNumberAndBookendVerseNumbersByBookIdMap
+                            .GetValueOrNull(x.BookId)
+                            ?.BookendVerseNumbersByChapterNumberMap
+                            .OrderBy(kvp => kvp.Key)
+                            .Select(
+                                kvp => new ResponseChapter
+                                {
+                                    Number = kvp.Key,
+                                    TotalVerses = kvp.Value.MaxVerseNumber,
+                                })
+                            .ToList()
+                        ?? [],
                 })
-            }).ToListAsync(ct);
+            .ToList();
 
         await SendOkAsync(response, ct);
     }

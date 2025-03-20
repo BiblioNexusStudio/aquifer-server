@@ -158,6 +158,87 @@ public sealed class VersificationUtilitiesTests
             .Should()
             .Equal(expectedTargetVerseIds.Cast<int?>(), because);
     }
+
+    [Theory]
+    [InlineData(99, 1001001001, 1001001001,
+        "a Bible that doesn't exist in the data should return null")]
+    [InlineData(1, 1079001001, 1079001003,
+        "a Book that doesn't exist in the data should return null")]
+    [InlineData(1, int.MaxValue, int.MaxValue,
+        "a Book that doesn't exist at all should return null")]
+    public async Task GetValidVerseIdRangeAsync_NoData_ReturnsNull(
+        int bibleId,
+        int startVerseId,
+        int endVerseId,
+        string because)
+    {
+        var result = await VersificationUtilities.GetValidVerseIdRangeAsync(
+            bibleId,
+            startVerseId,
+            endVerseId,
+            _versificationService,
+            CancellationToken.None);
+        result.Should().BeNull(because);
+    }
+
+    [Theory]
+    [InlineData(1, 1001002001, 1001002001, 1001002001, 1001002001,
+        "a single valid verse ID range should return itself")]
+    [InlineData(1, 1002001003, 1002001003, 1002001004, 1002001004,
+        "a single excluded verse ID should return the next verse")]
+    [InlineData(1, 1001003001, 1001003005, 1001003001, 1001003005,
+        "a valid range should return the same range")]
+    [InlineData(1, 1002001001, 1002001005, 1002001001, 1002001005,
+        "a range containing an excluded verse in the middle should still return itself")]
+    [InlineData(1, 1001004001, 1001004004, 1001004003, 1001004004,
+        "a range starting with excluded verses should adjust to the next non-excluded verse")]
+    [InlineData(1, 1001001000, 1001001999, 1001001001, 1001001031,
+        "a range outside of the valid range for the chapter should adjust to the valid range")]
+    [InlineData(1, 1001000000, 1001999999, 1001001001, 1001006011,
+        "a range outside of the valid range for the book should adjust to the valid range")]
+    public async Task GetValidVerseIdRangeAsync_ValidArguments_Success(
+        int bibleId,
+        int startVerseId,
+        int endVerseId,
+        int expectedStartVerseId,
+        int expectedEndVerseId,
+        string because)
+    {
+        var result = await VersificationUtilities.GetValidVerseIdRangeAsync(
+            bibleId,
+            startVerseId,
+            endVerseId,
+            _versificationService,
+            CancellationToken.None);
+        result.Should().Be((expectedStartVerseId, expectedEndVerseId), because);
+    }
+
+    // The tests above cover all the other valid scenarios for this method, too.
+    [Theory]
+    [InlineData(1, BookId.BookGEN, null, null, null, null, 1001001001, 1001006011,
+        "not specifying a range should adjust to the valid range for the book")]
+    public async Task GetValidVerseIdRangeAsync_EmptyRange_Success(
+        int bibleId,
+        BookId bookId,
+        int? startChapterNumber,
+        int? startVerseNumber,
+        int? endChapterNumber,
+        int? endVerseNumber,
+        int expectedStartVerseId,
+        int expectedEndVerseId,
+        string because)
+    {
+        var result = await VersificationUtilities.GetValidVerseIdRangeAsync(
+            bibleId,
+            bookId,
+            startChapterNumber,
+            startVerseNumber,
+            endChapterNumber,
+            endVerseNumber,
+            _versificationService,
+            CancellationToken.None);
+        result.Should().Be((expectedStartVerseId, expectedEndVerseId), because);
+    }
 }
 
 public class MockCachingVersificationService : ICachingVersificationService
@@ -212,58 +293,60 @@ public class MockCachingVersificationService : ICachingVersificationService
         }
         .AsReadOnly();
 
-    private static readonly
-        ReadOnlyDictionary<BookId, (int MaxChapterNumber, ReadOnlyDictionary<int, int> MaxVerseNumberByChapterNumberMap)>
-        s_baseMaxChapterNumberAndVerseNumbersByBookIdMap =
-            new Dictionary<BookId, (int MaxChapterNumber, ReadOnlyDictionary<int, int> MaxVerseNumberByChapterNumberMap)>
+    private static readonly ReadOnlyDictionary<
+            BookId,
+            (int MaxChapterNumber, ReadOnlyDictionary<int, (int MinVerseNumber, int MaxVerseNumber)> BookendVerseNumbersByChapterNumberMap)>
+        s_baseMaxChapterNumberAndBookendVerseNumbersByBookIdMap =
+            new Dictionary<BookId, (int, ReadOnlyDictionary<int, (int, int)>)>
             {
                 [BookId.BookGEN] =
                 (
                     6,
-                    new Dictionary<int, int>
+                    new Dictionary<int, (int, int)>
                     {
-                        [1] = 31,
-                        [2] = 29,
-                        [3] = 24,
-                        [4] = 26,
-                        [5] = 32,
-                        [6] = 11,
+                        [1] = (1, 31),
+                        [2] = (1, 29),
+                        [3] = (1, 24),
+                        [4] = (1, 26),
+                        [5] = (1, 32),
+                        [6] = (1, 11),
                     }
                     .AsReadOnly()
                 ),
                 [BookId.BookEXO] =
                 (
                     4,
-                    new Dictionary<int, int>
+                    new Dictionary<int, (int, int)>
                     {
-                        [1] = 5,
-                        [2] = 9,
-                        [3] = 24,
-                        [4] = 11,
+                        [1] = (1, 5),
+                        [2] = (1, 9),
+                        [3] = (1, 24),
+                        [4] = (1, 11),
                     }
                     .AsReadOnly()
                 ),
             }
             .AsReadOnly();
 
-    private static readonly
-        ReadOnlyDictionary<BookId, (int MaxChapterNumber, ReadOnlyDictionary<int, int> MaxVerseNumberByChapterNumberMap)>
-            s_additionalMaxChapterNumberAndVerseNumbersByBookIdMap =
-                new Dictionary<BookId, (int MaxChapterNumber, ReadOnlyDictionary<int, int> MaxVerseNumberByChapterNumberMap)>
-                    {
-                        [BookId.BookSIR] =
-                        (
-                            3,
-                            new Dictionary<int, int>
-                                {
-                                    [1] = 4,
-                                    [2] = 5,
-                                    [3] = 6,
-                                }
-                                .AsReadOnly()
-                        ),
-                    }
-                    .AsReadOnly();
+    private static readonly ReadOnlyDictionary<
+            BookId,
+            (int MaxChapterNumber, ReadOnlyDictionary<int, (int MinVerseNumber, int MaxVerseNumber)> BookendVerseNumbersByChapterNumberMap)>
+        s_additionalMaxChapterNumberAndVerseNumbersByBookIdMap =
+            new Dictionary<BookId, (int, ReadOnlyDictionary<int, (int, int)>)>
+                {
+                    [BookId.BookSIR] =
+                    (
+                        3,
+                        new Dictionary<int, (int, int)>
+                            {
+                                [1] = (1, 4),
+                                [2] = (1, 5),
+                                [3] = (1, 6),
+                            }
+                            .AsReadOnly()
+                    ),
+                }
+                .AsReadOnly();
 
     public Task<ReadOnlyDictionary<int, string>>
         GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(int bibleId, CancellationToken cancellationToken)
@@ -286,23 +369,41 @@ public class MockCachingVersificationService : ICachingVersificationService
         return Task.FromResult(s_excludedVerseIdsByBibleIdMap.GetValueOrDefault(bibleId, new ReadOnlySet<int>(new HashSet<int>())));
     }
 
-    public Task<ReadOnlyDictionary<BookId, (int MaxChapterNumber, ReadOnlyDictionary<int, int> MaxVerseNumberByChapterNumberMap)>>
-        GetMaxChapterNumberAndVerseNumbersByBookIdMapAsync(int bibleId, CancellationToken cancellationToken)
+    public Task<bool> DoesBibleIncludeBookAsync(int bibleId, BookId bookId, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<int?> GetMaxChapterNumberForBookAsync(int bibleId, BookId bookId, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<(int MinVerseNumber, int MaxVerseNumber)?> GetBookendVerseNumbersForChapterAsync(int bibleId, BookId bookId, int chapterNumber, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ReadOnlyDictionary<
+            BookId,
+            (int MaxChapterNumber,
+                ReadOnlyDictionary<int, (int MinVerseNumber, int MaxVerseNumber)> BookendVerseNumbersByChapterNumberMap)>>
+        GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(int bibleId, CancellationToken cancellationToken)
     {
         return Task.FromResult(bibleId switch
         {
             // Bible 99 doesn't exist.
-            99 => new Dictionary<BookId, (int MaxChapterNumber, ReadOnlyDictionary<int, int> MaxVerseNumberByChapterNumberMap)>()
+            99 => new Dictionary<BookId, (int, ReadOnlyDictionary<int, (int, int)>)>()
                 .AsReadOnly(),
 
             //  Bible 2 gets an additional book.
-            2 => s_baseMaxChapterNumberAndVerseNumbersByBookIdMap
+            2 => s_baseMaxChapterNumberAndBookendVerseNumbersByBookIdMap
                 .Concat(s_additionalMaxChapterNumberAndVerseNumbersByBookIdMap)
                 .ToDictionary()
                 .AsReadOnly(),
 
             // Return the same max chapters/verses for all other Bibles.
-            _ => s_baseMaxChapterNumberAndVerseNumbersByBookIdMap,
+            _ => s_baseMaxChapterNumberAndBookendVerseNumbersByBookIdMap,
         });
     }
 }

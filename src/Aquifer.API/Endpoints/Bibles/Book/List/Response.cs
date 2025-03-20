@@ -6,7 +6,7 @@ public class Response
     public required string Code { get; set; }
     public required string LocalizedName { get; set; }
     public required int TotalChapters { get; set; }
-    public required IEnumerable<ResponseChapter> Chapters { get; set; }
+    public required IReadOnlyList<ResponseChapter> Chapters { get; set; }
 }
 
 public class ResponseChapter
