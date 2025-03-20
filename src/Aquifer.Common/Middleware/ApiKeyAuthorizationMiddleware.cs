@@ -28,7 +28,7 @@ public class ApiKeyAuthorizationMiddleware(RequestDelegate _next, IOptions<ApiKe
             return;
         }
 
-        var scopedApiKey = await cachingApiKeyService.GetCachedApiKeyAsync(apiKeyToValidate, _options.Value.Scope, context.RequestAborted);
+        var scopedApiKey = await cachingApiKeyService.GetApiKeyAsync(apiKeyToValidate, _options.Value.Scope, context.RequestAborted);
 
         if (scopedApiKey is null)
         {
@@ -38,7 +38,7 @@ public class ApiKeyAuthorizationMiddleware(RequestDelegate _next, IOptions<ApiKe
             return;
         }
 
-        context.Items.Add(Constants.HttpContextItemCachedApiKey, scopedApiKey);
+        cachingApiKeyService.CurrentApiKey = scopedApiKey;
 
         await _next(context);
     }

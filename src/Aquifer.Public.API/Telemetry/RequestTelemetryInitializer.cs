@@ -19,7 +19,7 @@ public class RequestTelemetryInitializer(IHttpContextAccessor httpContextAccesso
 
         if ((httpContextAccessor.HttpContext?.Items.TryGetValue(Constants.HttpContextItemCachedApiKey, out var maybeCachedApiKey) ??
                 false) &&
-            maybeCachedApiKey is CachedApiKey cachedApiKey)
+            maybeCachedApiKey is ApiKey cachedApiKey)
         {
             requestTelemetry.Properties[Constants.TelemetryBnApiCallerIdPropertyName] = cachedApiKey.Id.ToString();
             requestTelemetry.Properties[Constants.TelemetryBnApiCallerPropertyName] = cachedApiKey.Organization;

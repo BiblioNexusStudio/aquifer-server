@@ -11,7 +11,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddTrackResourceContentRequestServices(this IServiceCollection services)
     {
         return services
-            .AddSingleton<IResourceContentRequestTrackingMessagePublisher, ResourceContentRequestTrackingMessagePublisher>()
+            .AddScoped<IResourceContentRequestTrackingMessagePublisher, ResourceContentRequestTrackingMessagePublisher>()
             .AddHostedService<TrackResourceContentRequestBackgroundService>()
             .AddSingleton(
                 _ => Channel.CreateUnbounded<TrackResourceContentRequestMessage>(
