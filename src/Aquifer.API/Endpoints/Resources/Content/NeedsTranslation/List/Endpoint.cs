@@ -9,6 +9,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.Content.NeedsTranslation.List;
 
+/// <summary>
+///     Despite the general endpoint name, this is only for Community Reviewers and their dashboard. Don't use it for anything else.
+/// </summary>
 public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request, Response>
 {
     public override void Configure()
@@ -24,7 +27,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var likeKey = isExactSearch ? "" : "%";
         var searchParameter = new SqlParameter("SearchQuery", hasSearchQuery ? $"{likeKey}{req.SearchQuery!.Trim('"')}{likeKey}" : "");
 
-        var total = (await dbContext.Database.SqlQueryRaw<int>(BuildQuery(req, user, true, hasSearchQuery, isExactSearch), searchParameter)
+        var total = (await dbContext.Database
+            .SqlQueryRaw<int>(BuildQuery(req, user, true, hasSearchQuery, isExactSearch), searchParameter)
             .ToListAsync(ct)).Single();
         var resourceContent = total == 0
             ? []
@@ -62,7 +66,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     INNER JOIN ParentResources PR ON PR.id = R.ParentResourceId
                     INNER JOIN Languages L ON L.Id = RC.LanguageId
                     INNER JOIN ResourceContentVersions RCV ON RCV.ResourceContentId = RC.Id
-                WHERE RC.MediaType != {(int)ResourceContentMediaType.Audio}
+                WHERE RC.MediaType = {(int)ResourceContentMediaType.Text}
+                AND PR.AllowCommunityReview = 1
                 {ApplyLanguageIdFilter(user.LanguageId ?? 1)}
                 {ApplyParentResourceIdFilter(req.ParentResourceId)}
                 {ApplySearchQueryFilter(hasSearchQuery, isExactSearch)}
