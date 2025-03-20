@@ -1,13 +1,15 @@
 using Aquifer.API.Helpers;
+using Aquifer.API.Services;
 using Aquifer.Common;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Resources.ParentResources.List;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Response>>
+public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : Endpoint<Request, List<Response>>
 {
     public override void Configure()
     {
@@ -19,6 +21,11 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
+        // Note that the server never caches when an auth header is sent, so while Well users would continue to get a cached version, a
+        // community reviewer will always hit this. Thus, there's no risk of the community reviewer getting a cached version with everything
+        // or vice versa.
+        var isRequestedByCommunityReviewer =
+            _userService.GetAllJwtRoles().FirstOrDefault() == UserRole.CommunityReviewer.ToString().ToLower();
         var fallbackMediaTypesSqlArray = string.Join(',', Constants.FallbackToEnglishForMediaTypes.Select(t => (int)t));
 
         var query = $"""
@@ -45,13 +52,12 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                          FROM
                              ParentResources pr
                          LEFT JOIN ParentResourceLocalizations prl ON prl.ParentResourceId = pr.Id AND prl.LanguageId = @LanguageId
-                         WHERE pr.Enabled = 1
+                         WHERE pr.Enabled = 1 {(isRequestedByCommunityReviewer ? "AND pr.AllowCommunityReview = 1" : "")}
                          ORDER BY COALESCE(prl.DisplayName, pr.DisplayName)
                      """;
 
-        var response = await dbContext.Database
-            .SqlQueryRaw<Response>(query,
-                new SqlParameter("LanguageId", req.LanguageId))
+        var response = await _dbContext.Database
+            .SqlQueryRaw<Response>(query, new SqlParameter("LanguageId", req.LanguageId))
             .ToListAsync(ct);
 
         await SendOkAsync(response, ct);
