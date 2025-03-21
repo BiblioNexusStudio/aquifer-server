@@ -1,11 +1,13 @@
 using Aquifer.API.Common;
+using Aquifer.API.Services;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Reports.Dynamic.List;
 
-public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<IEnumerable<Response>>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService) : EndpointWithoutRequest<IEnumerable<Response>>
 {
     public override void Configure()
     {
@@ -15,11 +17,42 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<IEnum
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var reports = await dbContext.Reports
+        var user = await userService.GetUserFromJwtAsync(ct);
+
+        var reportsWithAllowedRoles = await dbContext.Reports
             .Where(r => r.Enabled)
-            .Select(r => new Response { Slug = r.Slug, Name = r.Name, Description = r.Description, Type = r.Type })
+            .Select(
+                r => new Report
+                {
+                    Slug = r.Slug,
+                    Name = r.Name,
+                    Description = r.Description,
+                    Type = r.Type,
+                    AllowedRoles = r.AllowedRoles
+                })
             .ToListAsync(ct);
 
+        var reports = reportsWithAllowedRoles.Where(
+                r => ReportRoleHelper.RoleIsAllowedForReport(r.AllowedRoles, user.Role))
+            .Select(
+                r => new Response
+                {
+                    Name = r.Name,
+                    Description = r.Description,
+                    Type = r.Type,
+                    Slug = r.Slug
+                }
+            );
+
         await SendOkAsync(reports, ct);
+    }
+
+    private record Report
+    {
+        public required string Slug { get; set; }
+        public required string Name { get; set; }
+        public required string Description { get; set; }
+        public ReportType Type { get; set; }
+        public string? AllowedRoles { get; set; }
     }
 }
