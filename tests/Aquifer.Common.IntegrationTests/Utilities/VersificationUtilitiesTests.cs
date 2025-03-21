@@ -11,7 +11,7 @@ public sealed class VersificationUtilitiesTests(App _app) : TestBase<App>
     private const int BsbBibleId = 1;
     private const int Ls1910BibleId = 6;
     private const int RsbBibleId = 9;
-    private const int GltBibleId = 10;
+    private const int IrvBibleId = 2;
 
     [Theory]
     [InlineData(BsbBibleId, 1001001001, true,
@@ -78,18 +78,12 @@ public sealed class VersificationUtilitiesTests(App _app) : TestBase<App>
         "the RSB has a different versification than the BSB for the given verse")]
     [InlineData(RsbBibleId, BsbBibleId, 1019009028, 1019010007,
         "the RSB has a different versification than the BSB for the given verse")]
-    [InlineData(BsbBibleId, RsbBibleId, 1016007067, 1016007068,
-        "the RSB has a different versification than the BSB for the given verse with an ignored optional base verse part")]
     [InlineData(RsbBibleId, BsbBibleId, 1016007068, 1016007067,
         "the RSB has a different versification than the BSB for the given verse with a non-matching base verse part")]
     [InlineData(EngVersificationSchemeBibleId, Ls1910BibleId, 1004026001, 1004026001,
         "the ENG and LS1910 have the same versification with matching base verse parts")]
     [InlineData(Ls1910BibleId, EngVersificationSchemeBibleId, 1004026001, 1004026001,
         "the ENG and LS1910 have the same versification with matching base verse parts")]
-    [InlineData(BsbBibleId, EngVersificationSchemeBibleId, 1004026001, 1004026001,
-        "the ENG has a different versification than the BSB, the Bible verse part of 'b' is not loaded, and the base verse part of 'b' is ignored which results in mapping back to the same verse ID")]
-    [InlineData(EngVersificationSchemeBibleId, BsbBibleId, 1004026001, 1004026001,
-        "the ENG has a different versification than the BSB and the base verse part of 'b' is ignored which results in mapping to the same verse ID")]
     public async Task ConvertVersification_ValidArguments_Success(
         int sourceBibleId,
         int targetBibleId,
@@ -97,37 +91,91 @@ public sealed class VersificationUtilitiesTests(App _app) : TestBase<App>
         int? expectedTargetVerseId,
         string because)
     {
-        var result = await VersificationUtilities.ConvertVersificationAsync(
+        var results = await VersificationUtilities.ConvertVersificationAsync(
             sourceBibleId,
             sourceVerseId,
             targetBibleId,
             _versificationService,
             CancellationToken.None);
 
-        result.Should().Be(expectedTargetVerseId, because);
+        if (expectedTargetVerseId != null)
+        {
+            results.Should().HaveCount(1);
+            results[0].Should().Be(expectedTargetVerseId, because);
+        }
+        else
+        {
+            results.Should().BeEmpty(because);
+        }
+    }
+
+    [Theory]
+    [InlineData(RsbBibleId, BsbBibleId, 1003014055, new [] { 1003014055, 1003014056 },
+        "the RSB uses two different verse IDs for the BSB's single verse ID")]
+    [InlineData(BsbBibleId, RsbBibleId, 1016007067, new[] { 1016007067, 1016007068 },
+        "the RSB has a three mappings for the BSB's non-mapping")]
+    [InlineData(BsbBibleId, EngVersificationSchemeBibleId, 1004026001, new[] { 1004026001 },
+        "the ENG has a different versification than the BSB, the Bible verse part of 'b' is not loaded, and the base verse part of 'b' is ignored which results in mapping back to the same verse ID")]
+    [InlineData(EngVersificationSchemeBibleId, BsbBibleId, 1004026001, new [] { 1004026001 },
+        "the ENG maps to two verse references in the BSB but one doesn't exist in the BSB so it is constrained to only a single verse")]
+    public async Task ConvertVersification_ValidArguments_MultipleResultsSuccess(
+        int sourceBibleId,
+        int targetBibleId,
+        int sourceVerseId,
+        int[] expectedTargetVerseIds,
+        string because)
+    {
+        var results = await VersificationUtilities.ConvertVersificationAsync(
+            sourceBibleId,
+            sourceVerseId,
+            targetBibleId,
+            _versificationService,
+            CancellationToken.None);
+
+        results.Should().BeEquivalentTo(expectedTargetVerseIds, because);
     }
 
     [Fact]
-    public async Task ConvertVersificationRange_ValidArgumentsWithExclusionInSourceAndTarget_Success()
+    public async Task ConvertVersificationRange_ValidArgumentsWithExclusionsInSource_Success()
     {
         var results = await VersificationUtilities.ConvertVersificationRangeAsync(
             sourceBibleId: BsbBibleId,
             1046016023,
-            1046016027,
-            targetBibleId: GltBibleId,
+            1046016025,
+            targetBibleId: IrvBibleId,
             _versificationService,
             CancellationToken.None);
 
-        var expectedResults = new Dictionary<int, int?>
+        var expectedResults = new Dictionary<int, IReadOnlyList<int>>
             {
-                [1046016023] = 1046016023,
-                //[1046016024] = 1046016024, // The BSB doesn't have Rom. 16:24
-                [1046016025] = 1046016025,
-                [1046016026] = null, // The GLT doesn't have Rom. 16:26 or 16:27
-                [1046016027] = null,
+                [1046016023] = [1046016023],
+                //[1046016024] = [1046016024], // The BSB doesn't have Rom. 16:24
+                [1046016025] = [1046016025],
             }
             .AsReadOnly();
 
-        results.Should().Equal(expectedResults, "source and target both have exclusions");
+        results.Should().BeEquivalentTo(expectedResults, "source has exclusion");
+    }
+
+    [Fact]
+    public async Task ConvertVersificationRange_ValidArgumentsWithExclusionInTarget_Success()
+    {
+        var results = await VersificationUtilities.ConvertVersificationRangeAsync(
+            sourceBibleId: IrvBibleId,
+            1046016023,
+            1046016025,
+            targetBibleId: BsbBibleId,
+            _versificationService,
+            CancellationToken.None);
+
+        var expectedResults = new Dictionary<int, IReadOnlyList<int>>
+            {
+                [1046016023] = [1046016023],
+                [1046016024] = [], // The BSB doesn't have Rom. 16:24
+                [1046016025] = [1046016025],
+            }
+            .AsReadOnly();
+
+        results.Should().BeEquivalentTo(expectedResults, "target has exclusion");
     }
 }
