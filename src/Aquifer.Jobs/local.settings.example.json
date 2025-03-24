@@ -8,7 +8,10 @@
 
         // The below settings are optional and only for local development (disabling jobs can help reduce noise).
 
-        // email jobs (suggest leaving disabled unless doing email testing)
+        // alerting jobs (suggest leaving disabled locally unless doing alert testing)
+        "AzureWebJobs.AlertOnPoisonQueueMessagesManager.Disabled": true,
+
+        // email jobs (suggest leaving disabled locally unless doing email testing)
         "AzureWebJobs.SendEmailMessageSubscriber.Disabled": true,
         "AzureWebJobs.SendTemplatedEmailMessageSubscriber.Disabled": true,
 
@@ -17,15 +20,20 @@
 
         // notification jobs
         "AzureWebJobs.SendProjectStartedNotificationMessageSubscriber.Disabled": false,
-        "AzureWebJobs.SendResourceCommentCreatedNotificationMessageSubscriber.Disabled": false,
         "AzureWebJobs.SendResourceAssignmentNotificationsManager.Disabled": false,
 
         // resource tracking jobs
         "AzureWebJobs.TrackResourceContentRequestMessageSubscriber.Disabled": false,
 
+        // similarity jobs
+        "AzureWebJobs.ScoreResourceContentVersionSimilarityMessageSubscriber.Disabled": false,
+
         // translation jobs
         "AzureWebJobs.TranslateLanguageResourcesMessageSubscriber.Disabled": false,
         "AzureWebJobs.TranslateProjectResourcesMessageSubscriber.Disabled": false,
-        "AzureWebJobs.TranslateResourceMessageSubscriber.Disabled": false
+        "AzureWebJobs.TranslateResourceMessageSubscriber.Disabled": false,
+
+        // upload jobs
+        "AzureWebJobs.UploadResourceContentAudioMessageSubscriber.Disabled": false
     }
 }

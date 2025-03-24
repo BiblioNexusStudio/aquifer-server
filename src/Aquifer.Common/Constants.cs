@@ -7,7 +7,7 @@ public static class Constants
 {
     public const int EnglishLanguageId = 1;
 
-    public const string HttpContextItemCachedApiKey = "CachedApiKey";
+    public const string HttpContextItemCachedApiKey = "ApiKey";
 
     public const string TelemetryBnApiPropertyName = "bnApi";
     public const string TelemetryBnApiCallerPropertyName = "bnApiCaller";

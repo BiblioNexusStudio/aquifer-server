@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Marketing.ParentResourceStatuses.List;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerable<Response>>
+public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IReadOnlyList<Response>>
 {
     private const int EnglishLanguageId = 1;
 
@@ -77,7 +77,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
             Status = ParentResourceStatusHelpers.GetStatus(x.TotalResources, x.TotalLanguageResources, x.LastPublished)
         });
 
-        Response = selectedBibles.Concat(selectedRows);
+        Response = selectedBibles.Concat(selectedRows).ToList();
     }
 }
 

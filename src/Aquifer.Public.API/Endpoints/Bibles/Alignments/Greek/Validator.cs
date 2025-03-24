@@ -31,13 +31,13 @@ public class Validator : Validator<Request>
         RuleFor(x => x.StartChapter)
             .InclusiveBetween(1, 999);
         RuleFor(x => x.StartVerse)
-            .InclusiveBetween(1, 999);
+            .InclusiveBetween(0, 999);
         RuleFor(x => x.StartWord)
             .InclusiveBetween(1, 999);
         RuleFor(x => x.EndChapter)
             .InclusiveBetween(1, 999);
         RuleFor(x => x.EndVerse)
-            .InclusiveBetween(1, 999);
+            .InclusiveBetween(0, 999);
         RuleFor(x => x.EndWord)
             .InclusiveBetween(1, 999);
     }

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -14,8 +15,31 @@ public interface ICachingVersificationService
 
     Task<ReadOnlySet<int>> GetExcludedVerseIdsAsync(int bibleId, CancellationToken cancellationToken);
 
-    Task<ReadOnlyDictionary<BookId, (int MaxChapterNumber, ReadOnlyDictionary<int, int> MaxVerseNumberByChapterNumberMap)>>
-        GetMaxChapterNumberAndVerseNumbersByBookIdMapAsync(int bibleId, CancellationToken cancellationToken);
+    Task<bool> DoesBibleIncludeBookAsync(int bibleId, BookId bookId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Returns <c>null</c> if there is no Bible content for the given arguments.
+    /// </summary>
+    Task<int?> GetMaxChapterNumberForBookAsync(int bibleId, BookId bookId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Returns <c>null</c> if there is no Bible content for the given arguments.
+    /// </summary>
+    Task<(int MinVerseNumber, int MaxVerseNumber)?> GetBookendVerseNumbersForChapterAsync(
+        int bibleId,
+        BookId bookId,
+        int chapterNumber,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Prefer to use <see cref="GetMaxChapterNumberForBookAsync"/> or <see cref="GetBookendVerseNumbersForChapterAsync"/> instead
+    /// for ease of use.
+    /// </summary>
+    Task<ReadOnlyDictionary<
+            BookId,
+            (int MaxChapterNumber, ReadOnlyDictionary<int, (int MinVerseNumber, int MaxVerseNumber)>
+                BookendVerseNumbersByChapterNumberMap)>>
+        GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(int bibleId, CancellationToken cancellationToken);
 }
 
 public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMemoryCache _memoryCache) : ICachingVersificationService
@@ -31,8 +55,8 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
     private const string ExcludedVerseIdsByBibleIdMapCacheKey =
         $"{nameof(CachingVersificationService)}:{nameof(ExcludedVerseIdsByBibleIdMapCacheKey)}";
 
-    private const string MaxVerseNumberByChapterNumberMapByBookIdMapCacheKey =
-        $"{nameof(CachingVersificationService)}:{nameof(MaxVerseNumberByChapterNumberMapByBookIdMapCacheKey)}";
+    private const string BookendVersesNumberByChapterNumberMapByBookIdMapCacheKey =
+        $"{nameof(CachingVersificationService)}:{nameof(BookendVersesNumberByChapterNumberMapByBookIdMapCacheKey)}";
 
     private static readonly TimeSpan s_cacheLifetime = TimeSpan.FromMinutes(120);
 
@@ -51,11 +75,14 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
             ?? new Dictionary<string, int>().AsReadOnly();
     }
 
-    public async Task<ReadOnlyDictionary<BookId, (int MaxChapterNumber, ReadOnlyDictionary<int, int> MaxVerseNumberByChapterNumberMap)>>
-        GetMaxChapterNumberAndVerseNumbersByBookIdMapAsync(int bibleId, CancellationToken cancellationToken)
+    public async Task<ReadOnlyDictionary<
+            BookId,
+            (int MaxChapterNumber, ReadOnlyDictionary<int, (int MinVerseNumber, int MaxVerseNumber)>
+                BookendVerseNumbersByChapterNumberMap)>>
+        GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(int bibleId, CancellationToken cancellationToken)
     {
         // Cache each Bible's data independently in order to have cheaper SQL queries for each Bible.
-        var cacheKey = $"{MaxVerseNumberByChapterNumberMapByBookIdMapCacheKey}:{bibleId}";
+        var cacheKey = $"{BookendVersesNumberByChapterNumberMapByBookIdMapCacheKey}:{bibleId}";
 
         // Special case: The "eng" (common superset of most English Bibles) versification scheme's max verses are saved in the
         // BookChapters DB table because we use that scheme for Resource verse references (Bible ID 0 has no BibleTexts data).
@@ -65,13 +92,16 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
                 cacheKey,
                 async cacheEntry =>
                 {
-                    cacheEntry.SlidingExpiration = s_cacheLifetime;
+                    cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
+                    // TODO Update BookChapters to have a MinVerseNumber column so we don't have to assume 1.
+                    // Some Psalms begin with verse 0 for "eng" data which will need to be loaded from the mapping information.
                     return (await _dbContext.BookChapters
                             .Select(bc => new
                             {
                                 bc.BookId,
                                 bc.Number,
+                                MinVerseNumber = 1,
                                 bc.MaxVerseNumber,
                             })
                             .ToListAsync(cancellationToken))
@@ -81,10 +111,10 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
                             grp =>
                             (
                                 MaxChapterNumber: grp.Max(x => x.Number),
-                                MaxVerseNumberByChapterNumberMap: grp
+                                BookendVerseNumbersByChapterNumberMap: grp
                                     .ToDictionary(
                                         x => x.Number,
-                                        x => x.MaxVerseNumber)
+                                        x => (x.MinVerseNumber, x.MaxVerseNumber))
                                     .AsReadOnly()
                             ))
                         .AsReadOnly();
@@ -97,7 +127,7 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
             cacheKey,
             async cacheEntry =>
             {
-                cacheEntry.SlidingExpiration = s_cacheLifetime;
+                cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
                 return (await _dbContext.BibleTexts
                         .Where(x => x.BibleId == bibleId)
@@ -106,6 +136,7 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
                         {
                             grp.Key.BookId,
                             grp.Key.ChapterNumber,
+                            MinVerseNumber = grp.Min(x => x.VerseNumber),
                             MaxVerseNumber = grp.Max(x => x.VerseNumber),
                         })
                         .ToListAsync(cancellationToken))
@@ -118,12 +149,37 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
                             MaxVerseNumberByChapterNumberMap: grp
                                 .ToDictionary(
                                     x => x.ChapterNumber,
-                                    x => x.MaxVerseNumber)
+                                    x => (x.MinVerseNumber, x.MaxVerseNumber))
                                 .AsReadOnly()
                         ))
                     .AsReadOnly();
             })
             ?? throw new InvalidOperationException($"\"{cacheKey}\" unexpectedly had a null value cached.");
+    }
+
+    public async Task<bool> DoesBibleIncludeBookAsync(int bibleId, BookId bookId, CancellationToken cancellationToken)
+    {
+        return (await GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(bibleId, cancellationToken))
+            .ContainsKey(bookId);
+    }
+
+    public async Task<int?> GetMaxChapterNumberForBookAsync(int bibleId, BookId bookId, CancellationToken cancellationToken)
+    {
+        return (await GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(bibleId, cancellationToken))
+            .GetValueOrNull(bookId)
+            ?.MaxChapterNumber;
+    }
+
+    public async Task<(int MinVerseNumber, int MaxVerseNumber)?> GetBookendVerseNumbersForChapterAsync(
+        int bibleId,
+        BookId bookId,
+        int chapterNumber,
+        CancellationToken cancellationToken)
+    {
+        return (await GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(bibleId, cancellationToken))
+            .GetValueOrNull(bookId)
+            ?.BookendVerseNumbersByChapterNumberMap
+            .GetValueOrNull(chapterNumber);
     }
 
     public async Task<ReadOnlySet<int>> GetExcludedVerseIdsAsync(int bibleId, CancellationToken cancellationToken)
@@ -140,7 +196,7 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
             BaseVerseIdByBibleVerseIdMapsCacheKey,
             async cacheEntry =>
             {
-                cacheEntry.SlidingExpiration = s_cacheLifetime;
+                cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
                 // Verse part handling:
                 // 1. Ignore BibleVerseIdPart because consumers don't care about parts when passing verse IDs.
@@ -174,7 +230,7 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
             BibleVerseIdByBaseVerseIdMapsCacheKey,
             async cacheEntry =>
             {
-                cacheEntry.SlidingExpiration = s_cacheLifetime;
+                cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
                 // When inverting the bibleVerseId -> baseVerseIdWithOptionalPart map, there may be multiple Bible verse IDs that map to
                 // the same base verse ID with optional part.  In that case, take the first entry ordered by
@@ -200,7 +256,7 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
             ExcludedVerseIdsByBibleIdMapCacheKey,
             async cacheEntry =>
             {
-                cacheEntry.SlidingExpiration = s_cacheLifetime;
+                cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
                 return (await _dbContext.VersificationExclusions
                         .GroupBy(x => x.BibleId)

@@ -20,17 +20,18 @@ public class Validator : Validator<Request>
         RuleFor(x => x.ResourceTypes).NotEmpty().When(x => x.ParentResourceId is null);
         RuleForEach(x => x.ResourceTypes).IsInEnum();
 
-        RuleFor(x => x.StartChapter).InclusiveBetween(0, 150);
-        RuleFor(x => x.EndChapter).InclusiveBetween(0, 150);
+        RuleFor(x => x.StartChapter).InclusiveBetween(1, 150);
+        RuleFor(x => x.EndChapter).InclusiveBetween(1, 150);
         RuleFor(x => x.StartVerse).InclusiveBetween(0, 200);
         RuleFor(x => x.EndVerse).InclusiveBetween(0, 200);
 
-        RuleFor(x => x.StartChapter).GreaterThan(0).When(x => x.EndChapter > 0 || x.StartVerse > 0);
-        RuleFor(x => x.EndChapter).GreaterThan(0).When(x => x.StartChapter > 0);
-        RuleFor(x => x.StartVerse).GreaterThan(0).When(x => x.EndVerse > 0);
-        RuleFor(x => x.EndVerse).GreaterThan(0).When(x => x.StartVerse > 0);
+        RuleFor(x => x.StartChapter).NotNull().When(x => x.EndChapter != null || x.StartVerse != null);
+        RuleFor(x => x.EndChapter).NotNull().When(x => x.StartChapter != null);
+        RuleFor(x => x.StartVerse).NotNull().When(x => x.EndVerse != null);
+        RuleFor(x => x.EndVerse).NotNull().When(x => x.StartVerse != null);
 
         RuleFor(x => x).Must(x => x.StartChapter <= x.EndChapter)
+            .When(x => x.StartChapter != null && x.EndChapter != null)
             .WithMessage("startChapter cannot be greater than endChapter");
     }
 }

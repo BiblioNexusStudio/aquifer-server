@@ -3,6 +3,8 @@
     "logging": {
         "logLevel": {
             "default": "Information",
+            // opt-in to logging from our code
+            "Aquifer": "Trace",
             // log everything from our code
             "Function": "Trace",
             // suppress noisy SDK warnings

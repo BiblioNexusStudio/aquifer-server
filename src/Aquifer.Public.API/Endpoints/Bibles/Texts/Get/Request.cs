@@ -24,8 +24,8 @@ public class Request
     /// <summary>
     /// Optional start verse in the start chapter.
     /// </summary>
-    [DefaultValue(1)]
-    public int StartVerse { get; init; } = 1;
+    [DefaultValue(0)]
+    public int StartVerse { get; init; } = 0;
 
     /// <summary>
     /// Optional end chapter in the book.

@@ -25,7 +25,7 @@ public sealed class BibleWordIdentifier
     public int WordSegment { get; }
 
     /// <summary>
-    /// Creates a <see cref="BibleWordIdentifier"/> from the raw word identifier value.
+    /// Creates a <see cref="BibleWordIdentifier"/> from the raw word identifier value (must include word segment part).
     /// </summary>
     public BibleWordIdentifier(long wordIdentifier)
     {
@@ -50,7 +50,7 @@ public sealed class BibleWordIdentifier
         Chapter = (int)(num % 1000L);
         num /= 1000L;
 
-        BookId = (BookId)(num + 1);
+        BookId = (BookId)(num < 40 ? num : num + 1);
     }
 
     /// <summary>

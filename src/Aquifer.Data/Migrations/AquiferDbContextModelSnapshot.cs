@@ -1088,6 +1088,9 @@ namespace Aquifer.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AllowCommunityReview")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -1120,6 +1123,13 @@ namespace Aquifer.Data.Migrations
                     b.Property<string>("ShortName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SliCategory")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int?>("SliLevel")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("Updated")
                         .ValueGeneratedOnAdd()
@@ -1399,6 +1409,10 @@ namespace Aquifer.Data.Migrations
 
                     b.Property<int>("MediaType")
                         .HasColumnType("int");
+
+                    b.Property<string>("NotApplicableReason")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<int>("ResourceId")
                         .HasColumnType("int");
@@ -1935,6 +1949,52 @@ namespace Aquifer.Data.Migrations
                     b.ToTable("TranslationPairs");
                 });
 
+            modelBuilder.Entity("Aquifer.Data.Entities.UploadEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BlobName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Created")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("ResourceContentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StartedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("StepNumber")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Updated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("getutcdate()");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Uploads");
+                });
+
             modelBuilder.Entity("Aquifer.Data.Entities.UserEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -2176,7 +2236,7 @@ namespace Aquifer.Data.Migrations
             modelBuilder.Entity("Aquifer.Data.Entities.BookChapterEntity", b =>
                 {
                     b.HasOne("Aquifer.Data.Entities.BookEntity", "Book")
-                        .WithMany("Chapters")
+                        .WithMany()
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2778,6 +2838,23 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("Language");
                 });
 
+            modelBuilder.Entity("Aquifer.Data.Entities.UploadEntity", b =>
+                {
+                    b.HasOne("Aquifer.Data.Entities.ResourceContentEntity", "ResourceContent")
+                        .WithMany()
+                        .HasForeignKey("ResourceContentId");
+
+                    b.HasOne("Aquifer.Data.Entities.UserEntity", "StartedByUser")
+                        .WithMany()
+                        .HasForeignKey("StartedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ResourceContent");
+
+                    b.Navigation("StartedByUser");
+                });
+
             modelBuilder.Entity("Aquifer.Data.Entities.UserEntity", b =>
                 {
                     b.HasOne("Aquifer.Data.Entities.CompanyEntity", "Company")
@@ -2877,11 +2954,6 @@ namespace Aquifer.Data.Migrations
                     b.Navigation("BibleVersionWordGroupWords");
 
                     b.Navigation("NewTestamentAlignments");
-                });
-
-            modelBuilder.Entity("Aquifer.Data.Entities.BookEntity", b =>
-                {
-                    b.Navigation("Chapters");
                 });
 
             modelBuilder.Entity("Aquifer.Data.Entities.CommentThreadEntity", b =>

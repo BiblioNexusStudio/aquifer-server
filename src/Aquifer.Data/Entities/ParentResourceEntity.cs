@@ -20,6 +20,12 @@ public class ParentResourceEntity : IHasUpdatedTimestamp
     public ICollection<ParentResourceLocalizationEntity> Localizations { get; set; } = [];
 
     public bool? ForMarketing { get; set; }
+    public bool AllowCommunityReview { get; set; }
+
+    [MaxLength(128)]
+    public string? SliCategory { get; set; }
+
+    public int? SliLevel { get; set; }
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;

@@ -11,8 +11,4 @@ public class BookEntity
 
     [MaxLength(5)]
     public string Code { get; set; } = null!;
-
-    // TODO delete this after there aren't any usages left.
-    // Each Bible has potentially unique chapter/verse information.
-    public ICollection<BookChapterEntity> Chapters { get; set; } = null!;
 }

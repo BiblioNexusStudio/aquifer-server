@@ -52,10 +52,16 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 ThrowError("User must be assigned to content to send for company review.");
             }
 
-            await historyService.AddSnapshotHistoryAsync(draftVersion,
+            await historyService.AddSnapshotHistoryAsync(
+                draftVersion,
                 draftVersion.AssignedUserId,
                 draftVersion.ResourceContent.Status,
                 ct);
+
+            await SetAssignedUserIdAsync(user,
+                draftVersion.ResourceContent.ProjectResourceContents.FirstOrDefault(x => x.Project.ActualPublishDate == null)?.Project,
+                managerIds,
+                draftVersion);
 
             var reviewPendingStatus = draftVersion.ResourceContent.Status == ResourceContentStatus.AquiferizeEditorReview
                 ? ResourceContentStatus.AquiferizeCompanyReview
@@ -68,11 +74,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 draftVersion.ResourceContent.Status = reviewPendingStatus;
                 await historyService.AddStatusHistoryAsync(draftVersion, reviewPendingStatus, user.Id, ct);
             }
-
-            await SetAssignedUserIdAsync(user,
-                draftVersion.ResourceContent.ProjectResourceContents.FirstOrDefault(x => x.Project.ActualPublishDate == null)?.Project,
-                managerIds,
-                draftVersion);
 
             await historyService.AddAssignedUserHistoryAsync(draftVersion, draftVersion.AssignedUserId, user.Id, ct);
 

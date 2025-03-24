@@ -14,8 +14,7 @@ public class Endpoint(
     AquiferDbContext dbContext,
     IUserService userService,
     IResourceHistoryService historyService,
-    ITranslationMessagePublisher translationMessagePublisher)
-    : Endpoint<Request, Response>
+    ITranslationMessagePublisher translationMessagePublisher) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -28,12 +27,12 @@ public class Endpoint(
         var user = await userService.GetUserFromJwtAsync(ct);
         var isCommunityUser = !userService.HasPermission(PermissionName.CreateContent);
 
-        if (isCommunityUser) {
-            var isUserAssigned = await dbContext.ResourceContentVersions
-                .AsTracking()
-                .AnyAsync(x => x.AssignedUserId == user.Id, ct);
+        if (isCommunityUser)
+        {
+            var isUserAssigned = await dbContext.ResourceContentVersions.AsTracking().AnyAsync(x => x.AssignedUserId == user.Id, ct);
 
-            if (isUserAssigned) {
+            if (isUserAssigned)
+            {
                 AddError("User can only create one translation at a time");
                 await SendErrorsAsync(cancellation: ct);
                 return;
@@ -44,6 +43,8 @@ public class Endpoint(
             .AsTracking()
             .Where(x => x.Id == request.BaseContentId)
             .Include(x => x.Versions)
+            .Include(x => x.Resource)
+            .ThenInclude(x => x.ParentResource)
             .SingleOrDefaultAsync(ct);
         if (baseContent is null ||
             !baseContent.Versions.Any(x => x.IsPublished) ||
@@ -52,10 +53,19 @@ public class Endpoint(
             ThrowError("Base version not found");
         }
 
+        if (baseContent.MediaType != ResourceContentMediaType.Text)
+        {
+            ThrowError("Cannot translate media type that isn't Text");
+        }
+
+        if (isCommunityUser && !baseContent.Resource.ParentResource.AllowCommunityReview)
+        {
+            ThrowError("Community reviewer is not allowed to translate this resource type");
+        }
+
         var isExistingTranslation = await dbContext.ResourceContents
             .AsTracking()
-            .AnyAsync(x => x.LanguageId == request.LanguageId && x.ResourceId == baseContent.ResourceId,
-            ct);
+            .AnyAsync(x => x.LanguageId == request.LanguageId && x.ResourceId == baseContent.ResourceId, ct);
         if (isExistingTranslation)
         {
             ThrowError("Translation already exists");
@@ -100,29 +110,16 @@ public class Endpoint(
             MediaType = baseContent.MediaType,
             Status = ResourceContentStatus.TranslationAwaitingAiDraft,
             Trusted = true,
-            Versions = [newResourceContentVersion],
+            Versions = [newResourceContentVersion]
         };
 
         await dbContext.ResourceContents.AddAsync(newResourceContent, ct);
 
-        await historyService.AddStatusHistoryAsync(
-            newResourceContentVersion,
-            newResourceContent.Status,
-            user.Id,
-            ct
-        );
+        await historyService.AddStatusHistoryAsync(newResourceContentVersion, newResourceContent.Status, user.Id, ct);
 
-        await historyService.AddSnapshotHistoryAsync(
-            newResourceContentVersion,
-            user.Id,
-            originalStatus,
-            ct);
+        await historyService.AddSnapshotHistoryAsync(newResourceContentVersion, user.Id, originalStatus, ct);
 
-        await historyService.AddAssignedUserHistoryAsync(
-            newResourceContentVersion,
-            user.Id,
-            user.Id,
-            ct);
+        await historyService.AddAssignedUserHistoryAsync(newResourceContentVersion, user.Id, user.Id, ct);
 
         await dbContext.SaveChangesAsync(ct);
 
@@ -130,10 +127,8 @@ public class Endpoint(
             new TranslateResourceMessage(
                 newResourceContent.Id,
                 user.Id,
-                ShouldForceRetranslation: false,
-                isCommunityUser
-                    ? TranslationOrigin.CommunityReviewer
-                    : TranslationOrigin.CreateTranslation),
+                false,
+                isCommunityUser ? TranslationOrigin.CommunityReviewer : TranslationOrigin.CreateTranslation),
             ct);
 
         await SendOkAsync(new Response(newResourceContent.Id), ct);

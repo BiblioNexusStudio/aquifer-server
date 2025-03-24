@@ -22,6 +22,7 @@ public class Response
     public required IEnumerable<TranslationResponse> ContentTranslations { get; set; }
     public required bool HasPublishedVersion { get; set; }
     public int ResourceContentVersionId { get; set; }
+    public DateTime ResourceContentVersionCreated { get; set; }
     public bool IsDraft { get; set; }
     public ResourceContentVersionReviewLevel ReviewLevel { get; set; }
     public bool CanPullBackToCompanyReview { get; set; }

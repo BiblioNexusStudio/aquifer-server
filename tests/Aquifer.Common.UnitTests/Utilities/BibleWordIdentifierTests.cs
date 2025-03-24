@@ -6,7 +6,9 @@ namespace Aquifer.Common.UnitTests.Utilities;
 public sealed class BibleWordIdentifierTests
 {
     [Theory]
-    [InlineData(0L, BookId.BookGEN, 0, 0, 0, 0)]
+    [InlineData(0L, BookId.None, 0, 0, 0, 0)]
+    [InlineData(01_001_001_001_1L, BookId.BookGEN, 1, 1, 1, 1)]
+    [InlineData(39_001_001_001_1L, BookId.BookMAL, 1, 1, 1, 1)]
     [InlineData(40_001_001_001_1L, BookId.BookMAT, 1, 1, 1, 1)]
     [InlineData(40_001_001_001_9L, BookId.BookMAT, 1, 1, 1, 9)]
     [InlineData(40_001_001_021_1L, BookId.BookMAT, 1, 1, 21, 1)]
