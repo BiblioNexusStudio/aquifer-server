@@ -70,6 +70,8 @@ public sealed class Endpoint(AquiferDbReadOnlyContext _dbContext, ICachingLangua
             DisplayName = parentResource.DisplayName,
             ShortName = parentResource.ShortName,
             ResourceType = parentResource.ResourceType,
+            SliCategory = parentResource.SliCategory,
+            SliLevel = parentResource.SliLevel,
             LicenseInfo = JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(parentResource.LicenseInfo),
             AvailableLanguages = localizations
                 .Select(l => new AvailableLanguageResponse
@@ -94,7 +96,9 @@ public sealed class Endpoint(AquiferDbReadOnlyContext _dbContext, ICachingLangua
                 pr.DisplayName,
                 pr.ShortName,
                 pr.ResourceType,
-                pr.LicenseInfo
+                pr.LicenseInfo,
+                pr.SliCategory,
+                pr.SliLevel
             FROM
                 ParentResources pr
             WHERE
@@ -117,7 +121,9 @@ public sealed class Endpoint(AquiferDbReadOnlyContext _dbContext, ICachingLangua
         string DisplayName,
         string ShortName,
         ResourceType ResourceType,
-        string LicenseInfo);
+        string LicenseInfo,
+        string? SliCategory,
+        int? SliLevel);
 
     private static async Task<IReadOnlyList<ParentResourceLocalizationWithResourceContentCount>>
         GetParentResourceLocalizationWithResourceContentCountAsync(
