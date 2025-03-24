@@ -25,9 +25,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             return;
         }
 
-        var user = await userService.GetUserFromJwtAsync(ct);
+        var roles = userService.GetAllJwtRoles();
 
-        if (!ReportRoleHelper.RoleIsAllowedForReport(report.AllowedRoles, user.Role))
+        if (!ReportRoleHelper.RoleIsAllowedForReport(report.AllowedRoles, roles))
         {
             await SendForbiddenAsync(ct);
         }

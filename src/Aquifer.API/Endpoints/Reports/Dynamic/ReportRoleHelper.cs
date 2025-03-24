@@ -1,11 +1,9 @@
-using Aquifer.Data.Entities;
-
 namespace Aquifer.API.Endpoints.Reports.Dynamic;
 
 public static class ReportRoleHelper
 {
-    public static bool RoleIsAllowedForReport(string? allowedRoles, UserRole userRole)
+    public static bool RoleIsAllowedForReport(string? allowedRoles, List<string> roles)
     {
-        return allowedRoles != null && Array.ConvertAll(allowedRoles.Split(','), int.Parse).Contains((int)userRole);
+        return allowedRoles != null && allowedRoles.Split(',').Any(r => roles.Contains(r.ToString()));
     }
 }

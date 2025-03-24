@@ -17,8 +17,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var user = await userService.GetUserFromJwtAsync(ct);
-
         var reportsWithAllowedRoles = await dbContext.Reports
             .Where(r => r.Enabled)
             .Select(
@@ -32,8 +30,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 })
             .ToListAsync(ct);
 
+        var roles = userService.GetAllJwtRoles();
+
         var reports = reportsWithAllowedRoles.Where(
-                r => ReportRoleHelper.RoleIsAllowedForReport(r.AllowedRoles, user.Role))
+                r => ReportRoleHelper.RoleIsAllowedForReport(r.AllowedRoles, roles))
             .Select(
                 r => new Response
                 {
