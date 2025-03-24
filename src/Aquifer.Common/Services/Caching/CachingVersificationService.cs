@@ -98,14 +98,12 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
                 {
                     cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
-                    // TODO Update BookChapters to have a MinVerseNumber column so we don't have to assume 1.
-                    // Some Psalms begin with verse 0 for "eng" data which will need to be loaded from the mapping information.
                     return (await _dbContext.BookChapters
                             .Select(bc => new
                             {
                                 bc.BookId,
                                 bc.Number,
-                                MinVerseNumber = 1,
+                                bc.MinVerseNumber,
                                 bc.MaxVerseNumber,
                             })
                             .ToListAsync(cancellationToken))
