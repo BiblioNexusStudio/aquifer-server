@@ -8,6 +8,8 @@ public sealed class Response
     public required string DisplayName { get; init; }
     public required string ShortName { get; init; }
     public required ResourceType ResourceType { get; init; }
+    public required string? SliCategory { get; set; }
+    public required int? SliLevel { get; set; }
     public required ResourceLicenseInfo LicenseInfo { get; init; }
     public required IReadOnlyList<AvailableLanguageResponse> AvailableLanguages { get; init; }
 }
