@@ -20,7 +20,7 @@ public static class VersificationUtilities
     {
         var verse = BibleUtilities.TranslateVerseId(verseId);
 
-        if (verse.bookId == BookId.None || verse.chapter == 0 || verse.verse == 0)
+        if (verse.bookId == BookId.None || verse.chapter == 0)
         {
             return false;
         }
