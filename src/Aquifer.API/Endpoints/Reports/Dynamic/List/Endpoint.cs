@@ -40,7 +40,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     Name = r.Name,
                     Description = r.Description,
                     Type = r.Type,
-                    Slug = r.Slug
+                    Slug = r.Slug,
+                    ShowInDropdown = r.ShowInDropdown
                 }
             );
 
