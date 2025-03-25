@@ -29,6 +29,7 @@ public static class PermissionName
         ReadProject = "read:projects",
         ReadProjectsInCompany = "read:projects-in-company",
         ReadReports = "read:reports",
+        ReadReportsInCompany = "read:reports-in-company",
         ReadResourceLists = "read:resource-lists",
         ReadResources = "read:resources",
         ReadUsers = "read:users",

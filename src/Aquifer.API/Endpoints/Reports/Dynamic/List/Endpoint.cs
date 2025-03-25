@@ -12,7 +12,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override void Configure()
     {
         Get("/reports/dynamic");
-        Permissions(PermissionName.ReadReports);
+        Permissions(PermissionName.ReadReports, PermissionName.ReadReportsInCompany);
     }
 
     public override async Task HandleAsync(CancellationToken ct)
@@ -26,14 +26,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                     Name = r.Name,
                     Description = r.Description,
                     Type = r.Type,
-                    AllowedRoles = r.AllowedRoles
+                    AllowedRoles = r.AllowedRoles,
+                    ShowInDropdown = r.ShowInDropdown
                 })
             .ToListAsync(ct);
 
-        var roles = userService.GetAllJwtRoles();
-
         var reports = reportsWithAllowedRoles.Where(
-                r => ReportRoleHelper.RoleIsAllowedForReport(r.AllowedRoles, roles))
+                r => ReportRoleHelper.RoleIsAllowedForReport(r.AllowedRoles, userService.GetUserRoleFromJwt()))
             .Select(
                 r => new Response
                 {
@@ -55,5 +54,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         public required string Description { get; set; }
         public ReportType Type { get; set; }
         public string? AllowedRoles { get; set; }
+        public bool ShowInDropdown { get; set; }
     }
 }

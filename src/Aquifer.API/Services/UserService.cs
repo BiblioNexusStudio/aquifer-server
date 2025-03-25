@@ -13,6 +13,7 @@ public interface IUserService
     Task<UserEntity> GetUserWithCompanyFromJwtAsync(CancellationToken cancellationToken);
     List<string> GetAllJwtPermissions();
     List<string> GetAllJwtRoles();
+    UserRole GetUserRoleFromJwt();
     bool HasPermission(string permission);
     Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken);
     Task<UserEntity> GetUserWithCompanyLanguagesFromJwtAsync(CancellationToken cancellationToken);
@@ -40,6 +41,18 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
     public List<string> GetAllJwtRoles()
     {
         return httpContextAccessor.HttpContext?.User.FindAll(Permissions.RolesClaim).Select(c => c.Value).ToList() ?? [];
+    }
+
+    public UserRole GetUserRoleFromJwt()
+    {
+        var role = GetAllJwtRoles()[0];
+        var isParsed = Enum.TryParse(string.Concat(role[0].ToString().ToUpper(), role.AsSpan(1)), out UserRole userRole);
+        if (!isParsed)
+        {
+            throw new InvalidCastException($"Role {role} is not a valid role");
+        }
+
+        return userRole;
     }
 
     public List<string> GetAllJwtPermissions()
