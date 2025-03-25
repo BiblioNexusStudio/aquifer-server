@@ -1361,6 +1361,9 @@ namespace Aquifer.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("ShowInDropdown")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");

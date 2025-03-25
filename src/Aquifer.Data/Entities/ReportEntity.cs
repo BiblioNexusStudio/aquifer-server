@@ -44,7 +44,7 @@ public class ReportEntity : IHasUpdatedTimestamp
     /// Set to true when the report should appear in a dropdown
     /// menu for user to select.
     /// </summary>
-    public bool IsSelectable { get; set; }
+    public bool ShowInDropdown { get; set; }
 }
 
 public enum ReportType
