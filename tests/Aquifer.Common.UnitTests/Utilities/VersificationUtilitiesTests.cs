@@ -18,7 +18,7 @@ public sealed class VersificationUtilitiesTests
         "the source Bible does not have the given verse due to exclusion")]
     [InlineData(1, 1072001001, false,
         "the source Bible does not have the given book")]
-    [InlineData(1, 1001007001, false,
+    [InlineData(1, 1001015001, false,
         "the source Bible does not have the given chapter (greater than max chapter in book)")]
     [InlineData(1, 1001001032, false,
         "the source Bible does not have the given verse (greater than max verse in chapter)")]
@@ -50,7 +50,7 @@ public sealed class VersificationUtilitiesTests
         "a range should not include excluded verse IDs for the given Bible")]
     [InlineData(1, 1001001030, 1001002001, new[] { 1001001030, 1001001031, 1001002001 },
         "a range spanning two chapters should be correctly returned")]
-    [InlineData(1, 1001006011, 1002001002, new[] { 1001006011, 1002001001, 1002001002 },
+    [InlineData(1, 1001008008, 1002001002, new[] { 1001008008, 1002001001, 1002001002 },
         "a range spanning two books should be correctly returned")]
     public async Task ExpandVerseIdRangeAsync_ValidArguments_Success(
         int bibleId,
@@ -117,14 +117,44 @@ public sealed class VersificationUtilitiesTests
         int? expectedTargetVerseId,
         string because)
     {
-        var result = await VersificationUtilities.ConvertVersificationAsync(
+        var results = await VersificationUtilities.ConvertVersificationAsync(
             sourceBibleId,
             sourceVerseId,
             targetBibleId,
             _versificationService,
             CancellationToken.None);
 
-        result.Should().Be(expectedTargetVerseId, because);
+        if (expectedTargetVerseId != null)
+        {
+            results.Should().HaveCount(1);
+            results[0].Should().Be(expectedTargetVerseId, because);
+        }
+        else
+        {
+            results.Should().BeEmpty(because);
+        }
+    }
+
+    [Theory]
+    [InlineData(1, 2, 1001007001, new [] { 1001007001 },
+        "the target Bible and source Bible both map to the same multiple base verse IDs with parts")]
+    [InlineData(1, 2, 1001008002, new[] { 1001008002, 1001008003, 1001008004 },
+        "the target Bible uses multiple verses for the source Bible's single verse")]
+    public async Task ConvertVersification_ValidArguments_MultipleResultsSuccess(
+        int sourceBibleId,
+        int targetBibleId,
+        int sourceVerseId,
+        IReadOnlyList<int> expectedTargetVerseIds,
+        string because)
+    {
+        var results = await VersificationUtilities.ConvertVersificationAsync(
+            sourceBibleId,
+            sourceVerseId,
+            targetBibleId,
+            _versificationService,
+            CancellationToken.None);
+
+        results.Should().BeEquivalentTo(expectedTargetVerseIds, because);
     }
 
     [Theory]
@@ -154,9 +184,9 @@ public sealed class VersificationUtilitiesTests
 
         result
             .OrderBy(kvp => kvp.Key)
-            .Select(kvp => kvp.Value)
+            .Select(kvp => kvp.Value.Single())
             .Should()
-            .Equal(expectedTargetVerseIds.Cast<int?>(), because);
+            .BeEquivalentTo(expectedTargetVerseIds, because);
     }
 
     [Theory]
@@ -194,7 +224,7 @@ public sealed class VersificationUtilitiesTests
         "a range starting with excluded verses should adjust to the next non-excluded verse")]
     [InlineData(1, 1001001000, 1001001999, 1001001001, 1001001031,
         "a range outside of the valid range for the chapter should adjust to the valid range")]
-    [InlineData(1, 1001000000, 1001999999, 1001001001, 1001006011,
+    [InlineData(1, 1001000000, 1001999999, 1001001001, 1001008008,
         "a range outside of the valid range for the book should adjust to the valid range")]
     public async Task GetValidVerseIdRangeAsync_ValidArguments_Success(
         int bibleId,
@@ -215,7 +245,7 @@ public sealed class VersificationUtilitiesTests
 
     // The tests above cover all the other valid scenarios for this method, too.
     [Theory]
-    [InlineData(1, BookId.BookGEN, null, null, null, null, 1001001001, 1001006011,
+    [InlineData(1, BookId.BookGEN, null, null, null, null, 1001001001, 1001008008,
         "not specifying a range should adjust to the valid range for the book")]
     public async Task GetValidVerseIdRangeAsync_EmptyRange_Success(
         int bibleId,
@@ -243,32 +273,34 @@ public sealed class VersificationUtilitiesTests
 
 public class MockCachingVersificationService : ICachingVersificationService
 {
-    private static readonly ReadOnlyDictionary<int, ReadOnlyDictionary<int, string>>
+    private static readonly ReadOnlyDictionary<int, ReadOnlyDictionary<int, IReadOnlyList<string>>>
         s_baseVerseIdWithOptionalPartByBibleVerseIdMapByBibleIdMap =
-        new Dictionary<int, ReadOnlyDictionary<int, string>>
+        new Dictionary<int, ReadOnlyDictionary<int, IReadOnlyList<string>>>
         {
-            // All mappings are in GEN 3.
-            [1] = new Dictionary<int, string>
+            [1] = new Dictionary<int, IReadOnlyList<string>>
                 {
-                    [1001003001] = "1001003002",
-                    [1001003002] = "1001003003",
-                    [1001003003] = "1001003004",
-                    [1001003004] = "1001003005",
-                    [1001005001] = "1001005001a",
-                    [1001005002] = "1001005001b",
-                    [1001005003] = "1001005001c",
-                    [1001006001] = "1001006001a",
-                    [1001006002] = "1001006001b",
+                    [1001003001] = ["1001003002"],
+                    [1001003002] = ["1001003003"],
+                    [1001003003] = ["1001003004"],
+                    [1001003004] = ["1001003005"],
+                    [1001005001] = ["1001005001a"],
+                    [1001005002] = ["1001005001b"],
+                    [1001005003] = ["1001005001c"],
+                    [1001006001] = ["1001006001a"],
+                    [1001006002] = ["1001006001b"],
+                    [1001007001] = ["1001007001b", "1001007002a"],
+                    [1001008002] = ["1001008002c", "1001008003", "1001008004a"],
             }
                 .AsReadOnly(),
-            [2] = new Dictionary<int, string>
+            [2] = new Dictionary<int, IReadOnlyList<string>>
                 {
-                    [1001003003] = "1001003002",
-                    [1001003004] = "1001003003",
-                    [1001003005] = "1001003004",
-                    [1001005001] = "1001005001a",
-                    [1001005002] = "1001005001b",
-                    [1001005003] = "1001005001c",
+                    [1001003003] = ["1001003002"],
+                    [1001003004] = ["1001003003"],
+                    [1001003005] = ["1001003004"],
+                    [1001005001] = ["1001005001a"],
+                    [1001005002] = ["1001005001b"],
+                    [1001005003] = ["1001005001c"],
+                    [1001007001] = ["1001007001b", "1001007002a"],
             }
                 .AsReadOnly(),
         }
@@ -301,7 +333,7 @@ public class MockCachingVersificationService : ICachingVersificationService
             {
                 [BookId.BookGEN] =
                 (
-                    6,
+                    8,
                     new Dictionary<int, (int, int)>
                     {
                         [1] = (1, 31),
@@ -310,6 +342,8 @@ public class MockCachingVersificationService : ICachingVersificationService
                         [4] = (1, 26),
                         [5] = (1, 32),
                         [6] = (1, 11),
+                        [7] = (1, 4),
+                        [8] = (1, 8),
                     }
                     .AsReadOnly()
                 ),
@@ -348,19 +382,28 @@ public class MockCachingVersificationService : ICachingVersificationService
                 }
                 .AsReadOnly();
 
-    public Task<ReadOnlyDictionary<int, string>>
+    public Task<ReadOnlyDictionary<int, IReadOnlyList<string>>>
         GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(int bibleId, CancellationToken cancellationToken)
     {
         return Task.FromResult(s_baseVerseIdWithOptionalPartByBibleVerseIdMapByBibleIdMap.GetValueOrDefault(bibleId)
-            ?? new Dictionary<int, string>().AsReadOnly());
+            ?? new Dictionary<int, IReadOnlyList<string>>().AsReadOnly());
     }
 
-    public async Task<ReadOnlyDictionary<string, int>> GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(
+    public async Task<ReadOnlyDictionary<string, IReadOnlyList<int>>> GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(
         int bibleId,
         CancellationToken cancellationToken)
     {
+        // this logic should match the CachingVersificationService
         return (await GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(bibleId, cancellationToken))
-            .ToDictionary(x => x.Value, x => x.Key)
+            .SelectMany(kvp => kvp.Value.Select(bvwp => (BibleVerseId: kvp.Key, BaseVerseIdWithOptionalVersePart: bvwp)))
+            .GroupBy(vm => vm.BaseVerseIdWithOptionalVersePart)
+            .ToDictionary(
+                baseVerseIdWithOptionalPartGrouping => baseVerseIdWithOptionalPartGrouping.Key,
+                IReadOnlyList<int> (baseVerseIdWithOptionalPartGrouping) => baseVerseIdWithOptionalPartGrouping
+                    .Select(vm => vm.BibleVerseId)
+                    .Order()
+                    .Distinct()
+                    .ToList())
             .AsReadOnly();
     }
 

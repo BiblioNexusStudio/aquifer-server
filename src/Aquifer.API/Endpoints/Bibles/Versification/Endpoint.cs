@@ -57,13 +57,14 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
                 versificationService,
                 ct);
 
+            // exclude mappings where the source and target verse IDs are the same
             verseMappings = versificationMap
-                .Where(mapping => mapping.Value != mapping.Key)
+                .Where(mapping => mapping.Value.Count != 1 || mapping.Value[0] != mapping.Key)
                 .Select(
                     mapping => new VerseMapping
                     {
                         SourceVerse = MapToVerseReference(mapping.Key),
-                        TargetVerse = mapping.Value.HasValue ? MapToVerseReference(mapping.Value.Value) : null
+                        TargetVerses = mapping.Value.Select(MapToVerseReference).ToList(),
                     })
                 .ToList();
         }
