@@ -9,9 +9,13 @@ namespace Aquifer.Common.Services.Caching;
 
 public interface ICachingVersificationService
 {
-    Task<ReadOnlyDictionary<int, string>> GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(int bibleId, CancellationToken cancellationToken);
+    Task<ReadOnlyDictionary<int, IReadOnlyList<string>>> GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(
+        int bibleId,
+        CancellationToken cancellationToken);
 
-    Task<ReadOnlyDictionary<string, int>> GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(int bibleId, CancellationToken cancellationToken);
+    Task<ReadOnlyDictionary<string, IReadOnlyList<int>>> GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(
+        int bibleId,
+        CancellationToken cancellationToken);
 
     Task<ReadOnlySet<int>> GetExcludedVerseIdsAsync(int bibleId, CancellationToken cancellationToken);
 
@@ -60,19 +64,19 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
 
     private static readonly TimeSpan s_cacheLifetime = TimeSpan.FromMinutes(120);
 
-    public async Task<ReadOnlyDictionary<int, string>>
+    public async Task<ReadOnlyDictionary<int, IReadOnlyList<string>>>
         GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(int bibleId, CancellationToken cancellationToken)
     {
-        return (await GetBaseVerseIdWithOptionalPartByBibleVerseIdMapByBibleIdMapAsync(cancellationToken))
+        return (await GetBaseVerseIdsWithOptionalPartByBibleVerseIdMapByBibleIdMapAsync(cancellationToken))
             .GetValueOrDefault(bibleId)
-            ?? new Dictionary<int, string>().AsReadOnly();
+            ?? new Dictionary<int, IReadOnlyList<string>>().AsReadOnly();
     }
 
-    public async Task<ReadOnlyDictionary<string, int>> GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(int bibleId, CancellationToken cancellationToken)
+    public async Task<ReadOnlyDictionary<string, IReadOnlyList<int>>> GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(int bibleId, CancellationToken cancellationToken)
     {
-        return (await GetBibleVerseIdByBaseVerseIdWithOptionalPartMapByBibleIdMapAsync(cancellationToken))
+        return (await GetBibleVerseIdsByBaseVerseIdWithOptionalPartMapByBibleIdMapAsync(cancellationToken))
             .GetValueOrDefault(bibleId)
-            ?? new Dictionary<string, int>().AsReadOnly();
+            ?? new Dictionary<string, IReadOnlyList<int>>().AsReadOnly();
     }
 
     public async Task<ReadOnlyDictionary<
@@ -94,14 +98,12 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
                 {
                     cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
-                    // TODO Update BookChapters to have a MinVerseNumber column so we don't have to assume 1.
-                    // Some Psalms begin with verse 0 for "eng" data which will need to be loaded from the mapping information.
                     return (await _dbContext.BookChapters
                             .Select(bc => new
                             {
                                 bc.BookId,
                                 bc.Number,
-                                MinVerseNumber = 1,
+                                bc.MinVerseNumber,
                                 bc.MaxVerseNumber,
                             })
                             .ToListAsync(cancellationToken))
@@ -189,8 +191,8 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
             ?? new ReadOnlySet<int>(new HashSet<int>());
     }
 
-    private async Task<ReadOnlyDictionary<int, ReadOnlyDictionary<int, string>>>
-        GetBaseVerseIdWithOptionalPartByBibleVerseIdMapByBibleIdMapAsync(CancellationToken ct)
+    private async Task<ReadOnlyDictionary<int, ReadOnlyDictionary<int, IReadOnlyList<string>>>>
+        GetBaseVerseIdsWithOptionalPartByBibleVerseIdMapByBibleIdMapAsync(CancellationToken ct)
     {
         return await _memoryCache.GetOrCreateAsync(
             BaseVerseIdByBibleVerseIdMapsCacheKey,
@@ -200,21 +202,22 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
 
                 // Verse part handling:
                 // 1. Ignore BibleVerseIdPart because consumers don't care about parts when passing verse IDs.
-                //    There is part data in the DB, though, so take only the first mapping in the DB for a verse
-                //    (either the one with no verse part or the one with an 'a' verse part).
-                // 2. Keep BaseVerseIdPart in the mappings because it provides more accurate conversions between source -> base -> target.
+                //    (but if the BibleVerseId has multiple mappings using different parts keep all the mappings, just without a part).
+                // 3. Keep BaseVerseIdPart in the mappings because it provides more accurate conversions between source -> base -> target.
                 var versifications = await _dbContext.VersificationMappings
                     .GroupBy(x => x.BibleId)
                     .ToDictionaryAsync(
                         bibleGrouping => bibleGrouping.Key,
                         bibleGrouping => bibleGrouping
                             .GroupBy(x => x.BibleVerseId)
-                            .Select(bibleVerseIdGrouping => bibleVerseIdGrouping
-                                .OrderBy(x => x.BaseVerseIdPart)
-                                .First())
                             .ToDictionary(
-                                x => x.BibleVerseId,
-                                x => $"{x.BaseVerseId}{x.BaseVerseIdPart}")
+                                bibleVerseIdGrouping => bibleVerseIdGrouping.Key,
+                                IReadOnlyList<string> (bibleVerseIdGrouping) => bibleVerseIdGrouping
+                                    .OrderBy(x => x.BaseVerseId)
+                                    .ThenBy(x => x.BaseVerseIdPart)
+                                    .Select(x => $"{x.BaseVerseId}{x.BaseVerseIdPart}")
+                                    .Distinct()
+                                    .ToList())
                             .AsReadOnly(),
                         ct);
 
@@ -223,8 +226,8 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
             ?? throw new InvalidOperationException($"\"{BaseVerseIdByBibleVerseIdMapsCacheKey}\" unexpectedly had a null value cached.");
     }
 
-    private async Task<ReadOnlyDictionary<int, ReadOnlyDictionary<string, int>>>
-        GetBibleVerseIdByBaseVerseIdWithOptionalPartMapByBibleIdMapAsync(CancellationToken ct)
+    private async Task<ReadOnlyDictionary<int, ReadOnlyDictionary<string, IReadOnlyList<int>>>>
+        GetBibleVerseIdsByBaseVerseIdWithOptionalPartMapByBibleIdMapAsync(CancellationToken ct)
     {
         return await _memoryCache.GetOrCreateAsync(
             BibleVerseIdByBaseVerseIdMapsCacheKey,
@@ -233,17 +236,20 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
                 cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
 
                 // When inverting the bibleVerseId -> baseVerseIdWithOptionalPart map, there may be multiple Bible verse IDs that map to
-                // the same base verse ID with optional part.  In that case, take the first entry ordered by
-                // baseVerseIdWithOptionalPart alphabetically (which will usually be no part or the 'a' part).
-                return (await GetBaseVerseIdWithOptionalPartByBibleVerseIdMapByBibleIdMapAsync(ct))
+                // the same base verse ID with optional part.  In that case, get all such mappings but drop the BibleVersePart.
+                return (await GetBaseVerseIdsWithOptionalPartByBibleVerseIdMapByBibleIdMapAsync(ct))
                     .ToDictionary(
                         x => x.Key,
                         x => x.Value
-                            .GroupBy(y => y.Value)
-                            .Select(baseVerseIdWithOptionalPartGrouping => baseVerseIdWithOptionalPartGrouping
-                                .OrderBy(y => y.Value)
-                                .First())
-                            .ToDictionary(y => y.Value, y => y.Key)
+                            .SelectMany(kvp => kvp.Value.Select(bvwp => (BibleVerseId: kvp.Key, BaseVerseIdWithOptionalVersePart: bvwp)))
+                            .GroupBy(vm => vm.BaseVerseIdWithOptionalVersePart)
+                            .ToDictionary(
+                                baseVerseIdWithOptionalPartGrouping => baseVerseIdWithOptionalPartGrouping.Key,
+                                IReadOnlyList<int> (baseVerseIdWithOptionalPartGrouping) => baseVerseIdWithOptionalPartGrouping
+                                    .Select(vm => vm.BibleVerseId)
+                                    .Order()
+                                    .Distinct()
+                                    .ToList())
                             .AsReadOnly())
                     .AsReadOnly();
             })

@@ -39,6 +39,12 @@ public class ReportEntity : IHasUpdatedTimestamp
 
     [MaxLength(32)]
     public string? AllowedRoles { get; set; }
+
+    /// <summary>
+    /// Set to true when the report should appear in a dropdown
+    /// menu for user to select.
+    /// </summary>
+    public bool ShowInDropdown { get; set; }
 }
 
 public enum ReportType
