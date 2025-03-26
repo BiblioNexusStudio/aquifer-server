@@ -5,9 +5,17 @@ namespace Aquifer.Public.API.Endpoints.Resources.Updates.List;
 public class Request
 {
     /// <summary>
-    ///     UTC timestamp (e.g. 07/20/2024) indicating how far back to check for updates. The maximum look-back is 90 days.
+    ///     UTC timestamp (e.g. 07/20/2024) representing the starting time of a range in which to look for new updates. This is required when not
+    ///     passing the deprecated `Timestamp` property.
     /// </summary>
-    public DateTime Timestamp { get; init; }
+    public DateTime? StartTimestamp { get; set; }
+
+    /// <summary>
+    ///     UTC timestamp (e.g. 07/20/2024) representing the ending time of a range in which to look for new updates. If no value is provided it
+    ///     will default to UtcNow.
+    /// </summary>
+    [DefaultValue(typeof(DateTime), "DateTime.UtcNow")]
+    public DateTime? EndTimestamp { get; init; } = DateTime.UtcNow;
 
     /// <summary>
     ///     Optional LanguageId to search on. If none is provided, updates for all languages will be returned.
@@ -36,4 +44,10 @@ public class Request
     ///     as "TyndaleBibleDictionary".
     /// </summary>
     public string? ResourceCollectionCode { get; init; }
+
+    /// <summary>
+    ///     WARNING: DEPRECATED!  Use `StartTimestamp` instead.  If `StartTimestamp` is provided then this value will be ignored.
+    /// </summary>
+    [Obsolete("Use StartTimestamp instead.")]
+    public DateTime? Timestamp { get; init; }
 }

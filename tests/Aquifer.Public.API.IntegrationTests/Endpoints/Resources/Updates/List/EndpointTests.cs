@@ -13,7 +13,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
         {
             LanguageId = 4,
             ResourceCollectionCode = "TyndaleBibleDictionary",
-            Timestamp = DateTime.UtcNow.AddMonths(-1),
+            StartTimestamp = DateTime.UtcNow.AddMonths(-1),
             Limit = 2,
         },
         new Request
@@ -21,11 +21,11 @@ public sealed class EndpointTests(App _app) : TestBase<App>
             LanguageCode = "spa",
             Offset = 10,
             Limit = 15,
-            Timestamp = DateTime.UtcNow.AddDays(-90).AddHours(1),
+            StartTimestamp = DateTime.UtcNow.AddDays(-90).AddHours(1),
         },
         new Request
         {
-            Timestamp = DateTime.UtcNow.AddDays(-90).AddHours(1),
+            StartTimestamp = DateTime.UtcNow.AddDays(-90).AddHours(1),
             Limit = 100,
         },
     ];
@@ -67,7 +67,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
             }
 
             item.ResourceId.Should().BeGreaterThan(0);
-            item.Timestamp.Should().BeAfter(request.Timestamp);
+            item.Timestamp.Should().BeAfter(request.StartTimestamp!.Value);
         }
     }
 }
