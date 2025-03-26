@@ -46,7 +46,7 @@ public class Request
     public string? ResourceCollectionCode { get; init; }
 
     /// <summary>
-    ///     This is the same as `StartTimestamp` and should no longer be used. If `StartTimestamp` is provided this will be ignored.
+    ///     WARNING: DEPRECATED!  Use `StartTimestamp` instead.  If `StartTimestamp` is provided then this value will be ignored.
     /// </summary>
     public DateTime? Timestamp { get; init; }
 }
