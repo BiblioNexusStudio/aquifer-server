@@ -53,14 +53,8 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
         }
 
         var role = jwtRoles[0];
-        var isParsed = Enum.TryParse(string.Concat(role[0].ToString().ToUpper(), role.AsSpan(1)), out UserRole userRole);
-        if (!isParsed)
-        {
-            return UserRole.None;
-        }
-
-        return userRole;
-
+        var isParsed = Enum.TryParse(role, true, out UserRole userRole);
+        return !isParsed ? UserRole.None : userRole;
     }
 
     public List<string> GetAllJwtPermissions()
