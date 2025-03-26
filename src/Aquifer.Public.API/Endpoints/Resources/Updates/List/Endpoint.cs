@@ -11,29 +11,27 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext, ICachingLanguageServic
     public override void Configure()
     {
         Get("/resources/updates");
-        Description(d => d
-            .WithTags("Resources")
-            .ProducesProblemFE());
-        Summary(s =>
-        {
-            s.Summary = "Get resource ids that are new or updated since the given UTC timestamp.";
-            s.Description =
-                "For a given UTC timestamp, get a list of resource ids that are new or have been updated since the provided timestamp. This is intended for users who are storing Aquifer data locally and want to fetch new content.";
-        });
+        Description(d => d.WithTags("Resources").ProducesProblemFE());
+        Summary(
+            s =>
+            {
+                s.Summary = "Get resource ids that are new or updated since the given UTC timestamp.";
+                s.Description =
+                    "For a given UTC timestamp, get a list of resource ids that are new or have been updated since the provided timestamp. This is intended for users who are storing Aquifer data locally and want to fetch new content.";
+            });
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         ValidateCollectionCode(req);
+        req.StartTimestamp ??= req.Timestamp;
+
         var query = await GetQueryAsync(req, ct);
         var totalCount = await GetTotalResourceCountAsync(req, query, ct);
 
         if (totalCount == 0)
         {
-            await SendOkAsync(new Response
-            {
-                Offset = req.Offset
-            }, ct);
+            await SendOkAsync(new Response { Offset = req.Offset }, ct);
             return;
         }
 
@@ -46,22 +44,24 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext, ICachingLanguageServic
         };
     }
 
-    private async Task<List<ResponseContent>> GetResourceUpdatesAsync(Request req, IQueryable<ResourceContentVersionEntity> query,
+    private async Task<List<ResponseContent>> GetResourceUpdatesAsync(
+        Request req,
+        IQueryable<ResourceContentVersionEntity> query,
         CancellationToken ct)
     {
         var languageCodeByIdMap = await cachingLanguageService.GetLanguageCodeByIdMapAsync(ct);
-        return await query
-            .OrderByDescending(r => r.Updated)
+        return await query.OrderBy(r => r.Updated)
             .Skip(req.Offset)
             .Take(req.Limit)
-            .Select(x => new ResponseContent
-            {
-                ResourceId = x.ResourceContentId,
-                LanguageId = x.ResourceContent.LanguageId,
-                LanguageCode = languageCodeByIdMap[x.ResourceContent.LanguageId],
-                UpdateType = x.Version == 1 ? ResponseContentUpdateType.New : ResponseContentUpdateType.Updated,
-                Timestamp = x.Updated
-            })
+            .Select(
+                x => new ResponseContent
+                {
+                    ResourceId = x.ResourceContentId,
+                    LanguageId = x.ResourceContent.LanguageId,
+                    LanguageCode = languageCodeByIdMap[x.ResourceContent.LanguageId],
+                    UpdateType = x.Version == 1 ? ResponseContentUpdateType.New : ResponseContentUpdateType.Updated,
+                    Timestamp = x.Updated
+                })
             .ToListAsync(ct);
     }
 
@@ -91,12 +91,13 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext, ICachingLanguageServic
             ThrowError(x => x.LanguageId, $"Invalid LanguageId: {req.LanguageId}");
         }
 
-        return dbContext.ResourceContentVersions
-            .Where(x => (!validLanguageId.HasValue || x.ResourceContent.LanguageId == validLanguageId) &&
-                        x.IsPublished &&
-                        x.Updated >= req.Timestamp &&
-                        (req.ResourceCollectionCode == null ||
-                         x.ResourceContent.Resource.ParentResource.Code.ToLower() == req.ResourceCollectionCode.ToLower()));
+        return dbContext.ResourceContentVersions.Where(
+            x => (!validLanguageId.HasValue || x.ResourceContent.LanguageId == validLanguageId) &&
+                x.IsPublished &&
+                x.Updated >= req.StartTimestamp &&
+                x.Updated <= req.EndTimestamp &&
+                (req.ResourceCollectionCode == null ||
+                    x.ResourceContent.Resource.ParentResource.Code.ToLower() == req.ResourceCollectionCode.ToLower()));
     }
 
     private void ValidateCollectionCode(Request req)
