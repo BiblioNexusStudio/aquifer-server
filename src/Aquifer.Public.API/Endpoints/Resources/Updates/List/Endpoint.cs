@@ -24,7 +24,10 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext, ICachingLanguageServic
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         ValidateCollectionCode(req);
+
+#pragma warning disable CS0618 // Type or member is obsolete
         req.StartTimestamp ??= req.Timestamp;
+#pragma warning restore CS0618 // Type or member is obsolete
 
         var query = await GetQueryAsync(req, ct);
         var totalCount = await GetTotalResourceCountAsync(req, query, ct);

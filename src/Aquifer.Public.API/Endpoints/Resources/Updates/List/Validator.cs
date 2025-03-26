@@ -1,6 +1,8 @@
 ﻿using FastEndpoints;
 using FluentValidation;
 
+#pragma warning disable CS0618 // Type or member is obsolete
+
 namespace Aquifer.Public.API.Endpoints.Resources.Updates.List;
 
 public class Validator : Validator<Request>

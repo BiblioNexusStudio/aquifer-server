@@ -48,5 +48,6 @@ public class Request
     /// <summary>
     ///     This is the same as `StartTimestamp` and should no longer be used. If `StartTimestamp` is provided this will be ignored.
     /// </summary>
+    [Obsolete("Use StartTimestamp instead.")]
     public DateTime? Timestamp { get; init; }
 }
