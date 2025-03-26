@@ -1,7 +1,6 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,14 +19,14 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var reportsWithAllowedRoles = await dbContext.Reports
             .Where(r => r.Enabled)
             .Select(
-                r => new Report
+                r => new
                 {
-                    Slug = r.Slug,
-                    Name = r.Name,
-                    Description = r.Description,
-                    Type = r.Type,
-                    AllowedRoles = r.AllowedRoles,
-                    ShowInDropdown = r.ShowInDropdown
+                    r.Slug,
+                    r.Name,
+                    r.Description,
+                    r.Type,
+                    r.AllowedRoles,
+                    r.ShowInDropdown
                 })
             .ToListAsync(ct);
 
@@ -45,15 +44,5 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             );
 
         await SendOkAsync(reports, ct);
-    }
-
-    private record Report
-    {
-        public required string Slug { get; set; }
-        public required string Name { get; set; }
-        public required string Description { get; set; }
-        public ReportType Type { get; set; }
-        public string? AllowedRoles { get; set; }
-        public bool ShowInDropdown { get; set; }
     }
 }
