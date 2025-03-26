@@ -45,14 +45,22 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
 
     public UserRole GetUserRoleFromJwt()
     {
-        var role = GetAllJwtRoles()[0];
+        var jwtRoles = GetAllJwtRoles();
+
+        if (jwtRoles.Count <= 0)
+        {
+            return UserRole.None;
+        }
+
+        var role = jwtRoles[0];
         var isParsed = Enum.TryParse(string.Concat(role[0].ToString().ToUpper(), role.AsSpan(1)), out UserRole userRole);
         if (!isParsed)
         {
-            throw new InvalidCastException($"Role {role} is not a valid role");
+            return UserRole.None;
         }
 
         return userRole;
+
     }
 
     public List<string> GetAllJwtPermissions()

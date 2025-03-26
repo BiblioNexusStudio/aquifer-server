@@ -1,6 +1,7 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,19 +31,27 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 })
             .ToListAsync(ct);
 
-        var reports = reportsWithAllowedRoles.Where(
-                r => ReportRoleHelper.RoleIsAllowedForReport(r.AllowedRoles, userService.GetUserRoleFromJwt()))
-            .Select(
-                r => new Response
-                {
-                    Name = r.Name,
-                    Description = r.Description,
-                    Type = r.Type,
-                    Slug = r.Slug,
-                    ShowInDropdown = r.ShowInDropdown
-                }
-            );
+        var userRole = userService.GetUserRoleFromJwt();
+        if (userRole != UserRole.None)
+        {
+            var reports = reportsWithAllowedRoles.Where(
+                    r => ReportRoleHelper.RoleIsAllowedForReport(r.AllowedRoles, userRole))
+                .Select(
+                    r => new Response
+                    {
+                        Name = r.Name,
+                        Description = r.Description,
+                        Type = r.Type,
+                        Slug = r.Slug,
+                        ShowInDropdown = r.ShowInDropdown
+                    }
+                );
 
-        await SendOkAsync(reports, ct);
+            await SendOkAsync(reports, ct);
+        }
+        else
+        {
+            await SendForbiddenAsync(ct);
+        }
     }
 }
