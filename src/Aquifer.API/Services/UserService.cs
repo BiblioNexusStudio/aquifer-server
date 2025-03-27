@@ -47,11 +47,6 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
     {
         var jwtRoles = GetAllJwtRoles();
 
-        if (jwtRoles.Count == 0)
-        {
-            return UserRole.None;
-        }
-
         Enum.TryParse(jwtRoles.FirstOrDefault(), true, out UserRole userRole);
         return userRole;
     }
