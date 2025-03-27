@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using Aquifer.Data.Entities;
 
-namespace Aquifer.Data.Services;
+namespace Aquifer.Data.Utilities;
 
 public static partial class CommentMentionsUtility
 {
