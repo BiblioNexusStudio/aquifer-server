@@ -1,25 +1,57 @@
 using Aquifer.API.Common;
+using Aquifer.API.Services;
 using Aquifer.Data;
+using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Reports.Dynamic.List;
 
-public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<IEnumerable<Response>>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService) : EndpointWithoutRequest<IEnumerable<Response>>
 {
     public override void Configure()
     {
         Get("/reports/dynamic");
-        Permissions(PermissionName.ReadReports);
+        Permissions(PermissionName.ReadReports, PermissionName.ReadReportsInCompany);
     }
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var reports = await dbContext.Reports
+        var reportsWithAllowedRoles = await dbContext.Reports
             .Where(r => r.Enabled)
-            .Select(r => new Response { Slug = r.Slug, Name = r.Name, Description = r.Description, Type = r.Type })
+            .Select(
+                r => new
+                {
+                    r.Slug,
+                    r.Name,
+                    r.Description,
+                    r.Type,
+                    r.AllowedRoles,
+                    r.ShowInDropdown
+                })
             .ToListAsync(ct);
 
-        await SendOkAsync(reports, ct);
+        var userRole = userService.GetUserRoleFromJwt();
+        if (userRole != UserRole.None)
+        {
+            var reports = reportsWithAllowedRoles.Where(
+                    r => ReportRoleHelper.RoleIsAllowedForReport(r.AllowedRoles, userRole))
+                .Select(
+                    r => new Response
+                    {
+                        Name = r.Name,
+                        Description = r.Description,
+                        Type = r.Type,
+                        Slug = r.Slug,
+                        ShowInDropdown = r.ShowInDropdown
+                    }
+                );
+
+            await SendOkAsync(reports, ct);
+        }
+        else
+        {
+            await SendForbiddenAsync(ct);
+        }
     }
 }

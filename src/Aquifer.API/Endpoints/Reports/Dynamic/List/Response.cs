@@ -8,4 +8,5 @@ public record Response
     public string Name { get; set; } = null!;
     public string Description { get; set; } = null!;
     public ReportType Type { get; set; }
+    public bool ShowInDropdown { get; set; }
 }
