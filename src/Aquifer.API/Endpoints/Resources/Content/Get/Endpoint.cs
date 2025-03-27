@@ -182,6 +182,30 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 })
             .ToListAsync(ct);
 
+        if (resourceContent.Language.Id != 1)
+        {
+            var englishSourceVersion =
+                await dbContext.ResourceContentVersions
+                    .Where(
+                        rcv => rcv.ResourceContent.ResourceId == resourceContent.ResourceId &&
+                               rcv.ResourceContent.LanguageId == 1 &&
+                               rcv.IsPublished)
+                    .OrderByDescending(rcv => rcv.Created)
+                    .Select(
+                        rcv => new VersionResponse
+                        {
+                            Id = rcv.Id,
+                            Created = rcv.Created,
+                            Version = rcv.Version,
+                            IsPublished = rcv.IsPublished
+                        })
+                    .FirstOrDefaultAsync(ct);
+            if (englishSourceVersion is not null)
+            {
+                versions.Insert(0, englishSourceVersion);
+            }
+        }
+
         // Can this move into the IsDraft check below?
         resourceContent.MachineTranslations = await dbContext.ResourceContentVersionMachineTranslations
             .Where(x => x.ResourceContentVersionId == relevantContentVersion.Id)
