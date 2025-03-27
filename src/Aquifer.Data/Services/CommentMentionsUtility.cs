@@ -38,7 +38,6 @@ public static partial class CommentMentionsUtility
             .Matches(text)
             .Where(m => m.Success)
             .Select(m => int.Parse(m.Groups["userId"].Value))
-            .Distinct()
             .ToHashSet();
     }
 

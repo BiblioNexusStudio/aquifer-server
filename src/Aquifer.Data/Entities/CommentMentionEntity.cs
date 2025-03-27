@@ -26,7 +26,7 @@ public sealed class CommentMentionEntityConfiguration : IEntityTypeConfiguration
     public void Configure(EntityTypeBuilder<CommentMentionEntity> builder)
     {
         // Don't delete user mentions when a user is deleted.
-        // This necessary in order to prevent cascading deletes cycles.
+        // This necessary in order to prevent cascading delete cycles.
         builder
             .HasOne(x => x.User)
             .WithMany()
