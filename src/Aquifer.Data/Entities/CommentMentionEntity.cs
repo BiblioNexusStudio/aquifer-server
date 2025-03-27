@@ -15,10 +15,10 @@ public sealed class CommentMentionEntity
     public UserEntity User { get; set; } = null!;
 
     [SqlDefaultValue("getutcdate()")]
-    public DateTime Created { get; set; }
+    public DateTime Created { get; set; } = DateTime.UtcNow;
 
     [SqlDefaultValue("getutcdate()")]
-    public DateTime Updated { get; set; }
+    public DateTime Updated { get; set; } = DateTime.UtcNow;
 }
 
 public sealed class CommentMentionEntityConfiguration : IEntityTypeConfiguration<CommentMentionEntity>
