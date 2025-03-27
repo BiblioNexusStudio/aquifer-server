@@ -14,7 +14,6 @@ public static partial class CommentMentionsUtility
         var parsedMentionedUserIds = ParseMentionedUserIdsFromCommentText(comment.Comment);
         var recordedMentionedUserIds = comment.Mentions.Select(m => m.UserId).ToHashSet();
 
-        // filter to only the comments still mentioned
         var existingMentionsToDelete = comment.Mentions
             .Where(m => !parsedMentionedUserIds.Contains(m.UserId))
             .ToList();
@@ -25,7 +24,8 @@ public static partial class CommentMentionsUtility
             {
                 CommentId = comment.Id,
                 UserId = userId,
-            });
+            })
+            .ToList();
 
         dbContext.CommentMentions.RemoveRange(existingMentionsToDelete);
 

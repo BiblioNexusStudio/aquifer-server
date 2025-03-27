@@ -28,10 +28,14 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
         var newComment = new CommentEntity
         {
             Comment = req.Comment,
-            UserId = user.Id
+            UserId = user.Id,
+            Mentions = CommentMentionsUtility.ParseMentionedUserIdsFromCommentText(req.Comment)
+                .Select(userId => new CommentMentionEntity
+                {
+                    UserId = userId,
+                })
+                .ToList(),
         };
-
-        CommentMentionsUtility.UpsertCommentMentions(dbContext, newComment);
 
         thread!.Comments.Add(newComment);
 
