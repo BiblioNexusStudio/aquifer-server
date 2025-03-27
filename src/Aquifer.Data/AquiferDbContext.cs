@@ -53,6 +53,7 @@ public class AquiferDbContext : DbContext
     public DbSet<BookEntity> Books { get; set; }
     public DbSet<BookResourceEntity> BookResources { get; set; }
     public DbSet<CommentEntity> Comments { get; set; }
+    public DbSet<CommentMentionEntity> CommentMentions { get; set; }
     public DbSet<CommentThreadEntity> CommentThreads { get; set; }
     public DbSet<CompanyEntity> Companies { get; set; }
     public DbSet<CompanyReviewerEntity> CompanyReviewers { get; set; }
