@@ -1,4 +1,5 @@
 using Aquifer.API.Common;
+using Aquifer.API.Services;
 using Aquifer.Data;
 using FastEndpoints;
 using Microsoft.Data.SqlClient;
@@ -6,12 +7,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Reports.Dynamic.Get;
 
-public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request, Response>
 {
     public override void Configure()
     {
         Get("/reports/dynamic/{Slug}");
-        Permissions(PermissionName.ReadReports);
+        Permissions(PermissionName.ReadReports, PermissionName.ReadReportsInCompany);
     }
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
@@ -22,6 +23,11 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         {
             await SendNotFoundAsync(ct);
             return;
+        }
+
+        if (!ReportRoleHelper.RoleIsAllowedForReport(report.AllowedRoles, userService.GetUserRoleFromJwt()))
+        {
+            await SendForbiddenAsync(ct);
         }
 
         await using var connection = dbContext.Database.GetDbConnection();
