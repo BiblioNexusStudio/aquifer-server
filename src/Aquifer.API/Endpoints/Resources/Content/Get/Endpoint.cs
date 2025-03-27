@@ -197,7 +197,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                             Id = rcv.Id,
                             Created = rcv.Created,
                             Version = rcv.Version,
-                            IsPublished = rcv.IsPublished
+                            IsPublished = rcv.IsPublished,
+                            IsEnglishSource = true
                         })
                     .FirstOrDefaultAsync(ct);
             if (englishSourceVersion is not null)
