@@ -195,10 +195,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                         {
                             Id = x.Id,
                             Created = x.Created,
-                            AssignedUserName = x.User == null ? null : $"{x.User.FirstName} {x.User.LastName}",
+                            AssignedUserName = null,
                             Status = x.Status.GetDisplayName()
                         })
                     .FirstOrDefaultAsync(ct);
+
                 if (firstVersionSnapshot is not null)
                 {
                     snapshots.Insert(0, firstVersionSnapshot);
