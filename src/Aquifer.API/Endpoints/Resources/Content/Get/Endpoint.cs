@@ -182,7 +182,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 })
             .ToListAsync(ct);
 
-        if (resourceContent.Language.Id != 1 && versions.Any(v => v.IsPublished) && relevantContentVersion.IsDraft)
+        if (resourceContent.Language.Id != 1 && relevantContentVersion.Version > 1 && relevantContentVersion.IsDraft)
         {
             var englishSourceVersion =
                 await dbContext.ResourceContentVersions
