@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
 
+[Index(nameof(UserId))]
 [Index(nameof(ThreadId))]
 public class CommentEntity : IHasUpdatedTimestamp
 {
@@ -16,6 +17,7 @@ public class CommentEntity : IHasUpdatedTimestamp
 
     public CommentThreadEntity Thread { get; set; } = null!;
     public UserEntity User { get; set; } = null!;
+    public ICollection<CommentMentionEntity> Mentions { get; set; } = [];
 
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; }

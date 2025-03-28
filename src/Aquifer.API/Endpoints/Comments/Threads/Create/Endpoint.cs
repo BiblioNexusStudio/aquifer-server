@@ -4,6 +4,7 @@ using Aquifer.API.Helpers;
 using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Aquifer.Data.Utilities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -42,7 +43,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
         CommentEntity newComment = new()
         {
             Comment = req.Comment,
-            UserId = user.Id
+            UserId = user.Id,
+            Mentions = CommentMentionsUtility.ParseMentionedUserIdsFromCommentText(req.Comment)
+                .Select(userId => new CommentMentionEntity
+                {
+                    UserId = userId,
+                })
+                .ToList(),
         };
 
         CommentThreadEntity newThread = new() { Comments = [newComment] };
