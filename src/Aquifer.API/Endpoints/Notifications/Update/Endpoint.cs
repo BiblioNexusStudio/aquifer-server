@@ -54,8 +54,11 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
             // Note that only notifications that a user has interacted with are stored in the DB.
             var existingNotification = await _dbContext.Notifications
                 .AsTracking()
-                .Where(n => n.Kind == req.NotificationKind && n.NotificationKindId == req.NotificationKindId)
-                .FirstOrDefaultAsync(ct);
+                .Where(n =>
+                    n.UserId == currentUserId &&
+                    n.Kind == req.NotificationKind &&
+                    n.NotificationKindId == req.NotificationKindId)
+                .SingleOrDefaultAsync(ct);
 
             if (existingNotification is not null)
             {
