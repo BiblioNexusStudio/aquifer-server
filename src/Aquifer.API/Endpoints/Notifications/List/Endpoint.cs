@@ -153,9 +153,11 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
         DateTime minimumCommentCreatedDate,
         CancellationToken ct)
     {
-        // Get comment notifications for the current user where that user is assigned or has previously been assigned to the associated
-        // resource and where the current user is in the same company as the user who made the comment.  The user who made the comment
-        // should not get a notification.
+        // Get comments for the current user where:
+        // 1. The user was assigned to the resource content on which the comment was made at the time the comment was made.
+        // 2. The user has previously interacted in the comment thread for the comment.
+        // 3. The user was at-mentioned on the comment.
+        // The user who made the comment should not get a notification.
         const string query = """
             SELECT
                 c.Id AS CommentId,
@@ -176,14 +178,46 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
                 JOIN Resources r ON r.Id = rc.ResourceId
                 JOIN ParentResources pr ON pr.Id = r.ParentResourceId
             WHERE
-                EXISTS
                 (
-                    SELECT NULL
-                    FROM ResourceContentVersionAssignedUserHistory rcvauh
-                    WHERE
-                        rcvauh.ResourceContentVersionId = rcv.Id AND
-                        rcvauh.Created < c.Created AND
-                        rcvauh.AssignedUserId = @userId
+                    EXISTS
+                    (
+                        SELECT NULL
+                        FROM
+                        (
+                            SELECT rcvauh.AssignedUserId,
+                            ROW_NUMBER() OVER
+                            (
+                                PARTITION BY rcvauh.ResourceContentVersionId
+                                ORDER BY rcvauh.Created DESC
+                            ) AS Rank
+                            FROM ResourceContentVersionAssignedUserHistory rcvauh
+                            WHERE
+                                rcvauh.ResourceContentVersionId = rcv.Id AND
+                                rcvauh.Created < c.Created
+                        ) mostRecentHistory
+                        WHERE
+                            mostRecentHistory.Rank = 1 AND
+                            mostRecentHistory.AssignedUserId = @userId
+                    ) OR
+                    EXISTS
+                    (
+                        SELECT NULL
+                        FROM CommentThreads ct2
+                        JOIN Comments c2 ON c2.ThreadId = ct2.Id
+                        WHERE
+                            c.ThreadId = ct2.Id AND
+                            c2.UserId = @userId AND
+                            c.Created > c2.Created
+                    ) OR
+                    EXISTS
+                    (
+                        SELECT NULL
+                        FROM CommentMentions cm
+                        WHERE
+                            cm.CommentId = c.Id AND
+                            cm.UserId <> c.UserId AND
+                            cm.UserId = @userId
+                    )
                 ) AND
                 c.UserId <> @userId AND
                 c.Created > @minimumCommentCreatedDate AND
