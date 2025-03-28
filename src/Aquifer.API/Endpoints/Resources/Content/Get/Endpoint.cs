@@ -185,7 +185,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         if (resourceContent.Language.Id != 1 && relevantContentVersion.Version > 1 && relevantContentVersion.IsDraft && resourceContent.MediaType == ResourceContentMediaType.Text)
         {
             var firstVersion = versions.FirstOrDefault();
-            if (firstVersion != null)
+            if (firstVersion is not null)
             {
                 var firstVersionSnapshot = await dbContext.ResourceContentVersionSnapshots
                     .Where(rcvs => rcvs.ResourceContentVersionId == firstVersion.Id)
