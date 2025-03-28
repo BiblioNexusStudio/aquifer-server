@@ -154,7 +154,7 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
         CancellationToken ct)
     {
         // Get comments for the current user where:
-        // 1. The user was assigned or has previously been assigned to the resource content on which the comment was made.
+        // 1. The user was assigned to the resource content on which the comment was made at the time the comment was made.
         // 2. The user has previously interacted in the comment thread for the comment.
         // 3. The user was at-mentioned on the comment.
         // The user who made the comment should not get a notification.
@@ -182,11 +182,22 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
                     EXISTS
                     (
                         SELECT NULL
-                        FROM ResourceContentVersionAssignedUserHistory rcvauh
+                        FROM
+                        (
+                            SELECT rcvauh.AssignedUserId,
+                            ROW_NUMBER() OVER
+                            (
+                                PARTITION BY rcvauh.ResourceContentVersionId
+                                ORDER BY rcvauh.Created DESC
+                            ) AS Rank
+                            FROM ResourceContentVersionAssignedUserHistory rcvauh
+                            WHERE
+                                rcvauh.ResourceContentVersionId = rcv.Id AND
+                                rcvauh.Created < c.Created
+                        ) mostRecentHistory
                         WHERE
-                            rcvauh.ResourceContentVersionId = rcv.Id AND
-                            rcvauh.Created < c.Created AND
-                            rcvauh.AssignedUserId = @userId
+                            mostRecentHistory.Rank = 1 AND
+                            mostRecentHistory.AssignedUserId = @userId
                     ) OR
                     EXISTS
                     (
