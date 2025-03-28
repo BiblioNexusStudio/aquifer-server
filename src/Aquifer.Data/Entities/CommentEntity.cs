@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
 
+[Index(nameof(UserId))]
 [Index(nameof(ThreadId))]
 public class CommentEntity : IHasUpdatedTimestamp
 {
