@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
+[Index(nameof(CommentId), nameof(UserId))]
+[Index(nameof(UserId), nameof(CommentId))]
 [EntityTypeConfiguration(typeof(CommentMentionEntityConfiguration))]
 public sealed class CommentMentionEntity
 {
