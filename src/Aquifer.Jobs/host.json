@@ -15,7 +15,7 @@
             // additional logging
             "Host.Triggers.DurableTask": "Information",
             "Host.Aggregator": "Trace",
-            "Host.Results": "Error"
+            "Host.Results": "Information"
         },
         "ApplicationInsights": {
             "LogLevel": {
