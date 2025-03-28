@@ -182,28 +182,27 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 })
             .ToListAsync(ct);
 
-        if (resourceContent.Language.Id != 1 && relevantContentVersion.Version > 1 && relevantContentVersion.IsDraft)
+        if (resourceContent.Language.Id != 1 && relevantContentVersion.Version > 1 && relevantContentVersion.IsDraft && resourceContent.MediaType == ResourceContentMediaType.Text)
         {
-            var englishSourceVersion =
-                await dbContext.ResourceContentVersions
-                    .Where(
-                        rcv => rcv.ResourceContent.ResourceId == resourceContent.ResourceId &&
-                               rcv.ResourceContent.LanguageId == 1 &&
-                               rcv.IsPublished)
-                    .OrderByDescending(rcv => rcv.Created)
+            var firstVersion = versions.FirstOrDefault();
+            if (firstVersion != null)
+            {
+                var firstVersionSnapshot = await dbContext.ResourceContentVersionSnapshots
+                    .Where(rcvs => rcvs.ResourceContentVersionId == firstVersion.Id)
+                    .OrderBy(x => x.Created)
                     .Select(
-                        rcv => new VersionResponse
+                        x => new SnapshotResponse
                         {
-                            Id = rcv.Id,
-                            Created = rcv.Created,
-                            Version = rcv.Version,
-                            IsPublished = rcv.IsPublished,
-                            IsEnglishSource = true
+                            Id = x.Id,
+                            Created = x.Created,
+                            AssignedUserName = x.User == null ? null : $"{x.User.FirstName} {x.User.LastName}",
+                            Status = x.Status.GetDisplayName()
                         })
                     .FirstOrDefaultAsync(ct);
-            if (englishSourceVersion is not null)
-            {
-                versions.Insert(0, englishSourceVersion);
+                if (firstVersionSnapshot is not null)
+                {
+                    snapshots.Insert(0, firstVersionSnapshot);
+                }
             }
         }
 

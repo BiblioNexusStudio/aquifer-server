@@ -139,7 +139,6 @@ public class VersionResponse
     public required DateTime Created { get; set; }
     public required int Version { get; set; }
     public required bool IsPublished { get; set; }
-    public bool IsEnglishSource { get; set; } = false;
 }
 
 public class UserResponse
