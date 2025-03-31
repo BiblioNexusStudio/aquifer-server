@@ -182,6 +182,31 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 })
             .ToListAsync(ct);
 
+        if (resourceContent.Language.Id != 1 && relevantContentVersion.Version > 1 && relevantContentVersion.IsDraft && resourceContent.MediaType == ResourceContentMediaType.Text)
+        {
+            var firstVersion = versions.FirstOrDefault();
+            if (firstVersion is not null)
+            {
+                var firstVersionSnapshot = await dbContext.ResourceContentVersionSnapshots
+                    .Where(rcvs => rcvs.ResourceContentVersionId == firstVersion.Id)
+                    .OrderBy(x => x.Created)
+                    .Select(
+                        x => new SnapshotResponse
+                        {
+                            Id = x.Id,
+                            Created = x.Created,
+                            AssignedUserName = null,
+                            Status = x.Status.GetDisplayName()
+                        })
+                    .FirstOrDefaultAsync(ct);
+
+                if (firstVersionSnapshot is not null)
+                {
+                    snapshots.Insert(0, firstVersionSnapshot);
+                }
+            }
+        }
+
         // Can this move into the IsDraft check below?
         resourceContent.MachineTranslations = await dbContext.ResourceContentVersionMachineTranslations
             .Where(x => x.ResourceContentVersionId == relevantContentVersion.Id)
