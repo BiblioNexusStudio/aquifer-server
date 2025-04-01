@@ -49,6 +49,9 @@ public class Endpoint(
             "audio/x-oggpcm",
             "audio/x-speex",
             "audio/x-wav",
+
+            // webm can be either audio or video and the browser may use video by default
+            "video/webm",
         });
 
     public override void Configure()
@@ -77,7 +80,8 @@ public class Endpoint(
         }
 
         // we could change this in the future if desired and support additional audio types
-        if (!s_supportedAudioMimeTypes.Contains(request.File.ContentType))
+        if (!s_supportedAudioMimeTypes.Contains(request.File.ContentType) &&
+            !s_supportedAudioMimeTypes.Any(mt => request.File.ContentType.StartsWith($"{mt};")))
         {
             ThrowError(x => x.File, $"Unsupported MIME type: {request.File.ContentType}", StatusCodes.Status400BadRequest);
         }
