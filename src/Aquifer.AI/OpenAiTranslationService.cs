@@ -14,7 +14,7 @@ public interface ITranslationService
     /// Translates plain text.
     /// Note: It's up to the caller to guarantee that the text length is not too long.
     /// </summary>
-    public Task<string> TranslateTextAsync(
+    Task<string> TranslateTextAsync(
         string text,
         (string Iso6393Code, string EnglishName) destinationLanguage,
         IDictionary<string, string> translationPairs,
@@ -24,7 +24,7 @@ public interface ITranslationService
     /// Translates HTML content while preserving the HTML tags.
     /// Note: Translations are done on each individual paragraph in order to avoid hitting length limitations.
     /// </summary>
-    public Task<string> TranslateHtmlAsync(
+    Task<string> TranslateHtmlAsync(
         string html,
         (string Iso6393Code, string EnglishName) destinationLanguage,
         IDictionary<string, string> translationPairs,
