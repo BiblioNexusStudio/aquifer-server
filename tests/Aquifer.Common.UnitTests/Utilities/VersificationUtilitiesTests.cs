@@ -383,7 +383,10 @@ public class MockCachingVersificationService : ICachingVersificationService
                 .AsReadOnly();
 
     public Task<ReadOnlyDictionary<int, IReadOnlyList<string>>>
-        GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(int bibleId, CancellationToken cancellationToken)
+        GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(
+            int bibleId,
+            bool shouldFallBackToLanguageDefault,
+            CancellationToken cancellationToken)
     {
         return Task.FromResult(s_baseVerseIdWithOptionalPartByBibleVerseIdMapByBibleIdMap.GetValueOrDefault(bibleId)
             ?? new Dictionary<int, IReadOnlyList<string>>().AsReadOnly());
@@ -391,10 +394,11 @@ public class MockCachingVersificationService : ICachingVersificationService
 
     public async Task<ReadOnlyDictionary<string, IReadOnlyList<int>>> GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(
         int bibleId,
+        bool shouldFallBackToLanguageDefault,
         CancellationToken cancellationToken)
     {
         // this logic should match the CachingVersificationService
-        return (await GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(bibleId, cancellationToken))
+        return (await GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(bibleId, shouldFallBackToLanguageDefault, cancellationToken))
             .SelectMany(kvp => kvp.Value.Select(bvwp => (BibleVerseId: kvp.Key, BaseVerseIdWithOptionalVersePart: bvwp)))
             .GroupBy(vm => vm.BaseVerseIdWithOptionalVersePart)
             .ToDictionary(
@@ -412,25 +416,10 @@ public class MockCachingVersificationService : ICachingVersificationService
         return Task.FromResult(s_excludedVerseIdsByBibleIdMap.GetValueOrDefault(bibleId, new ReadOnlySet<int>(new HashSet<int>())));
     }
 
-    public Task<bool> DoesBibleIncludeBookAsync(int bibleId, BookId bookId, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<int?> GetMaxChapterNumberForBookAsync(int bibleId, BookId bookId, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<(int MinVerseNumber, int MaxVerseNumber)?> GetBookendVerseNumbersForChapterAsync(int bibleId, BookId bookId, int chapterNumber, CancellationToken cancellationToken)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<ReadOnlyDictionary<
             BookId,
             (int MaxChapterNumber,
-                ReadOnlyDictionary<int, (int MinVerseNumber, int MaxVerseNumber)> BookendVerseNumbersByChapterNumberMap)>>
+            ReadOnlyDictionary<int, (int MinVerseNumber, int MaxVerseNumber)> BookendVerseNumbersByChapterNumberMap)>>
         GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(int bibleId, CancellationToken cancellationToken)
     {
         return Task.FromResult(bibleId switch
@@ -448,5 +437,25 @@ public class MockCachingVersificationService : ICachingVersificationService
             // Return the same max chapters/verses for all other Bibles.
             _ => s_baseMaxChapterNumberAndBookendVerseNumbersByBookIdMap,
         });
+    }
+
+    public Task<bool> DoesBibleIncludeBookAsync(int bibleId, BookId bookId, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<int?> GetMaxChapterNumberForBookAsync(int bibleId, BookId bookId, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<(int MinVerseNumber, int MaxVerseNumber)?> GetBookendVerseNumbersForChapterAsync(int bibleId, BookId bookId, int chapterNumber, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<ReadOnlyDictionary<int, int>> GetDefaultLanguageBibleIdByBibleIdMapAsync(CancellationToken ct)
+    {
+        throw new NotImplementedException();
     }
 }
