@@ -70,7 +70,7 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
         $"{nameof(CachingVersificationService)}:{nameof(BookendVersesNumberByChapterNumberMapByBookIdMapCacheKey)}";
 
     private const string DefaultLanguageBibleIdByBibleIdMapCacheKey =
-        $"{nameof(CachingVersificationService)}:{nameof(BaseVerseIdByBibleVerseIdMapsCacheKey)}";
+        $"{nameof(CachingVersificationService)}:{nameof(DefaultLanguageBibleIdByBibleIdMapCacheKey)}";
 
     private static readonly TimeSpan s_cacheLifetime = TimeSpan.FromMinutes(120);
 
@@ -96,7 +96,7 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
                             b => defaultBibleIdByLanguageIdMap[b.LanguageId])
                         .AsReadOnly();
                 })
-            ?? throw new InvalidOperationException($"\"{BaseVerseIdByBibleVerseIdMapsCacheKey}\" unexpectedly had a null value cached.");
+            ?? throw new InvalidOperationException($"\"{DefaultLanguageBibleIdByBibleIdMapCacheKey}\" unexpectedly had a null value cached.");
     }
 
     public async Task<ReadOnlyDictionary<int, IReadOnlyList<string>>> GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(
