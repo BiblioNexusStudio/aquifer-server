@@ -142,7 +142,7 @@ public sealed class SendResourceAssignmentNotificationsManager(
 
         if (successCount > 0)
         {
-            jobHistory.LastProcessed = userHistories.Select(uh => uh.Created).Max();
+            jobHistory.LastProcessed = userHistories.Max(uh => uh.Created);
             await _dbContext.SaveChangesAsync(CancellationToken.None);
         }
 

@@ -5,13 +5,13 @@ namespace Aquifer.Jobs.Services.TranslationProcessors;
 
 public interface ITranslationProcessingService
 {
-    public Task<string> PostProcessHtmlAsync(string html, string languageIso6393Code, CancellationToken cancellationToken);
+    Task<string> PostProcessHtmlAsync(string html, string languageIso6393Code, CancellationToken cancellationToken);
 }
 
 public interface ILanguageSpecificTranslationProcessingService
 {
-    public string Iso6393Code { get; }
-    public Task<string> PostProcessHtmlAsync(string html, CancellationToken cancellationToken);
+    string Iso6393Code { get; }
+    Task<string> PostProcessHtmlAsync(string html, CancellationToken cancellationToken);
 }
 
 public static class TranslationProcessingServicesRegistry
