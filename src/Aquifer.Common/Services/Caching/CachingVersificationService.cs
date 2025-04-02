@@ -11,10 +11,12 @@ public interface ICachingVersificationService
 {
     Task<ReadOnlyDictionary<int, IReadOnlyList<string>>> GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(
         int bibleId,
+        bool shouldFallBackToLanguageDefault,
         CancellationToken cancellationToken);
 
     Task<ReadOnlyDictionary<string, IReadOnlyList<int>>> GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(
         int bibleId,
+        bool shouldFallBackToLanguageDefault,
         CancellationToken cancellationToken);
 
     Task<ReadOnlySet<int>> GetExcludedVerseIdsAsync(int bibleId, CancellationToken cancellationToken);
@@ -44,6 +46,11 @@ public interface ICachingVersificationService
             (int MaxChapterNumber, ReadOnlyDictionary<int, (int MinVerseNumber, int MaxVerseNumber)>
                 BookendVerseNumbersByChapterNumberMap)>>
         GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(int bibleId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Allows quickly fetching the default Bible ID for a given language via a Bible ID also in that language.
+    /// </summary>
+    Task<ReadOnlyDictionary<int, int>> GetDefaultLanguageBibleIdByBibleIdMapAsync(CancellationToken ct);
 }
 
 public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMemoryCache _memoryCache) : ICachingVersificationService
@@ -62,21 +69,72 @@ public sealed class CachingVersificationService(AquiferDbContext _dbContext, IMe
     private const string BookendVersesNumberByChapterNumberMapByBookIdMapCacheKey =
         $"{nameof(CachingVersificationService)}:{nameof(BookendVersesNumberByChapterNumberMapByBookIdMapCacheKey)}";
 
+    private const string DefaultLanguageBibleIdByBibleIdMapCacheKey =
+        $"{nameof(CachingVersificationService)}:{nameof(BaseVerseIdByBibleVerseIdMapsCacheKey)}";
+
     private static readonly TimeSpan s_cacheLifetime = TimeSpan.FromMinutes(120);
 
-    public async Task<ReadOnlyDictionary<int, IReadOnlyList<string>>>
-        GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(int bibleId, CancellationToken cancellationToken)
+    public async Task<ReadOnlyDictionary<int, int>> GetDefaultLanguageBibleIdByBibleIdMapAsync(CancellationToken ct)
     {
-        return (await GetBaseVerseIdsWithOptionalPartByBibleVerseIdMapByBibleIdMapAsync(cancellationToken))
-            .GetValueOrDefault(bibleId)
-            ?? new Dictionary<int, IReadOnlyList<string>>().AsReadOnly();
+        return await _memoryCache.GetOrCreateAsync(
+                DefaultLanguageBibleIdByBibleIdMapCacheKey,
+                async cacheEntry =>
+                {
+                    cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
+
+                    var bibles = await _dbContext.Bibles.ToListAsync(ct);
+
+                    var defaultBibleIdByLanguageIdMap = bibles
+                        .Where(b => b.LanguageDefault)
+                        .ToDictionary(
+                            b => b.LanguageId,
+                            b => b.Id);
+
+                    return bibles
+                        .ToDictionary(
+                            b => b.Id,
+                            b => defaultBibleIdByLanguageIdMap[b.LanguageId])
+                        .AsReadOnly();
+                })
+            ?? throw new InvalidOperationException($"\"{BaseVerseIdByBibleVerseIdMapsCacheKey}\" unexpectedly had a null value cached.");
     }
 
-    public async Task<ReadOnlyDictionary<string, IReadOnlyList<int>>> GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(int bibleId, CancellationToken cancellationToken)
+    public async Task<ReadOnlyDictionary<int, IReadOnlyList<string>>> GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(
+        int bibleId,
+        bool shouldFallBackToLanguageDefault,
+        CancellationToken cancellationToken)
     {
-        return (await GetBibleVerseIdsByBaseVerseIdWithOptionalPartMapByBibleIdMapAsync(cancellationToken))
-            .GetValueOrDefault(bibleId)
-            ?? new Dictionary<string, IReadOnlyList<int>>().AsReadOnly();
+        var map = (await GetBaseVerseIdsWithOptionalPartByBibleVerseIdMapByBibleIdMapAsync(cancellationToken))
+            .GetValueOrDefault(bibleId);
+
+        if (map == null &&
+            shouldFallBackToLanguageDefault &&
+            (await GetDefaultLanguageBibleIdByBibleIdMapAsync(cancellationToken)).TryGetValue(bibleId, out var languageDefaultBibleId))
+        {
+            map = (await GetBaseVerseIdsWithOptionalPartByBibleVerseIdMapByBibleIdMapAsync(cancellationToken))
+                .GetValueOrDefault(languageDefaultBibleId);
+        }
+
+        return map ?? new Dictionary<int, IReadOnlyList<string>>().AsReadOnly();
+    }
+
+    public async Task<ReadOnlyDictionary<string, IReadOnlyList<int>>> GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(
+        int bibleId,
+        bool shouldFallBackToLanguageDefault,
+        CancellationToken cancellationToken)
+    {
+        var map = (await GetBibleVerseIdsByBaseVerseIdWithOptionalPartMapByBibleIdMapAsync(cancellationToken))
+            .GetValueOrDefault(bibleId);
+
+        if (map == null &&
+            shouldFallBackToLanguageDefault &&
+            (await GetDefaultLanguageBibleIdByBibleIdMapAsync(cancellationToken)).TryGetValue(bibleId, out var languageDefaultBibleId))
+        {
+            map = (await GetBibleVerseIdsByBaseVerseIdWithOptionalPartMapByBibleIdMapAsync(cancellationToken))
+                .GetValueOrDefault(languageDefaultBibleId);
+        }
+
+        return map ?? new Dictionary<string, IReadOnlyList<int>>().AsReadOnly();
     }
 
     public async Task<ReadOnlyDictionary<
