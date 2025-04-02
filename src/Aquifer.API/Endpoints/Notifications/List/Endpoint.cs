@@ -221,7 +221,8 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
                 ) AND
                 c.UserId <> @userId AND
                 c.Created > @minimumCommentCreatedDate AND
-                rcv.IsDraft = 1
+                rcv.IsDraft = 1 AND
+                ct.Resolved = 0
             ORDER BY
                 c.Created DESC,
                 c.Id DESC
