@@ -34,7 +34,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             {
                 BibleBookId = x.Key,
                 BookName = x.Select(y => y.BookName).First(),
-                LastPublished = x.Select(y => y.LastPublished).Max(),
+                LastPublished = x.Max(y => y.LastPublished),
                 TotalResources = x.Sum(y => y.TotalResources)
             })
             .OrderBy(x => x.BibleBookId)
@@ -46,7 +46,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             {
                 BibleBookId = x.Key,
                 BookName = x.Select(y => y.BookName).First(),
-                LastPublished = x.Select(y => y.LastPublished).Max(),
+                LastPublished = x.Max(y => y.LastPublished),
                 TotalResources = x.Sum(y => y.TotalResources)
             })
             .ToList();

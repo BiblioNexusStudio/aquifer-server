@@ -54,7 +54,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
             await GetDataAsync(dbContext, ct);
 
         // resourcesByParentResource sum will be changed later, so keep this at the top
-        var allResourcesCount = resourcesByParentResource.Select(x => x.ResourceCount).Sum();
+        var allResourcesCount = resourcesByParentResource.Sum(x => x.ResourceCount);
         var months = ReportUtilities.GetLastMonths(6);
         var languages = resourcesByLanguage.Select(x => x.LanguageName).Distinct().ToList();
         var parentResources = resourcesByLanguage.Select(x => x.ParentResourceName).Distinct().ToList();
