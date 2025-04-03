@@ -74,9 +74,14 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         await using var reader = await command.ExecuteReaderAsync(ct);
 
+        var companyColumnPosition = -1;
         for (var i = 0; i < reader.FieldCount; i++)
         {
-            columnNames.Add(reader.GetName(i));
+            if(userPermissions.Contains(PermissionName.ReadReportsInCompany) && reader.GetName(i) == "Company"){
+                companyColumnPosition = i;
+            } else {
+                columnNames.Add(reader.GetName(i));
+            }
         }
 
         while (await reader.ReadAsync(ct))
@@ -84,7 +89,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             var item = new List<object?>();
             for (var i = 0; i < reader.FieldCount; i++)
             {
-                item.Add(await reader.IsDBNullAsync(i, ct) ? null : reader[i]);
+                if(!(userPermissions.Contains(PermissionName.ReadReportsInCompany) && i == companyColumnPosition))
+                {
+                    item.Add(await reader.IsDBNullAsync(i, ct) ? null : reader[i]);
+                }
             }
 
             items.Add(item);
