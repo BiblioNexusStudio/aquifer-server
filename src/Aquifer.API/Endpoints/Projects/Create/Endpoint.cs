@@ -343,7 +343,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 if (resourceContent.Status != ResourceContentStatus.TranslationAwaitingAiDraft)
                 {
                     ThrowError(
-                        r =>r.ResourceIds,
+                        r => r.ResourceIds,
                         "One or more resources exist but are not in TranslationAwaitingAiDraft status.");
                 }
 
