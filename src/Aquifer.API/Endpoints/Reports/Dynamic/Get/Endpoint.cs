@@ -25,7 +25,14 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             return;
         }
 
-        if (!ReportRoleHelper.RoleIsAllowedForReport(report.AllowedRoles, userService.GetUserRoleFromJwt()))
+        var user = await userService.GetUserFromJwtAsync(ct);
+        if (!ReportRoleHelper.RoleIsAllowedForReport(report.AllowedRoles, user.Role))
+        {
+            await SendForbiddenAsync(ct);
+        }
+
+        var userPermissions = userService.GetAllJwtPermissions();
+        if (!userPermissions.Contains(PermissionName.ReadReports) && user.CompanyId != request.CompanyId && request.CompanyId != 0)
         {
             await SendForbiddenAsync(ct);
         }
@@ -77,7 +84,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             var item = new List<object?>();
             for (var i = 0; i < reader.FieldCount; i++)
             {
-                item.Add(await reader.IsDBNullAsync(i ,ct) ? null : reader[i]);
+                item.Add(await reader.IsDBNullAsync(i, ct) ? null : reader[i]);
             }
 
             items.Add(item);
