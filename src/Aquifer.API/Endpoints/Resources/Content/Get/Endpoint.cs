@@ -202,7 +202,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
                 if (firstVersionSnapshot is not null)
                 {
-                    snapshots.Insert(0, firstVersionSnapshot);
+                    snapshots.Add(firstVersionSnapshot);
                 }
             }
         }
