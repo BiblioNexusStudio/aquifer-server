@@ -8,7 +8,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.API.Endpoints.Notifications.List;
 
-public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : Endpoint<Request, IReadOnlyList<Response>>
+public class Endpoint(
+    AquiferDbContext _dbContext,
+    IUserService _userService,
+    IConfiguration _configuration) : Endpoint<Request, IReadOnlyList<Response>>
 {
     public override void Configure()
     {
@@ -100,6 +103,12 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
         await SendOkAsync(notifications, ct);
     }
 
+    private string[]? GetNotifyUserIdsOnCommunityReviewerComment()
+    {
+        var userIds = _configuration.GetValue<string>("NotifyIdsOnCommunityReviewerComment");
+        return userIds?.Split(",");
+    }
+
     private sealed record HelpDocumentNotificationData(
         int Id,
         HelpDocumentType Type,
@@ -153,6 +162,8 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
         DateTime minimumCommentCreatedDate,
         CancellationToken ct)
     {
+        var userIds = GetNotifyUserIdsOnCommunityReviewerComment();
+
         // Get comments for the current user where:
         // 1. The user was assigned to the resource content on which the comment was made at the time the comment was made.
         // 2. The user has previously interacted in the comment thread for the comment.
