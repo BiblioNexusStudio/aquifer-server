@@ -297,7 +297,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 {
                     ThrowError(
                         r => r.ResourceIds,
-                        "One or more resources are missing a published English version to use as a base.");
+                        "One or more resources are missing a published version to use as a base.");
                 }
 
                 var newResourceContentVersion = new ResourceContentVersionEntity
