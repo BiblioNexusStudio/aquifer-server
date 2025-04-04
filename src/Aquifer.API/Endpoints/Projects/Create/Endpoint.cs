@@ -80,7 +80,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var wordCount = await dbContext.ResourceContentVersions.AsTracking()
             .Where(rcv => request.ResourceIds.Contains(rcv.ResourceContent.ResourceId) &&
                 rcv.IsPublished &&
-                rcv.ResourceContent.LanguageId == 1)
+                rcv.ResourceContent.LanguageId == request.SourceLanguageId)
             .Select(rcv => rcv.WordCount ?? 0)
             .SumAsync(ct);
 
