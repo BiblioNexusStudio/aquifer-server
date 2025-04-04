@@ -107,7 +107,7 @@ public class Endpoint(
     private static int[]? GetNotifyUserIdsOnCommunityReviewerComment(IConfiguration configuration)
     {
         var userIds = configuration.GetValue<string>("NotifyIdsOnCommunityReviewerComment");
-        return userIds is not null ? Array.ConvertAll(userIds.Split(","), int.Parse) : null;
+        return !string.IsNullOrEmpty(userIds) ? Array.ConvertAll(userIds.Split(",").Where(s => !string.IsNullOrEmpty(s)).ToArray(), int.Parse) : null;
     }
 
     private sealed record HelpDocumentNotificationData(
