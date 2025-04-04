@@ -89,6 +89,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             Name = request.Title,
             SourceWordCount = wordCount,
             ProjectResourceContents = resourceContents.Select(rc => new ProjectResourceContentEntity { ResourceContent = rc }).ToList(),
+            SourceLanguage = request.IsAlreadyTranslated ? null : sourceLanguage,
             Language = request.IsAlreadyTranslated ? sourceLanguage : targetLanguage!,
             ProjectManagerUser = projectManagerUser,
             CompanyLeadUser = companyLeadUser,
