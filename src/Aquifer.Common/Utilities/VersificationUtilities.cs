@@ -361,9 +361,9 @@ public static class VersificationUtilities
         }
 
         var baseVerseIdsWithOptionalPartBySourceBibleVerseIdMap =
-            await versificationService.GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(sourceBibleId, ct);
+            await versificationService.GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(sourceBibleId, true, ct);
         var targetBibleVerseIdsByBaseVerseIdWithOptionalPartMap =
-            await versificationService.GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(targetBibleId, ct);
+            await versificationService.GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(targetBibleId, true, ct);
         var targetBibleExcludedVerseIds = await versificationService.GetExcludedVerseIdsAsync(targetBibleId, ct);
         var maxChapterNumberAndBookendVerseNumbersByBookIdMap =
             await versificationService.GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(targetBibleId, ct);
@@ -460,9 +460,10 @@ public static class VersificationUtilities
             ct);
 
         var baseVerseIdsWithOptionalPartBySourceBibleVerseIdMap =
-            await versificationService.GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(sourceBibleId, ct);
+            await versificationService.GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(sourceBibleId, true, ct);
+
         var targetBibleVerseIdsByBaseVerseIdWithOptionalPartMap =
-            await versificationService.GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(targetBibleId, ct);
+            await versificationService.GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(targetBibleId, true, ct);
         var targetBibleExcludedVerseIds = await versificationService.GetExcludedVerseIdsAsync(targetBibleId, ct);
         var maxChapterNumberAndBookendVerseNumbersByBookIdMap =
             await versificationService.GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(targetBibleId, ct);
