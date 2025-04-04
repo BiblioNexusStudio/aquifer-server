@@ -37,7 +37,10 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
                                  FROM
                                      Resources r
                                      LEFT JOIN ResourceContents rc ON rc.ResourceId = r.Id AND rc.LanguageId = @LanguageId
-                                     LEFT JOIN ResourceContents rce ON rce.ResourceId = r.Id AND rce.LanguageId = 1 AND rce.MediaType IN ({fallbackMediaTypesSqlArray})
+                                     LEFT JOIN ResourceContents rce ON
+                                         rce.ResourceId = r.Id AND
+                                         rce.LanguageId = {Constants.EnglishLanguageId} AND
+                                         rce.MediaType IN ({fallbackMediaTypesSqlArray})
                                      INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = COALESCE(rc.Id, rce.Id)
                                  WHERE
                                      r.ParentResourceId = pr.Id AND rcv.IsPublished = 1

@@ -1,5 +1,6 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
+using Aquifer.Common;
 using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -79,7 +80,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     private static string ApplyLanguageIdFilter(int languageId)
     {
         return $"""
-                AND RC.LanguageId = 1 AND RCV.IsPublished = 1 AND NOT EXISTS (
+                AND RC.LanguageId = {Constants.EnglishLanguageId} AND RCV.IsPublished = 1 AND NOT EXISTS (
                     SELECT 1 FROM ResourceContents RCL
                     WHERE RCL.ResourceId = R.Id AND RCL.LanguageId = {languageId}
                 )
