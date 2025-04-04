@@ -324,6 +324,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 };
                 var newResourceContent = new ResourceContentEntity
                 {
+                    SourceLanguageId = sourceLanguageId,
                     LanguageId = targetLanguageId,
                     ResourceId = resourceContent.ResourceId,
                     MediaType = resourceContent.MediaType,

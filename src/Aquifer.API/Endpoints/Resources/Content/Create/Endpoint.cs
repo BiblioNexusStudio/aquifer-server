@@ -9,7 +9,7 @@ namespace Aquifer.API.Endpoints.Resources.Content.Create;
 
 public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request>
 {
-    private const string EmptyTipTapContent = "[{\"tiptap\":{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\"}]}}]";
+    private const string EmptyTipTapContent = /* lang=json */ "[{\"tiptap\":{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\"}]}}]";
 
     public override void Configure()
     {
@@ -42,6 +42,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var resourceContentEntity = new ResourceContentEntity
         {
             Resource = resourceEntity,
+            SourceLanguageId = request.LanguageId,
             LanguageId = request.LanguageId,
             Trusted = true,
             Status = ResourceContentStatus.AquiferizeEditorReview,
