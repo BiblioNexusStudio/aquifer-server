@@ -1,5 +1,4 @@
 using Aquifer.API.Services;
-using Aquifer.Common;
 using Aquifer.Common.Messages.Models;
 using Aquifer.Common.Messages.Publishers;
 using Aquifer.Common.Tiptap;
@@ -76,13 +75,14 @@ public static class Helpers
         var resourceContent = await dbContext.ResourceContents.AsTracking().SingleOrDefaultAsync(rc => rc.Id == contentId, ct)
             ?? throw new ArgumentException($"Content with ID {contentId} not found.", nameof(contentId));
 
-        if (assignedUserId is null || resourceContent.LanguageId == Constants.EnglishLanguageId)
+        var isAquiferization = resourceContent.SourceLanguageId == resourceContent.LanguageId;
+        if (assignedUserId is null || isAquiferization)
         {
             await historyService.AddSnapshotHistoryAsync(newResourceContentVersion, user.Id, ResourceContentStatus.New, ct);
         }
 
         // new English resources go through the AI Aquiferization (English text simplification) process
-        if (resourceContent is { LanguageId: Constants.EnglishLanguageId, Status: ResourceContentStatus.New })
+        if (isAquiferization && resourceContent.Status == ResourceContentStatus.New)
         {
             resourceContent.Status = ResourceContentStatus.AquiferizeAwaitingAiDraft;
             await historyService.AddStatusHistoryAsync(newResourceContentVersion, ResourceContentStatus.AquiferizeAwaitingAiDraft, user.Id, ct);
