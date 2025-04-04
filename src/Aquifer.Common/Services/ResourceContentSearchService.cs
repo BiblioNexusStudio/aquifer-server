@@ -37,6 +37,7 @@ public sealed class ResourceContentSearchFilter
     public bool? HasUnresolvedCommentThreads { get; set; }
     public bool? IsInProject { get; set; }
     public bool? IsTranslated { get; set; }
+    public int? TranslationSourceLanguageId { get; set; }
 }
 
 // The property names of this class must match the column names on the dbo.VerseIdRanges User-Defined Table Type!
@@ -241,17 +242,24 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 nameof(filter));
         }
 
-        if (filter is { IsTranslated: not null, LanguageId: Constants.EnglishLanguageId })
-        {
-            throw new ArgumentException(
-                $"\"{nameof(filter.LanguageId)}\" may not be English when filtering by \"{nameof(filter.IsTranslated)}\".",
-                nameof(filter));
-        }
-
         if (filter is { IsTranslated: true, IsPublished: not true })
         {
             throw new ArgumentException(
                 $"The \"{nameof(filter.IsPublished)}\" filter must also be true when filtering by an \"{nameof(filter.IsTranslated)}\" value of true.",
+                nameof(filter));
+        }
+
+        if (filter is { IsTranslated: false, TranslationSourceLanguageId: null })
+        {
+            throw new ArgumentException(
+                $"The \"{nameof(filter.TranslationSourceLanguageId)}\" filter must also be passed when filtering by an \"{nameof(filter.IsTranslated)}\" value of false.",
+                nameof(filter));
+        }
+
+        if (filter is { IsTranslated: not false, TranslationSourceLanguageId: not null })
+        {
+            throw new ArgumentException(
+                $"The \"{nameof(filter.TranslationSourceLanguageId)}\" may not be be passed unless filtering by an \"{nameof(filter.IsTranslated)}\" value of false.",
                 nameof(filter));
         }
 
@@ -514,10 +522,11 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         const string languageIdParamName = "languageId";
         if (filter.IsTranslated.HasValue && !filter.IsTranslated.Value)
         {
-            const string englishLanguageIdParamName = "englishLanguageId";
+            const string translationSourceLanguageIdParamName = "translationSourceLanguageId";
 
-            coreParameters.Add(englishLanguageIdParamName, Constants.EnglishLanguageId);
-            whereClausesSql.Add($"rc.LanguageId = {{={englishLanguageIdParamName}}}");
+            // TranslationSourceLanguageId is verified to not be null above
+            coreParameters.Add(translationSourceLanguageIdParamName, filter.TranslationSourceLanguageId!.Value);
+            whereClausesSql.Add($"rc.LanguageId = @{translationSourceLanguageIdParamName}");
         }
         else if (filter.LanguageId.HasValue)
         {
@@ -608,6 +617,9 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                             FROM ResourceContents rc2
                             WHERE
                                 rc2.ResourceId = rc.ResourceId AND
+                                {(filter.ExcludeContentMediaTypes is { Count: > 0 }
+                                    ? $"rc2.MediaType NOT IN @{includeContentMediaTypesParamName} AND"
+                                    : "")}
                                 {(filter.IncludeContentMediaTypes is { Count: > 0 }
                                     ? $"rc2.MediaType IN @{includeContentMediaTypesParamName} AND"
                                     : "")}

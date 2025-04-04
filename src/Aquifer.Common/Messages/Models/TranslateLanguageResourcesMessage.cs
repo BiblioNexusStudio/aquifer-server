@@ -1,6 +1,7 @@
 ﻿namespace Aquifer.Common.Messages.Models;
 
 public sealed record TranslateLanguageResourcesMessage(
-    int LanguageId,
+    int SourceLanguageId,
+    int TargetLanguageId,
     int ParentResourceId,
     int StartedByUserId);

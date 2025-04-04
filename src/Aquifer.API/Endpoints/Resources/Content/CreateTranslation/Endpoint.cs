@@ -105,6 +105,7 @@ public class Endpoint(
 
         var newResourceContent = new ResourceContentEntity
         {
+            SourceLanguageId = baseContent.LanguageId,
             LanguageId = language.Id,
             ResourceId = baseContent.ResourceId,
             MediaType = baseContent.MediaType,
