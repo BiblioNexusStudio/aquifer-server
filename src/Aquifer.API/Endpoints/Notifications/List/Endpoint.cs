@@ -223,7 +223,6 @@ public class Endpoint(
                                  ) mostRecentHistory
                                  WHERE
                                      mostRecentHistory.Rank = 1 AND
-                                     rcv.IsDraft = 1 AND
                                      mostRecentHistory.AssignedUserId = @userId
                              ) {(isContainingCommunityReviewerComments ? communityReviewerCommentsSubquery : "")}
                               OR 
@@ -235,7 +234,6 @@ public class Endpoint(
                                  WHERE
                                      c.ThreadId = ct2.Id AND
                                      c2.UserId = @userId AND
-                                     rcv.IsDraft = 1 AND
                                      c.Created > c2.Created
                              ) OR
                              EXISTS
@@ -245,11 +243,11 @@ public class Endpoint(
                                  WHERE
                                      cm.CommentId = c.Id AND
                                      cm.UserId <> c.UserId AND
-                                     rcv.IsDraft = 1 AND
                                      cm.UserId = @userId
                              )
                          ) AND
                          c.UserId <> @userId AND
+                         rcv.IsDraft = 1 AND
                          c.Created > @minimumCommentCreatedDate AND
                          ct.Resolved = 0
                      ORDER BY
