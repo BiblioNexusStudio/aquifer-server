@@ -166,18 +166,18 @@ public class Endpoint(
     {
         var communityReviewerCommentNotificationUserIds = GetNotifyUserIdsOnCommunityReviewerComment(cofiguration);
         var isContainingCommunityReviewerComments = communityReviewerCommentNotificationUserIds is not null && communityReviewerCommentNotificationUserIds.Contains(userId);
-        const string communityReviewerCommentsSubquery = """
-                                                         OR EXISTS (
-                                                             SELECT NULL
-                                                             FROM CommentThreads ct2
-                                                             JOIN Comments c2 ON c2.ThreadId = ct2.Id
-                                                             WHERE  
-                                                                 c2.UserId IN (
-                                                                     SELECT Id FROM Users WHERE Role = 6
-                                                                 ) AND
-                                                                 c.ThreadId = ct2.Id
-                                                         )
-                                                         """;
+        var communityReviewerCommentsSubquery = $"""
+                                                 OR EXISTS (
+                                                     SELECT NULL
+                                                     FROM CommentThreads ct2
+                                                     JOIN Comments c2 ON c2.ThreadId = ct2.Id
+                                                     WHERE  
+                                                         c2.UserId IN (
+                                                             SELECT Id FROM Users WHERE Role = {UserRole.CommunityReviewer}
+                                                         ) AND
+                                                         c.ThreadId = ct2.Id
+                                                 )
+                                                 """;
 
         // Get comments for the current user where:
         // 1. The user was assigned to the resource content on which the comment was made at the time the comment was made.
