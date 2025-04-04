@@ -10,8 +10,23 @@ namespace Aquifer.Data.Entities;
 public class ResourceContentEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
+
     public int ResourceId { get; set; }
+    public ResourceEntity Resource { get; set; } = null!;
+
+    public int SourceLanguageId { get; set; }
+    public LanguageEntity SourceLanguage { get; set; } = null!;
+
+    /// <summary>
+    /// AKA TargetLanguageId
+    /// </summary>
     public int LanguageId { get; set; }
+
+    /// <summary>
+    /// AKA TargetLanguage
+    /// </summary>
+    public LanguageEntity Language { get; set; } = null!;
+
     public bool Trusted { get; set; }
     public ResourceContentMediaType MediaType { get; set; }
     public ResourceContentStatus Status { get; set; }
@@ -24,8 +39,6 @@ public class ResourceContentEntity : IHasUpdatedTimestamp
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    public LanguageEntity Language { get; set; } = null!;
-    public ResourceEntity Resource { get; set; } = null!;
     public ICollection<ResourceContentVersionEntity> Versions { get; set; } = [];
     public ICollection<ProjectResourceContentEntity> ProjectResourceContents { get; set; } = [];
 
@@ -47,6 +60,7 @@ public class ResourceContentEntityConfiguration : IEntityTypeConfiguration<Resou
             .IncludeProperties(
                 e => new
                 {
+                    e.SourceLanguageId,
                     e.Created,
                     e.ResourceId,
                     e.Updated,
@@ -58,9 +72,22 @@ public class ResourceContentEntityConfiguration : IEntityTypeConfiguration<Resou
             e => new
             {
                 e.ContentUpdated,
+                e.SourceLanguageId,
                 e.LanguageId,
                 e.ResourceId
             });
+
+        // This necessary in order to prevent cascading delete cycles.
+        builder
+            .HasOne(rc => rc.SourceLanguage)
+            .WithMany()
+            .HasForeignKey(rc => rc.SourceLanguageId)
+            .OnDelete(DeleteBehavior.NoAction);
+        builder
+            .HasOne(rc => rc.Language)
+            .WithMany()
+            .HasForeignKey(rc => rc.LanguageId)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }
 
