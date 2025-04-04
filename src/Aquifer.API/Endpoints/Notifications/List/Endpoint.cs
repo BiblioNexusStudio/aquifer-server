@@ -164,8 +164,8 @@ public class Endpoint(
         IConfiguration cofiguration,
         CancellationToken ct)
     {
-        var userIds = GetNotifyUserIdsOnCommunityReviewerComment(cofiguration);
-        var isContainingCommunityReviewerComments = userIds is not null && userIds.Contains(userId);
+        var communityReviewerCommentNotificationUserIds = GetNotifyUserIdsOnCommunityReviewerComment(cofiguration);
+        var isContainingCommunityReviewerComments = communityReviewerCommentNotificationUserIds is not null && communityReviewerCommentNotificationUserIds.Contains(userId);
         const string communityReviewerCommentsSubquery = """
                                                          OR EXISTS (
                                                              SELECT NULL
