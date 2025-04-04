@@ -1,6 +1,5 @@
 using Aquifer.API.Common;
 using Aquifer.API.Services;
-using Aquifer.Common;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Data.Services;
@@ -43,7 +42,7 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
 
         foreach (var draftVersion in draftVersions)
         {
-            var newStatus = draftVersion.ResourceContent.LanguageId == Constants.EnglishLanguageId
+            var newStatus = draftVersion.ResourceContent.SourceLanguageId == draftVersion.ResourceContent.LanguageId
                 ? ResourceContentStatus.AquiferizePublisherReview
                 : ResourceContentStatus.TranslationPublisherReview;
 
