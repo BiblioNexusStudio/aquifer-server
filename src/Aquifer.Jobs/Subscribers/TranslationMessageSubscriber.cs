@@ -709,7 +709,7 @@ public sealed class TranslationMessageSubscriber(
         var resourceContentLanguage = resourceContentVersion.ResourceContent.Language;
         var destinationLanguage = (Iso6393Code: resourceContentLanguage.ISO6393Code, EnglishName: resourceContentLanguage.EnglishDisplay);
 
-        var translationPairs = isAquiferization
+        var translationPairs = isAquiferization || resourceContentVersion.ResourceContent.SourceLanguageId != Constants.EnglishLanguageId
             ? []
             : await _dbContext.TranslationPairs.Where(x => x.LanguageId == resourceContentLanguage.Id)
                 .Select(x => new
