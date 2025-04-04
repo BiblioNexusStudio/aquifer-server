@@ -36,7 +36,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                              INNER JOIN Resources r ON vr.ResourceId = r.Id
                              INNER JOIN ParentResources pr ON r.ParentResourceId = pr.Id
                              LEFT JOIN ResourceContents rc ON rc.ResourceId = r.Id AND rc.LanguageId = {request.LanguageId}
-                             LEFT JOIN ResourceContents rce ON rce.ResourceId = r.Id AND rce.LanguageId = 1
+                             LEFT JOIN ResourceContents rce ON rce.ResourceId = r.Id AND rce.LanguageId = {Constants.EnglishLanguageId}
                                                                AND rce.MediaType IN ({fallbackMediaTypesSqlArray})
                              LEFT JOIN ResourceContents rct ON rc.MediaType != {(int)ResourceContentMediaType.Text} AND rct.ResourceId = r.Id
                                                                AND rct.MediaType = {(int)ResourceContentMediaType.Text} AND rct.LanguageId = {request.LanguageId}
@@ -63,7 +63,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                              INNER JOIN Verses v ON v.Id BETWEEN p.StartVerseId AND p.EndVerseId
                                  AND v.Id BETWEEN {startVerseId} AND {endVerseId}
                              LEFT JOIN ResourceContents rc ON rc.ResourceId = r.Id AND rc.LanguageId = {request.LanguageId}
-                             LEFT JOIN ResourceContents rce ON rce.ResourceId = r.Id AND rce.LanguageId = 1
+                             LEFT JOIN ResourceContents rce ON rce.ResourceId = r.Id AND rce.LanguageId = {Constants.EnglishLanguageId}
                                                                AND rce.MediaType IN ({fallbackMediaTypesSqlArray})
                              LEFT JOIN ResourceContents rct ON rc.MediaType != {(int)ResourceContentMediaType.Text} AND rct.ResourceId = r.Id
                                                                AND rct.MediaType = {(int)ResourceContentMediaType.Text} AND rct.LanguageId = {request.LanguageId}

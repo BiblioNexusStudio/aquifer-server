@@ -9,8 +9,6 @@ namespace Aquifer.API.Endpoints.Marketing.ParentResourceStatuses.BibleBooks.Get;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Response>>
 {
-    private const int EnglishLanguageId = 1;
-
     public override void Configure()
     {
         Get("/marketing/parent-resource-statuses/bible-books");
@@ -21,8 +19,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var englishVerses = await GetVerseResourceCountAsync(EnglishLanguageId, request.ParentResourceId, ct);
-        var englishPassages = await GetPassageResourceCountAsync(EnglishLanguageId, request.ParentResourceId, ct);
+        var englishVerses = await GetVerseResourceCountAsync(Aquifer.Common.Constants.EnglishLanguageId, request.ParentResourceId, ct);
+        var englishPassages = await GetPassageResourceCountAsync(Aquifer.Common.Constants.EnglishLanguageId, request.ParentResourceId, ct);
         var languageVerses = await GetVerseResourceCountAsync(request.LanguageId, request.ParentResourceId, ct);
         var languagePassages = await GetPassageResourceCountAsync(request.LanguageId, request.ParentResourceId, ct);
         var booksWithNoResources = GetZeroResourceCount();

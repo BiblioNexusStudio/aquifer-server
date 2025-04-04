@@ -13,7 +13,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
             new Request
             {
                 IsLanguageDefault = true,
-                LanguageId = 1,
+                LanguageId = Common.Constants.EnglishLanguageId,
                 HasAudio = true,
                 HasGreekAlignment = true,
             },

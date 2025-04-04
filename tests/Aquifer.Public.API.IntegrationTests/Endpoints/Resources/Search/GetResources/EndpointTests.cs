@@ -31,7 +31,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
             StartVerse = 3,
             EndChapter = 3,
             EndVerse = 2,
-            LanguageId = 1,
+            LanguageId = Common.Constants.EnglishLanguageId,
             ResourceCollectionCode = "TyndaleBibleDictionary",
         },
     ];

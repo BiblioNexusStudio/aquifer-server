@@ -12,7 +12,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
     {
         var request = new Request
         {
-            LanguageId = 1,
+            LanguageId = Aquifer.Common.Constants.EnglishLanguageId,
         };
 
         var (response, result) = await _app.Client.GETAsync<Endpoint, Request, IReadOnlyList<Response>>(request);
