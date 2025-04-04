@@ -590,6 +590,7 @@ public sealed class TranslationMessageSubscriber(
             var newResourceContent = new ResourceContentEntity
             {
                 ExternalVersion = sourceResourceContentVersionToTranslate.ResourceContent.ExternalVersion,
+                SourceLanguageId = dto.SourceLanguageId,
                 LanguageId = dto.TargetLanguageId,
                 MediaType = sourceResourceContentVersionToTranslate.ResourceContent.MediaType,
                 ResourceId = sourceResourceContentVersionToTranslate.ResourceContent.ResourceId,
