@@ -31,6 +31,7 @@ builder.Services
 builder.Services
     .AddSingleton(cfg => cfg.GetRequiredService<IOptions<ConfigurationOptions>>().Value.AzureStorageAccount)
     .AddSingleton(cfg => cfg.GetRequiredService<IOptions<ConfigurationOptions>>().Value.Upload)
+    .AddSingleton(cfg => cfg.GetRequiredService<IOptions<ConfigurationOptions>>().Value.NotificationOptions)
     .AddAuthServices(configuration.JwtSettings)
     .AddCors()
     .AddOutputCache()
