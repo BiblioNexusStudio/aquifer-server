@@ -28,6 +28,7 @@ public interface ITranslationService
         string html,
         (string Iso6393Code, string EnglishName) destinationLanguage,
         IDictionary<string, string> translationPairs,
+        bool shouldOnlyPerformTextImprovement,
         CancellationToken cancellationToken);
 }
 
@@ -51,7 +52,6 @@ public sealed class OpenAiChatCompletionException(string message, string prompt,
 
 public sealed partial class OpenAiTranslationService : ITranslationService
 {
-    private const string EnglishLanguageCode = "ENG";
     private const int MaxContentLength = 5_000;
     private const int MaxParallelizationForSingleTranslation = 3;
 
@@ -113,9 +113,10 @@ public sealed partial class OpenAiTranslationService : ITranslationService
         string html,
         (string Iso6393Code, string EnglishName) destinationLanguage,
         IDictionary<string, string> translationPairs,
+        bool shouldOnlyPerformTextImprovement,
         CancellationToken cancellationToken)
     {
-        var htmlTranslationPrompt = GetHtmlTranslationPrompt(destinationLanguage);
+        var htmlTranslationPrompt = shouldOnlyPerformTextImprovement ? null : GetHtmlTranslationPrompt(destinationLanguage);
         var htmlTextImprovementPrompt = GetHtmlTextImprovementPrompt(destinationLanguage);
 
         var translatedHtml = new StringBuilder();
@@ -201,13 +202,8 @@ public sealed partial class OpenAiTranslationService : ITranslationService
         return chatCompletion.Value.Content[0].Text.Replace(Environment.NewLine, "");
     }
 
-    private string? GetHtmlTranslationPrompt((string Iso6393Code, string EnglishName) destinationLanguage)
+    private string GetHtmlTranslationPrompt((string Iso6393Code, string EnglishName) destinationLanguage)
     {
-        if (string.Equals(destinationLanguage.Iso6393Code, EnglishLanguageCode, StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-
         var translationPrompt = string.Format(_options.TranslationPromptFormatString, destinationLanguage.EnglishName);
 
         return $"{_options.HtmlBasePrompt} {translationPrompt}";

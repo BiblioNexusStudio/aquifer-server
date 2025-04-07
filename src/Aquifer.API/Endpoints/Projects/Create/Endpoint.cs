@@ -32,10 +32,23 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         var user = await userService.GetUserFromJwtAsync(ct);
 
-        var language = await dbContext.Languages.AsTracking().SingleOrDefaultAsync(l => l.Id == request.LanguageId, ct);
-        if (language is null)
+        var languages = await dbContext.Languages
+            .AsTracking()
+            .Where(l =>
+                l.Id == request.SourceLanguageId ||
+                (request.TargetLanguageId.HasValue && l.Id == request.TargetLanguageId))
+            .ToListAsync(ct);
+
+        var sourceLanguage = languages.SingleOrDefault(l => l.Id == request.SourceLanguageId);
+        if (sourceLanguage is null)
         {
-            ThrowEntityNotFoundError<Request>(r => r.LanguageId);
+            ThrowEntityNotFoundError<Request>(r => r.SourceLanguageId);
+        }
+
+        var targetLanguage = languages.SingleOrDefault(l => l.Id == request.TargetLanguageId);
+        if (targetLanguage is null && !request.IsAlreadyTranslated)
+        {
+            ThrowEntityNotFoundError<Request>(r => r.TargetLanguageId);
         }
 
         var projectManagerUser = await dbContext.Users.AsTracking()
@@ -62,12 +75,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         }
 
         var companyLeadUser = await GetCompanyLeadUserAsync(request, ct);
-        var resourceContents = await CreateOrFindResourceContentFromResourceIdsAsync(language.Id, request, user, ct);
+        var resourceContents = await CreateOrFindResourceContentFromResourceIdsAsync(request, user, ct);
 
         var wordCount = await dbContext.ResourceContentVersions.AsTracking()
             .Where(rcv => request.ResourceIds.Contains(rcv.ResourceContent.ResourceId) &&
                 rcv.IsPublished &&
-                rcv.ResourceContent.LanguageId == 1)
+                rcv.ResourceContent.LanguageId == request.SourceLanguageId)
             .Select(rcv => rcv.WordCount ?? 0)
             .SumAsync(ct);
 
@@ -76,7 +89,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             Name = request.Title,
             SourceWordCount = wordCount,
             ProjectResourceContents = resourceContents.Select(rc => new ProjectResourceContentEntity { ResourceContent = rc }).ToList(),
-            Language = language,
+            SourceLanguage = request.IsAlreadyTranslated ? null : sourceLanguage,
+            Language = request.IsAlreadyTranslated ? sourceLanguage : targetLanguage!,
             ProjectManagerUser = projectManagerUser,
             CompanyLeadUser = companyLeadUser,
             Company = company,
@@ -102,39 +116,51 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         return companyLeadUser;
     }
 
-    private async Task<List<ResourceContentEntity>> CreateOrFindResourceContentFromResourceIdsAsync(int languageId,
+    private async Task<List<ResourceContentEntity>> CreateOrFindResourceContentFromResourceIdsAsync(
         Request request,
         UserEntity user,
         CancellationToken ct)
     {
-        if (languageId == Constants.EnglishLanguageId)
+        // Aquiferization
+        if (request.SourceLanguageId == request.TargetLanguageId)
         {
-            if (request.IsAlreadyTranslated)
+            if (request.TargetLanguageId.Value != Constants.EnglishLanguageId)
             {
-                ThrowError(r => r.LanguageId, "English projects cannot be created with already translated resource contents.");
+                ThrowError(r => r.TargetLanguageId, "Only English is currently supported for Aquiferization.");
             }
 
-            return await CreateOrFindAquiferizationResourceContentAsync(languageId, request, ct);
+            return await CreateOrFindAquiferizationResourceContentAsync(request.TargetLanguageId.Value, request.ResourceIds, ct);
         }
 
-        return request.IsAlreadyTranslated
-            ? await CreateOrFindTranslatedResourceContentAsync(languageId, request, user, ct)
-            : await CreateOrFindTranslationResourceContentAsync(languageId, request, user, ct);
+        if (request.IsAlreadyTranslated)
+        {
+            if (request.SourceLanguageId == Constants.EnglishLanguageId)
+            {
+                ThrowError(
+                    r => r.SourceLanguageId,
+                    "English projects cannot be created with already translated resource contents.");
+            }
+
+            return await CreateOrFindTranslatedResourceContentAsync(request.SourceLanguageId, request.ResourceIds, user, ct);
+        }
+
+        return await CreateOrFindTranslationResourceContentAsync(request.SourceLanguageId, request.TargetLanguageId!.Value, request.ResourceIds, user, ct);
     }
 
-    private async Task<List<ResourceContentEntity>> CreateOrFindAquiferizationResourceContentAsync(int languageId,
-        Request request,
+    private async Task<List<ResourceContentEntity>> CreateOrFindAquiferizationResourceContentAsync(
+        int languageId,
+        IReadOnlyList<int> resourceIds,
         CancellationToken ct)
     {
         var resourceContents = await dbContext.ResourceContents.AsTracking()
-            .Where(rc => request.ResourceIds.Contains(rc.ResourceId) &&
+            .Where(rc => resourceIds.Contains(rc.ResourceId) &&
                 rc.LanguageId == languageId &&
                 rc.MediaType != ResourceContentMediaType.Audio)
             .Include(rc => rc.Versions.OrderByDescending(v => v.Created))
             .Include(rc => rc.ProjectResourceContents)
             .ToListAsync(ct);
 
-        if (resourceContents.Count < request.ResourceIds.Length)
+        if (resourceContents.Count < resourceIds.Count)
         {
             ThrowError(r => r.ResourceIds, "One or more not found.");
         }
@@ -178,12 +204,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     private async Task<List<ResourceContentEntity>> CreateOrFindTranslatedResourceContentAsync(
         int languageId,
-        Request request,
+        IReadOnlyList<int> resourceIds,
         UserEntity user,
         CancellationToken ct)
     {
         var languageResourceContents = await dbContext.ResourceContents.AsTracking()
-            .Where(rc => request.ResourceIds.Contains(rc.ResourceId) &&
+            .Where(rc => resourceIds.Contains(rc.ResourceId) &&
                 rc.MediaType != ResourceContentMediaType.Audio &&
                 rc.LanguageId == languageId)
             .Include(rc => rc.Versions)
@@ -245,15 +271,17 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         return resourceContents;
     }
 
-    private async Task<List<ResourceContentEntity>> CreateOrFindTranslationResourceContentAsync(int languageId,
-        Request request,
+    private async Task<List<ResourceContentEntity>> CreateOrFindTranslationResourceContentAsync(
+        int sourceLanguageId,
+        int targetLanguageId,
+        IReadOnlyList<int> resourceIds,
         UserEntity user,
         CancellationToken ct)
     {
-        var englishOrLanguageResourceContents = await dbContext.ResourceContents.AsTracking()
-            .Where(rc => request.ResourceIds.Contains(rc.ResourceId) && rc.MediaType != ResourceContentMediaType.Audio)
-            .Where(rc => rc.LanguageId == languageId ||
-                (rc.Resource.ResourceContents.All(rci => rci.LanguageId != languageId) && rc.LanguageId == Constants.EnglishLanguageId))
+        var sourceLanguageOrTargetLanguageResourceContents = await dbContext.ResourceContents.AsTracking()
+            .Where(rc => resourceIds.Contains(rc.ResourceId) && rc.MediaType == ResourceContentMediaType.Text)
+            .Where(rc => rc.LanguageId == targetLanguageId ||
+                (rc.Resource.ResourceContents.All(rci => rci.LanguageId != targetLanguageId) && rc.LanguageId == sourceLanguageId))
             .Include(rc => rc.Versions)
             .Include(rc => rc.ProjectResourceContents)
             .Include(rc => rc.Language)
@@ -261,14 +289,16 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         List<ResourceContentEntity> resourceContents = [];
 
-        foreach (var resourceContent in englishOrLanguageResourceContents)
+        foreach (var resourceContent in sourceLanguageOrTargetLanguageResourceContents)
         {
-            if (resourceContent.LanguageId == Constants.EnglishLanguageId)
+            if (resourceContent.LanguageId == sourceLanguageId)
             {
                 var baseVersion = resourceContent.Versions.FirstOrDefault(v => v.IsPublished);
                 if (baseVersion is null)
                 {
-                    ThrowError(r => r.ResourceIds, "One or more resources are missing a published English version to use as a base.");
+                    ThrowError(
+                        r => r.ResourceIds,
+                        "One or more resources are missing a published version to use as a base.");
                 }
 
                 var newResourceContentVersion = new ResourceContentVersionEntity
@@ -294,7 +324,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 };
                 var newResourceContent = new ResourceContentEntity
                 {
-                    LanguageId = languageId,
+                    SourceLanguageId = sourceLanguageId,
+                    LanguageId = targetLanguageId,
                     ResourceId = resourceContent.ResourceId,
                     MediaType = resourceContent.MediaType,
                     Status = ResourceContentStatus.TranslationAwaitingAiDraft,
@@ -313,7 +344,9 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
                 if (resourceContent.Status != ResourceContentStatus.TranslationAwaitingAiDraft)
                 {
-                    ThrowError(r => r.ResourceIds, "One or more resources exist but are not in TranslationAwaitingAiDraft status.");
+                    ThrowError(
+                        r => r.ResourceIds,
+                        "One or more resources exist but are not in TranslationAwaitingAiDraft status.");
                 }
 
                 var existingVersion = resourceContent.Versions.FirstOrDefault(v => v.IsDraft);

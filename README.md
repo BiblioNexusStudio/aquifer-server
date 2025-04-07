@@ -67,14 +67,23 @@ dotnet ef migrations add --startup-project src/Aquifer.Migrations --project src/
 ```
 Your new migration will be created in the `src/Aquifer.Data/Migrations` directory along with the `.Designer` file and updated `AquiferDbContextModelSnapshot.cs` file.
 
-
 If you run that command and the new migration file is empty, that means there
 were no changes detected between the C# Entities and the database. You can use
 this to your advantage to create empty migrations and add your own custom code.
 
+To see all migrations (useful before applying them to the DB), run:
+```bash
+dotnet ef migrations list --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext
+```
+
 To run migrations and add your changes to the DB, run:
 ```bash
 dotnet ef database update --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext
+```
+
+To remove the last migration (useful when developing locally), run:
+```bash
+dotnet ef migrations remove --startup-project src/Aquifer.Migrations --project src/Aquifer.Data --context AquiferDbContext
 ```
 
 ## Test

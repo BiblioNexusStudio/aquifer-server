@@ -10,8 +10,6 @@ namespace Aquifer.API.Endpoints.Marketing.ParentResourceStatuses.List;
 
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IReadOnlyList<Response>>
 {
-    private const int EnglishLanguageId = 1;
-
     public override void Configure()
     {
         Get("/marketing/parent-resource-statuses");
@@ -39,7 +37,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IReadOnlyL
                                                                                                            INNER JOIN Resources R2 ON R2.Id = RC2.ResourceId
                                                                                                   WHERE R2.ParentResourceId = PR.Id
                                                                                                     AND RC2.LanguageId = {request.LanguageId}) OtherLanguage
-                                                                            WHERE RC.LanguageId = {EnglishLanguageId}
+                                                                            WHERE RC.LanguageId = {Aquifer.Common.Constants.EnglishLanguageId}
                                                                             GROUP BY PR.DisplayName, OtherLanguage.Total, OtherLanguage.LastPublished, PR.LicenseInfo, PR.ResourceType, PR.Id
                                                                             ORDER BY PR.DisplayName
                                                                             """)

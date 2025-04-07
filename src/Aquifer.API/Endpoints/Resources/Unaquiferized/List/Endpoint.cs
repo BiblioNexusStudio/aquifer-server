@@ -1,5 +1,4 @@
-﻿using Aquifer.Common;
-using Aquifer.Common.Services;
+﻿using Aquifer.Common.Services;
 using Aquifer.Common.Utilities;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -27,7 +26,7 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
                 IncludeContentStatuses = [ResourceContentStatus.New],
                 IsInProject = false,
                 IsNewestResourceContentVersion = true,
-                LanguageId = Constants.EnglishLanguageId,
+                LanguageId = request.LanguageId,
                 ParentResourceId = request.ParentResourceId,
                 ResourceEnglishLabelQuery = request.SearchQuery,
                 VerseIdRanges = verseIdRanges.Select(vir => new VerseIdRange(vir)).ToList(),
