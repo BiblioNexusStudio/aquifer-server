@@ -279,7 +279,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         CancellationToken ct)
     {
         var sourceLanguageOrTargetLanguageResourceContents = await dbContext.ResourceContents.AsTracking()
-            .Where(rc => resourceIds.Contains(rc.ResourceId) && rc.MediaType != ResourceContentMediaType.Audio)
+            .Where(rc => resourceIds.Contains(rc.ResourceId) && rc.MediaType == ResourceContentMediaType.Text)
             .Where(rc => rc.LanguageId == targetLanguageId ||
                 (rc.Resource.ResourceContents.All(rci => rci.LanguageId != targetLanguageId) && rc.LanguageId == sourceLanguageId))
             .Include(rc => rc.Versions)
