@@ -1,4 +1,5 @@
-﻿using Aquifer.API.Services;
+﻿using System.Data;
+using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -18,54 +19,62 @@ public class Endpoint(AquiferDbContext _dbContext, IUserService _userService) : 
         var currentUserId = (await _userService.GetUserFromJwtAsync(ct)).Id;
 
         ThrowErrorOnInvalidNotificationKinds(req);
-        var requestedCommentIds = await ThrowErrorOnInvalidCommentIdsAsync(req, ct);
-        var requestedHelpDocumentIds = await ThrowErrorOnInvalidHelpDocumentIdsAsync(req, ct);
 
-        var created = DateTime.UtcNow;
-
-        // Note that only notifications that a user has interacted with are stored in the DB.
-        var existingNotifications = await _dbContext.Notifications
-            .AsTracking()
-            .Where(n => n.UserId == currentUserId &&
-                ((n.Kind == NotificationKind.Comment && requestedCommentIds.Contains(n.NotificationKindId)) ||
-                    (n.Kind == NotificationKind.HelpDocument && requestedHelpDocumentIds.Contains(n.NotificationKindId))))
-            .ToListAsync(ct);
-
-        var existingNotificationByIdMapByKindMap = existingNotifications
-            .GroupBy(n => n.Kind)
-            .ToDictionary(
-                n => n.Key,
-                grp => grp.ToDictionary(n => n.NotificationKindId));
-
-        foreach (var update in req.Updates)
+        await _dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
-            if (update.IsRead.HasValue)
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+
+            var requestedCommentIds = await ThrowErrorOnInvalidCommentIdsAsync(req, ct);
+            var requestedHelpDocumentIds = await ThrowErrorOnInvalidHelpDocumentIdsAsync(req, ct);
+
+            var created = DateTime.UtcNow;
+
+            // Note that only notifications that a user has marked as read/unread are stored in the DB.
+            var existingNotifications = await _dbContext.Notifications
+                .AsTracking()
+                .Where(
+                    n => n.UserId == currentUserId &&
+                        ((n.Kind == NotificationKind.Comment && requestedCommentIds.Contains(n.NotificationKindId)) ||
+                            (n.Kind == NotificationKind.HelpDocument && requestedHelpDocumentIds.Contains(n.NotificationKindId))))
+                .ToListAsync(ct);
+
+            var existingNotificationByIdMapByKindMap = existingNotifications
+                .GroupBy(n => n.Kind)
+                .ToDictionary(
+                    n => n.Key,
+                    grp => grp.ToDictionary(n => n.NotificationKindId));
+
+            foreach (var update in req.Updates)
             {
-                var existingNotification = existingNotificationByIdMapByKindMap
-                    .GetValueOrDefault(update.NotificationKind)
-                    ?.GetValueOrDefault(update.NotificationKindId);
+                if (update.IsRead.HasValue)
+                {
+                    var existingNotification = existingNotificationByIdMapByKindMap
+                        .GetValueOrDefault(update.NotificationKind)
+                        ?.GetValueOrDefault(update.NotificationKindId);
 
-                if (existingNotification is not null)
-                {
-                    existingNotification.IsRead = update.IsRead.Value;
-                }
-                else
-                {
-                    var newNotification = new NotificationEntity
+                    if (existingNotification is not null)
                     {
-                        UserId = currentUserId,
-                        Kind = update.NotificationKind,
-                        NotificationKindId = update.NotificationKindId,
-                        Created = created,
-                        IsRead = update.IsRead.Value,
-                    };
+                        existingNotification.IsRead = update.IsRead.Value;
+                    }
+                    else
+                    {
+                        var newNotification = new NotificationEntity
+                        {
+                            UserId = currentUserId,
+                            Kind = update.NotificationKind,
+                            NotificationKindId = update.NotificationKindId,
+                            Created = created,
+                            IsRead = update.IsRead.Value,
+                        };
 
-                    _dbContext.Notifications.Add(newNotification);
+                        _dbContext.Notifications.Add(newNotification);
+                    }
                 }
             }
-        }
 
-        await _dbContext.SaveChangesAsync(ct);
+            await _dbContext.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+        });
 
         await SendNoContentAsync(ct);
     }
