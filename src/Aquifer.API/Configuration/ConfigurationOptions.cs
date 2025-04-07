@@ -11,7 +11,6 @@ public class ConfigurationOptions
     public required Auth0Settings Auth0Settings { get; init; }
     public required string KeyVaultUri { get; init; }
     public required UploadOptions Upload { get; init; }
-    public required string NotifyIdsOnCommunityReviewerComment { get; init; }
 }
 
 public class ConnectionStringOptions

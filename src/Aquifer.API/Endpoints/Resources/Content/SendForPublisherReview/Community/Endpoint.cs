@@ -42,6 +42,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             contentVersion.ResourceContent.Status,
             ct);
 
+        if (contentVersion.ResourceContent.MediaType == ResourceContentMediaType.Text)
+        {
+            Helpers.SanitizeTiptapContent(contentVersion);
+        }
+
         contentVersion.ResourceContent.Status = ResourceContentStatus.TranslationReviewPending;
         contentVersion.AssignedUserId = null;
 
