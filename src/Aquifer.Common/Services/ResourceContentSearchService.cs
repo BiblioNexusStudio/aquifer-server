@@ -539,10 +539,9 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             whereClausesSql.Add($"prc.ProjectId IS {(filter.IsInProject.Value ? "NOT " : "")}NULL");
         }
 
+        const string excludeContentMediaTypesParamName = "contentMediaTypeIds";
         if (filter.ExcludeContentMediaTypes is { Count: > 0 })
         {
-            const string excludeContentMediaTypesParamName = "contentMediaTypeIds";
-
             coreParameters.Add(excludeContentMediaTypesParamName, filter.ExcludeContentMediaTypes
                 .Select(x => (int)x)
                 .ToArray());
@@ -618,7 +617,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                             WHERE
                                 rc2.ResourceId = rc.ResourceId AND
                                 {(filter.ExcludeContentMediaTypes is { Count: > 0 }
-                                    ? $"rc2.MediaType NOT IN @{includeContentMediaTypesParamName} AND"
+                                    ? $"rc2.MediaType NOT IN @{excludeContentMediaTypesParamName} AND"
                                     : "")}
                                 {(filter.IncludeContentMediaTypes is { Count: > 0 }
                                     ? $"rc2.MediaType IN @{includeContentMediaTypesParamName} AND"
