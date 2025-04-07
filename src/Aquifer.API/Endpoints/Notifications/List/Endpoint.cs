@@ -1,5 +1,6 @@
 ﻿using System.Data.Common;
 using Aquifer.API.Common.Dtos;
+using Aquifer.API.Configuration;
 using Aquifer.API.Services;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
@@ -11,7 +12,7 @@ namespace Aquifer.API.Endpoints.Notifications.List;
 public class Endpoint(
     AquiferDbContext _dbContext,
     IUserService _userService,
-    IConfiguration _configuration) : Endpoint<Request, IReadOnlyList<Response>>
+    NotificationOptions _notificationOptions) : Endpoint<Request, IReadOnlyList<Response>>
 {
     public override void Configure()
     {
@@ -34,7 +35,7 @@ public class Endpoint(
                 dbConnection,
                 currentUserId,
                 oldestNotificationTimestamp,
-                _configuration,
+                _notificationOptions,
                 ct)
             : [];
 
@@ -104,9 +105,9 @@ public class Endpoint(
         await SendOkAsync(notifications, ct);
     }
 
-    private static int[]? GetNotifyUserIdsOnCommunityReviewerComment(IConfiguration configuration)
+    private static int[]? GetNotifyUserIdsOnCommunityReviewerComment(NotificationOptions notificationOptions)
     {
-        var userIds = configuration.GetValue<string>("NotifyIdsOnCommunityReviewerComment");
+        var userIds = notificationOptions.NotifyIdsOnCommunityReviewerComment;
         return !string.IsNullOrEmpty(userIds) ? Array.ConvertAll(userIds.Split(",").Where(s => !string.IsNullOrEmpty(s)).ToArray(), int.Parse) : null;
     }
 
@@ -161,10 +162,10 @@ public class Endpoint(
         DbConnection dbConnection,
         int userId,
         DateTime minimumCommentCreatedDate,
-        IConfiguration cofiguration,
+        NotificationOptions notificationOptions,
         CancellationToken ct)
     {
-        var communityReviewerCommentNotificationUserIds = GetNotifyUserIdsOnCommunityReviewerComment(cofiguration);
+        var communityReviewerCommentNotificationUserIds = GetNotifyUserIdsOnCommunityReviewerComment(notificationOptions);
         var isContainingCommunityReviewerComments = communityReviewerCommentNotificationUserIds is not null && communityReviewerCommentNotificationUserIds.Contains(userId);
         var communityReviewerCommentsSubquery = $"""
                                                  OR EXISTS (
