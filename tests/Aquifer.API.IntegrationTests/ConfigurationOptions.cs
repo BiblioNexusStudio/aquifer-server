@@ -20,9 +20,4 @@ public sealed class ConfigurationOptions
     {
         public required string TestUserPassword { get; init; }
     }
-
-    public class NotificationOptions
-    {
-        public string? NotifyIdsOnCommunityReviewerComment { get; init; }
-    }
 }
