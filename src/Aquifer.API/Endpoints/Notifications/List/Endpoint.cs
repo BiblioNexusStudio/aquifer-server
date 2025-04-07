@@ -46,7 +46,7 @@ public class Endpoint(
             : [];
 
         var readNotificationEntityIdsByNotificationKindMap = (await _dbContext.Notifications
-                .Where(n => n.Created > oldestNotificationTimestamp && n.IsRead)
+                .Where(n => n.Created > oldestNotificationTimestamp && n.IsRead && n.UserId == currentUserId)
                 .Select(n => new
                 {
                     n.Kind,
