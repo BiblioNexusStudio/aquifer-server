@@ -173,7 +173,7 @@ public class Endpoint(
                                                      JOIN Comments c2 ON c2.ThreadId = ct2.Id
                                                      WHERE  
                                                          c2.UserId IN (
-                                                             SELECT Id FROM Users WHERE Role = {UserRole.CommunityReviewer}
+                                                             SELECT Id FROM Users WHERE Role = {(int)UserRole.CommunityReviewer}
                                                          ) AND
                                                          c.ThreadId = ct2.Id
                                                  )
