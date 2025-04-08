@@ -107,7 +107,7 @@ public class Endpoint(
 
     private static int[]? GetNotifyUserIdsOnCommunityReviewerComment(NotificationOptions notificationOptions)
     {
-        var userIds = notificationOptions.NotifyIdsOnCommunityReviewerComment;
+        var userIds = notificationOptions.NotifyUserIdsOnCommunityReviewerComment;
         return !string.IsNullOrEmpty(userIds) ? Array.ConvertAll(userIds.Split(",").Where(s => !string.IsNullOrEmpty(s)).ToArray(), int.Parse) : null;
     }
 
