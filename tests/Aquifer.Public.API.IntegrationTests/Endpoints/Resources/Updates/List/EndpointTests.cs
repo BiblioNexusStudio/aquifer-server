@@ -19,7 +19,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
         new Request
         {
             LanguageCode = "spa",
-            Offset = 10,
+            Offset = 0,
             Limit = 15,
             StartTimestamp = DateTime.UtcNow.AddDays(-90).AddHours(1),
         },
