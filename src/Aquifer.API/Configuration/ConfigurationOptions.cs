@@ -16,7 +16,7 @@ public class ConfigurationOptions
 
 public class NotificationOptions
 {
-    public string? NotifyIdsOnCommunityReviewerComment { get; init; }
+    public string? NotifyUserIdsOnCommunityReviewerComment { get; init; }
 }
 
 public class ConnectionStringOptions
