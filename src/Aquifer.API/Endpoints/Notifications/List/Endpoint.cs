@@ -182,9 +182,10 @@ public class Endpoint(
 
         // Get comments for the current user where:
         // 1. The user was assigned to the resource content on which the comment was made at the time the comment was made.
-        // 2. The user has previously interacted in the comment thread for the comment.
+        // 2. The user previously created an older comment in the same thread as the comment.
         // 3. The user was at-mentioned on the comment.
-        // The user who made the comment should not get a notification.
+        // 4. The user is in the list of users to notify when community reviewers create a comment and the comment is by a community reviewer.
+        // The user who created the comment should not get a notification.
         var query = $"""
                      SELECT
                          c.Id AS CommentId,
