@@ -19,6 +19,14 @@ public interface IResourceHistoryService
         int? oldUserId,
         ResourceContentStatus oldStatus,
         CancellationToken ct);
+
+    Task AddSnapshotHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
+        string content,
+        string displayName,
+        int? wordCount,
+        int? oldUserId,
+        ResourceContentStatus oldStatus,
+        CancellationToken ct);
 }
 
 public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHistoryService
@@ -74,18 +82,36 @@ public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHist
 
         if (snapshotEntity?.Content != contentVersionEntity.Content)
         {
-            var resourceContentVersionSnapshot = new ResourceContentVersionSnapshotEntity
-            {
-                ResourceContentVersion = contentVersionEntity,
-                Content = contentVersionEntity.Content,
-                DisplayName = contentVersionEntity.DisplayName,
-                WordCount = contentVersionEntity.WordCount,
-                UserId = oldUserId,
-                Status = oldStatus,
-                Created = DateTime.UtcNow
-            };
-
-            await _dbContext.ResourceContentVersionSnapshots.AddAsync(resourceContentVersionSnapshot, ct);
+            await AddSnapshotHistoryAsync(
+                contentVersionEntity,
+                contentVersionEntity.Content,
+                contentVersionEntity.DisplayName,
+                contentVersionEntity.WordCount,
+                oldUserId,
+                oldStatus,
+                ct);
         }
+    }
+
+    public async Task AddSnapshotHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
+        string content,
+        string displayName,
+        int? wordCount,
+        int? oldUserId,
+        ResourceContentStatus oldStatus,
+        CancellationToken ct)
+    {
+        var resourceContentVersionSnapshot = new ResourceContentVersionSnapshotEntity
+        {
+            ResourceContentVersion = contentVersionEntity,
+            Content = content,
+            DisplayName = displayName,
+            WordCount = wordCount,
+            UserId = oldUserId,
+            Status = oldStatus,
+            Created = DateTime.UtcNow
+        };
+
+        await _dbContext.ResourceContentVersionSnapshots.AddAsync(resourceContentVersionSnapshot, ct);
     }
 }

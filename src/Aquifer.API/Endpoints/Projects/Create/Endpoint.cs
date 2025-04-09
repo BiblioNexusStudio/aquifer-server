@@ -3,13 +3,15 @@ using Aquifer.API.Services;
 using Aquifer.Common;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
+using Aquifer.Data.Services;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 using static Aquifer.API.Helpers.EndpointHelpers;
 
 namespace Aquifer.API.Endpoints.Projects.Create;
 
-public class Endpoint(AquiferDbContext dbContext, IUserService userService) : Endpoint<Request, Response>
+public class Endpoint(AquiferDbContext dbContext, IUserService userService, IResourceHistoryService resourceHistoryService)
+    : Endpoint<Request, Response>
 {
     public override void Configure()
     {
@@ -278,6 +280,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         UserEntity user,
         CancellationToken ct)
     {
+        // do this in one query for performance reasons
         var sourceLanguageOrTargetLanguageResourceContents = await dbContext.ResourceContents.AsTracking()
             .Where(rc => resourceIds.Contains(rc.ResourceId) && rc.MediaType == ResourceContentMediaType.Text)
             .Where(rc => rc.LanguageId == targetLanguageId ||
@@ -287,78 +290,122 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             .Include(rc => rc.Language)
             .ToListAsync(ct);
 
-        List<ResourceContentEntity> resourceContents = [];
+        var resourceContentsByIsSource = sourceLanguageOrTargetLanguageResourceContents
+            .ToLookup(rc => rc.LanguageId == sourceLanguageId);
 
-        foreach (var resourceContent in sourceLanguageOrTargetLanguageResourceContents)
+        // We need to fetch the original English snapshot for any base resource contents that are not English.
+        // It's done here in order to do it in bulk for performance reasons.
+        // See comment below for details.
+        var baseVersionIdsToFetchOriginalSnapshot = resourceContentsByIsSource[true]
+            .Where(rc => rc.LanguageId != Constants.EnglishLanguageId && rc.SourceLanguageId == Constants.EnglishLanguageId)
+            .Select(rc => rc.Versions.FirstOrDefault(v => v.IsPublished)?.Id)
+            .OfType<int>()
+            .ToList();
+
+        var baseVersionOriginalSnapshotByBaseVersionId = baseVersionIdsToFetchOriginalSnapshot.Count > 0
+            ? await dbContext.ResourceContentVersionSnapshots
+                .Where(s => baseVersionIdsToFetchOriginalSnapshot.Contains(s.ResourceContentVersionId))
+                .GroupBy(s => s.ResourceContentVersionId)
+                .ToDictionaryAsync(
+                    g => g.Key,
+                    g => g.OrderBy(s => s.Created).First(),
+                    ct)
+            : [];
+
+        List<ResourceContentEntity> projectResourceContents = [];
+
+        foreach (var baseResourceContent in resourceContentsByIsSource[true])
         {
-            if (resourceContent.LanguageId == sourceLanguageId)
+            var baseVersion = baseResourceContent.Versions.FirstOrDefault(v => v.IsPublished);
+            if (baseVersion is null)
             {
-                var baseVersion = resourceContent.Versions.FirstOrDefault(v => v.IsPublished);
-                if (baseVersion is null)
-                {
-                    ThrowError(
-                        r => r.ResourceIds,
-                        "One or more resources are missing a published version to use as a base.");
-                }
-
-                var newResourceContentVersion = new ResourceContentVersionEntity
-                {
-                    IsPublished = false,
-                    IsDraft = true,
-                    ReviewLevel = ResourceContentVersionReviewLevel.Professional,
-                    DisplayName = baseVersion.DisplayName,
-                    Content = baseVersion.Content,
-                    ContentSize = baseVersion.ContentSize,
-                    WordCount = baseVersion.WordCount,
-                    SourceWordCount = baseVersion.WordCount,
-                    ResourceContentVersionStatusHistories =
-                    [
-                        new ResourceContentVersionStatusHistoryEntity
-                        {
-                            Status = ResourceContentStatus.TranslationAwaitingAiDraft,
-                            ChangedByUserId = user.Id,
-                            Created = DateTime.UtcNow
-                        }
-                    ],
-                    Version = 1
-                };
-                var newResourceContent = new ResourceContentEntity
-                {
-                    SourceLanguageId = sourceLanguageId,
-                    LanguageId = targetLanguageId,
-                    ResourceId = resourceContent.ResourceId,
-                    MediaType = resourceContent.MediaType,
-                    Status = ResourceContentStatus.TranslationAwaitingAiDraft,
-                    Trusted = true,
-                    Versions = [newResourceContentVersion]
-                };
-                await dbContext.ResourceContents.AddAsync(newResourceContent, ct);
-                resourceContents.Add(newResourceContent);
+                ThrowError(
+                    r => r.ResourceIds,
+                    "One or more resources are missing a published version to use as a base.");
             }
-            else
+
+            var newResourceContentVersion = new ResourceContentVersionEntity
             {
-                if (resourceContent.ProjectResourceContents.Count > 0)
-                {
-                    ThrowError(r => r.ResourceIds, "One or more resources are already in a project.");
-                }
+                IsPublished = false,
+                IsDraft = true,
+                ReviewLevel = ResourceContentVersionReviewLevel.Professional,
+                DisplayName = baseVersion.DisplayName,
+                Content = baseVersion.Content,
+                ContentSize = baseVersion.ContentSize,
+                WordCount = baseVersion.WordCount,
+                SourceWordCount = baseVersion.WordCount,
+                ResourceContentVersionStatusHistories =
+                [
+                    new ResourceContentVersionStatusHistoryEntity
+                    {
+                        Status = ResourceContentStatus.TranslationAwaitingAiDraft,
+                        ChangedByUserId = user.Id,
+                        Created = DateTime.UtcNow
+                    }
+                ],
+                Version = 1
+            };
+            var newResourceContent = new ResourceContentEntity
+            {
+                SourceLanguageId = sourceLanguageId,
+                LanguageId = targetLanguageId,
+                ResourceId = baseResourceContent.ResourceId,
+                MediaType = baseResourceContent.MediaType,
+                Status = ResourceContentStatus.TranslationAwaitingAiDraft,
+                Trusted = true,
+                Versions = [newResourceContentVersion]
+            };
+            await dbContext.ResourceContents.AddAsync(newResourceContent, ct);
+            projectResourceContents.Add(newResourceContent);
 
-                if (resourceContent.Status != ResourceContentStatus.TranslationAwaitingAiDraft)
-                {
-                    ThrowError(
-                        r => r.ResourceIds,
-                        "One or more resources exist but are not in TranslationAwaitingAiDraft status.");
-                }
+            // If the base resource content is not English, we need to create a snapshot of the original English source text for
+            // comparison purposes. Note that it's possible for there to be multiple chains of translations
+            // (e.g. English -> French -> Russian -> Arabic -> Traditional Chinese) which would require a recursive fetch of resource
+            // contents to find the original source (the resource content where SourceLanguageId == targetLanguageId which may not
+            // be English). For now, though, most translations originate in English so we are only going to implement the common case of
+            // English -> base -> new (e.g. English -> French -> Arabic) where the source language is always English.
+            //
+            // Note that an additional snapshot of the base version text is created when the project is started (i.e. the source text
+            // for the actual AI translation).
+            if (baseResourceContent.LanguageId != Constants.EnglishLanguageId &&
+                baseResourceContent.SourceLanguageId == Constants.EnglishLanguageId)
+            {
+                var baseVersionOriginalSnapshot = baseVersionOriginalSnapshotByBaseVersionId[baseVersion.Id];
 
-                var existingVersion = resourceContent.Versions.FirstOrDefault(v => v.IsDraft);
-                if (existingVersion is null)
-                {
-                    ThrowError(r => r.ResourceIds, "One or more resources exist but are missing a draft to use.");
-                }
-
-                resourceContents.Add(resourceContent);
+                await resourceHistoryService.AddSnapshotHistoryAsync(
+                    newResourceContentVersion,
+                    baseVersionOriginalSnapshot.Content,
+                    baseVersionOriginalSnapshot.DisplayName,
+                    baseVersionOriginalSnapshot.WordCount,
+                    user.Id,
+                    ResourceContentStatus.New,
+                    ct);
             }
         }
 
-        return resourceContents;
+        foreach (var existingResourceContent in resourceContentsByIsSource[false])
+        {
+            if (existingResourceContent.ProjectResourceContents.Count > 0)
+            {
+                ThrowError(r => r.ResourceIds, "One or more resources are already in a project.");
+            }
+
+            if (existingResourceContent.Status != ResourceContentStatus.TranslationAwaitingAiDraft)
+            {
+                ThrowError(
+                    r => r.ResourceIds,
+                    "One or more resources exist but are not in TranslationAwaitingAiDraft status.");
+            }
+
+            var existingVersion = existingResourceContent.Versions.FirstOrDefault(v => v.IsDraft);
+            if (existingVersion is null)
+            {
+                ThrowError(r => r.ResourceIds, "One or more resources exist but are missing a draft to use.");
+            }
+
+            projectResourceContents.Add(existingResourceContent);
+        }
+
+        return projectResourceContents;
     }
 }
