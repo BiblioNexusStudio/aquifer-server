@@ -30,12 +30,6 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
             return;
         }
 
-        if (resourceContent.LanguageId != 1)
-        {
-            ThrowError("Only English content can be used for updating Bible references.");
-            return;
-        }
-
         if (request.StartVerseId == request.EndVerseId)
         {
             var verseResource = resourceContent.Resource.VerseResources
