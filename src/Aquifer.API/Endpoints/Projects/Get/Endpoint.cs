@@ -42,30 +42,31 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     private async Task<Response?> GetProjectAsync(Request req, CancellationToken ct)
     {
         return await dbContext.Projects
-        .Where(x => x.Id == req.ProjectId)
-        .Include(x => x.CompanyLeadUser)
-        .Select(x => new Response
-        {
-            Id = x.Id,
-            Name = x.Name,
-            Company = x.Company.Name,
-            Language = x.Language.EnglishDisplay,
-            CompanyLead = x.CompanyLeadUser != null
-                ? $"{x.CompanyLeadUser.FirstName} {x.CompanyLeadUser.LastName}"
-                : null,
-            CompanyLeadUser = UserDto.FromUserEntity(x.CompanyLeadUser),
-            ProjectPlatform = x.ProjectPlatform.Name,
-            ProjectManager = $"{x.ProjectManagerUser.FirstName} {x.ProjectManagerUser.LastName}",
-            ProjectManagerUser = UserDto.FromUserEntity(x.ProjectManagerUser)!,
-            SourceWordCount = x.SourceWordCount,
-            EffectiveWordCount = x.EffectiveWordCount,
-            QuotedCost = x.QuotedCost,
-            Started = x.Started,
-            ActualDeliveryDate = x.ActualDeliveryDate,
-            ActualPublishDate = x.ActualPublishDate,
-            ProjectedDeliveryDate = x.ProjectedDeliveryDate,
-            ProjectedPublishDate = x.ProjectedPublishDate
-        }).SingleOrDefaultAsync(ct);
+            .Where(x => x.Id == req.ProjectId)
+            .Include(x => x.CompanyLeadUser)
+            .Select(
+                x => new Response
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Company = x.Company.Name,
+                    Language = x.Language.EnglishDisplay,
+                    CompanyLead = x.CompanyLeadUser != null ? $"{x.CompanyLeadUser.FirstName} {x.CompanyLeadUser.LastName}" : null,
+                    CompanyLeadUser = UserDto.FromUserEntity(x.CompanyLeadUser),
+                    ProjectPlatform = x.ProjectPlatform.Name,
+                    ProjectManager = $"{x.ProjectManagerUser.FirstName} {x.ProjectManagerUser.LastName}",
+                    ProjectManagerUser = UserDto.FromUserEntity(x.ProjectManagerUser)!,
+                    SourceWordCount = x.SourceWordCount,
+                    EffectiveWordCount = x.EffectiveWordCount,
+                    QuotedCost = x.QuotedCost,
+                    Started = x.Started,
+                    ActualDeliveryDate = x.ActualDeliveryDate,
+                    ActualPublishDate = x.ActualPublishDate,
+                    ProjectedDeliveryDate = x.ProjectedDeliveryDate,
+                    ProjectedPublishDate = x.ProjectedPublishDate,
+                    SourceLanguage = x.SourceLanguage != null ? x.SourceLanguage.EnglishDisplay : null
+                })
+            .SingleOrDefaultAsync(ct);
     }
 
     private async Task<bool> HasSameCompanyAsProjectAsync(int projectId, CancellationToken ct)

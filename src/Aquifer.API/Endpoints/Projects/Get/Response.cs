@@ -10,6 +10,7 @@ public class Response
     public required int Id { get; set; }
     public required string Name { get; set; }
     public required string Language { get; set; }
+    public string? SourceLanguage { get; set; }
     public required string ProjectManager { get; set; }
     public required UserDto ProjectManagerUser { get; set; }
     public required string Company { get; set; }
