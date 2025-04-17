@@ -1,6 +1,6 @@
 ﻿using Aquifer.Common.Configuration;
 
-namespace Aquifer.Public.API.Configuration;
+namespace Aquifer.Well.API.Configuration;
 
 public class ConfigurationOptions
 {
