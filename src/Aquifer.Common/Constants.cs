@@ -12,6 +12,7 @@ public static class Constants
     public const string TelemetryBnApiPropertyName = "bnApi";
     public const string TelemetryBnApiCallerPropertyName = "bnApiCaller";
     public const string TelemetryBnApiCallerIdPropertyName = "bnApiCallerId";
+    public const string TelemetryAppInsightsUserIdPropertyName = "appInsightsUserId";
     public const string TelemetryUserPropertyName = "user";
 
     // Some guide types have predetermined passages (rather than freeform "select any Bible section").

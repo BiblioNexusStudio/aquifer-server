@@ -81,6 +81,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy-to-env", "deploy-to-
 		.github\actions\deploy-to-env\action.yml = .github\actions\deploy-to-env\action.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aquifer.Well.API", "src\Aquifer.Well.API\Aquifer.Well.API.csproj", "{FFD5BBAC-BDD1-4951-8402-01ED82005266}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -153,6 +155,10 @@ Global
 		{73F5F966-C27E-47AB-8B02-7A4B48C374EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{73F5F966-C27E-47AB-8B02-7A4B48C374EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{73F5F966-C27E-47AB-8B02-7A4B48C374EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FFD5BBAC-BDD1-4951-8402-01ED82005266}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FFD5BBAC-BDD1-4951-8402-01ED82005266}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FFD5BBAC-BDD1-4951-8402-01ED82005266}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FFD5BBAC-BDD1-4951-8402-01ED82005266}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -179,6 +185,7 @@ Global
 		{61FDF919-192A-435C-8A61-2F7E97AC6454} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{7F69D32F-5B88-4B95-8AB7-9A8F72A36132} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{92256CE3-C3B2-4A50-85B4-8D0564FB3E11} = {61FDF919-192A-435C-8A61-2F7E97AC6454}
+		{FFD5BBAC-BDD1-4951-8402-01ED82005266} = {795E7203-D40F-4962-837D-DD39BAF2C930}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8E32492B-EA66-40E4-A7A8-67E4ABA14A53}
