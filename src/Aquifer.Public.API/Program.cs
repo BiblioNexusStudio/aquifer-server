@@ -21,14 +21,15 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration.Get<ConfigurationOptions>() ??
     throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
-builder.Services
-    .AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
+builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
 
 builder.Services
     .AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.AzureStorageAccount)
-    .AddDbContext<AquiferDbReadOnlyContext>(
-        options => options
-            .UseAzureSql(configuration.ConnectionStrings.BiblioNexusReadOnlyDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
+    .AddDbContext<
+        AquiferDbReadOnlyContext>(options =>
+        options.UseAzureSql(
+                configuration.ConnectionStrings.BiblioNexusReadOnlyDb,
+                providerOptions => providerOptions.EnableRetryOnFailure(3))
             .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
     .AddScoped<AquiferDbContext, AquiferDbReadOnlyContext>()
@@ -57,26 +58,24 @@ app.UseHealthChecks("/_health")
     .UseResponseCaching()
     .UseOutputCache()
     .UseOpenApi()
-    .UseReDoc(
-        options =>
-        {
-            options.Path = "/docs";
-            // hide the version number
-            options.CustomInlineStyles = "h1 > span { display: none; }";
-            options.DocumentTitle = "Aquifer API Documentation";
-        })
+    .UseReDoc(options =>
+    {
+        options.Path = "/docs";
+        // hide the version number
+        options.CustomInlineStyles = "h1 > span { display: none; }";
+        options.DocumentTitle = "Aquifer API Documentation";
+    })
     .UseMiddleware<ApiKeyAuthorizationMiddleware>()
-    .UseFastEndpoints(
-        config =>
-        {
-            config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-            config.Endpoints.Configurator = ep => ep.AllowAnonymous();
-        })
+    .UseFastEndpoints(config =>
+    {
+        config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        config.Endpoints.Configurator = ep => ep.AllowAnonymous();
+    })
     .UseResponseCachingVaryByAllQueryKeys();
 
 app.ConfigureClientGeneration(SwaggerDocumentSettings.DocumentName, TimeSpan.FromDays(365));
 
 app.Run();
 
-// make this class public in order to access from integration tests
+// make this class public to access from integration tests
 public partial class Program;
