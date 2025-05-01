@@ -38,6 +38,7 @@ jobs:
                   dotnet test \
                       --configuration Release \
                       --no-build \
+                      --logger "trx;LogFileName=test-results.trx" \
                       -e ASPNETCORE_ENVIRONMENT="${{ vars.ASPNETCORE_ENVIRONMENT }}" \
                       -e ConnectionStrings__BiblioNexusDb="${{ secrets.BIBLIONEXUS_DB_CONNECTION_STRING }}" \
                       -e ConnectionStrings__BiblioNexusReadOnlyDb="${{ secrets.BIBLIONEXUS_DB_CONNECTION_STRING }};ApplicationIntent=ReadOnly;" \
@@ -56,3 +57,17 @@ jobs:
                       -e IntegrationTestUserSettings__TestUserPassword="${{ secrets.INTEGRATION_TEST_USER_SETTINGS_TEST_USER_PASSWORD }}" \
                       -e InternalApiKey="${{ secrets.INTERNAL_API_KEY }}" \
                       -e PublicApiKey="${{ secrets.PUBLIC_API_KEY }}"
+            - name: Test Results
+              uses: dorny/test-reporter@v2.0.0
+              if: success() || failure()
+              with:
+                name: Test Results
+                path: tests/**/*.trx
+                reporter: dotnet-trx
+            - name: Upload Test Results Artifacts
+              uses: actions/upload-artifact@v4.6.1
+              if: success() || failure()
+              with:
+                  include-hidden-files: true
+                  name: test-results
+                  path: tests/**/TestResults/**/*

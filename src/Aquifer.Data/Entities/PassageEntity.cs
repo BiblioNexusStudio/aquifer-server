@@ -26,6 +26,9 @@ public class PassageEntityConfiguration : IEntityTypeConfiguration<PassageEntity
 {
     public void Configure(EntityTypeBuilder<PassageEntity> builder)
     {
+        builder.ToTable(b =>
+            b.HasCheckConstraint("CK_Passages_IsValidPassage", "StartVerseId <= EndVerseId"));
+
         builder.HasOne(p => p.StartVerse).WithMany().OnDelete(DeleteBehavior.NoAction);
 
         builder.HasOne(p => p.EndVerse).WithMany().OnDelete(DeleteBehavior.NoAction);
