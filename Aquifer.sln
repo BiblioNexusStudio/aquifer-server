@@ -74,6 +74,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\post-merge-jobs.yml = .github\workflows\post-merge-jobs.yml
 		.github\workflows\post-merge-public-api.yml = .github\workflows\post-merge-public-api.yml
 		.github\workflows\pre-merge.yml = .github\workflows\pre-merge.yml
+		.github\workflows\post-merge-well-api.yml = .github\workflows\post-merge-well-api.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy-to-env", "deploy-to-env", "{92256CE3-C3B2-4A50-85B4-8D0564FB3E11}"
