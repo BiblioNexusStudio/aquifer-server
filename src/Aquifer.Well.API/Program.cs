@@ -4,12 +4,11 @@ using Aquifer.Common.Extensions;
 using Aquifer.Common.Messages;
 using Aquifer.Common.Middleware;
 using Aquifer.Common.Services;
+using Aquifer.Common.Services.Caching;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
-using Aquifer.Public.API.Configuration;
-using Aquifer.Public.API.OpenApi;
-using Aquifer.Public.API.Services;
-using Aquifer.Public.API.Telemetry;
+using Aquifer.Well.API.Configuration;
+using Aquifer.Well.API.Telemetry;
 using FastEndpoints;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Http.Json;
@@ -25,57 +24,44 @@ builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
 
 builder.Services
     .AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.AzureStorageAccount)
-    .AddDbContext<
-        AquiferDbReadOnlyContext>(options =>
-        options.UseAzureSql(
-                configuration.ConnectionStrings.BiblioNexusReadOnlyDb,
-                providerOptions => providerOptions.EnableRetryOnFailure(3))
+    .AddDbContext<AquiferDbReadOnlyContext>(
+        options => options
+            .UseAzureSql(configuration.ConnectionStrings.BiblioNexusReadOnlyDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
             .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
     .AddScoped<AquiferDbContext, AquiferDbReadOnlyContext>()
     .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))
     .AddFastEndpoints()
     .AddMemoryCache()
-    .AddCachingServices()
+    .AddScoped<ICachingLanguageService, CachingLanguageService>()
+    .AddScoped<ICachingApiKeyService, CachingApiKeyService>()
     .AddSingleton<IQueueClientFactory, QueueClientFactory>()
     .AddTrackResourceContentRequestServices()
     .AddSingleton<ITelemetryInitializer, RequestTelemetryInitializer>()
     .AddAzureClient(builder.Environment.IsDevelopment())
-    .AddSwaggerDocumentSettings()
     .AddOutputCache()
     .AddApplicationInsightsTelemetry()
     .AddHealthChecks()
     .AddDbContextCheck<AquiferDbReadOnlyContext>();
 
 builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
-builder.Services.Configure<ApiKeyAuthorizationMiddlewareOptions>(o => o.Scope = ApiKeyScope.PublicApi);
+builder.Services.Configure<ApiKeyAuthorizationMiddlewareOptions>(o => o.Scope = ApiKeyScope.WellApi);
 
 var app = builder.Build();
 
 StaticLoggerFactory.LoggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
 
 app.UseHealthChecks("/_health")
+    .UseMiddleware<ApiKeyAuthorizationMiddleware>()
     .UseResponseCaching()
     .UseOutputCache()
-    .UseOpenApi()
-    .UseReDoc(options =>
-    {
-        options.Path = "/docs";
-        // hide the version number
-        options.CustomInlineStyles = "h1 > span { display: none; }";
-        options.DocumentTitle = "Aquifer API Documentation";
-    })
-    .UseMiddleware<ApiKeyAuthorizationMiddleware>()
-    .UseFastEndpoints(config =>
-    {
-        config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        config.Endpoints.Configurator = ep => ep.AllowAnonymous();
-    })
+    .UseFastEndpoints(
+        config =>
+        {
+            config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            config.Endpoints.Configurator = ep => ep.AllowAnonymous();
+            config.Versioning.Prefix = "v";
+        })
     .UseResponseCachingVaryByAllQueryKeys();
 
-app.ConfigureClientGeneration(SwaggerDocumentSettings.DocumentName, TimeSpan.FromDays(365));
-
 app.Run();
-
-// make this class public to access from integration tests
-public partial class Program;
