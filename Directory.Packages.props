@@ -18,7 +18,7 @@
         <PackageVersion Include="Contrib.Grpc.Core.M1" Version="2.46.7" />
         <PackageVersion Include="coverlet.collector" Version="6.0.4" />
         <!-- Do not upgrade past 2.1.37 until https://github.com/DapperLib/Dapper/issues/2072 is fixed because DateOnly support is disabled. -->
-        <PackageVersion Include="Dapper" Version="2.1.66" />
+        <PackageVersion Include="Dapper" Version="2.1.37" />
         <PackageVersion Include="FastEndpoints" Version="6.0.0" />
         <PackageVersion Include="FastEndpoints.ClientGen.Kiota" Version="6.0.0" />
         <PackageVersion Include="FastEndpoints.Swagger" Version="6.0.0" />
