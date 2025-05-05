@@ -4,7 +4,6 @@
 #
 # It follows a build-then-deploy pattern:
 # - Build: Compiles the Public API project and upload as artifact
-#     - Deploy to Dev: Download artifact and deploy
 #     - Deploy to QA: Download artifact and deploy
 #     - Deploy to Production: Download artifact and deploy
 #
@@ -83,28 +82,6 @@ jobs:
                   include-hidden-files: true
                   name: build
                   path: build
-
-    deploy_public_api_to_dev:
-        if: needs.check_should_deploy.outputs.should_deploy == 'true'
-        name: Deploy Public API to dev
-        runs-on: ubuntu-latest
-        needs:
-            - build
-            - check_should_deploy
-        environment:
-            name: dev-public
-            url: ${{ vars.URL_DEV }}
-        steps:
-            - name: Checkout source code
-              uses: actions/checkout@v4.2.2
-            - uses: ./.github/actions/deploy-to-env
-              id: deploy
-              with:
-                  environment: dev
-                  connection-url: ${{ vars.DB_CONNECTION_URL_DEV }}
-                  web-app-name: ${{ vars.AZURE_WEB_APP_NAME_PUBLIC_DEV }}
-                  resource-group: ${{ vars.AZURE_RESOURCE_GROUP_DEV }}
-                  azure-credentials: ${{ secrets.AZURE_CREDENTIALS }}
 
     deploy_public_api_to_qa:
         if: needs.check_should_deploy.outputs.should_deploy == 'true'
