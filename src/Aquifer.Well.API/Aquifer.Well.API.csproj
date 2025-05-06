@@ -11,8 +11,12 @@
 
     <ItemGroup>
         <PackageReference Include="FastEndpoints" />
+        <PackageReference Include="FastEndpoints.ClientGen.Kiota" />
+        <PackageReference Include="FastEndpoints.Swagger" />
         <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
         <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+        <PackageReference Include="Swashbuckle.AspNetCore" />
     </ItemGroup>
 
 </Project>

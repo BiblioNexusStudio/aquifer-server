@@ -14,4 +14,9 @@ public static class EndpointHelpers
                 .Expire(TimeSpan.FromSeconds(seconds))
                 .Tag(AnonymousOutputCacheTag));
     }
+
+    public static class EndpointTags
+    {
+        public const string ExcludeFromSwaggerDocument = nameof(ExcludeFromSwaggerDocument);
+    }
 }

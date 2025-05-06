@@ -8,6 +8,7 @@ using Aquifer.Common.Services.Caching;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using Aquifer.Well.API.Configuration;
+using Aquifer.Well.API.OpenApi;
 using Aquifer.Well.API.Telemetry;
 using FastEndpoints;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -39,6 +40,7 @@ builder.Services
     .AddTrackResourceContentRequestServices()
     .AddSingleton<ITelemetryInitializer, RequestTelemetryInitializer>()
     .AddAzureClient(builder.Environment.IsDevelopment())
+    .AddSwaggerDocumentSettings()
     .AddOutputCache()
     .AddApplicationInsightsTelemetry()
     .AddHealthChecks()
@@ -55,6 +57,12 @@ app.UseHealthChecks("/_health")
     .UseMiddleware<ApiKeyAuthorizationMiddleware>()
     .UseResponseCaching()
     .UseOutputCache()
+    .UseOpenApi()
+    .UseReDoc(options =>
+    {
+        options.Path = "/docs";
+        options.DocumentTitle = "Aquifer Well API Documentation";
+    })
     .UseFastEndpoints(
         config =>
         {
@@ -63,5 +71,7 @@ app.UseHealthChecks("/_health")
             config.Versioning.Prefix = "v";
         })
     .UseResponseCachingVaryByAllQueryKeys();
+
+await app.GenerateApiClientAsync(SwaggerDocumentSettings.DocumentName);
 
 app.Run();

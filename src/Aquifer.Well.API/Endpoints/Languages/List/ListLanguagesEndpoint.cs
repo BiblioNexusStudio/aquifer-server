@@ -11,6 +11,12 @@ public class ListLanguagesEndpoint(AquiferDbReadOnlyContext dbContext) : Endpoin
     {
         Get("/languages");
         Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
+        Description(d => d.WithTags("Languages"));
+        Summary(s =>
+        {
+            s.Summary = "Return language list.";
+            s.Description = "Return a list of languages that can have associated resources in the Aquifer.";
+        });
     }
 
     public override async Task HandleAsync(CancellationToken ct)
