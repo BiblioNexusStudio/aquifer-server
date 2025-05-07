@@ -22,6 +22,7 @@ public static class ClientGenerationSettings
             c.ClientNamespaceName = "BibleWell.Aquifer.API.Client";
             c.ClientClassName = "AquiferWellApiClient";
             c.OutputPath = Path.Combine(c.OutputPath, "../../../../bible-well/src/BibleWell.Aquifer.Api/Client");
+            c.ExcludePatterns = ["**/admin/**"];
         });
     }
 }

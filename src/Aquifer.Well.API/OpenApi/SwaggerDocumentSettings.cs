@@ -10,7 +10,8 @@ public static class SwaggerDocumentSettings
 
     public static IServiceCollection AddSwaggerDocumentSettings(this IServiceCollection services)
     {
-        return services.SwaggerDocument(sd =>
+        return services
+            .SwaggerDocument(sd =>
         {
             // turn off auto-grouping (but now must manually tag each endpoint using `WithTags()`)
             sd.AutoTagPathSegmentIndex = 0;
@@ -31,6 +32,7 @@ public static class SwaggerDocumentSettings
                         In = OpenApiSecurityApiKeyLocation.Header,
                         Type = OpenApiSecuritySchemeType.ApiKey
                     });
+                ds.MarkNonNullablePropsAsRequired();
                 ds.SchemaSettings.SchemaProcessors.Add(new EnumSchemaProcessor());
                 ds.OperationProcessors.Add(new DefaultParameterOperationProcessor());
             };

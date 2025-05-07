@@ -2,9 +2,9 @@
 
 public record ListLanguagesResponse
 {
-    public int Id { get; init; }
-    public string Code { get; init; } = null!;
-    public string EnglishDisplay { get; init; } = null!;
-    public string LocalizedDisplay { get; init; } = null!;
-    public string ScriptDirection { get; init; } = null!;
+    public required int Id { get; init; }
+    public required string Code { get; init; }
+    public required string EnglishDisplay { get; init; }
+    public required string LocalizedDisplay { get; init; }
+    public required string ScriptDirection { get; init; }
 }

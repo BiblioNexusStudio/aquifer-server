@@ -48,6 +48,7 @@ public static class SwaggerDocumentSettings
                         In = OpenApiSecurityApiKeyLocation.Header,
                         Type = OpenApiSecuritySchemeType.ApiKey
                     });
+                ds.MarkNonNullablePropsAsRequired();
                 ds.SchemaSettings.SchemaProcessors.Add(new EnumSchemaProcessor());
                 ds.OperationProcessors.Add(new DefaultParameterOperationProcessor());
             };
