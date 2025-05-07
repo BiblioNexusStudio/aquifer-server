@@ -11,7 +11,6 @@ public class ListLanguagesEndpoint(AquiferDbReadOnlyContext dbContext) : Endpoin
     {
         Get("/languages");
         Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.OneHourInSeconds));
-        Description(d => d.WithTags("Languages"));
         Summary(s =>
         {
             s.Summary = "Return language list.";

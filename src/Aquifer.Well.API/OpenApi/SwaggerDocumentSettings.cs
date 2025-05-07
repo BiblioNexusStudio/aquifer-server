@@ -15,9 +15,6 @@ public static class SwaggerDocumentSettings
         return services
             .SwaggerDocument(sd =>
         {
-            // turn off auto-grouping (but now must manually tag each endpoint using `WithTags()`)
-            sd.AutoTagPathSegmentIndex = 0;
-
             sd.ShortSchemaNames = true;
             sd.EnableJWTBearerAuth = false;
             sd.EndpointFilter = ep => ep.EndpointTags?.Contains(EndpointHelpers.EndpointTags.ExcludeFromSwaggerDocument) != true;

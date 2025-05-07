@@ -58,11 +58,6 @@ app.UseHealthChecks("/_health")
     .UseResponseCaching()
     .UseOutputCache()
     .UseOpenApi()
-    .UseReDoc(options =>
-    {
-        options.Path = "/docs";
-        options.DocumentTitle = "Aquifer Well API Documentation";
-    })
     .UseFastEndpoints(
         config =>
         {
