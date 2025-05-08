@@ -1,4 +1,6 @@
-﻿using Aquifer.Public.API.Helpers;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using Aquifer.Public.API.Helpers;
 using FastEndpoints.Swagger;
 using NSwag;
 
@@ -18,6 +20,11 @@ public static class SwaggerDocumentSettings
             sd.ShortSchemaNames = true;
             sd.EnableJWTBearerAuth = false;
             sd.EndpointFilter = ep => ep.EndpointTags?.Contains(EndpointHelpers.EndpointTags.ExcludeFromSwaggerDocument) != true;
+            sd.SerializerSettings = s =>
+            {
+                s.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                s.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+            };
             sd.DocumentSettings = ds =>
             {
                 ds.DocumentName = DocumentName;
@@ -48,6 +55,7 @@ public static class SwaggerDocumentSettings
                         In = OpenApiSecurityApiKeyLocation.Header,
                         Type = OpenApiSecuritySchemeType.ApiKey
                     });
+                ds.MarkNonNullablePropsAsRequired();
                 ds.SchemaSettings.SchemaProcessors.Add(new EnumSchemaProcessor());
                 ds.OperationProcessors.Add(new DefaultParameterOperationProcessor());
             };
