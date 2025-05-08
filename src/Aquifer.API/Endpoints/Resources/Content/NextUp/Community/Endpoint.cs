@@ -22,7 +22,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
         if (resourceContentFromReq is null)
         {
-            await SendNotFoundAsync(ct);
+            await SendAsync(new Response { NextUpResourceContentId = null }, cancellation: ct);
             return;
         }
 
