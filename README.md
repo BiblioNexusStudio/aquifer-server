@@ -101,3 +101,12 @@ and [Azure Function Core Tools](https://learn.microsoft.com/en-us/azure/azure-fu
 
 1. Run Azurite so that you can have local queues. In the `aquifer-server` dir, run `azurite`.
 2. Run Aquifer.Jobs using the function core tools. In the `aquifer-server/src/Aquifer.Jobs` run `func start`.
+
+## Client Generation
+
+Aquifer.Well.API supports C# client generation based upon the OpenAPI spec. To generate the client, run:
+```bash
+dotnet run --project src/Aquifer.Well.API --generateclients true
+```
+This command assumes that you have a local clone of the bible-well repo that is sitting in a folder next to this repo.
+Running the command will update the client code in that repo based upon changes to the OpenAPI spec.
