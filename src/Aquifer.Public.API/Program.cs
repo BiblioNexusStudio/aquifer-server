@@ -34,6 +34,7 @@ builder.Services
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
     .AddScoped<AquiferDbContext, AquiferDbReadOnlyContext>()
     .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))
+    .AddSwaggerDocumentSettings()
     .AddFastEndpoints()
     .AddMemoryCache()
     .AddCachingServices()
@@ -41,7 +42,6 @@ builder.Services
     .AddTrackResourceContentRequestServices()
     .AddSingleton<ITelemetryInitializer, RequestTelemetryInitializer>()
     .AddAzureClient(builder.Environment.IsDevelopment())
-    .AddSwaggerDocumentSettings()
     .AddOutputCache()
     .AddApplicationInsightsTelemetry()
     .AddHealthChecks()
@@ -57,6 +57,11 @@ StaticLoggerFactory.LoggerFactory = app.Services.GetRequiredService<ILoggerFacto
 app.UseHealthChecks("/_health")
     .UseResponseCaching()
     .UseOutputCache()
+    .UseFastEndpoints(config =>
+    {
+        config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        config.Endpoints.Configurator = ep => ep.AllowAnonymous();
+    })
     .UseOpenApi()
     .UseReDoc(options =>
     {
@@ -66,11 +71,6 @@ app.UseHealthChecks("/_health")
         options.DocumentTitle = "Aquifer API Documentation";
     })
     .UseMiddleware<ApiKeyAuthorizationMiddleware>()
-    .UseFastEndpoints(config =>
-    {
-        config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        config.Endpoints.Configurator = ep => ep.AllowAnonymous();
-    })
     .UseResponseCachingVaryByAllQueryKeys();
 
 app.ConfigureClientGeneration(SwaggerDocumentSettings.DocumentName, TimeSpan.FromDays(365));
