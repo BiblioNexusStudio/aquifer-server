@@ -31,5 +31,5 @@ public enum ParentResourceStatus
     RecentlyCompleted = 2,
     Partial = 3,
     RecentlyUpdated = 4,
-    ComingSoon = 5
+    ComingSoon = 5,
 }

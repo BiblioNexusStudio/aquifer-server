@@ -1,5 +1,5 @@
-using Aquifer.Data.Entities;
 using System.ComponentModel;
+using Aquifer.Data.Entities;
 
 namespace Aquifer.Public.API.Endpoints.Resources.Collections.List;
 

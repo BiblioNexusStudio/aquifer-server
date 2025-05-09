@@ -24,66 +24,61 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var currentUserId = (await userService.GetUserFromJwtAsync(ct)).Id;
         var resourceContent = await dbContext.ResourceContents
             .Where(x => x.Id == request.Id)
-            .Select(
-                rc => new Response
+            .Select(rc => new Response
+            {
+                EnglishLabel = rc.Resource.EnglishLabel,
+                ParentResourceName = rc.Resource.ParentResource.DisplayName,
+                ParentResourceLicenseInfo =
+                    JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(rc.Resource.ParentResource.LicenseInfo),
+                ResourceContentId = rc.Id,
+                ResourceId = rc.ResourceId,
+                Language = new LanguageResponse
                 {
-                    EnglishLabel = rc.Resource.EnglishLabel,
-                    ParentResourceName = rc.Resource.ParentResource.DisplayName,
-                    ParentResourceLicenseInfo =
-                        JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(rc.Resource.ParentResource.LicenseInfo),
-                    ResourceContentId = rc.Id,
-                    ResourceId = rc.ResourceId,
-                    Language = new LanguageResponse
-                    {
-                        Id = rc.LanguageId,
-                        EnglishDisplay = rc.Language.EnglishDisplay,
-                        ISO6393Code = rc.Language.ISO6393Code,
-                        ScriptDirection = rc.Language.ScriptDirection
-                    },
-                    Status = rc.Status,
-                    MediaType = rc.MediaType,
-                    ContentTranslations =
-                        rc.Resource
-                            .ResourceContents
-                            .Where(
-                                orc => orc.MediaType == rc.MediaType &&
-                                    orc.Status != ResourceContentStatus.TranslationNotApplicable &&
-                                    orc.Status != ResourceContentStatus.CompleteNotApplicable)
-                            .Select(
-                                orc => new TranslationResponse
-                                {
-                                    ContentId = orc.Id,
-                                    LanguageId = orc.LanguageId,
-                                    Status = orc.Status.GetDisplayName(),
-                                    HasDraft = orc.Versions.Any(x => x.IsDraft),
-                                    HasPublished = orc.Versions.Any(x => x.IsPublished),
-                                    ResourceContentStatus = orc.Status
-                                }),
-                    AssociatedResources = rc.Resource.AssociatedResources.Select(
-                        ar => new AssociatedContentResponse
+                    Id = rc.LanguageId,
+                    EnglishDisplay = rc.Language.EnglishDisplay,
+                    ISO6393Code = rc.Language.ISO6393Code,
+                    ScriptDirection = rc.Language.ScriptDirection,
+                },
+                Status = rc.Status,
+                MediaType = rc.MediaType,
+                ContentTranslations =
+                    rc.Resource
+                        .ResourceContents
+                        .Where(orc => orc.MediaType == rc.MediaType &&
+                            orc.Status != ResourceContentStatus.TranslationNotApplicable &&
+                            orc.Status != ResourceContentStatus.CompleteNotApplicable)
+                        .Select(orc => new TranslationResponse
                         {
-                            // Get the associated resource content for the current content's language or fallback to English
-                            ResourceContent = ar.AssociatedResource
-                                .ResourceContents
-                                .Where(rci => rci.MediaType == ResourceContentMediaType.Text)
-                                .OrderByDescending(
-                                    rci => rci.LanguageId == rc.LanguageId
-                                        ? 2
-                                        : rci.LanguageId == Constants.EnglishLanguageId
-                                            ? 1
-                                            : 0)
-                                .FirstOrDefault(),
-                            EnglishLabel = ar.AssociatedResource.EnglishLabel,
-                            ParentResourceName = ar.AssociatedResource.ParentResource.DisplayName,
-                            MediaTypes = ar.AssociatedResource.ResourceContents.Select(arrc => arrc.MediaType)
+                            ContentId = orc.Id,
+                            LanguageId = orc.LanguageId,
+                            Status = orc.Status.GetDisplayName(),
+                            HasDraft = orc.Versions.Any(x => x.IsDraft),
+                            HasPublished = orc.Versions.Any(x => x.IsPublished),
+                            ResourceContentStatus = orc.Status,
                         }),
-                    ProjectEntity =
-                        rc.ProjectResourceContents.FirstOrDefault(prc => prc.ResourceContentId == request.Id) == null
-                            ? null
-                            : rc.ProjectResourceContents.First(prc => prc.ResourceContentId == request.Id).Project,
-                    HasPublishedVersion = rc.Versions.Any(rcv => rcv.IsPublished),
-                    HasAdditionalReviewer = rc.Versions.Any(rcv => rcv.AssignedReviewerUser != null && rcv.IsDraft)
-                })
+                AssociatedResources = rc.Resource.AssociatedResources.Select(ar => new AssociatedContentResponse
+                {
+                    // Get the associated resource content for the current content's language or fallback to English
+                    ResourceContent = ar.AssociatedResource
+                        .ResourceContents
+                        .Where(rci => rci.MediaType == ResourceContentMediaType.Text)
+                        .OrderByDescending(rci => rci.LanguageId == rc.LanguageId
+                            ? 2
+                            : rci.LanguageId == Constants.EnglishLanguageId
+                                ? 1
+                                : 0)
+                        .FirstOrDefault(),
+                    EnglishLabel = ar.AssociatedResource.EnglishLabel,
+                    ParentResourceName = ar.AssociatedResource.ParentResource.DisplayName,
+                    MediaTypes = ar.AssociatedResource.ResourceContents.Select(arrc => arrc.MediaType),
+                }),
+                ProjectEntity =
+                    rc.ProjectResourceContents.FirstOrDefault(prc => prc.ResourceContentId == request.Id) == null
+                        ? null
+                        : rc.ProjectResourceContents.First(prc => prc.ResourceContentId == request.Id).Project,
+                HasPublishedVersion = rc.Versions.Any(rcv => rcv.IsPublished),
+                HasAdditionalReviewer = rc.Versions.Any(rcv => rcv.AssignedReviewerUser != null && rcv.IsDraft),
+            })
             .AsSplitQuery()
             .FirstOrDefaultAsync(ct);
 
@@ -102,39 +97,36 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
         resourceContent.PassageReferences = await dbContext.PassageResources
             .Where(x => x.ResourceId == resourceContent.ResourceId)
-            .Select(
-                pr => new PassageReferenceResponse
-                {
-                    StartVerseId = pr.Passage.StartVerseId,
-                    EndVerseId = pr.Passage.EndVerseId
-                })
+            .Select(pr => new PassageReferenceResponse
+            {
+                StartVerseId = pr.Passage.StartVerseId,
+                EndVerseId = pr.Passage.EndVerseId,
+            })
             .ToListAsync(ct);
 
         var relevantContentVersion = await dbContext.ResourceContentVersions
             .Where(rcv => rcv.ResourceContentId == request.Id)
-            .Select(
-                x => new
-                {
-                    x.Id,
-                    x.ResourceContentId,
-                    x.IsDraft,
-                    x.IsPublished,
-                    x.Version,
-                    x.AssignedUserId,
-                    x.AssignedUser,
-                    x.Content,
-                    x.ContentSize,
-                    x.DisplayName,
-                    x.WordCount,
-                    x.ReviewLevel,
-                    x.Created
-                })
-            .OrderBy(
-                rcv => rcv.IsDraft
-                    ? 0
-                    : rcv.IsPublished
-                        ? 1
-                        : 2)
+            .Select(x => new
+            {
+                x.Id,
+                x.ResourceContentId,
+                x.IsDraft,
+                x.IsPublished,
+                x.Version,
+                x.AssignedUserId,
+                x.AssignedUser,
+                x.Content,
+                x.ContentSize,
+                x.DisplayName,
+                x.WordCount,
+                x.ReviewLevel,
+                x.Created,
+            })
+            .OrderBy(rcv => rcv.IsDraft
+                ? 0
+                : rcv.IsPublished
+                    ? 1
+                    : 2)
             .ThenByDescending(rcv => rcv.Version)
             .FirstOrDefaultAsync(ct);
 
@@ -159,30 +151,31 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var snapshots = await dbContext.ResourceContentVersionSnapshots
             .Where(rcvs => rcvs.ResourceContentVersionId == relevantContentVersion.Id)
             .OrderByDescending(rcvs => rcvs.Created)
-            .Select(
-                rcvs => new SnapshotResponse
-                {
-                    Id = rcvs.Id,
-                    Created = rcvs.Created,
-                    AssignedUserName = rcvs.User == null ? null : $"{rcvs.User.FirstName} {rcvs.User.LastName}",
-                    Status = rcvs.Status.GetDisplayName()
-                })
+            .Select(rcvs => new SnapshotResponse
+            {
+                Id = rcvs.Id,
+                Created = rcvs.Created,
+                AssignedUserName = rcvs.User == null ? null : $"{rcvs.User.FirstName} {rcvs.User.LastName}",
+                Status = rcvs.Status.GetDisplayName(),
+            })
             .ToListAsync(ct);
 
         var versions = await dbContext.ResourceContentVersions
             .Where(rcv => rcv.Id != relevantContentVersion.Id && rcv.ResourceContentId == relevantContentVersion.ResourceContentId)
             .OrderByDescending(rcv => rcv.Created)
-            .Select(
-                rcv => new VersionResponse
-                {
-                    Id = rcv.Id,
-                    Created = rcv.Created,
-                    Version = rcv.Version,
-                    IsPublished = rcv.IsPublished
-                })
+            .Select(rcv => new VersionResponse
+            {
+                Id = rcv.Id,
+                Created = rcv.Created,
+                Version = rcv.Version,
+                IsPublished = rcv.IsPublished,
+            })
             .ToListAsync(ct);
 
-        if (resourceContent.Language.Id != 1 && relevantContentVersion.Version > 1 && relevantContentVersion.IsDraft && resourceContent.MediaType == ResourceContentMediaType.Text)
+        if (resourceContent.Language.Id != 1 &&
+            relevantContentVersion.Version > 1 &&
+            relevantContentVersion.IsDraft &&
+            resourceContent.MediaType == ResourceContentMediaType.Text)
         {
             var firstVersion = versions.FirstOrDefault();
             if (firstVersion is not null)
@@ -190,14 +183,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 var firstVersionSnapshot = await dbContext.ResourceContentVersionSnapshots
                     .Where(rcvs => rcvs.ResourceContentVersionId == firstVersion.Id)
                     .OrderBy(x => x.Created)
-                    .Select(
-                        x => new SnapshotResponse
-                        {
-                            Id = x.Id,
-                            Created = x.Created,
-                            AssignedUserName = null,
-                            Status = x.Status.GetDisplayName()
-                        })
+                    .Select(x => new SnapshotResponse
+                    {
+                        Id = x.Id,
+                        Created = x.Created,
+                        AssignedUserName = null,
+                        Status = x.Status.GetDisplayName(),
+                    })
                     .FirstOrDefaultAsync(ct);
 
                 if (firstVersionSnapshot is not null)
@@ -210,27 +202,25 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         // Can this move into the IsDraft check below?
         resourceContent.MachineTranslations = await dbContext.ResourceContentVersionMachineTranslations
             .Where(x => x.ResourceContentVersionId == relevantContentVersion.Id)
-            .Select(
-                mt => new MachineTranslationResponse
-                {
-                    Id = mt.Id,
-                    ContentIndex = mt.ContentIndex,
-                    UserId = mt.UserId,
-                    UserRating = mt.UserRating,
-                    ImproveClarity = mt.ImproveClarity,
-                    ImproveConsistency = mt.ImproveConsistency,
-                    ImproveTone = mt.ImproveTone,
-                    HadRetranslation = mt.RetranslationReason != null,
-                    Created = mt.Created
-                })
+            .Select(mt => new MachineTranslationResponse
+            {
+                Id = mt.Id,
+                ContentIndex = mt.ContentIndex,
+                UserId = mt.UserId,
+                UserRating = mt.UserRating,
+                ImproveClarity = mt.ImproveClarity,
+                ImproveConsistency = mt.ImproveConsistency,
+                ImproveTone = mt.ImproveTone,
+                HadRetranslation = mt.RetranslationReason != null,
+                Created = mt.Created,
+            })
             .ToListAsync(ct);
 
         var relatedAudioResourceContentIds = await dbContext.ResourceContents
-            .Where(
-                rc => rc.Id != resourceContent.ResourceContentId &&
-                    rc.ResourceId == resourceContent.ResourceId &&
-                    rc.LanguageId == resourceContent.Language.Id &&
-                    rc.MediaType == ResourceContentMediaType.Audio)
+            .Where(rc => rc.Id != resourceContent.ResourceContentId &&
+                rc.ResourceId == resourceContent.ResourceId &&
+                rc.LanguageId == resourceContent.Language.Id &&
+                rc.MediaType == ResourceContentMediaType.Audio)
             .Select(rc => rc.Id)
             .ToListAsync(ct);
 
@@ -261,24 +251,22 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             resourceContent.CommentThreads = new CommentThreadsResponse
             {
                 ThreadTypeId = relevantContentVersion.Id,
-                Threads = commentThreads.Select(
-                        x => new ThreadResponse
-                        {
-                            Id = x.CommentThreadId,
-                            Resolved = x.CommentThread.Resolved,
-                            Comments = x.CommentThread
-                                .Comments
-                                .Select(
-                                    c => new CommentResponse
-                                    {
-                                        Id = c.Id,
-                                        Comment = c.Comment,
-                                        User = UserDto.FromUserEntity(c.User)!,
-                                        DateTime = c.Updated
-                                    })
-                                .ToList()
-                        })
-                    .ToList()
+                Threads = commentThreads.Select(x => new ThreadResponse
+                    {
+                        Id = x.CommentThreadId,
+                        Resolved = x.CommentThread.Resolved,
+                        Comments = x.CommentThread
+                            .Comments
+                            .Select(c => new CommentResponse
+                            {
+                                Id = c.Id,
+                                Comment = c.Comment,
+                                User = UserDto.FromUserEntity(c.User)!,
+                                DateTime = c.Updated,
+                            })
+                            .ToList(),
+                    })
+                    .ToList(),
             };
 
             if (relevantContentVersion.AssignedUser is not null)
@@ -287,7 +275,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 {
                     Id = relevantContentVersion.AssignedUser.Id,
                     Name = $"{relevantContentVersion.AssignedUser.FirstName} {relevantContentVersion.AssignedUser.LastName}",
-                    CompanyId = relevantContentVersion.AssignedUser.CompanyId
+                    CompanyId = relevantContentVersion.AssignedUser.CompanyId,
                 };
             }
         }

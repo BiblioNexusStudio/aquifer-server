@@ -6,7 +6,7 @@ namespace Aquifer.Data.Utilities;
 public static partial class CommentMentionsUtility
 {
     /// <summary>
-    /// Parses mentions from the comment and updates the <paramref name="comment"/>'s <see cref="CommentEntity.Mentions"/>.
+    /// Parses mentions from the comment and updates the <paramref name="comment" />'s <see cref="CommentEntity.Mentions" />.
     /// Note: Caller must save DbContext changes.
     /// </summary>
     public static void UpsertCommentMentions(AquiferDbContext dbContext, CommentEntity comment)

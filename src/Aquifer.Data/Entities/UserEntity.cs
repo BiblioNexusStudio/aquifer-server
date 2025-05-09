@@ -4,8 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
-[Index(nameof(ProviderId), IsUnique = true), Index(nameof(Email), IsUnique = true),
- EntityTypeConfiguration(typeof(UserEntityConfiguration))]
+[Index(nameof(ProviderId), IsUnique = true)]
+[Index(nameof(Email), IsUnique = true)]
+[EntityTypeConfiguration(typeof(UserEntityConfiguration))]
 public class UserEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }

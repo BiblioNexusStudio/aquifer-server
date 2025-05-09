@@ -19,8 +19,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var user = await userService.GetUserFromJwtAsync(ct);
         var queryResults = await dbContext.ResourceContentVersionAssignedUserHistory
             .Where(x => x.ChangedByUserId == user.Id &&
-                        x.Created > DateTime.UtcNow.AddDays(-45) &&
-                        x.ResourceContentVersion.AssignedUserId != user.Id)
+                x.Created > DateTime.UtcNow.AddDays(-45) &&
+                x.ResourceContentVersion.AssignedUserId != user.Id)
             .Select(x => new Response
             {
                 Id = x.ResourceContentVersion.ResourceContentId,
@@ -28,7 +28,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 LastActionTime = x.Created,
                 ParentResourceName = x.ResourceContentVersion.ResourceContent.Resource.ParentResource.DisplayName,
                 SortOrder = x.ResourceContentVersion.ResourceContent.Resource.SortOrder,
-                SourceWords = x.ResourceContentVersion.SourceWordCount
+                SourceWords = x.ResourceContentVersion.SourceWordCount,
             })
             .ToListAsync(ct);
 

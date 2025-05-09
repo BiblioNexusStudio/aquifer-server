@@ -17,8 +17,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         var response = await dbContext.BibleBookContents
-            .Where(bbc => bbc.Bible.Enabled && bbc.Bible.Id == req.BibleId &&
-                          ((int)bbc.BookId == req.BookNumber || bbc.Book.Code == req.BookCode))
+            .Where(bbc => bbc.Bible.Enabled &&
+                bbc.Bible.Id == req.BibleId &&
+                ((int)bbc.BookId == req.BookNumber || bbc.Book.Code == req.BookCode))
             .Select(bbc => new Response
             {
                 BibleId = bbc.Bible.Id,
@@ -26,17 +27,19 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 BibleAbbreviation = bbc.Bible.Abbreviation,
                 BookCode = bbc.Book.Code,
                 BookName = bbc.DisplayName,
-                BookNumber = (int)bbc.BookId
+                BookNumber = (int)bbc.BookId,
             })
             .FirstOrDefaultAsync(ct);
 
         if (response is not null)
         {
             response.Chapters = await dbContext.BibleTexts
-                .Where(bt => bt.BibleId == response.BibleId && (int)bt.BookId == response.BookNumber &&
-                             bt.ChapterNumber >= req.StartChapter && bt.ChapterNumber <= req.EndChapter &&
-                             (bt.ChapterNumber != req.StartChapter || bt.VerseNumber >= req.StartVerse) &&
-                             (bt.ChapterNumber != req.EndChapter || bt.VerseNumber <= req.EndVerse))
+                .Where(bt => bt.BibleId == response.BibleId &&
+                    (int)bt.BookId == response.BookNumber &&
+                    bt.ChapterNumber >= req.StartChapter &&
+                    bt.ChapterNumber <= req.EndChapter &&
+                    (bt.ChapterNumber != req.StartChapter || bt.VerseNumber >= req.StartVerse) &&
+                    (bt.ChapterNumber != req.EndChapter || bt.VerseNumber <= req.EndVerse))
                 .OrderBy(bt => bt.ChapterNumber)
                 .GroupBy(bt => bt.ChapterNumber)
                 .Select(bt => new ResponseChapters
@@ -47,8 +50,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                         .Select(bti => new ResponseChapterVerses
                         {
                             Number = bti.VerseNumber,
-                            Text = bti.Text
-                        }).ToList()
+                            Text = bti.Text,
+                        })
+                        .ToList(),
                 })
                 .ToListAsync(ct);
         }

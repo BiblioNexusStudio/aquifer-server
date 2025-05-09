@@ -40,13 +40,19 @@ public sealed class EndpointTests(App _app) : TestBase<App>
 
         if (request.LanguageCodes is not null)
         {
-            result.AvailableLanguages.Select(l => l.LanguageCode).Order()
-                .Should().Equal(request.LanguageCodes.Order());
+            result.AvailableLanguages
+                .Select(l => l.LanguageCode)
+                .Order()
+                .Should()
+                .Equal(request.LanguageCodes.Order());
         }
         else if (request.LanguageIds is not null)
         {
-            result.AvailableLanguages.Select(l => l.LanguageId).Order()
-                .Should().Equal(request.LanguageIds.Order());
+            result.AvailableLanguages
+                .Select(l => l.LanguageId)
+                .Order()
+                .Should()
+                .Equal(request.LanguageIds.Order());
         }
 
         // assert that response data is populated

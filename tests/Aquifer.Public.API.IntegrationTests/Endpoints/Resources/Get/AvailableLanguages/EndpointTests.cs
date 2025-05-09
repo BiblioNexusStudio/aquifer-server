@@ -19,7 +19,6 @@ public sealed class EndpointTests(App _app) : TestBase<App>
             new Request
             {
                 ContentId = resourceContentId,
-                
             });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);

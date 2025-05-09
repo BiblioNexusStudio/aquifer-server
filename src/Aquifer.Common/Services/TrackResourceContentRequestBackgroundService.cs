@@ -40,6 +40,6 @@ public sealed class TrackResourceContentRequestBackgroundService(
         CancellationToken ct)
     {
         var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.TrackResourceContentRequest, ct);
-        await queueClient.SendMessageAsync(message, cancellationToken: ct);
+        await queueClient.SendMessageAsync(message, ct);
     }
 }

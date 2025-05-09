@@ -20,7 +20,8 @@ public class TrackResourceContentRequestMessageSubscriber(
 
     [Function(TrackResourceContentRequestMessageSubscriberFunctionName)]
     public async Task RunAsync(
-        [QueueTrigger(Queues.TrackResourceContentRequest)] QueueMessage queueMessage,
+        [QueueTrigger(Queues.TrackResourceContentRequest)]
+        QueueMessage queueMessage,
         CancellationToken ct)
     {
         await queueMessage.ProcessAsync<TrackResourceContentRequestMessage, TrackResourceContentRequestMessageSubscriber>(
@@ -43,7 +44,7 @@ public class TrackResourceContentRequestMessageSubscriber(
                     EndpointId = message.EndpointId,
                     Source = message.Source,
                     UserId = message.UserId,
-                    Created = queueMessage.InsertedOn?.UtcDateTime ?? DateTime.UtcNow
+                    Created = queueMessage.InsertedOn?.UtcDateTime ?? DateTime.UtcNow,
                 }),
             ct);
 
@@ -69,40 +70,43 @@ public class TrackResourceContentRequestMessageSubscriber(
             // IP service for the same IP address at the same time.
             // Using a transaction requires explicitly defining an execution strategy so that EF knows exactly what to replay in the event
             // of a transient failure.
-            await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
-            {
-                await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
-
-                var ipDataRecord = await dbContext.Database
-                    .SqlQuery<IpAddressDataEntity>($"""
-                        SELECT
-                            IpAddress,
-                            City,
-                            Region,
-                            Country,
-                            Created
-                        FROM IpAddressData WITH (UPDLOCK)
-                        WHERE IpAddress = {trackingMetadata.IpAddress}
-                        """)
-                    .SingleOrDefaultAsync(ct);
-
-                if (ipDataRecord is null)
+            await dbContext.Database
+                .CreateExecutionStrategy()
+                .ExecuteAsync(async () =>
                 {
-                    var ipData = await ipAddressClient.LookupIpAddressAsync(trackingMetadata.IpAddress, ct);
+                    await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
 
-                    var newRecord = new IpAddressDataEntity
+                    var ipDataRecord = await dbContext.Database
+                        .SqlQuery<IpAddressDataEntity>(
+                            $"""
+                            SELECT
+                                IpAddress,
+                                City,
+                                Region,
+                                Country,
+                                Created
+                            FROM IpAddressData WITH (UPDLOCK)
+                            WHERE IpAddress = {trackingMetadata.IpAddress}
+                            """)
+                        .SingleOrDefaultAsync(ct);
+
+                    if (ipDataRecord is null)
                     {
-                        IpAddress = trackingMetadata.IpAddress,
-                        City = ipData.City,
-                        Region = ipData.Region,
-                        Country = ipData.Country
-                    };
+                        var ipData = await ipAddressClient.LookupIpAddressAsync(trackingMetadata.IpAddress, ct);
 
-                    await dbContext.IpAddressData.AddAsync(newRecord, ct);
-                    await dbContext.SaveChangesAsync(ct);
-                    await transaction.CommitAsync(ct);
-                }
-            });
+                        var newRecord = new IpAddressDataEntity
+                        {
+                            IpAddress = trackingMetadata.IpAddress,
+                            City = ipData.City,
+                            Region = ipData.Region,
+                            Country = ipData.Country,
+                        };
+
+                        await dbContext.IpAddressData.AddAsync(newRecord, ct);
+                        await dbContext.SaveChangesAsync(ct);
+                        await transaction.CommitAsync(ct);
+                    }
+                });
         }
         catch (Exception e)
         {

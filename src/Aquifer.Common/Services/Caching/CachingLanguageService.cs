@@ -20,9 +20,9 @@ public interface ICachingLanguageService
         ValidateLanguageIdOrCodeAsync(int? languageId, string? languageCode, bool shouldRequireInput, CancellationToken ct);
 
     Task<
-        (IReadOnlyList<int> InvalidLanguageIds,
-        IReadOnlyList<string> InvalidLanguageCodes,
-        IReadOnlyList<int>? ValidLanguageIds)>
+            (IReadOnlyList<int> InvalidLanguageIds,
+            IReadOnlyList<string> InvalidLanguageCodes,
+            IReadOnlyList<int>? ValidLanguageIds)>
         ValidateLanguageIdsOrCodesAsync(
             IReadOnlyList<int>? languageIds,
             IReadOnlyList<string>? languageCodes,
@@ -79,33 +79,6 @@ public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryC
     {
         return (await GetDictionariesFromCacheAsync(ct))
             .LanguageIdByCodeMap;
-    }
-
-    private async Task<(ReadOnlyDictionary<int, Language> LanguageByIdMap, ReadOnlyDictionary<int, string> LanguageCodeByIdMap, ReadOnlyDictionary<string, int> LanguageIdByCodeMap)> GetDictionariesFromCacheAsync(CancellationToken ct)
-    {
-        return await _memoryCache.GetOrCreateAsync(
-            LanguageDictionariesCacheKey,
-            async cacheEntry =>
-            {
-                cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
-
-                var languageByIdMap = (await _dbContext.Languages
-                        .ToListAsync(ct))
-                    .ToDictionary(
-                        l => l.Id,
-                        l => new Language(l.Id, l.ISO6393Code, l.EnglishDisplay, l.DisplayName, l.Enabled, l.ScriptDirection))
-                    .AsReadOnly();
-
-                var languageCodeByIdMap = languageByIdMap
-                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ISO6393Code)
-                    .AsReadOnly();
-
-                var languageIdByCodeMap = languageCodeByIdMap
-                    .ToDictionary(kvp => kvp.Value, kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
-                    .AsReadOnly();
-
-                return (languageByIdMap, languageCodeByIdMap, languageIdByCodeMap);
-            });
     }
 
     public async Task<(bool IsValidLanguageId, bool IsValidLanguageCode, int? ValidLanguageId)>
@@ -207,5 +180,33 @@ public sealed class CachingLanguageService(AquiferDbContext _dbContext, IMemoryC
         }
 
         throw new ArgumentException($"One of {nameof(languageIds)} or {nameof(languageCodes)} must be non-null and non-empty.");
+    }
+
+    private async Task<(ReadOnlyDictionary<int, Language> LanguageByIdMap, ReadOnlyDictionary<int, string> LanguageCodeByIdMap,
+        ReadOnlyDictionary<string, int> LanguageIdByCodeMap)> GetDictionariesFromCacheAsync(CancellationToken ct)
+    {
+        return await _memoryCache.GetOrCreateAsync(
+            LanguageDictionariesCacheKey,
+            async cacheEntry =>
+            {
+                cacheEntry.AbsoluteExpirationRelativeToNow = s_cacheLifetime;
+
+                var languageByIdMap = (await _dbContext.Languages
+                        .ToListAsync(ct))
+                    .ToDictionary(
+                        l => l.Id,
+                        l => new Language(l.Id, l.ISO6393Code, l.EnglishDisplay, l.DisplayName, l.Enabled, l.ScriptDirection))
+                    .AsReadOnly();
+
+                var languageCodeByIdMap = languageByIdMap
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ISO6393Code)
+                    .AsReadOnly();
+
+                var languageIdByCodeMap = languageCodeByIdMap
+                    .ToDictionary(kvp => kvp.Value, kvp => kvp.Key, StringComparer.OrdinalIgnoreCase)
+                    .AsReadOnly();
+
+                return (languageByIdMap, languageCodeByIdMap, languageIdByCodeMap);
+            });
     }
 }

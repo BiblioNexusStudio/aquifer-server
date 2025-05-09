@@ -24,7 +24,7 @@ public sealed class SendResourceAssignmentNotificationsManager(
     private const int MaxAgeOfResourceAssignmentInMinutes = 120;
 
     [Function(nameof(SendResourceAssignmentNotificationsManager))]
-    [FixedDelayRetry(maxRetryCount: 1, Timings.TenSecondDelayInterval)]
+    [FixedDelayRetry(1, Timings.TenSecondDelayInterval)]
     public override async Task RunAsync([TimerTrigger(CronSchedules.EveryTenMinutes)] TimerInfo timerInfo, CancellationToken ct)
     {
         await base.RunAsync(timerInfo, ct);
@@ -40,30 +40,29 @@ public sealed class SendResourceAssignmentNotificationsManager(
         // Normally we expect to find only recent resource assignments but if there are errors during processing
         // or the Azure Function is temporarily disabled then we don't want to send out-of-date notification content.
         var includeResourcesAssignedSince = new[]
-        {
-            jobHistory.LastProcessed,
-            DateTime.UtcNow.AddMinutes(-MaxAgeOfResourceAssignmentInMinutes),
-        }
-        .Max();
+            {
+                jobHistory.LastProcessed, DateTime.UtcNow.AddMinutes(-MaxAgeOfResourceAssignmentInMinutes),
+            }
+            .Max();
 
         // Possible Improvement: Only send notifications when a user is assigned to the *most recent* ResourceContentVersion.
         var userHistories = await _dbContext.ResourceContentVersionAssignedUserHistory
-                .Where(rcvauh =>
-                    rcvauh.AssignedUser != null &&
-                    rcvauh.AssignedUser.Enabled &&
-                    rcvauh.AssignedUser.AquiferNotificationsEnabled &&
-                    (rcvauh.AssignedUser.Role == UserRole.Editor || rcvauh.AssignedUser.Role == UserRole.Reviewer) &&
-                    rcvauh.AssignedUserId == rcvauh.ResourceContentVersion.AssignedUserId &&
-                    (rcvauh.Created > includeResourcesAssignedSince))
-                .Select(rcvauh => new
-                {
-                    AssignedUser = rcvauh.AssignedUser!,
-                    rcvauh.Created,
-                    ParentResourceName = rcvauh.ResourceContentVersion.ResourceContent.Resource.ParentResource.DisplayName,
-                    rcvauh.ResourceContentVersion.ResourceContentId,
-                    ResourceName = rcvauh.ResourceContentVersion.ResourceContent.Resource.EnglishLabel,
-                })
-                .ToListAsync(ct);
+            .Where(rcvauh =>
+                rcvauh.AssignedUser != null &&
+                rcvauh.AssignedUser.Enabled &&
+                rcvauh.AssignedUser.AquiferNotificationsEnabled &&
+                (rcvauh.AssignedUser.Role == UserRole.Editor || rcvauh.AssignedUser.Role == UserRole.Reviewer) &&
+                rcvauh.AssignedUserId == rcvauh.ResourceContentVersion.AssignedUserId &&
+                rcvauh.Created > includeResourcesAssignedSince)
+            .Select(rcvauh => new
+            {
+                AssignedUser = rcvauh.AssignedUser!,
+                rcvauh.Created,
+                ParentResourceName = rcvauh.ResourceContentVersion.ResourceContent.Resource.ParentResource.DisplayName,
+                rcvauh.ResourceContentVersion.ResourceContentId,
+                ResourceName = rcvauh.ResourceContentVersion.ResourceContent.Resource.EnglishLabel,
+            })
+            .ToListAsync(ct);
 
         var usersByIdMap = userHistories
             .Select(uh => uh.AssignedUser)
@@ -78,15 +77,17 @@ public sealed class SendResourceAssignmentNotificationsManager(
                 var countOfResourcesAssignedToUser = userGrouping.Count();
 
                 return new SendTemplatedEmailMessage(
-                    From: NotificationsHelper.NotificationSenderEmailAddress,
-                    TemplateId: _configurationOptions.Value.Notifications.SendResourceAssignmentNotificationTemplateId,
-                    Tos: [NotificationsHelper.GetEmailAddress(user)],
-                    DynamicTemplateData: new Dictionary<string, object>
+                    NotificationsHelper.NotificationSenderEmailAddress,
+                    _configurationOptions.Value.Notifications.SendResourceAssignmentNotificationTemplateId,
+                    [NotificationsHelper.GetEmailAddress(user)],
+                    new Dictionary<string, object>
                     {
                         [EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notification: Resources Assigned",
                         ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
                         ["resourceCount"] = countOfResourcesAssignedToUser,
-                        ["additionalResourceCount"] = Math.Max(countOfResourcesAssignedToUser - MaxNumberOfResourcesToDisplayInNotificationContent, 0),
+                        ["additionalResourceCount"] = Math.Max(
+                            countOfResourcesAssignedToUser - MaxNumberOfResourcesToDisplayInNotificationContent,
+                            0),
                         ["parentResources"] = userGrouping
                             .Take(MaxNumberOfResourcesToDisplayInNotificationContent)
                             .GroupBy(uh => uh.ParentResourceName)
@@ -106,14 +107,14 @@ public sealed class SendResourceAssignmentNotificationsManager(
                             })
                             .ToArray(),
                     },
-                    EmailSpecificDynamicTemplateDataByToEmailAddressMap: new Dictionary<string, Dictionary<string, object>>
+                    new Dictionary<string, Dictionary<string, object>>
                     {
                         [user.Email] = new()
                         {
                             ["recipientName"] = NotificationsHelper.GetUserFullName(user),
                         },
                     },
-                    ReplyTos: [NotificationsHelper.NotificationNoReplyEmailAddress]);
+                    [NotificationsHelper.NotificationNoReplyEmailAddress]);
             })
             .ToList();
 
@@ -133,10 +134,10 @@ public sealed class SendResourceAssignmentNotificationsManager(
             catch (Exception ex)
             {
                 Logger.LogError(
-                    ex, 
+                    ex,
                     "Unable to publish resource assignment notification message for \"{EmailAddress}\". Skipping notification. Manual developer replay is required: {MessageContent}",
                     sendTemplatedEmailMessage.Tos[0].Email,
-                    MessagesJsonSerializer.Serialize(sendTemplatedEmailMessage, shouldAllowInvalidMessageLength: true));
+                    MessagesJsonSerializer.Serialize(sendTemplatedEmailMessage, true));
             }
         }
 

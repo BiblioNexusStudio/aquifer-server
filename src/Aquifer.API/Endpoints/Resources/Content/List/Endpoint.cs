@@ -29,8 +29,8 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
 
         var (total, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
             ResourceContentSearchIncludeFlags.ResourceContentVersions |
-                ResourceContentSearchIncludeFlags.HasAudioForLanguage |
-                ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
+            ResourceContentSearchIncludeFlags.HasAudioForLanguage |
+            ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
             new ResourceContentSearchFilter
             {
                 ParentResourceId = req.ParentResourceId,

@@ -7,7 +7,8 @@ public class Validator : Validator<Request>
 {
     public Validator()
     {
-        RuleFor(x => x.Ids).NotEmpty()
+        RuleFor(x => x.Ids)
+            .NotEmpty()
             .Must(ids => ids.Length <= 100);
     }
 }

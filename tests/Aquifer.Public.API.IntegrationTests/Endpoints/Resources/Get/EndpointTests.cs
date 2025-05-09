@@ -122,7 +122,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
         result.Language.ScriptDirection.Should().NotBe(ScriptDirection.None);
     }
 
-    private sealed class CdnUrlWrapper
+    public sealed class CdnUrlWrapper
     {
         public string Url { get; set; } = null!;
     }

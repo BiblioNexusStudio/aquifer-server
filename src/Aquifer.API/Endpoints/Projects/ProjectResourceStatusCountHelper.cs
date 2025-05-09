@@ -12,27 +12,27 @@ public static class ProjectResourceStatusCountHelper
         CancellationToken ct)
     {
         var selectQuery = $"""
-                           SELECT
-                               SUM(RCVD.SourceWordCount) AS WordCount,
-                               RC.Status,
-                               PRC.ProjectId
-                           FROM ResourceContents RC
-                           JOIN ProjectResourceContents PRC ON RC.Id = PRC.ResourceContentId
-                           LEFT JOIN
-                           (
-                               SELECT *
-                               FROM
-                               (
-                                   SELECT
-                                       *,
-                                       ROW_NUMBER() OVER (PARTITION BY ResourceContentId ORDER BY [Version] DESC) AS LatestVersionRank
-                                   FROM ResourceContentVersions
-                               ) x
-                               WHERE x.LatestVersionRank = 1
-                           ) RCVD ON RCVD.ResourceContentId = RC.Id
-                           {(projectIds is { Count: > 0 } ? $"WHERE PRC.ProjectId IN ({string.Join(", ", projectIds)})" : "")}
-                           GROUP BY ProjectId, Status
-                           """;
+            SELECT
+                SUM(RCVD.SourceWordCount) AS WordCount,
+                RC.Status,
+                PRC.ProjectId
+            FROM ResourceContents RC
+            JOIN ProjectResourceContents PRC ON RC.Id = PRC.ResourceContentId
+            LEFT JOIN
+            (
+                SELECT *
+                FROM
+                (
+                    SELECT
+                        *,
+                        ROW_NUMBER() OVER (PARTITION BY ResourceContentId ORDER BY [Version] DESC) AS LatestVersionRank
+                    FROM ResourceContentVersions
+                ) x
+                WHERE x.LatestVersionRank = 1
+            ) RCVD ON RCVD.ResourceContentId = RC.Id
+            {(projectIds is { Count: > 0 } ? $"WHERE PRC.ProjectId IN ({string.Join(", ", projectIds)})" : "")}
+            GROUP BY ProjectId, Status
+            """;
         return await dbContext.Database
             .SqlQueryRaw<ProjectResourceSourceWordCount>(selectQuery)
             .ToListAsync(ct);

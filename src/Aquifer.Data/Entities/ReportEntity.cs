@@ -34,9 +34,6 @@ public class ReportEntity : IHasUpdatedTimestamp
 
     public int? DefaultDateRangeMonths { get; set; }
 
-    [SqlDefaultValue("getutcdate()")]
-    public DateTime Updated { get; set; } = DateTime.UtcNow;
-
     [MaxLength(32)]
     public string? AllowedRoles { get; set; }
 
@@ -45,6 +42,9 @@ public class ReportEntity : IHasUpdatedTimestamp
     /// menu for user to select.
     /// </summary>
     public bool ShowInDropdown { get; set; }
+
+    [SqlDefaultValue("getutcdate()")]
+    public DateTime Updated { get; set; } = DateTime.UtcNow;
 }
 
 public enum ReportType
@@ -52,5 +52,5 @@ public enum ReportType
     None = 0,
     Table = 1,
     BarChart = 2,
-    LineChart = 3
+    LineChart = 3,
 }

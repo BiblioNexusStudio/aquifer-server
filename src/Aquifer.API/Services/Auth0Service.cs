@@ -22,6 +22,7 @@ public interface IAuth0Service
         string accessToken,
         string auth0UserId,
         CancellationToken ct);
+
     Task AssignRoleToUserAsync(string accessToken, string auth0UserId, string roleId, CancellationToken ct);
     Task RemoveRolesFromUserAsync(string accessToken, string auth0UserId, IReadOnlyList<string> roleIds, CancellationToken ct);
 
@@ -87,7 +88,7 @@ public sealed class Auth0Service(Auth0Settings _auth0Options, IAzureKeyVaultClie
 
         var getRolesResponse = await auth0ManagementClient.Roles.GetAllAsync(
             new GetRolesRequest(),
-            new PaginationInfo(pageNo: 0, perPage: 50), // one page should be enough to fetch all of our roles
+            new PaginationInfo(0, 50), // one page should be enough to fetch all of our roles
             ct);
 
         return getRolesResponse
@@ -114,8 +115,8 @@ public sealed class Auth0Service(Auth0Settings _auth0Options, IAzureKeyVaultClie
 
         var getUserRolesResponse = await auth0ManagementClient.Users.GetRolesAsync(
             auth0UserId,
-            new PaginationInfo(pageNo: 0, perPage: 50), // one page should be enough to fetch all of our roles
-            cancellationToken: ct);
+            new PaginationInfo(0, 50), // one page should be enough to fetch all of our roles
+            ct);
 
         return getUserRolesResponse
             .Select(r => (r.Id, r.Name))

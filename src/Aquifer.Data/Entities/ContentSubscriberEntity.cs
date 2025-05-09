@@ -10,6 +10,7 @@ public class ContentSubscriberEntity : IHasUpdatedTimestamp
 
     [MaxLength(64)]
     public string UnsubscribeId { get; set; } = RandomNumberGenerator.GetHexString(64);
+
     [MaxLength(256)]
     public string Name { get; set; } = null!;
 

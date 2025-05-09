@@ -21,7 +21,7 @@ public sealed class SendNewContentEmailsManager(
     : ManagerBase<SendNewContentEmailsManager>(logger)
 {
     [Function(nameof(SendNewContentEmailsManager))]
-    [FixedDelayRetry(maxRetryCount: 1, Timings.TenSecondDelayInterval)]
+    [FixedDelayRetry(1, Timings.TenSecondDelayInterval)]
     public override async Task RunAsync([TimerTrigger(CronSchedules.FirstOfMonthAtNoon)] TimerInfo timerInfo, CancellationToken ct)
     {
         await base.RunAsync(timerInfo, ct);
@@ -40,7 +40,8 @@ public sealed class SendNewContentEmailsManager(
         await SendNewContentEmailsAsync(subscribers, allNewItems, ct);
     }
 
-    private async Task SendNewContentEmailsAsync(List<SubscriberInfo> subscribers,
+    private async Task SendNewContentEmailsAsync(
+        List<SubscriberInfo> subscribers,
         List<UpdatedParentResources> allNewItems,
         CancellationToken ct)
     {
@@ -70,35 +71,39 @@ public sealed class SendNewContentEmailsManager(
 
     private void TrackSendEvent(SubscriberInfo subscriber, string emailContent)
     {
-        telemetryClient.TrackEvent("marketing-new-content-email-sent",
+        telemetryClient.TrackEvent(
+            "marketing-new-content-email-sent",
             new Dictionary<string, string>
             {
                 { "email", subscriber.Email },
                 { "name", subscriber.Name },
-                { "content", emailContent }
+                { "content", emailContent },
             });
     }
 
-    private async Task SendEmailAsync(EmailTemplateEntity emailTemplate,
+    private async Task SendEmailAsync(
+        EmailTemplateEntity emailTemplate,
         SubscriberInfo subscriber,
         string emailContent,
         CancellationToken ct)
     {
         await emailMessagePublisher.PublishSendEmailMessageAsync(
             new SendEmailMessage(
-                From: new EmailAddress(options.Value.MarketingEmail.Address, options.Value.MarketingEmail.Name),
-                Subject: emailTemplate.Subject,
-                HtmlContent: emailContent,
-                Tos: [new EmailAddress(subscriber.Email, subscriber.Name)]),
+                new EmailAddress(options.Value.MarketingEmail.Address, options.Value.MarketingEmail.Name),
+                emailTemplate.Subject,
+                emailContent,
+                [new EmailAddress(subscriber.Email, subscriber.Name)]),
             ct);
     }
 
     private string BuildEmailContent(List<UpdatedParentResources> newItems, EmailTemplateEntity emailTemplate, SubscriberInfo subscriber)
     {
-        var resourcesLanguages = newItems.Aggregate("",
+        var resourcesLanguages = newItems.Aggregate(
+            "",
             (current, item) => current + $"{item.ParentResourceDisplayName} - {item.LanguageEnglishDisplayName}<br />");
 
-        return emailTemplate.Template.Replace("[NAME]", subscriber.Name)
+        return emailTemplate.Template
+            .Replace("[NAME]", subscriber.Name)
             .Replace("[RESOURCES]", resourcesLanguages)
             .Replace("[RESOURCE_LINK]", options.Value.MarketingEmail.ResourceLink)
             .Replace("[UNSUBSCRIBE]", $"{options.Value.AquiferApiBaseUri}/marketing/unsubscribe/{subscriber.UnsubscribeId}?api-key=none");
@@ -124,7 +129,7 @@ public sealed class SendNewContentEmailsManager(
                 ParentResourceId = x.ResourceContent.Resource.ParentResourceId,
                 ParentResourceDisplayName = x.ResourceContent.Resource.ParentResource.DisplayName,
                 LanguageId = x.ResourceContent.LanguageId,
-                LanguageEnglishDisplayName = x.ResourceContent.Language.EnglishDisplay
+                LanguageEnglishDisplayName = x.ResourceContent.Language.EnglishDisplay,
             })
             .Distinct()
             .ToListAsync(ct);
@@ -132,14 +137,15 @@ public sealed class SendNewContentEmailsManager(
 
     private async Task<List<SubscriberInfo>> GetSubscribersAsync(CancellationToken ct)
     {
-        return await dbContext.ContentSubscribers.Where(cs => cs.Enabled)
+        return await dbContext.ContentSubscribers
+            .Where(cs => cs.Enabled)
             .Select(cs => new SubscriberInfo
             {
                 Name = cs.Name,
                 Email = cs.Email,
                 UnsubscribeId = cs.UnsubscribeId,
                 Languages = cs.ContentSubscriberLanguages.Select(csl => csl.Language),
-                ParentResources = cs.ContentSubscriberParentResources.Select(cspr => cspr.ParentResource)
+                ParentResources = cs.ContentSubscriberParentResources.Select(cspr => cspr.ParentResource),
             })
             .ToListAsync(ct);
     }

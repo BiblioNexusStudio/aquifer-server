@@ -20,7 +20,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var contentVersion = await dbContext.ResourceContentVersions.AsTracking()
+        var contentVersion = await dbContext.ResourceContentVersions
+            .AsTracking()
             .Where(x => x.ResourceContentId == request.ContentId && x.AssignedUserId == user.Id && x.IsDraft)
             .Include(x => x.ResourceContent)
             .SingleOrDefaultAsync(ct);
@@ -37,7 +38,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         }
 
         await historyService.AddStatusHistoryAsync(contentVersion, ResourceContentStatus.TranslationReviewPending, user.Id, ct);
-        await historyService.AddSnapshotHistoryAsync(contentVersion,
+        await historyService.AddSnapshotHistoryAsync(
+            contentVersion,
             contentVersion.AssignedUserId,
             contentVersion.ResourceContent.Status,
             ct);

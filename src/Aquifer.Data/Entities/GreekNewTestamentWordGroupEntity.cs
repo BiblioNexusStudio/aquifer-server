@@ -1,5 +1,5 @@
-﻿
-namespace Aquifer.Data.Entities;
+﻿namespace Aquifer.Data.Entities;
+
 public class GreekNewTestamentWordGroupEntity
 {
     public int Id { get; set; }
@@ -9,5 +9,4 @@ public class GreekNewTestamentWordGroupEntity
 
     public ICollection<NewTestamentAlignmentEntity> NewTestamentAlignments { get; set; } = [];
     public ICollection<GreekNewTestamentWordGroupWordEntity> GreekNewTestamentWordGroupWords { get; set; } = [];
-
 }

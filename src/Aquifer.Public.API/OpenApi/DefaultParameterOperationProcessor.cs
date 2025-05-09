@@ -11,7 +11,8 @@ public class DefaultParameterOperationProcessor : IOperationProcessor
     public bool Process(OperationProcessorContext context)
     {
         var dtoType = ((AspNetCoreOperationProcessorContext)context).ApiDescription.ParameterDescriptions
-            .FirstOrDefault()?.Type;
+            .FirstOrDefault()
+            ?.Type;
 
         if (dtoType is null)
         {
@@ -20,7 +21,8 @@ public class DefaultParameterOperationProcessor : IOperationProcessor
 
         foreach (var parameter in context.OperationDescription.Operation.Parameters)
         {
-            var property = dtoType.GetProperty(parameter.Name,
+            var property = dtoType.GetProperty(
+                parameter.Name,
                 BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
             if (HasDefaultValue(property))
             {

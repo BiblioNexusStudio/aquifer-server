@@ -4,9 +4,6 @@ namespace Aquifer.API.Common.Dtos;
 
 public class UserDto(int id, string name)
 {
-    public int Id { get; } = id;
-    public string Name { get; } = name;
-
     public UserDto(int id, string firstName, string lastName)
         : this(id, $"{firstName} {lastName}")
     {
@@ -16,6 +13,9 @@ public class UserDto(int id, string name)
         : this(user.Id, user.FirstName, user.LastName)
     {
     }
+
+    public int Id { get; } = id;
+    public string Name { get; } = name;
 
     public static UserDto? FromUserEntity(UserEntity? user)
     {

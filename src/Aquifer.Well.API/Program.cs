@@ -25,11 +25,12 @@ builder.Services.AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
 
 builder.Services
     .AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.AzureStorageAccount)
-    .AddDbContext<AquiferDbReadOnlyContext>(
-        options => options
-            .UseAzureSql(configuration.ConnectionStrings.BiblioNexusReadOnlyDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
-            .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
-            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
+    .AddDbContext<AquiferDbReadOnlyContext>(options => options
+        .UseAzureSql(
+            configuration.ConnectionStrings.BiblioNexusReadOnlyDb,
+            providerOptions => providerOptions.EnableRetryOnFailure(3))
+        .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
+        .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
     .AddScoped<AquiferDbContext, AquiferDbReadOnlyContext>()
     .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))
     .AddSwaggerDocumentSettings()
@@ -57,13 +58,12 @@ app.UseHealthChecks("/_health")
     .UseMiddleware<ApiKeyAuthorizationMiddleware>()
     .UseResponseCaching()
     .UseOutputCache()
-    .UseFastEndpoints(
-        config =>
-        {
-            config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-            config.Endpoints.Configurator = ep => ep.AllowAnonymous();
-            config.Versioning.Prefix = "v";
-        })
+    .UseFastEndpoints(config =>
+    {
+        config.Serializer.Options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        config.Endpoints.Configurator = ep => ep.AllowAnonymous();
+        config.Versioning.Prefix = "v";
+    })
     .UseOpenApi()
     .UseResponseCachingVaryByAllQueryKeys();
 

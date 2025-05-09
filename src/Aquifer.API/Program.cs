@@ -26,7 +26,8 @@ var configuration = builder.Configuration.Get<ConfigurationOptions>() ??
     throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
 builder.Services
-    .AddOptions<ConfigurationOptions>().Bind(builder.Configuration);
+    .AddOptions<ConfigurationOptions>()
+    .Bind(builder.Configuration);
 
 builder.Services
     .AddSingleton(cfg => cfg.GetRequiredService<IOptions<ConfigurationOptions>>().Value.AzureStorageAccount)
@@ -38,20 +39,20 @@ builder.Services
     .AddMemoryCache()
     .AddApplicationInsightsTelemetry()
     .AddSingleton<ITelemetryInitializer, RequestTelemetryInitializer>()
-    .AddDbContext<AquiferDbContext>(
-        options => options
-            .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
-            .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
-            .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
+    .AddDbContext<AquiferDbContext>(options => options
+        .UseAzureSql(
+            configuration.ConnectionStrings.BiblioNexusDb,
+            providerOptions => providerOptions.EnableRetryOnFailure(3))
+        .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
+        .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
     .RegisterModules()
     .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))
-    .AddHttpLogging(
-        logging =>
-        {
-            logging.LoggingFields = HttpLoggingFields.Response;
-            logging.RequestBodyLogLimit = 4096;
-            logging.ResponseBodyLogLimit = 4096;
-        })
+    .AddHttpLogging(logging =>
+    {
+        logging.LoggingFields = HttpLoggingFields.Response;
+        logging.RequestBodyLogLimit = 4096;
+        logging.ResponseBodyLogLimit = 4096;
+    })
     .AddSingleton<IBlobStorageService, BlobStorageService>()
     .AddSingleton<IQueueClientFactory, QueueClientFactory>()
     .AddScoped<IUserService, UserService>()

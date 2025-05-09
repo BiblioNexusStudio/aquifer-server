@@ -20,5 +20,5 @@ public enum FeedbackType
 {
     None = 0,
     WellSettingsFeedbackForm = 1,
-    WellPopupFeedbackForm = 2
+    WellPopupFeedbackForm = 2,
 }

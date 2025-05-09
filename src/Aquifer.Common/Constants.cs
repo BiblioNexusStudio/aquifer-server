@@ -30,7 +30,7 @@ public static class Constants
         ResourceContentStatus.AquiferizeEditorReview,
         ResourceContentStatus.AquiferizeReviewPending,
         ResourceContentStatus.AquiferizePublisherReview,
-        ResourceContentStatus.AquiferizeCompanyReview
+        ResourceContentStatus.AquiferizeCompanyReview,
     ]);
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> TranslationStatuses = new(
@@ -40,7 +40,7 @@ public static class Constants
         ResourceContentStatus.TranslationEditorReview,
         ResourceContentStatus.TranslationReviewPending,
         ResourceContentStatus.TranslationPublisherReview,
-        ResourceContentStatus.TranslationCompanyReview
+        ResourceContentStatus.TranslationCompanyReview,
     ]);
 
     public static readonly ReadOnlyCollection<ResourceContentStatus> ReviewPendingStatuses =

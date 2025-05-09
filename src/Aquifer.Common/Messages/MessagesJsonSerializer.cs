@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
 namespace Aquifer.Common.Messages;
@@ -27,10 +28,10 @@ public sealed class MessagesJsonSerializer
     {
         var json = JsonConvert.SerializeObject(dto, s_settings);
 
-        if (!shouldAllowInvalidMessageLength && System.Text.Encoding.Unicode.GetByteCount(json) > MaxMessageSizeInBytes)
+        if (!shouldAllowInvalidMessageLength && Encoding.Unicode.GetByteCount(json) > MaxMessageSizeInBytes)
         {
             throw new ArgumentException(
-                $"Serialized JSON message is {System.Text.Encoding.Unicode.GetByteCount(json)} bytes but must be less than {MaxMessageSizeInBytes} bytes. Content: {json}",
+                $"Serialized JSON message is {Encoding.Unicode.GetByteCount(json)} bytes but must be less than {MaxMessageSizeInBytes} bytes. Content: {json}",
                 nameof(dto));
         }
 

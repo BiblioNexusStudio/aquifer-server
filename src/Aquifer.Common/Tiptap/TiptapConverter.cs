@@ -6,14 +6,14 @@ using TiptapUtilities = Aquifer.JsEngine.Tiptap.TiptapUtilities;
 namespace Aquifer.Common.Tiptap;
 
 /// <summary>
-///     Uses the TiptapUtilities.js file (shared with front-end) to do conversion instead of the C# models in this project.
-///     Unlike TiptapUtilities.js, this utility correctly handles step numbers for Content with more than one step.
+/// Uses the TiptapUtilities.js file (shared with front-end) to do conversion instead of the C# models in this project.
+/// Unlike TiptapUtilities.js, this utility correctly handles step numbers for Content with more than one step.
 /// </summary>
 public static class TiptapConverter
 {
     /// <summary>
-    ///     Converts a JSON string containing an array of Tiptap models to HTML strings, one for each Tiptap model.
-    ///     Note: this removes any comments that are present in the Tiptap.
+    /// Converts a JSON string containing an array of Tiptap models to HTML strings, one for each Tiptap model.
+    /// Note: this removes any comments that are present in the Tiptap.
     /// </summary>
     public static IReadOnlyList<string> ConvertJsonToHtmlItems(string json)
     {
@@ -29,8 +29,8 @@ public static class TiptapConverter
     }
 
     /// <summary>
-    ///     Converts an array of HTML items, one for each step number and in step number order,
-    ///     into a JSON string containing an array of Tiptap models.
+    /// Converts an array of HTML items, one for each step number and in step number order,
+    /// into a JSON string containing an array of Tiptap models.
     /// </summary>
     public static string ConvertHtmlItemsToJson(IReadOnlyList<string> htmlItems)
     {
@@ -41,7 +41,7 @@ public static class TiptapConverter
             .Select((html, index) => new PartialTiptapModel
             {
                 Tiptap = tiptapUtilities.ParseHtmlAsJson(html),
-                StepNumber = shouldInsertStepNumber ? index + 1 : null
+                StepNumber = shouldInsertStepNumber ? index + 1 : null,
             })
             .ToList();
 
@@ -49,10 +49,10 @@ public static class TiptapConverter
     }
 
     /// <summary>
-    ///     Converts a Tiptap JSON array string to an array of the specified type.
-    ///     Note: this method isn't concerned about the return type since it's assumed it will be json serialized as part of an
-    ///     http response. If more control over the return type is needed, create a new method.
-    ///     Note: this removes any comments that are present in the Tiptap.
+    /// Converts a Tiptap JSON array string to an array of the specified type.
+    /// Note: this method isn't concerned about the return type since it's assumed it will be json serialized as part of an
+    /// http response. If more control over the return type is needed, create a new method.
+    /// Note: this removes any comments that are present in the Tiptap.
     /// </summary>
     public static object ConvertJsonToType(string tiptapJson, TiptapContentType type)
     {
@@ -62,7 +62,7 @@ public static class TiptapConverter
             TiptapContentType.Json => DeserializeForPublish(tiptapJson),
             TiptapContentType.Html => ConvertJsonToHtmlItems(tiptapJson),
             TiptapContentType.Markdown => ConvertJsonToMarkdownItems(tiptapJson),
-            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
     }
 
@@ -85,17 +85,17 @@ public static class TiptapConverter
     }
 
     /// <summary>
-    ///     This is purely a wrapper in order to serialize/deserialize the Tiptap model object array and step numbers.
+    /// This is purely a wrapper in order to serialize/deserialize the Tiptap model object array and step numbers.
     /// </summary>
     private class PartialTiptapModel
     {
         /// <summary>
-        ///     Will not be present in most ResourceContentVersion Content JSON.
+        /// Will not be present in most ResourceContentVersion Content JSON.
         /// </summary>
         public int? StepNumber { get; init; }
 
         /// <summary>
-        ///     Keep the Tiptap JSON as-is.
+        /// Keep the Tiptap JSON as-is.
         /// </summary>
         [JsonConverter(typeof(JsonUtilities.RawJsonConverter))]
         public required object Tiptap { get; init; }

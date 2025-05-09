@@ -53,10 +53,10 @@ public class SendGridEmailService : IEmailService
             {
                 ApiKey = apiToken,
                 ReliabilitySettings = new ReliabilitySettings(
-                    maximumNumberOfRetries: 5,
-                    minimumBackoff: TimeSpan.FromMilliseconds(200),
-                    maximumBackOff: TimeSpan.FromSeconds(5),
-                    deltaBackOff: TimeSpan.FromMilliseconds(50)),
+                    5,
+                    TimeSpan.FromMilliseconds(200),
+                    TimeSpan.FromSeconds(5),
+                    TimeSpan.FromMilliseconds(50)),
             });
     }
 
@@ -144,10 +144,14 @@ public class SendGridEmailService : IEmailService
         string toEmailAddress)
     {
         var emailSpecificDynamicTemplateData = emailSpecificDynamicTemplateDataByToEmailAddressMap
-            ?.GetValueOrDefault(toEmailAddress)
-            ?? null;
+                ?.GetValueOrDefault(toEmailAddress) ??
+            null;
 
-        return new List<Dictionary<string, object>?> { dynamicTemplateData, emailSpecificDynamicTemplateData }
+        return new List<Dictionary<string, object>?>
+            {
+                dynamicTemplateData,
+                emailSpecificDynamicTemplateData,
+            }
             .Where(d => d is not null)
             .SelectMany(d => d!)
             .ToDictionary();
@@ -205,13 +209,13 @@ public sealed class SendGridEmailException(string _message, SendGridMessage _ema
     public override string ToString()
     {
         return $"""
-                {Message}
+            {Message}
 
-                Email:
-                {Email}
+            Email:
+            {Email}
 
-                Response:
-                {Response}
-                """;
+            Response:
+            {Response}
+            """;
     }
 }

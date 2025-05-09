@@ -80,7 +80,7 @@ public class ResourceContentRequestTrackingMessagePublisher(
             SubscriptionName = _cachingApiKeyService.CurrentApiKey.Organization,
             EndpointId = endpointId,
             UserId = httpContext.Request.Headers["bn-user-id"],
-            ResourceContentIds = resourceContentIds
+            ResourceContentIds = resourceContentIds,
         };
 
         await PublishTrackResourceContentRequestMessageAsync(message, cancellationToken);

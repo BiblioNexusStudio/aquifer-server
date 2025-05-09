@@ -40,17 +40,19 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
                 BookCode = bbc.Book.Code,
                 BookId = bbc.BookId,
                 BookName = bbc.DisplayName,
-                AudioUrls = bbc.AudioUrls
+                AudioUrls = bbc.AudioUrls,
             })
             .FirstOrDefaultAsync(ct);
 
         if (bookData is not null)
         {
             bookData.Chapters = await dbContext.BibleTexts
-                .Where(bt => bt.BibleId == bookData.BibleId && bt.BookId == bookData.BookId &&
-                             bt.ChapterNumber >= request.StartChapter && bt.ChapterNumber <= request.EndChapter &&
-                             (bt.ChapterNumber != request.StartChapter || bt.VerseNumber >= request.StartVerse) &&
-                             (bt.ChapterNumber != request.EndChapter || bt.VerseNumber <= request.EndVerse))
+                .Where(bt => bt.BibleId == bookData.BibleId &&
+                    bt.BookId == bookData.BookId &&
+                    bt.ChapterNumber >= request.StartChapter &&
+                    bt.ChapterNumber <= request.EndChapter &&
+                    (bt.ChapterNumber != request.StartChapter || bt.VerseNumber >= request.StartVerse) &&
+                    (bt.ChapterNumber != request.EndChapter || bt.VerseNumber <= request.EndVerse))
                 .OrderBy(bt => bt.ChapterNumber)
                 .GroupBy(bt => bt.ChapterNumber)
                 .Select(bt => new IntermediateChapter
@@ -61,8 +63,9 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
                         .Select(bti => new IntermediateChapterVerse
                         {
                             Number = bti.VerseNumber,
-                            Text = bti.Text
-                        }).ToList()
+                            Text = bti.Text,
+                        })
+                        .ToList(),
                 })
                 .ToListAsync(ct);
         }
@@ -94,12 +97,12 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
                                     AudioTimestamp =
                                         MapToResponseAudioTimestamp(
                                             chapterAudio?.AudioTimestamps?.FirstOrDefault(at => at.VerseNumber == v.Number.ToString())),
-                                    Text = v.Text
+                                    Text = v.Text,
                                 })
-                                .ToList()
+                                .ToList(),
                         };
                     })
-                    .ToList()
+                    .ToList(),
             };
 
         await (response is null ? SendNotFoundAsync(ct) : SendOkAsync(response, ct));
@@ -117,7 +120,7 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
             : new ResponseChapterAudio
             {
                 Webm = MapToResponseAudioFile(audioChapter.Webm),
-                Mp3 = MapToResponseAudioFile(audioChapter.Mp3)
+                Mp3 = MapToResponseAudioFile(audioChapter.Mp3),
             };
     }
 
@@ -128,7 +131,7 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
             : new ResponseAudioFile
             {
                 Url = audioUrl.Url,
-                Size = audioUrl.Size
+                Size = audioUrl.Size,
             };
     }
 
@@ -140,7 +143,7 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
             : new ResponseChapterVerseAudioTimestamp
             {
                 Start = audioTimestamp.Start,
-                End = audioTimestamp.End
+                End = audioTimestamp.End,
             };
     }
 

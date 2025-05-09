@@ -1,13 +1,13 @@
 using Aquifer.API.Common;
+using Aquifer.API.Common.Dtos;
 using Aquifer.API.Services;
 using Aquifer.Common.Extensions;
-using Aquifer.Common.Services.Caching;
 using Aquifer.Common.Services;
+using Aquifer.Common.Services.Caching;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
-using Aquifer.API.Common.Dtos;
 
 namespace Aquifer.API.Endpoints.Resources.Content.AssignedToSelf.List;
 
@@ -36,8 +36,8 @@ public class Endpoint(
 
         var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
             ResourceContentSearchIncludeFlags.Project |
-                ResourceContentSearchIncludeFlags.HasAudioForLanguage |
-                ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
+            ResourceContentSearchIncludeFlags.HasAudioForLanguage |
+            ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
             new ResourceContentSearchFilter
             {
                 IsDraft = true,
@@ -51,8 +51,8 @@ public class Endpoint(
                 HasUnresolvedCommentThreads = req.HasUnresolvedCommentThreads,
             },
             ResourceContentSearchSortOrder.ResourceContentId,
-            offset: 0,
-            limit: null,
+            0,
+            null,
             ct);
 
         var languageByIdMap = await _cachingLanguageService.GetLanguageByIdMapAsync(ct);
@@ -61,7 +61,7 @@ public class Endpoint(
         var lastUserAssignmentsByResourceContentVersionIdMap =
             await Helpers.GetLastUserAssignmentsByResourceContentVersionIdMapAsync(
                 resourceContentSummaries.Select(rcs => rcs.ResourceContentVersion!.Id),
-                numberOfAssignments: 2,
+                2,
                 _dbContext,
                 ct);
 

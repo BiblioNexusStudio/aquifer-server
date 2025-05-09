@@ -44,28 +44,27 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         return await dbContext.Projects
             .Where(x => x.Id == req.ProjectId)
             .Include(x => x.CompanyLeadUser)
-            .Select(
-                x => new Response
-                {
-                    Id = x.Id,
-                    Name = x.Name,
-                    Company = x.Company.Name,
-                    Language = x.Language.EnglishDisplay,
-                    CompanyLead = x.CompanyLeadUser != null ? $"{x.CompanyLeadUser.FirstName} {x.CompanyLeadUser.LastName}" : null,
-                    CompanyLeadUser = UserDto.FromUserEntity(x.CompanyLeadUser),
-                    ProjectPlatform = x.ProjectPlatform.Name,
-                    ProjectManager = $"{x.ProjectManagerUser.FirstName} {x.ProjectManagerUser.LastName}",
-                    ProjectManagerUser = UserDto.FromUserEntity(x.ProjectManagerUser)!,
-                    SourceWordCount = x.SourceWordCount,
-                    EffectiveWordCount = x.EffectiveWordCount,
-                    QuotedCost = x.QuotedCost,
-                    Started = x.Started,
-                    ActualDeliveryDate = x.ActualDeliveryDate,
-                    ActualPublishDate = x.ActualPublishDate,
-                    ProjectedDeliveryDate = x.ProjectedDeliveryDate,
-                    ProjectedPublishDate = x.ProjectedPublishDate,
-                    SourceLanguage = x.SourceLanguage != null ? x.SourceLanguage.EnglishDisplay : null
-                })
+            .Select(x => new Response
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Company = x.Company.Name,
+                Language = x.Language.EnglishDisplay,
+                CompanyLead = x.CompanyLeadUser != null ? $"{x.CompanyLeadUser.FirstName} {x.CompanyLeadUser.LastName}" : null,
+                CompanyLeadUser = UserDto.FromUserEntity(x.CompanyLeadUser),
+                ProjectPlatform = x.ProjectPlatform.Name,
+                ProjectManager = $"{x.ProjectManagerUser.FirstName} {x.ProjectManagerUser.LastName}",
+                ProjectManagerUser = UserDto.FromUserEntity(x.ProjectManagerUser)!,
+                SourceWordCount = x.SourceWordCount,
+                EffectiveWordCount = x.EffectiveWordCount,
+                QuotedCost = x.QuotedCost,
+                Started = x.Started,
+                ActualDeliveryDate = x.ActualDeliveryDate,
+                ActualPublishDate = x.ActualPublishDate,
+                ProjectedDeliveryDate = x.ProjectedDeliveryDate,
+                ProjectedPublishDate = x.ProjectedPublishDate,
+                SourceLanguage = x.SourceLanguage != null ? x.SourceLanguage.EnglishDisplay : null,
+            })
             .SingleOrDefaultAsync(ct);
     }
 
@@ -78,39 +77,39 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     private async Task<List<ProjectResourceItem>> GetProjectItemsAsync(int projectId, CancellationToken ct)
     {
         const string query = """
-                             SELECT
-                                 RC.Id AS ResourceContentId,
-                                 RCVD.SourceWordCount AS WordCount,
-                                 R.EnglishLabel,
-                                 PR.DisplayName AS ParentResourceName,
-                                 RC.Status,
-                                 CASE
-                                    WHEN RCVD.AssignedUserId IS NULL THEN NULL
-                                    ELSE U.FirstName + ' ' + U.LastName
-                                 END AS AssignedUserName,
-                                 R.SortOrder
-                             FROM ResourceContents RC
-                             INNER JOIN Resources R ON R.Id = RC.ResourceId
-                             INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
-                             LEFT JOIN
-                             (
-                                 SELECT *
-                                 FROM
-                                 (
-                                     SELECT
-                                         *,
-                                         ROW_NUMBER() OVER (PARTITION BY ResourceContentId ORDER BY [Version] DESC) AS LatestVersionRank
-                                     FROM ResourceContentVersions
-                                 ) x
-                                 WHERE x.LatestVersionRank = 1
-                             ) RCVD ON RCVD.ResourceContentId = RC.Id
-                             LEFT JOIN Users U on U.Id = RCVD.AssignedUserId
-                             WHERE RC.Id IN (
-                                 SELECT ResourceContentId
-                                 FROM ProjectResourceContents
-                                 WHERE ProjectId = {0}
-                             )
-                             """;
+            SELECT
+                RC.Id AS ResourceContentId,
+                RCVD.SourceWordCount AS WordCount,
+                R.EnglishLabel,
+                PR.DisplayName AS ParentResourceName,
+                RC.Status,
+                CASE
+                   WHEN RCVD.AssignedUserId IS NULL THEN NULL
+                   ELSE U.FirstName + ' ' + U.LastName
+                END AS AssignedUserName,
+                R.SortOrder
+            FROM ResourceContents RC
+            INNER JOIN Resources R ON R.Id = RC.ResourceId
+            INNER JOIN ParentResources PR ON PR.Id = R.ParentResourceId
+            LEFT JOIN
+            (
+                SELECT *
+                FROM
+                (
+                    SELECT
+                        *,
+                        ROW_NUMBER() OVER (PARTITION BY ResourceContentId ORDER BY [Version] DESC) AS LatestVersionRank
+                    FROM ResourceContentVersions
+                ) x
+                WHERE x.LatestVersionRank = 1
+            ) RCVD ON RCVD.ResourceContentId = RC.Id
+            LEFT JOIN Users U on U.Id = RCVD.AssignedUserId
+            WHERE RC.Id IN (
+                SELECT ResourceContentId
+                FROM ProjectResourceContents
+                WHERE ProjectId = {0}
+            )
+            """;
 
         return await dbContext.Database.SqlQueryRaw<ProjectResourceItem>(query, projectId).ToListAsync(ct);
     }

@@ -21,7 +21,11 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, IEnumerabl
         var resources = await query
             .OrderBy(r => r.SortOrder)
             .ThenBy(r => r.EnglishLabel)
-            .Select(r => new Response { ResourceId = r.Id, EnglishLabel = r.EnglishLabel })
+            .Select(r => new Response
+            {
+                ResourceId = r.Id,
+                EnglishLabel = r.EnglishLabel,
+            })
             .ToListAsync(ct);
 
         await SendOkAsync(resources, ct);

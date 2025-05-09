@@ -44,7 +44,7 @@ public enum ApiKeyScope
     InternalApi = 2,
     PublicApi = 3,
     Admin = 4,
-    WellApi = 5
+    WellApi = 5,
 }
 
 public class ApiKeyEntityConfiguration : IEntityTypeConfiguration<ApiKeyEntity>

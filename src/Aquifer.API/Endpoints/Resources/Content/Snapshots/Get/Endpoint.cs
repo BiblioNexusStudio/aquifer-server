@@ -31,7 +31,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 Created = snapshot.Created,
                 AssignedUserName = snapshot.User == null ? null : $"{snapshot.User.FirstName} {snapshot.User.LastName}",
                 Status = snapshot.Status.GetDisplayName(),
-                ContentValue = snapshot.Content
-            }, ct);
+                ContentValue = snapshot.Content,
+            },
+            ct);
     }
 }

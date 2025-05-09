@@ -4,7 +4,8 @@ namespace Aquifer.Data.Entities;
 
 public class IpAddressDataEntity
 {
-    [Key, MaxLength(64)]
+    [Key]
+    [MaxLength(64)]
     public string IpAddress { get; set; } = null!;
 
     [MaxLength(256)]

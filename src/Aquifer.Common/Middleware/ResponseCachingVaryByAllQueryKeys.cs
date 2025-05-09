@@ -16,10 +16,11 @@ public class ResponseCachingVaryByAllQueryKeysMiddleware(RequestDelegate _next)
 {
     public async Task InvokeAsync(HttpContext context)
     {
-        context.Features.Set<IResponseCachingFeature>(new ResponseCachingFeature
-        {
-            VaryByQueryKeys = ["*"]
-        });
+        context.Features.Set<IResponseCachingFeature>(
+            new ResponseCachingFeature
+            {
+                VaryByQueryKeys = ["*"],
+            });
 
         await _next(context);
     }

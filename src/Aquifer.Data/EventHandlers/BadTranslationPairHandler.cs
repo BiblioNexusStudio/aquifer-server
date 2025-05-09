@@ -10,7 +10,7 @@ public static class BadTranslationPairHandler
     private static readonly IReadOnlySet<string> s_keyBlacklist = new HashSet<string>
     {
         "span",
-        "div"
+        "div",
     };
 
     public static void Handle(IEnumerable<EntityEntry> entityEntries)

@@ -23,7 +23,8 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext, IResourceContentReques
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        Response = await ResourceHelper.GetResourceContentAsync(dbContext,
+        Response = await ResourceHelper.GetResourceContentAsync(
+            dbContext,
             new CommonResourceRequest(req.ContentId, req.ContentTextType, req.LanguageCode),
             ThrowError,
             ct);
@@ -32,6 +33,6 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext, IResourceContentReques
     public override async Task OnAfterHandleAsync(Request req, Response res, CancellationToken ct)
     {
         const string endpointId = "public-resources-get-by-language";
-        await trackingMessagePublisher.PublishTrackResourceContentRequestMessageAsync(HttpContext, res.Id, endpointId, source: "public-api", ct);
+        await trackingMessagePublisher.PublishTrackResourceContentRequestMessageAsync(HttpContext, res.Id, endpointId, "public-api", ct);
     }
 }

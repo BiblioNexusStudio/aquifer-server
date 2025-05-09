@@ -15,19 +15,20 @@ public class AzureClientService : IAzureClientService
 
     public AzureClientService(bool useCliCredential)
     {
-        _credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
-        {
-            ExcludeManagedIdentityCredential = useCliCredential,
-            ExcludeAzureCliCredential = !useCliCredential,
-            ExcludeVisualStudioCodeCredential = true,
-            ExcludeVisualStudioCredential = true,
-            ExcludeEnvironmentCredential = true,
-            ExcludeInteractiveBrowserCredential = true,
-            ExcludeWorkloadIdentityCredential = true,
-            ExcludeAzureDeveloperCliCredential = true,
-            ExcludeAzurePowerShellCredential = true,
-            ExcludeSharedTokenCacheCredential = true
-        });
+        _credential = new DefaultAzureCredential(
+            new DefaultAzureCredentialOptions
+            {
+                ExcludeManagedIdentityCredential = useCliCredential,
+                ExcludeAzureCliCredential = !useCliCredential,
+                ExcludeVisualStudioCodeCredential = true,
+                ExcludeVisualStudioCredential = true,
+                ExcludeEnvironmentCredential = true,
+                ExcludeInteractiveBrowserCredential = true,
+                ExcludeWorkloadIdentityCredential = true,
+                ExcludeAzureDeveloperCliCredential = true,
+                ExcludeAzurePowerShellCredential = true,
+                ExcludeSharedTokenCacheCredential = true,
+            });
     }
 
     public AzureClientService(TokenCredential credential)

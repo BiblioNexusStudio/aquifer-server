@@ -19,7 +19,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             .Select(h => new Response
             {
                 Event = h.Status.GetDisplayName(),
-                DateOfEvent = h.Created
+                DateOfEvent = h.Created,
             })
             .ToListAsync(ct);
 
@@ -28,7 +28,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             .Select(h => new Response
             {
                 Event = $"{h.AssignedUser!.FirstName} {h.AssignedUser.LastName}",
-                DateOfEvent = h.Created
+                DateOfEvent = h.Created,
             })
             .ToListAsync(ct);
 

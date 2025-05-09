@@ -22,7 +22,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
             Releases = helpDocuments.Where(x => x.Type == HelpDocumentType.Release),
             HowTos = helpDocuments
                 .Where(x => x.Type == HelpDocumentType.HowTo)
-                .OrderBy(x => x.Title)
+                .OrderBy(x => x.Title),
         };
         await SendOkAsync(response, ct);
     }
@@ -38,7 +38,7 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
                 Title = x.Title,
                 Type = x.Type,
                 Url = x.Url,
-                ThumbnailUrl = x.ThumbnailUrl
+                ThumbnailUrl = x.ThumbnailUrl,
             })
             .ToListAsync(ct);
     }

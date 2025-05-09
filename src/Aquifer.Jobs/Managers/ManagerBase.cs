@@ -11,7 +11,7 @@ namespace Aquifer.Jobs.Managers;
 /// <remarks>
 /// Example usage:
 /// <example>
-/// <code>
+///     <code>
 /// public sealed class FooManager(ILogger&lt;FooManager&gt; _logger) : ManagerBase&lt;FooManager&gt;(_logger)
 /// {
 ///     [Function(nameof(FooManager))]
@@ -37,32 +37,33 @@ public abstract class ManagerBase<T>(ILogger<T> _logger)
     private static readonly string s_azureFunctionName;
     private static readonly string s_azureFunctionSchedule;
 
-    protected ILogger<T> Logger { get; } = _logger;
-
     static ManagerBase()
     {
         var runMethod = typeof(T)
-            .GetRuntimeMethod(
-                nameof(RunAsync),
-                typeof(ManagerBase<T>)
-                    .GetMethod(nameof(RunAsync))
-                    ?.GetParameters()
-                    .Select(p => p.ParameterType)
-                    .ToArray()
-                    ?? [])
-            ?? throw new InvalidOperationException($"Unable to find method {nameof(RunAsync)} in {typeof(T).FullName}.");
-        var functionAttribute = runMethod.GetCustomAttribute<FunctionAttribute>()
-            ?? throw new InvalidOperationException($"Method {nameof(RunAsync)} in {typeof(T).FullName} is missing a {nameof(FunctionAttribute)}.");
+                .GetRuntimeMethod(
+                    nameof(RunAsync),
+                    typeof(ManagerBase<T>)
+                        .GetMethod(nameof(RunAsync))
+                        ?.GetParameters()
+                        .Select(p => p.ParameterType)
+                        .ToArray() ??
+                    []) ??
+            throw new InvalidOperationException($"Unable to find method {nameof(RunAsync)} in {typeof(T).FullName}.");
+        var functionAttribute = runMethod.GetCustomAttribute<FunctionAttribute>() ??
+            throw new InvalidOperationException(
+                $"Method {nameof(RunAsync)} in {typeof(T).FullName} is missing a {nameof(FunctionAttribute)}.");
         s_azureFunctionName = functionAttribute.Name;
 
         var timerInfoParameter = runMethod
-            .GetParameters()
-            .SingleOrDefault(p => p.ParameterType == typeof(TimerInfo))
-            ?? throw new InvalidOperationException($"Method {nameof(RunAsync)} in {typeof(T).FullName} is missing a parameter of type {nameof(TimerInfo)}.");
+                .GetParameters()
+                .SingleOrDefault(p => p.ParameterType == typeof(TimerInfo)) ??
+            throw new InvalidOperationException(
+                $"Method {nameof(RunAsync)} in {typeof(T).FullName} is missing a parameter of type {nameof(TimerInfo)}.");
 
         var timerTriggerAttribute = timerInfoParameter
-            .GetCustomAttribute<TimerTriggerAttribute>()
-            ?? throw new InvalidOperationException($"Method {nameof(RunAsync)} in {typeof(T).FullName} is missing a {nameof(TimerTriggerAttribute)} on the \"{timerInfoParameter.Name}\" parameter.");
+                .GetCustomAttribute<TimerTriggerAttribute>() ??
+            throw new InvalidOperationException(
+                $"Method {nameof(RunAsync)} in {typeof(T).FullName} is missing a {nameof(TimerTriggerAttribute)} on the \"{timerInfoParameter.Name}\" parameter.");
 
         s_azureFunctionSchedule = timerTriggerAttribute.Schedule;
 
@@ -70,6 +71,8 @@ public abstract class ManagerBase<T>(ILogger<T> _logger)
             runMethod.GetCustomAttribute<ExponentialBackoffRetryAttribute>() is not null ||
             runMethod.GetCustomAttribute<FixedDelayRetryAttribute>() is not null;
     }
+
+    protected ILogger<T> Logger { get; } = _logger;
 
     /// <summary>
     /// Override this method in the derived class and use it as the primary Manager Azure Function method using function attributes.
@@ -98,7 +101,7 @@ public abstract class ManagerBase<T>(ILogger<T> _logger)
         catch (Exception ex)
         {
             Logger.LogError(
-                ex, 
+                ex,
                 "Timer Trigger function \"{FunctionName}\" encountered an error during execution (Function has retry policy: {HasRetryPolicy}).",
                 s_azureFunctionName,
                 s_azureFunctionHasRetryPolicy);

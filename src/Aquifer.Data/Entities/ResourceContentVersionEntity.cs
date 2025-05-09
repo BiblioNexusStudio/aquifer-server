@@ -51,11 +51,19 @@ public class ResourceContentVersionEntityConfiguration : IEntityTypeConfiguratio
         builder.ToTable(b =>
             b.HasCheckConstraint("CK_ResourceContentVersions_IsPublishedOrIsDraftNotBoth", "IsPublished = 0 OR IsDraft = 0"));
 
-        builder.HasIndex(x => new { x.ResourceContentId, x.Version })
+        builder.HasIndex(x => new
+            {
+                x.ResourceContentId,
+                x.Version,
+            })
             .IsUnique();
 
         builder.HasIndex(x => x.AssignedUserId)
-            .IncludeProperties(x => new { x.ResourceContentId, x.SourceWordCount });
+            .IncludeProperties(x => new
+            {
+                x.ResourceContentId,
+                x.SourceWordCount,
+            });
 
         builder.HasIndex(x => x.ResourceContentId)
             .HasFilter($"{nameof(ResourceContentVersionEntity.IsDraft)} = 1")
@@ -80,5 +88,5 @@ public enum ResourceContentVersionReviewLevel
     None = 0,
     Community = 1,
     Professional = 2,
-    Ai = 3
+    Ai = 3,
 }

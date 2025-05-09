@@ -28,13 +28,14 @@ public class Endpoint(AquiferDbContext dbContext, TelemetryClient telemetry) : E
                 ReviewLevel = rcv.ReviewLevel,
                 MediaType = rcv.ResourceContent.MediaType,
                 Content = rcv.Content,
-                LanguageId = rcv.ResourceContent.LanguageId
+                LanguageId = rcv.ResourceContent.LanguageId,
             })
             .ToListAsync(ct);
 
         if (contentVersions.Count != request.Ids.Length)
         {
-            telemetry.TrackTrace("IDs and metadata found have different lengths.",
+            telemetry.TrackTrace(
+                "IDs and metadata found have different lengths.",
                 SeverityLevel.Error,
                 new Dictionary<string, string> { { "Ids", string.Join(", ", request.Ids) } });
             await SendNotFoundAsync(ct);
@@ -45,44 +46,45 @@ public class Endpoint(AquiferDbContext dbContext, TelemetryClient telemetry) : E
         var allResourceIds = string.Join(',', contentVersions.Select(cv => cv.ResourceId).Distinct());
 
         var associatedResourceQuery = $"""
-                                           SELECT
-                                               r.ExternalId,
-                                               ar.ResourceId AS AssociatedToResourceId,
-                                               r.Id AS ResourceId,
-                                               rc.Id AS ContentId,
-                                               rc.MediaType,
-                                               rc.LanguageId
-                                           FROM
-                                               AssociatedResources ar
-                                               INNER JOIN Resources r ON r.Id = ar.AssociatedResourceId
-                                               INNER JOIN ResourceContents rc ON rc.ResourceId = ar.AssociatedResourceId AND rc.LanguageId IN ({allLanguageIds})
-                                               INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = rc.Id AND rcv.IsPublished = 1
-                                           WHERE
-                                               ar.ResourceId IN ({allResourceIds})
-                                       """;
+                SELECT
+                    r.ExternalId,
+                    ar.ResourceId AS AssociatedToResourceId,
+                    r.Id AS ResourceId,
+                    rc.Id AS ContentId,
+                    rc.MediaType,
+                    rc.LanguageId
+                FROM
+                    AssociatedResources ar
+                    INNER JOIN Resources r ON r.Id = ar.AssociatedResourceId
+                    INNER JOIN ResourceContents rc ON rc.ResourceId = ar.AssociatedResourceId AND rc.LanguageId IN ({allLanguageIds})
+                    INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = rc.Id AND rcv.IsPublished = 1
+                WHERE
+                    ar.ResourceId IN ({allResourceIds})
+            """;
 
         var associatedResources = await dbContext.Database
             .SqlQueryRaw<AssociatedResourceResponseWithLanguageAndAssociatedTo>(associatedResourceQuery)
             .ToListAsync(ct);
 
         var metadata = contentVersions.Select(contentVersion => new Response
-        {
-            Id = contentVersion.Id,
-            DisplayName = contentVersion.DisplayName,
-            ReviewLevel = contentVersion.ReviewLevel,
-            Metadata = contentVersion.MediaType == ResourceContentMediaType.Text
-                ? null
-                : JsonUtilities.DefaultDeserialize(contentVersion.Content),
-            AssociatedResources = associatedResources
-                .Where(r => r.LanguageId == contentVersion.LanguageId && contentVersion.ResourceId == r.AssociatedToResourceId)
-                .Select(r => new AssociatedResourceResponse
-                {
-                    ExternalId = r.ExternalId,
-                    ResourceId = r.ResourceId,
-                    MediaType = r.MediaType,
-                    ContentId = r.ContentId
-                })
-        }).ToList();
+            {
+                Id = contentVersion.Id,
+                DisplayName = contentVersion.DisplayName,
+                ReviewLevel = contentVersion.ReviewLevel,
+                Metadata = contentVersion.MediaType == ResourceContentMediaType.Text
+                    ? null
+                    : JsonUtilities.DefaultDeserialize(contentVersion.Content),
+                AssociatedResources = associatedResources
+                    .Where(r => r.LanguageId == contentVersion.LanguageId && contentVersion.ResourceId == r.AssociatedToResourceId)
+                    .Select(r => new AssociatedResourceResponse
+                    {
+                        ExternalId = r.ExternalId,
+                        ResourceId = r.ResourceId,
+                        MediaType = r.MediaType,
+                        ContentId = r.ContentId,
+                    }),
+            })
+            .ToList();
 
         await SendOkAsync(metadata, ct);
     }

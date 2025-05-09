@@ -24,35 +24,32 @@ public class Endpoint(AquiferDbContext _dbContext, ICachingVersificationService 
 
         var response = (await _dbContext.BibleBookContents
                 .Where(bbc => bbc.Bible.Enabled && bbc.BibleId == req.BibleId)
-                .Select(
-                    bbc => new
-                    {
-                        bbc.BookId,
-                        bbc.Book.Code,
-                        bbc.DisplayName,
-                        bbc.ChapterCount,
-                    })
-                .ToListAsync(ct))
-            .Select(
-                x => new Response
+                .Select(bbc => new
                 {
-                    Code = x.Code,
-                    Number = (int)x.BookId,
-                    LocalizedName = x.DisplayName,
-                    TotalChapters = x.ChapterCount,
-                    Chapters = maxChapterNumberAndBookendVerseNumbersByBookIdMap
-                            .GetValueOrNull(x.BookId)
-                            ?.BookendVerseNumbersByChapterNumberMap
-                            .OrderBy(kvp => kvp.Key)
-                            .Select(
-                                kvp => new ResponseChapter
-                                {
-                                    Number = kvp.Key,
-                                    TotalVerses = kvp.Value.MaxVerseNumber,
-                                })
-                            .ToList()
-                        ?? [],
+                    bbc.BookId,
+                    bbc.Book.Code,
+                    bbc.DisplayName,
+                    bbc.ChapterCount,
                 })
+                .ToListAsync(ct))
+            .Select(x => new Response
+            {
+                Code = x.Code,
+                Number = (int)x.BookId,
+                LocalizedName = x.DisplayName,
+                TotalChapters = x.ChapterCount,
+                Chapters = maxChapterNumberAndBookendVerseNumbersByBookIdMap
+                        .GetValueOrNull(x.BookId)
+                        ?.BookendVerseNumbersByChapterNumberMap
+                        .OrderBy(kvp => kvp.Key)
+                        .Select(kvp => new ResponseChapter
+                        {
+                            Number = kvp.Key,
+                            TotalVerses = kvp.Value.MaxVerseNumber,
+                        })
+                        .ToList() ??
+                    [],
+            })
             .ToList();
 
         await SendOkAsync(response, ct);

@@ -15,7 +15,13 @@ public sealed class BibleWordIdentifierTests
     [InlineData(40_001_025_001_1L, BookId.BookMAT, 1, 25, 1, 1)]
     [InlineData(40_028_001_001_1L, BookId.BookMAT, 28, 1, 1, 1)]
     [InlineData(66_001_001_001_1L, BookId.BookREV, 1, 1, 1, 1)]
-    public void Constructor_FromWordIdentifier_ValidArguments_ReturnsExpectedValue(long wordIdentifier, BookId expectedBookId, int expectedChapter, int expectedVerse, int expectedWord, int expectedWordSegment)
+    public void Constructor_FromWordIdentifier_ValidArguments_ReturnsExpectedValue(
+        long wordIdentifier,
+        BookId expectedBookId,
+        int expectedChapter,
+        int expectedVerse,
+        int expectedWord,
+        int expectedWordSegment)
     {
         var actual = new BibleWordIdentifier(wordIdentifier);
         Assert.Equal(expectedBookId, actual.BookId);
@@ -78,7 +84,7 @@ public sealed class BibleWordIdentifierTests
     [InlineData(BookId.None)]
     public void Constructor_LowerBoundOfChapter_InvalidBookId_ThrowsException(BookId bookId)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(bookId, chapter: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(bookId, 1));
     }
 
     [Theory]
@@ -104,7 +110,7 @@ public sealed class BibleWordIdentifierTests
     [InlineData(BookId.None)]
     public void GetUpperBoundOfChapter_InvalidBookId_ThrowsException(BookId bookId)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => BibleWordIdentifier.GetUpperBoundOfChapter(bookId, chapter: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => BibleWordIdentifier.GetUpperBoundOfChapter(bookId, 1));
     }
 
     [Theory]
@@ -131,7 +137,7 @@ public sealed class BibleWordIdentifierTests
     [InlineData(BookId.None)]
     public void Constructor_LowerBoundOfVerse_InvalidBookId_ThrowsException(BookId bookId)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(bookId, chapter: 1, verse: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(bookId, 1, 1));
     }
 
     [Theory]
@@ -141,7 +147,7 @@ public sealed class BibleWordIdentifierTests
     [InlineData(int.MaxValue)]
     public void Constructor_LowerBoundOfVerse_InvalidChapter_ThrowsException(int chapter)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(BookId.BookMAT, chapter, verse: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(BookId.BookMAT, chapter, 1));
     }
 
     [Theory]
@@ -151,7 +157,7 @@ public sealed class BibleWordIdentifierTests
     [InlineData(int.MaxValue)]
     public void Constructor_LowerBoundOfVerse_InvalidVerse_ThrowsException(int verse)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(BookId.BookMAT, chapter: 1, verse));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(BookId.BookMAT, 1, verse));
     }
 
     [Theory]
@@ -168,7 +174,7 @@ public sealed class BibleWordIdentifierTests
     [InlineData(BookId.None)]
     public void GetUpperBoundOfVerse_InvalidBookId_ThrowsException(BookId bookId)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => BibleWordIdentifier.GetUpperBoundOfVerse(bookId, chapter: 1, verse: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => BibleWordIdentifier.GetUpperBoundOfVerse(bookId, 1, 1));
     }
 
     [Theory]
@@ -178,7 +184,7 @@ public sealed class BibleWordIdentifierTests
     [InlineData(int.MaxValue)]
     public void GetUpperBoundOfVerse_InvalidChapter_ThrowsException(int chapter)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => BibleWordIdentifier.GetUpperBoundOfVerse(BookId.BookMAT, chapter, verse: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => BibleWordIdentifier.GetUpperBoundOfVerse(BookId.BookMAT, chapter, 1));
     }
 
     [Theory]
@@ -188,7 +194,7 @@ public sealed class BibleWordIdentifierTests
     [InlineData(int.MaxValue)]
     public void GetUpperBoundOfVerse_InvalidVerse_ThrowsException(int verse)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => BibleWordIdentifier.GetUpperBoundOfVerse(BookId.BookMAT, chapter: 1, verse));
+        Assert.Throws<ArgumentOutOfRangeException>(() => BibleWordIdentifier.GetUpperBoundOfVerse(BookId.BookMAT, 1, verse));
     }
 
     [Theory]
@@ -197,7 +203,12 @@ public sealed class BibleWordIdentifierTests
     [InlineData(BookId.BookMAT, 1, 25, 1, 40_001_025_001_0L)]
     [InlineData(BookId.BookMAT, 28, 1, 1, 40_028_001_001_0L)]
     [InlineData(BookId.BookREV, 1, 1, 1, 66_001_001_001_0L)]
-    public void Constructor_LowerBoundOfWord_ValidArguments_ReturnsExpectedValue(BookId bookId, int chapter, int verse, int word, long expectedValue)
+    public void Constructor_LowerBoundOfWord_ValidArguments_ReturnsExpectedValue(
+        BookId bookId,
+        int chapter,
+        int verse,
+        int word,
+        long expectedValue)
     {
         Assert.Equal(expectedValue, new BibleWordIdentifier(bookId, chapter, verse, word));
     }
@@ -206,7 +217,7 @@ public sealed class BibleWordIdentifierTests
     [InlineData(BookId.None)]
     public void Constructor_LowerBoundOfWord_InvalidBookId_ThrowsException(BookId bookId)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(bookId, chapter: 1, verse: 1, word: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(bookId, 1, 1, 1));
     }
 
     [Theory]
@@ -216,7 +227,7 @@ public sealed class BibleWordIdentifierTests
     [InlineData(int.MaxValue)]
     public void Constructor_LowerBoundOfWord_InvalidChapter_ThrowsException(int chapter)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(BookId.BookMAT, chapter, verse: 1, word: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(BookId.BookMAT, chapter, 1, 1));
     }
 
     [Theory]
@@ -226,7 +237,7 @@ public sealed class BibleWordIdentifierTests
     [InlineData(int.MaxValue)]
     public void Constructor_LowerBoundOfWord_InvalidVerse_ThrowsException(int verse)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(BookId.BookMAT, chapter: 1, verse, word: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(BookId.BookMAT, 1, verse, 1));
     }
 
     [Theory]
@@ -236,7 +247,7 @@ public sealed class BibleWordIdentifierTests
     [InlineData(int.MaxValue)]
     public void Constructor_LowerBoundOfWord_InvalidWord_ThrowsException(int word)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(BookId.BookMAT, chapter: 1, verse: 1, word));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(BookId.BookMAT, 1, 1, word));
     }
 
     [Theory]
@@ -254,7 +265,7 @@ public sealed class BibleWordIdentifierTests
     [InlineData(BookId.None)]
     public void GetUpperBoundOfWord_InvalidBookId_ThrowsException(BookId bookId)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => BibleWordIdentifier.GetUpperBoundOfWord(bookId, chapter: 1, verse: 1, word: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => BibleWordIdentifier.GetUpperBoundOfWord(bookId, 1, 1, 1));
     }
 
     [Theory]
@@ -264,7 +275,8 @@ public sealed class BibleWordIdentifierTests
     [InlineData(int.MaxValue)]
     public void GetUpperBoundOfWord_InvalidChapter_ThrowsException(int chapter)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => BibleWordIdentifier.GetUpperBoundOfWord(BookId.BookMAT, chapter, verse: 1, word: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            BibleWordIdentifier.GetUpperBoundOfWord(BookId.BookMAT, chapter, 1, 1));
     }
 
     [Theory]
@@ -274,7 +286,8 @@ public sealed class BibleWordIdentifierTests
     [InlineData(int.MaxValue)]
     public void GetUpperBoundOfWord_InvalidVerse_ThrowsException(int verse)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => BibleWordIdentifier.GetUpperBoundOfWord(BookId.BookMAT, chapter: 1, verse, word: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            BibleWordIdentifier.GetUpperBoundOfWord(BookId.BookMAT, 1, verse, 1));
     }
 
     [Theory]
@@ -284,7 +297,8 @@ public sealed class BibleWordIdentifierTests
     [InlineData(int.MaxValue)]
     public void GetUpperBoundOfWord_InvalidWord_ThrowsException(int word)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => BibleWordIdentifier.GetUpperBoundOfWord(BookId.BookMAT, chapter: 1, verse: 1, word));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            BibleWordIdentifier.GetUpperBoundOfWord(BookId.BookMAT, 1, 1, word));
     }
 
     [Theory]
@@ -294,7 +308,13 @@ public sealed class BibleWordIdentifierTests
     [InlineData(BookId.BookMAT, 1, 25, 1, 1, 40_001_025_001_1L)]
     [InlineData(BookId.BookMAT, 28, 1, 1, 1, 40_028_001_001_1L)]
     [InlineData(BookId.BookREV, 1, 1, 1, 1, 66_001_001_001_1L)]
-    public void Constructor_FullySpecifiedComponents_ValidArguments_ReturnsExpectedValue(BookId bookId, int chapter, int verse, int word, int wordSegment, long expectedValue)
+    public void Constructor_FullySpecifiedComponents_ValidArguments_ReturnsExpectedValue(
+        BookId bookId,
+        int chapter,
+        int verse,
+        int word,
+        int wordSegment,
+        long expectedValue)
     {
         Assert.Equal(expectedValue, new BibleWordIdentifier(bookId, chapter, verse, word, wordSegment));
     }
@@ -303,7 +323,7 @@ public sealed class BibleWordIdentifierTests
     [InlineData(BookId.None)]
     public void Constructor_FullySpecifiedComponents_InvalidBookId_ThrowsException(BookId bookId)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(bookId, chapter: 1, verse: 1, word: 1, wordSegment: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(bookId, 1, 1, 1, 1));
     }
 
     [Theory]
@@ -313,7 +333,12 @@ public sealed class BibleWordIdentifierTests
     [InlineData(int.MaxValue)]
     public void Constructor_FullySpecifiedComponents_InvalidChapter_ThrowsException(int chapter)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(BookId.BookMAT, chapter, verse: 1, word: 1, wordSegment: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(
+            BookId.BookMAT,
+            chapter,
+            1,
+            1,
+            1));
     }
 
     [Theory]
@@ -323,7 +348,12 @@ public sealed class BibleWordIdentifierTests
     [InlineData(int.MaxValue)]
     public void Constructor_FullySpecifiedComponents_InvalidVerse_ThrowsException(int verse)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(BookId.BookMAT, chapter: 1, verse, word: 1, wordSegment: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(
+            BookId.BookMAT,
+            1,
+            verse,
+            1,
+            1));
     }
 
     [Theory]
@@ -333,7 +363,12 @@ public sealed class BibleWordIdentifierTests
     [InlineData(int.MaxValue)]
     public void Constructor_FullySpecifiedComponents_InvalidWord_ThrowsException(int word)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(BookId.BookMAT, chapter: 1, verse: 1, word, wordSegment: 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(
+            BookId.BookMAT,
+            1,
+            1,
+            word,
+            1));
     }
 
     [Theory]
@@ -343,6 +378,11 @@ public sealed class BibleWordIdentifierTests
     [InlineData(int.MaxValue)]
     public void Constructor_FullySpecifiedComponents_InvalidWordSegment_ThrowsException(int wordSegment)
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(BookId.BookMAT, chapter: 1, verse: 1, word: 1, wordSegment));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new BibleWordIdentifier(
+            BookId.BookMAT,
+            1,
+            1,
+            1,
+            wordSegment));
     }
 }

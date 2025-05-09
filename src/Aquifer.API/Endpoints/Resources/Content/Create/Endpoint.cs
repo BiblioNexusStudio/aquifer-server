@@ -19,7 +19,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var titleAlreadyExists = await dbContext.ResourceContentVersions.AnyAsync(x =>
+        var titleAlreadyExists = await dbContext.ResourceContentVersions.AnyAsync(
+            x =>
                 (x.DisplayName == request.LanguageTitle || x.ResourceContent.Resource.EnglishLabel == request.EnglishLabel) &&
                 x.ResourceContent.Resource.ParentResourceId == request.ParentResourceId,
             ct);
@@ -36,7 +37,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         {
             EnglishLabel = request.EnglishLabel,
             ParentResourceId = request.ParentResourceId,
-            SortOrder = 0
+            SortOrder = 0,
         };
 
         var resourceContentEntity = new ResourceContentEntity
@@ -46,7 +47,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             LanguageId = request.LanguageId,
             Trusted = true,
             Status = ResourceContentStatus.AquiferizeEditorReview,
-            MediaType = ResourceContentMediaType.Text
+            MediaType = ResourceContentMediaType.Text,
         };
 
         var resourceContentVersionEntity = new ResourceContentVersionEntity
@@ -64,17 +65,17 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 new ResourceContentVersionStatusHistoryEntity
                 {
                     Status = ResourceContentStatus.AquiferizeEditorReview,
-                    ChangedByUserId = currentUser.Id
-                }
+                    ChangedByUserId = currentUser.Id,
+                },
             ],
             ResourceContentVersionAssignedUserHistories =
             [
                 new ResourceContentVersionAssignedUserHistoryEntity
                 {
                     AssignedUserId = currentUser.Id,
-                    ChangedByUserId = currentUser.Id
-                }
-            ]
+                    ChangedByUserId = currentUser.Id,
+                },
+            ],
         };
 
         await dbContext.ResourceContentVersions.AddAsync(resourceContentVersionEntity, ct);

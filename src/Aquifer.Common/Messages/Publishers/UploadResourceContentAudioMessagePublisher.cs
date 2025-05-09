@@ -17,6 +17,6 @@ public sealed class UploadResourceContentAudioMessagePublisher(IQueueClientFacto
         CancellationToken cancellationToken)
     {
         var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.UploadResourceContentAudio, cancellationToken);
-        await queueClient.SendMessageAsync(message, cancellationToken: cancellationToken);
+        await queueClient.SendMessageAsync(message, cancellationToken);
     }
 }

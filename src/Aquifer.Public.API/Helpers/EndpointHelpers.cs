@@ -10,10 +10,9 @@ public static class EndpointHelpers
     // Because CacheOutput ignores requests that include an Authorization header, this is only meant for use on AllowAnonymous() endpoints.
     public static Action<RouteHandlerBuilder> UnauthenticatedServerCacheInSeconds(int seconds)
     {
-        return x => x.CacheOutput(
-            c => c
-                .Expire(TimeSpan.FromSeconds(seconds))
-                .Tag(AnonymousOutputCacheTag));
+        return x => x.CacheOutput(c => c
+            .Expire(TimeSpan.FromSeconds(seconds))
+            .Tag(AnonymousOutputCacheTag));
     }
 
     public static class EndpointTags

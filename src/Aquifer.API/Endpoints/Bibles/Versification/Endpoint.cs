@@ -58,12 +58,11 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
                 ct);
 
             verseMappings = versificationMap
-                .Select(
-                    mapping => new VerseMapping
-                    {
-                        SourceVerse = MapToVerseReference(mapping.Key),
-                        TargetVerses = mapping.Value.Select(MapToVerseReference).ToList(),
-                    })
+                .Select(mapping => new VerseMapping
+                {
+                    SourceVerse = MapToVerseReference(mapping.Key),
+                    TargetVerses = mapping.Value.Select(MapToVerseReference).ToList(),
+                })
                 .ToList();
         }
 
@@ -82,7 +81,7 @@ public class Endpoint(AquiferDbContext dbContext, ICachingVersificationService v
             VerseId = verseId,
             Book = bookName,
             Chapter = chapter,
-            Verse = verse
+            Verse = verse,
         };
     }
 

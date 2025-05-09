@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using Aquifer.API.Endpoints.Marketing.ParentResourceStatuses.List;
+using Aquifer.Common;
 using FastEndpoints;
 using FastEndpoints.Testing;
 
@@ -12,7 +13,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
     {
         var request = new Request
         {
-            LanguageId = Aquifer.Common.Constants.EnglishLanguageId,
+            LanguageId = Constants.EnglishLanguageId,
         };
 
         var (response, result) = await _app.Client.GETAsync<Endpoint, Request, IReadOnlyList<Response>>(request);

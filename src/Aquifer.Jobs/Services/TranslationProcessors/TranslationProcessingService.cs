@@ -20,7 +20,8 @@ public static class TranslationProcessingServicesRegistry
     {
         services.AddSingleton<ITranslationProcessingService, TranslationProcessingService>();
 
-        foreach (var implementationType in AppDomain.CurrentDomain.GetAssemblies()
+        foreach (var implementationType in AppDomain.CurrentDomain
+            .GetAssemblies()
             .SelectMany(s => s.GetTypes())
             .Where(t => typeof(ILanguageSpecificTranslationProcessingService).IsAssignableFrom(t) &&
                 t is { IsClass: true, IsAbstract: false }))

@@ -12,9 +12,9 @@ namespace Aquifer.Common.IntegrationTests;
 
 /// <summary>
 /// This class essentially acts as the Program.cs file for configuring the integration tests project's app config and services.
-/// XUnit will automatically run the <see cref="InitializeAsync"/> and <see cref="DisposeAsync"/> methods when used in conjunction with
-/// <see cref="TestBase{TAppFixture}"/> and will only do it only once per test class, not per test method, due to
-/// the base class using <see cref="IClassFixture{TFixture}"/>.
+/// XUnit will automatically run the <see cref="InitializeAsync" /> and <see cref="DisposeAsync" /> methods when used in conjunction with
+/// <see cref="TestBase{TAppFixture}" /> and will only do it only once per test class, not per test method, due to
+/// the base class using <see cref="IClassFixture{TFixture}" />.
 /// </summary>
 public sealed class App : IAsyncLifetime
 {
@@ -24,7 +24,10 @@ public sealed class App : IAsyncLifetime
 
     public ValueTask InitializeAsync()
     {
-        Host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
+        Host = Microsoft.Extensions
+            .Hosting
+            .Host
+            .CreateDefaultBuilder()
             .UseEnvironment(Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? Environments.Development)
             .ConfigureServices((context, services) =>
             {
@@ -38,11 +41,12 @@ public sealed class App : IAsyncLifetime
                 services
                     .AddMemoryCache()
                     .AddDbContext<AquiferDbContext>(options => options
-                        .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb,
+                        .UseAzureSql(
+                            configuration.ConnectionStrings.BiblioNexusDb,
                             providerOptions => providerOptions.EnableRetryOnFailure(3))
                         .EnableSensitiveDataLogging(isDevelopment)
                         .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
-                    .AddAzureClient(useCliCredential: true)
+                    .AddAzureClient(true)
                     .AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>()
                     .AddScoped<ICachingVersificationService, CachingVersificationService>();
             })

@@ -16,12 +16,12 @@ public sealed class EmailMessagePublisher(IQueueClientFactory _queueClientFactor
     public async Task PublishSendEmailMessageAsync(SendEmailMessage message, CancellationToken cancellationToken)
     {
         var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.SendEmail, cancellationToken);
-        await queueClient.SendMessageAsync(message, cancellationToken: cancellationToken);
+        await queueClient.SendMessageAsync(message, cancellationToken);
     }
 
     public async Task PublishSendTemplatedEmailMessageAsync(SendTemplatedEmailMessage message, CancellationToken cancellationToken)
     {
         var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.SendTemplatedEmail, cancellationToken);
-        await queueClient.SendMessageAsync(message, cancellationToken: cancellationToken);
+        await queueClient.SendMessageAsync(message, cancellationToken);
     }
 }

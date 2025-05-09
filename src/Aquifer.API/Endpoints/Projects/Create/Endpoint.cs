@@ -53,7 +53,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ThrowEntityNotFoundError<Request>(r => r.TargetLanguageId);
         }
 
-        var projectManagerUser = await dbContext.Users.AsTracking()
+        var projectManagerUser = await dbContext.Users
+            .AsTracking()
             .SingleOrDefaultAsync(u => u.Id == request.ProjectManagerUserId && u.Enabled, ct);
         if (projectManagerUser is null)
         {
@@ -79,7 +80,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var companyLeadUser = await GetCompanyLeadUserAsync(request, ct);
         var resourceContents = await CreateOrFindResourceContentFromResourceIdsAsync(request, user, ct);
 
-        var wordCount = await dbContext.ResourceContentVersions.AsTracking()
+        var wordCount = await dbContext.ResourceContentVersions
+            .AsTracking()
             .Where(rcv => request.ResourceIds.Contains(rcv.ResourceContent.ResourceId) &&
                 rcv.IsPublished &&
                 rcv.ResourceContent.LanguageId == request.SourceLanguageId)
@@ -96,7 +98,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             ProjectManagerUser = projectManagerUser,
             CompanyLeadUser = companyLeadUser,
             Company = company,
-            ProjectPlatformId = 1
+            ProjectPlatformId = 1,
         };
     }
 
@@ -146,7 +148,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             return await CreateOrFindTranslatedResourceContentAsync(request.SourceLanguageId, request.ResourceIds, user, ct);
         }
 
-        return await CreateOrFindTranslationResourceContentAsync(request.SourceLanguageId, request.TargetLanguageId!.Value, request.ResourceIds, user, ct);
+        return await CreateOrFindTranslationResourceContentAsync(
+            request.SourceLanguageId,
+            request.TargetLanguageId!.Value,
+            request.ResourceIds,
+            user,
+            ct);
     }
 
     private async Task<List<ResourceContentEntity>> CreateOrFindAquiferizationResourceContentAsync(
@@ -154,7 +161,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         IReadOnlyList<int> resourceIds,
         CancellationToken ct)
     {
-        var resourceContents = await dbContext.ResourceContents.AsTracking()
+        var resourceContents = await dbContext.ResourceContents
+            .AsTracking()
             .Where(rc => resourceIds.Contains(rc.ResourceId) &&
                 rc.LanguageId == languageId &&
                 rc.MediaType != ResourceContentMediaType.Audio)
@@ -185,19 +193,20 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             if (draftVersion is null)
             {
                 var firstVersion = resourceContent.Versions.First();
-                resourceContent.Versions.Add(new ResourceContentVersionEntity
-                {
-                    IsPublished = false,
-                    IsDraft = true,
-                    ReviewLevel = ResourceContentVersionReviewLevel.Professional,
-                    DisplayName = firstVersion.DisplayName,
-                    Content = firstVersion.Content,
-                    ContentSize = firstVersion.ContentSize,
-                    WordCount = firstVersion.WordCount,
-                    SourceWordCount = firstVersion.WordCount,
-                    Version = firstVersion.Version + 1,
-                    ResourceContent = resourceContent
-                });
+                resourceContent.Versions.Add(
+                    new ResourceContentVersionEntity
+                    {
+                        IsPublished = false,
+                        IsDraft = true,
+                        ReviewLevel = ResourceContentVersionReviewLevel.Professional,
+                        DisplayName = firstVersion.DisplayName,
+                        Content = firstVersion.Content,
+                        ContentSize = firstVersion.ContentSize,
+                        WordCount = firstVersion.WordCount,
+                        SourceWordCount = firstVersion.WordCount,
+                        Version = firstVersion.Version + 1,
+                        ResourceContent = resourceContent,
+                    });
             }
         }
 
@@ -210,7 +219,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         UserEntity user,
         CancellationToken ct)
     {
-        var languageResourceContents = await dbContext.ResourceContents.AsTracking()
+        var languageResourceContents = await dbContext.ResourceContents
+            .AsTracking()
             .Where(rc => resourceIds.Contains(rc.ResourceId) &&
                 rc.MediaType != ResourceContentMediaType.Audio &&
                 rc.LanguageId == languageId)
@@ -258,8 +268,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                     {
                         Status = status,
                         ChangedByUserId = user.Id,
-                        Created = DateTime.UtcNow
-                    }
+                        Created = DateTime.UtcNow,
+                    },
                 ],
                 Version = baseVersion.Version + 1,
             };
@@ -281,7 +291,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         CancellationToken ct)
     {
         // do this in one query for performance reasons
-        var sourceLanguageOrTargetLanguageResourceContents = await dbContext.ResourceContents.AsTracking()
+        var sourceLanguageOrTargetLanguageResourceContents = await dbContext.ResourceContents
+            .AsTracking()
             .Where(rc => resourceIds.Contains(rc.ResourceId) && rc.MediaType == ResourceContentMediaType.Text)
             .Where(rc => rc.LanguageId == targetLanguageId ||
                 (rc.Resource.ResourceContents.All(rci => rci.LanguageId != targetLanguageId) && rc.LanguageId == sourceLanguageId))
@@ -340,10 +351,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                     {
                         Status = ResourceContentStatus.TranslationAwaitingAiDraft,
                         ChangedByUserId = user.Id,
-                        Created = DateTime.UtcNow
-                    }
+                        Created = DateTime.UtcNow,
+                    },
                 ],
-                Version = 1
+                Version = 1,
             };
             var newResourceContent = new ResourceContentEntity
             {
@@ -353,7 +364,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 MediaType = baseResourceContent.MediaType,
                 Status = ResourceContentStatus.TranslationAwaitingAiDraft,
                 Trusted = true,
-                Versions = [newResourceContentVersion]
+                Versions = [newResourceContentVersion],
             };
             await dbContext.ResourceContents.AddAsync(newResourceContent, ct);
             projectResourceContents.Add(newResourceContent);

@@ -35,7 +35,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
             ContactType = request.ContactType,
             UserId = HttpContext.Request.Headers["bn-user-id"],
             Feedback = request.Feedback,
-            UserRating = request.UserRating
+            UserRating = request.UserRating,
         };
 
         await dbContext.ResourceContentVersionFeedback.AddAsync(feedback, ct);

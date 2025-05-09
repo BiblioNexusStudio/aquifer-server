@@ -15,6 +15,7 @@ public class Response
 
     [JsonIgnore]
     public required string LicenseInfoValue { get; set; }
+
     public ResourceLicenseInfo LicenseInfo => JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(LicenseInfoValue);
 
     public required ResourceTypeComplexityLevel ComplexityLevel { get; set; }

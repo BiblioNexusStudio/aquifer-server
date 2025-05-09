@@ -23,15 +23,19 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         [
             ResourceContentStatus.TranslationAiDraftComplete,
             ResourceContentStatus.TranslationEditorReview,
-            ResourceContentStatus.TranslationCompanyReview
+            ResourceContentStatus.TranslationCompanyReview,
         ];
 
-        var content = await dbContext.ResourceContentVersions.AsTracking().Include(x => x.ResourceContent).SingleOrDefaultAsync(x =>
-                x.ResourceContentId == request.ContentId &&
-                x.IsDraft &&
-                user.Id == x.AssignedUserId &&
-                allowedStatuses.Contains(x.ResourceContent.Status),
-            ct);
+        var content = await dbContext.ResourceContentVersions
+            .AsTracking()
+            .Include(x => x.ResourceContent)
+            .SingleOrDefaultAsync(
+                x =>
+                    x.ResourceContentId == request.ContentId &&
+                    x.IsDraft &&
+                    user.Id == x.AssignedUserId &&
+                    allowedStatuses.Contains(x.ResourceContent.Status),
+                ct);
 
         if (content is null)
         {

@@ -17,6 +17,6 @@ public sealed class NotificationMessagePublisher(IQueueClientFactory _queueClien
         CancellationToken cancellationToken)
     {
         var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.SendProjectStartedNotification, cancellationToken);
-        await queueClient.SendMessageAsync(message, cancellationToken: cancellationToken);
+        await queueClient.SendMessageAsync(message, cancellationToken);
     }
 }

@@ -134,7 +134,7 @@ public sealed class PortugueseTranslationProcessingService : ILanguageSpecificTr
                         "2 jo" => "2Jo",
                         "3 jo" => "3Jo",
                         "apo" => "Ap",
-                        _ => correctedValue
+                        _ => correctedValue,
                     };
 
                     return correctedValue + " ";

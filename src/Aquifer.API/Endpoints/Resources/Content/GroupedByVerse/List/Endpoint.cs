@@ -1,5 +1,5 @@
-using Aquifer.Common.Utilities;
 using Aquifer.Common;
+using Aquifer.Common.Utilities;
 using Aquifer.Data;
 using Aquifer.Data.Entities;
 using FastEndpoints;
@@ -23,81 +23,83 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         var fallbackMediaTypesSqlArray = string.Join(',', Constants.FallbackToEnglishForMediaTypes.Select(t => (int)t));
 
         var query = $"""
-                         SELECT
-                             COALESCE(rc.Id, rce.Id) AS Id,
-                             rct.Id AS DependentOnId,
-                             vr.VerseId,
-                             COALESCE(rc.MediaType, rce.MediaType) AS MediaType,
-                             pr.ResourceType,
-                             rcv.Version,
-                             pr.Id AS ParentResourceId
-                         FROM
-                             VerseResources vr
-                             INNER JOIN Resources r ON vr.ResourceId = r.Id
-                             INNER JOIN ParentResources pr ON r.ParentResourceId = pr.Id
-                             LEFT JOIN ResourceContents rc ON rc.ResourceId = r.Id AND rc.LanguageId = {request.LanguageId}
-                             LEFT JOIN ResourceContents rce ON rce.ResourceId = r.Id AND rce.LanguageId = {Constants.EnglishLanguageId}
-                                                               AND rce.MediaType IN ({fallbackMediaTypesSqlArray})
-                             LEFT JOIN ResourceContents rct ON rc.MediaType != {(int)ResourceContentMediaType.Text} AND rct.ResourceId = r.Id
-                                                               AND rct.MediaType = {(int)ResourceContentMediaType.Text} AND rct.LanguageId = {request.LanguageId}
-                             INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = COALESCE(rc.Id, rce.Id) AND rcv.IsPublished = 1
-                        WHERE
-                             pr.Enabled = 1 AND
-                             vr.VerseId BETWEEN {startVerseId} AND {endVerseId}
+                SELECT
+                    COALESCE(rc.Id, rce.Id) AS Id,
+                    rct.Id AS DependentOnId,
+                    vr.VerseId,
+                    COALESCE(rc.MediaType, rce.MediaType) AS MediaType,
+                    pr.ResourceType,
+                    rcv.Version,
+                    pr.Id AS ParentResourceId
+                FROM
+                    VerseResources vr
+                    INNER JOIN Resources r ON vr.ResourceId = r.Id
+                    INNER JOIN ParentResources pr ON r.ParentResourceId = pr.Id
+                    LEFT JOIN ResourceContents rc ON rc.ResourceId = r.Id AND rc.LanguageId = {request.LanguageId}
+                    LEFT JOIN ResourceContents rce ON rce.ResourceId = r.Id AND rce.LanguageId = {Constants.EnglishLanguageId}
+                                                      AND rce.MediaType IN ({fallbackMediaTypesSqlArray})
+                    LEFT JOIN ResourceContents rct ON rc.MediaType != {(int)ResourceContentMediaType.Text} AND rct.ResourceId = r.Id
+                                                      AND rct.MediaType = {(int)ResourceContentMediaType.Text} AND rct.LanguageId = {request.LanguageId}
+                    INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = COALESCE(rc.Id, rce.Id) AND rcv.IsPublished = 1
+               WHERE
+                    pr.Enabled = 1 AND
+                    vr.VerseId BETWEEN {startVerseId} AND {endVerseId}
 
-                         UNION
+                UNION
 
-                         SELECT
-                             COALESCE(rc.Id, rce.Id) AS Id,
-                             rct.Id AS DependentOnId,
-                             v.Id AS VerseId,
-                             COALESCE(rc.MediaType, rce.MediaType) AS MediaType,
-                             parr.ResourceType,
-                             rcv.Version,
-                             parr.Id AS ParentResourceId
-                         FROM
-                             Resources r
-                             INNER JOIN ParentResources parr ON parr.Id = r.ParentResourceId
-                             INNER JOIN PassageResources pasr ON pasr.ResourceId = r.id
-                             INNER JOIN Passages p ON p.Id = pasr.PassageId
-                             INNER JOIN Verses v ON v.Id BETWEEN p.StartVerseId AND p.EndVerseId
-                                 AND v.Id BETWEEN {startVerseId} AND {endVerseId}
-                             LEFT JOIN ResourceContents rc ON rc.ResourceId = r.Id AND rc.LanguageId = {request.LanguageId}
-                             LEFT JOIN ResourceContents rce ON rce.ResourceId = r.Id AND rce.LanguageId = {Constants.EnglishLanguageId}
-                                                               AND rce.MediaType IN ({fallbackMediaTypesSqlArray})
-                             LEFT JOIN ResourceContents rct ON rc.MediaType != {(int)ResourceContentMediaType.Text} AND rct.ResourceId = r.Id
-                                                               AND rct.MediaType = {(int)ResourceContentMediaType.Text} AND rct.LanguageId = {request.LanguageId}
-                             INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = COALESCE(rc.Id, rce.Id) AND rcv.IsPublished = 1
-                         WHERE
-                             parr.Enabled = 1 AND
-                             ((p.StartVerseId BETWEEN {startVerseId} AND {endVerseId})
-                             OR (p.EndVerseId BETWEEN {startVerseId} AND {endVerseId})
-                             OR (p.StartVerseId < {startVerseId} AND p.EndVerseId > {endVerseId}))
+                SELECT
+                    COALESCE(rc.Id, rce.Id) AS Id,
+                    rct.Id AS DependentOnId,
+                    v.Id AS VerseId,
+                    COALESCE(rc.MediaType, rce.MediaType) AS MediaType,
+                    parr.ResourceType,
+                    rcv.Version,
+                    parr.Id AS ParentResourceId
+                FROM
+                    Resources r
+                    INNER JOIN ParentResources parr ON parr.Id = r.ParentResourceId
+                    INNER JOIN PassageResources pasr ON pasr.ResourceId = r.id
+                    INNER JOIN Passages p ON p.Id = pasr.PassageId
+                    INNER JOIN Verses v ON v.Id BETWEEN p.StartVerseId AND p.EndVerseId
+                        AND v.Id BETWEEN {startVerseId} AND {endVerseId}
+                    LEFT JOIN ResourceContents rc ON rc.ResourceId = r.Id AND rc.LanguageId = {request.LanguageId}
+                    LEFT JOIN ResourceContents rce ON rce.ResourceId = r.Id AND rce.LanguageId = {Constants.EnglishLanguageId}
+                                                      AND rce.MediaType IN ({fallbackMediaTypesSqlArray})
+                    LEFT JOIN ResourceContents rct ON rc.MediaType != {(int)ResourceContentMediaType.Text} AND rct.ResourceId = r.Id
+                                                      AND rct.MediaType = {(int)ResourceContentMediaType.Text} AND rct.LanguageId = {request.LanguageId}
+                    INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = COALESCE(rc.Id, rce.Id) AND rcv.IsPublished = 1
+                WHERE
+                    parr.Enabled = 1 AND
+                    ((p.StartVerseId BETWEEN {startVerseId} AND {endVerseId})
+                    OR (p.EndVerseId BETWEEN {startVerseId} AND {endVerseId})
+                    OR (p.StartVerseId < {startVerseId} AND p.EndVerseId > {endVerseId}))
 
-                         ORDER BY
-                             VerseId
-                     """;
+                ORDER BY
+                    VerseId
+            """;
 
         var rows = await dbContext.Database.SqlQueryRaw<ResourceContentRow>(query).ToListAsync(ct);
 
         var response = new Response
         {
-            Verses = rows.GroupBy(row => row.VerseId).Select(group =>
-                new ResourcesForVerseResponse
-                {
-                    Number = BibleUtilities.TranslateVerseId(group.Key).verse,
-                    ResourceContents = group.Select(row => new ResourceContentResponse
+            Verses = rows.GroupBy(row => row.VerseId)
+                .Select(group =>
+                    new ResourcesForVerseResponse
                     {
-                        Id = row.Id,
-                        MediaType = row.MediaType.ToString(),
-                        ParentResourceId = row.ParentResourceId,
-                        Version = row.Version,
-                        ResourceType = row.ResourceType.ToString(),
-                        DependentOnId = row.DependentOnId
+                        Number = BibleUtilities.TranslateVerseId(group.Key).verse,
+                        ResourceContents = group.Select(row => new ResourceContentResponse
+                            {
+                                Id = row.Id,
+                                MediaType = row.MediaType.ToString(),
+                                ParentResourceId = row.ParentResourceId,
+                                Version = row.Version,
+                                ResourceType = row.ResourceType.ToString(),
+                                DependentOnId = row.DependentOnId,
+                            })
+                            .DistinctBy(row => row.Id)
+                            .ToList(),
                     })
-                        .DistinctBy(row => row.Id)
-                        .ToList()
-                }).ToList()
+                .ToList(),
         };
 
         await SendOkAsync(response, ct);

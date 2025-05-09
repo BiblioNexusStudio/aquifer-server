@@ -13,11 +13,13 @@ public interface IBlobStorageService
     Task DownloadFileAsync(string containerName, string blobName, string filePath, CancellationToken ct);
     Task DownloadStreamAsync(string containerName, string blobName, Stream stream, CancellationToken ct);
     Task UploadFileAsync(string containerName, string blobName, string filePath, bool overwrite, CancellationToken ct);
+
     Task UploadFilesInParallelAsync(
         string containerName,
         IEnumerable<(string BlobName, string FilePath)> files,
         bool overwrite,
         CancellationToken ct);
+
     Task UploadStreamAsync(string containerName, string blobName, Stream fileStream, CancellationToken ct);
 }
 
@@ -27,14 +29,10 @@ public sealed class BlobStorageService(
     ILogger<BlobStorageService> _logger)
     : IBlobStorageService
 {
-    private readonly BlobServiceClient _blobServiceClient = GetBlobServiceClient(
-        _azureStorageAccountOptions.BlobEndpoint,
-        _azureStorageAccountOptions.ConnectionStringOverride,
-        _azureClientService);
-
     private static readonly BlobClientOptions s_blobClientOptions = new()
     {
-        Retry = {
+        Retry =
+        {
             Delay = TimeSpan.FromMilliseconds(50),
             MaxRetries = 5,
             Mode = RetryMode.Exponential,
@@ -42,6 +40,11 @@ public sealed class BlobStorageService(
             NetworkTimeout = TimeSpan.FromSeconds(100),
         },
     };
+
+    private readonly BlobServiceClient _blobServiceClient = GetBlobServiceClient(
+        _azureStorageAccountOptions.BlobEndpoint,
+        _azureStorageAccountOptions.ConnectionStringOverride,
+        _azureClientService);
 
     public async Task DeleteFileAsync(string containerName, string blobName, CancellationToken ct)
     {
@@ -71,7 +74,7 @@ public sealed class BlobStorageService(
 
         try
         {
-            await blobClient.DownloadToAsync(filePath, cancellationToken: ct);
+            await blobClient.DownloadToAsync(filePath, ct);
         }
         catch (RequestFailedException rfe)
         {
@@ -93,7 +96,7 @@ public sealed class BlobStorageService(
 
         try
         {
-            await blobClient.DownloadToAsync(stream, cancellationToken: ct);
+            await blobClient.DownloadToAsync(stream, ct);
         }
         catch (RequestFailedException rfe)
         {
@@ -123,8 +126,9 @@ public sealed class BlobStorageService(
     {
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
 
-        await Task.WhenAll(files.Select(f =>
-            UploadFileCoreAsync(containerClient.GetBlobClient(f.BlobName), f.FilePath, overwrite, ct)));
+        await Task.WhenAll(
+            files.Select(f =>
+                UploadFileCoreAsync(containerClient.GetBlobClient(f.BlobName), f.FilePath, overwrite, ct)));
     }
 
     public async Task UploadStreamAsync(string containerName, string blobName, Stream fileStream, CancellationToken ct)
@@ -134,7 +138,7 @@ public sealed class BlobStorageService(
 
         try
         {
-            await blobClient.UploadAsync(fileStream, overwrite: true, ct);
+            await blobClient.UploadAsync(fileStream, true, ct);
         }
         catch (RequestFailedException rfe)
         {
@@ -179,9 +183,9 @@ public sealed class BlobStorageService(
     {
         return string.IsNullOrEmpty(connectionStringOverride)
             ? new BlobServiceClient(
-                blobEndpoint
-                    ?? throw new InvalidOperationException(
-                        $"The \"{nameof(AzureStorageAccountOptions.BlobEndpoint)}\" setting must be provided when \"{nameof(AzureStorageAccountOptions.ConnectionStringOverride)}\" is empty."),
+                blobEndpoint ??
+                throw new InvalidOperationException(
+                    $"The \"{nameof(AzureStorageAccountOptions.BlobEndpoint)}\" setting must be provided when \"{nameof(AzureStorageAccountOptions.ConnectionStringOverride)}\" is empty."),
                 azureClientService.GetCredential(),
                 s_blobClientOptions)
             : new BlobServiceClient(

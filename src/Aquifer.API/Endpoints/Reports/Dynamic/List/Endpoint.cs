@@ -19,31 +19,28 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     {
         var reportsWithAllowedRoles = await dbContext.Reports
             .Where(r => r.Enabled)
-            .Select(
-                r => new
-                {
-                    r.Slug,
-                    r.Name,
-                    r.Description,
-                    r.Type,
-                    r.AllowedRoles,
-                    r.ShowInDropdown
-                })
+            .Select(r => new
+            {
+                r.Slug,
+                r.Name,
+                r.Description,
+                r.Type,
+                r.AllowedRoles,
+                r.ShowInDropdown,
+            })
             .ToListAsync(ct);
 
         var userRole = userService.GetUserRoleFromJwt();
         if (userRole != UserRole.None)
         {
-            var reports = reportsWithAllowedRoles.Where(
-                    r => ReportRoleHelper.RoleIsAllowedForReport(r.AllowedRoles, userRole))
-                .Select(
-                    r => new Response
+            var reports = reportsWithAllowedRoles.Where(r => ReportRoleHelper.RoleIsAllowedForReport(r.AllowedRoles, userRole))
+                .Select(r => new Response
                     {
                         Name = r.Name,
                         Description = r.Description,
                         Type = r.Type,
                         Slug = r.Slug,
-                        ShowInDropdown = r.ShowInDropdown
+                        ShowInDropdown = r.ShowInDropdown,
                     }
                 );
 

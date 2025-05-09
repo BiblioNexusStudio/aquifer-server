@@ -21,8 +21,9 @@ public class Endpoint : EndpointWithoutRequest<List<Response>>
             .Select(x => new Response
             {
                 DisplayName = x.GetDisplayName(),
-                Status = x
-            }).ToList();
+                Status = x,
+            })
+            .ToList();
 
         await SendOkAsync(statuses, ct);
     }

@@ -27,7 +27,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         List<ResourceContentStatus> allowedStatuses =
         [
             ResourceContentStatus.AquiferizeEditorReview, ResourceContentStatus.TranslationEditorReview,
-            ResourceContentStatus.AquiferizeCompanyReview, ResourceContentStatus.TranslationCompanyReview
+            ResourceContentStatus.AquiferizeCompanyReview, ResourceContentStatus.TranslationCompanyReview,
         ];
 
         var draftVersions = await dbContext.ResourceContentVersions
@@ -58,7 +58,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 draftVersion.ResourceContent.Status,
                 ct);
 
-            await SetAssignedUserIdAsync(user,
+            await SetAssignedUserIdAsync(
+                user,
                 draftVersion.ResourceContent.ProjectResourceContents.FirstOrDefault(x => x.Project.ActualPublishDate == null)?.Project,
                 managerIds,
                 draftVersion);
@@ -76,7 +77,6 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             }
 
             await historyService.AddAssignedUserHistoryAsync(draftVersion, draftVersion.AssignedUserId, user.Id, ct);
-
         }
 
         await dbContext.SaveChangesAsync(ct);
@@ -84,12 +84,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         Response.Assignments = draftVersions.Select(x => new UserAssignment
             {
                 ResourceContentId = x.ResourceContentId,
-                AssignedUserId = x.AssignedUserId!.Value
+                AssignedUserId = x.AssignedUserId!.Value,
             })
             .ToList();
     }
 
-    private async Task SetAssignedUserIdAsync(UserEntity user,
+    private async Task SetAssignedUserIdAsync(
+        UserEntity user,
         ProjectEntity? project,
         List<int> managers,
         ResourceContentVersionEntity draftVersion)
@@ -100,7 +101,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
         if (draftVersion.AssignedReviewerUserId is not null &&
             (draftVersion.ResourceContent.Status == ResourceContentStatus.AquiferizeEditorReview ||
-             draftVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview))
+                draftVersion.ResourceContent.Status == ResourceContentStatus.TranslationEditorReview))
         {
             draftVersion.AssignedUserId = draftVersion.AssignedReviewerUserId;
         }

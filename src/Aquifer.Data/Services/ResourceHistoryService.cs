@@ -5,22 +5,26 @@ namespace Aquifer.Data.Services;
 
 public interface IResourceHistoryService
 {
-    Task AddAssignedUserHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
+    Task AddAssignedUserHistoryAsync(
+        ResourceContentVersionEntity contentVersionEntity,
         int? assignedUserId,
         int changedByUserId,
         CancellationToken ct);
 
-    Task AddStatusHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
+    Task AddStatusHistoryAsync(
+        ResourceContentVersionEntity contentVersionEntity,
         ResourceContentStatus status,
         int changedByUserId,
         CancellationToken ct);
 
-    Task AddSnapshotHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
+    Task AddSnapshotHistoryAsync(
+        ResourceContentVersionEntity contentVersionEntity,
         int? oldUserId,
         ResourceContentStatus oldStatus,
         CancellationToken ct);
 
-    Task AddSnapshotHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
+    Task AddSnapshotHistoryAsync(
+        ResourceContentVersionEntity contentVersionEntity,
         string content,
         string displayName,
         int? wordCount,
@@ -31,7 +35,8 @@ public interface IResourceHistoryService
 
 public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHistoryService
 {
-    public async Task AddStatusHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
+    public async Task AddStatusHistoryAsync(
+        ResourceContentVersionEntity contentVersionEntity,
         ResourceContentStatus status,
         int changedByUserId,
         CancellationToken ct)
@@ -41,13 +46,14 @@ public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHist
             ResourceContentVersion = contentVersionEntity,
             Status = status,
             ChangedByUserId = changedByUserId,
-            Created = DateTime.UtcNow
+            Created = DateTime.UtcNow,
         };
 
         await _dbContext.ResourceContentVersionStatusHistory.AddAsync(resourceContentVersionStatusHistory, ct);
     }
 
-    public async Task AddAssignedUserHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
+    public async Task AddAssignedUserHistoryAsync(
+        ResourceContentVersionEntity contentVersionEntity,
         int? assignedUserId,
         int changedByUserId,
         CancellationToken ct)
@@ -57,13 +63,14 @@ public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHist
             ResourceContentVersion = contentVersionEntity,
             AssignedUserId = assignedUserId,
             ChangedByUserId = changedByUserId,
-            Created = DateTime.UtcNow
+            Created = DateTime.UtcNow,
         };
 
         await _dbContext.ResourceContentVersionAssignedUserHistory.AddAsync(resourceContentVersionAssignedUserHistory, ct);
     }
 
-    public async Task AddSnapshotHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
+    public async Task AddSnapshotHistoryAsync(
+        ResourceContentVersionEntity contentVersionEntity,
         int? oldUserId,
         ResourceContentStatus oldStatus,
         CancellationToken ct)
@@ -93,7 +100,8 @@ public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHist
         }
     }
 
-    public async Task AddSnapshotHistoryAsync(ResourceContentVersionEntity contentVersionEntity,
+    public async Task AddSnapshotHistoryAsync(
+        ResourceContentVersionEntity contentVersionEntity,
         string content,
         string displayName,
         int? wordCount,
@@ -109,7 +117,7 @@ public class ResourceHistoryService(AquiferDbContext _dbContext) : IResourceHist
             WordCount = wordCount,
             UserId = oldUserId,
             Status = oldStatus,
-            Created = DateTime.UtcNow
+            Created = DateTime.UtcNow,
         };
 
         await _dbContext.ResourceContentVersionSnapshots.AddAsync(resourceContentVersionSnapshot, ct);

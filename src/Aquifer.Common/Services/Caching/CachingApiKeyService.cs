@@ -22,8 +22,8 @@ public class CachingApiKeyService(AquiferDbContext _dbContext, IMemoryCache _mem
 
     public ApiKey CurrentApiKey
     {
-        get => _httpContextAccessor.HttpContext?.Items[Constants.HttpContextItemCachedApiKey] as ApiKey
-            ?? throw new InvalidOperationException("API Key should be saved on HTTP Context!");
+        get => _httpContextAccessor.HttpContext?.Items[Constants.HttpContextItemCachedApiKey] as ApiKey ??
+            throw new InvalidOperationException("API Key should be saved on HTTP Context!");
         set => _httpContextAccessor.HttpContext?.Items.Add(Constants.HttpContextItemCachedApiKey, value);
     }
 

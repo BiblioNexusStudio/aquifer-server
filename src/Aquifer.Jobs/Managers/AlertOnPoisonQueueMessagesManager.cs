@@ -19,7 +19,7 @@ public sealed class AlertOnPoisonQueueMessagesManager(
     private readonly ILogger<AlertOnPoisonQueueMessagesManager> _logger = logger;
 
     [Function(nameof(AlertOnPoisonQueueMessagesManager))]
-    [FixedDelayRetry(maxRetryCount: 1, Timings.TenSecondDelayInterval)]
+    [FixedDelayRetry(1, Timings.TenSecondDelayInterval)]
     public override async Task RunAsync([TimerTrigger(CronSchedules.EveryTenMinutes)] TimerInfo timerInfo, CancellationToken ct)
     {
         await base.RunAsync(timerInfo, ct);
@@ -43,8 +43,8 @@ public sealed class AlertOnPoisonQueueMessagesManager(
                     .Where(pqm =>
                         !pqm.InsertedOn.HasValue ||
                         (pqm.InsertedOn.Value.UtcDateTime > jobHistory.LastProcessed && pqm.InsertedOn.Value.UtcDateTime <= now))
-                    .ToList()
-                ?? [];
+                    .ToList() ??
+                [];
 
             if (poisonQueueMessagesSinceLastJobRun.Count > 0)
             {
@@ -62,7 +62,8 @@ public sealed class AlertOnPoisonQueueMessagesManager(
 
         if (isHealthy)
         {
-            _logger.LogInformation($"{nameof(AlertOnPoisonQueueMessagesManager)}: No poison queue messages detected since {{LastJobRun}}.",
+            _logger.LogInformation(
+                $"{nameof(AlertOnPoisonQueueMessagesManager)}: No poison queue messages detected since {{LastJobRun}}.",
                 jobHistory.LastProcessed);
         }
 

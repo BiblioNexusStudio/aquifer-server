@@ -60,7 +60,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         [
             ResourceContentStatus.AquiferizeCompanyReview, ResourceContentStatus.TranslationCompanyReview,
             ResourceContentStatus.AquiferizeReviewPending, ResourceContentStatus.TranslationReviewPending,
-            ResourceContentStatus.AquiferizePublisherReview, ResourceContentStatus.TranslationPublisherReview
+            ResourceContentStatus.AquiferizePublisherReview, ResourceContentStatus.TranslationPublisherReview,
         ];
 
         var draftVersions = await dbContext.ResourceContentVersions
@@ -142,7 +142,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
                 true when isCurrentStatusTranslation => ResourceContentStatus.TranslationPublisherReview,
                 true when !isCurrentStatusTranslation => ResourceContentStatus.AquiferizePublisherReview,
                 false when isCurrentStatusTranslation => ResourceContentStatus.TranslationReviewPending,
-                _ => ResourceContentStatus.AquiferizeReviewPending
+                _ => ResourceContentStatus.AquiferizeReviewPending,
             };
         }
 

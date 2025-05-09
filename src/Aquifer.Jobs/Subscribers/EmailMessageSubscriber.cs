@@ -18,10 +18,11 @@ public sealed class EmailMessageSubscriber(
 {
     private const string SendEmailFunctionName = "SendEmailMessageSubscriber";
 
+    private const string SendTemplatedEmailFunctionName = "SendTemplatedEmailMessageSubscriber";
+
     [Function(SendEmailFunctionName)]
     public async Task SendEmailAsync(
-        [QueueTrigger(Queues.SendEmail)]
-        QueueMessage queueMessage,
+        [QueueTrigger(Queues.SendEmail)] QueueMessage queueMessage,
         CancellationToken ct)
     {
         await queueMessage.ProcessAsync<SendEmailMessage, EmailMessageSubscriber>(
@@ -39,8 +40,6 @@ public sealed class EmailMessageSubscriber(
 
         _logger.LogInformation("Email sent: {SendEmailMessage}", queueMessage.MessageText);
     }
-
-    private const string SendTemplatedEmailFunctionName = "SendTemplatedEmailMessageSubscriber";
 
     [Function(SendTemplatedEmailFunctionName)]
     public async Task SendTemplatedEmailAsync(

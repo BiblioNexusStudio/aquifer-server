@@ -55,7 +55,7 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext, ICachingLanguageServic
             TotalItemCount = totalCount,
             ReturnedItemCount = items.Count,
             Offset = req.Offset,
-            Items = items
+            Items = items,
         };
 
         await SendOkAsync(response, ct);
@@ -77,15 +77,15 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext, ICachingLanguageServic
                 x.ResourceContent.Resource.ParentResource.Enabled &&
                 (req.Query == null || x.DisplayName.Contains(req.Query) || x.ResourceContent.Resource.EnglishLabel.Contains(req.Query)) &&
                 (startVerseId == null ||
-                 x.ResourceContent.Resource.VerseResources.Any(vr =>
-                     vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
-                 x.ResourceContent.Resource.PassageResources.Any(pr =>
-                     (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
-                     (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
-                     (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
+                    x.ResourceContent.Resource.VerseResources.Any(vr =>
+                        vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
+                    x.ResourceContent.Resource.PassageResources.Any(pr =>
+                        (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
+                        (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
+                        (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
                 (req.ResourceType == default || x.ResourceContent.Resource.ParentResource.ResourceType == req.ResourceType) &&
                 (req.ResourceCollectionCode == null ||
-                 x.ResourceContent.Resource.ParentResource.Code.ToLower() == req.ResourceCollectionCode.ToLower()) &&
+                    x.ResourceContent.Resource.ParentResource.Code.ToLower() == req.ResourceCollectionCode.ToLower()) &&
                 x.ResourceContent.LanguageId == languageId);
     }
 
@@ -123,8 +123,8 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext, ICachingLanguageServic
                     Name = x.ResourceContent.Resource.ParentResource.DisplayName,
                     CollectionTitle = x.ResourceContent.Resource.ParentResource.DisplayName,
                     CollectionCode = x.ResourceContent.Resource.ParentResource.Code,
-                    Type = x.ResourceContent.Resource.ParentResource.ResourceType
-                }
+                    Type = x.ResourceContent.Resource.ParentResource.ResourceType,
+                },
             })
             .ToListAsync(ct);
 

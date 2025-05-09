@@ -1,6 +1,7 @@
 using Aquifer.Data.Entities;
 
 namespace Aquifer.API.Endpoints.Help.AquiferCms.Documents;
+
 public class Response
 {
     public required IEnumerable<HelpDocumentResponse> Releases { get; init; }

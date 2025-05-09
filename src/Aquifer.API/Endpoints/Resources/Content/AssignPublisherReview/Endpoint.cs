@@ -27,11 +27,11 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
         var draftVersions = await dbContext.ResourceContentVersions
             .AsTracking()
             .Where(x => contentIds.Contains(x.ResourceContentId) &&
-                        x.IsDraft &&
-                        (x.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
-                         x.ResourceContent.Status == ResourceContentStatus.AquiferizePublisherReview ||
-                         x.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending ||
-                         x.ResourceContent.Status == ResourceContentStatus.TranslationPublisherReview))
+                x.IsDraft &&
+                (x.ResourceContent.Status == ResourceContentStatus.AquiferizeReviewPending ||
+                    x.ResourceContent.Status == ResourceContentStatus.AquiferizePublisherReview ||
+                    x.ResourceContent.Status == ResourceContentStatus.TranslationReviewPending ||
+                    x.ResourceContent.Status == ResourceContentStatus.TranslationPublisherReview))
             .Include(x => x.ResourceContent)
             .ToListAsync(ct);
 
@@ -48,7 +48,8 @@ public class Endpoint(AquiferDbContext dbContext, IResourceHistoryService histor
 
             if (request.AssignedUserId != draftVersion.AssignedUserId)
             {
-                await historyService.AddSnapshotHistoryAsync(draftVersion,
+                await historyService.AddSnapshotHistoryAsync(
+                    draftVersion,
                     draftVersion.AssignedUserId,
                     draftVersion.ResourceContent.Status,
                     ct);

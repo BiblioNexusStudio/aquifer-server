@@ -102,7 +102,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             StartDate = startDate,
             EndDate = endDate,
             Columns = columnNames,
-            Results = items
+            Results = items,
         };
 
         await SendOkAsync(response, ct);

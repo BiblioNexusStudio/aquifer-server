@@ -12,7 +12,7 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
     {
         ResourceContentStatus.AquiferizeEditorReview,
         ResourceContentStatus.AquiferizePublisherReview,
-        ResourceContentStatus.AquiferizeReviewPending
+        ResourceContentStatus.AquiferizeReviewPending,
     };
 
     public override void Configure()
@@ -39,8 +39,8 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
                 VerseIdRanges = verseIdRanges.Select(vir => new VerseIdRange(vir)).ToList(),
             },
             ResourceContentSearchSortOrder.ParentResourceAndResourceName,
-            offset: 0,
-            limit: null,
+            0,
+            null,
             ct);
 
         var response = resourceContentSummaries

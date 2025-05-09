@@ -16,7 +16,7 @@ public sealed class FrenchTranslationProcessingService : ILanguageSpecificTransl
         "«",
         "=",
         @"\bapr\.", // apr.
-        @"\bav\." // av.
+        @"\bav\.", // av.
     };
 
     private static readonly IReadOnlySet<string> s_regexItemsThatHaveNnbspBeforeSelf = new HashSet<string>
@@ -25,7 +25,7 @@ public sealed class FrenchTranslationProcessingService : ILanguageSpecificTransl
         "!",
         @"\?",
         ":",
-        ";"
+        ";",
     };
 
     private readonly string _nnbspAfterPattern = @$"({string.Join("|", s_regexItemsThatHaveNnbspAfterSelf)})(?=[A-Za-zà-üÀ-Ü0-9\x20])";
@@ -143,7 +143,7 @@ public sealed class FrenchTranslationProcessingService : ILanguageSpecificTransl
                         "3 j" or "3 jn" => "3Jn",
                         "jud" or "ju" => "Jd",
                         "re" or "rév" or "rev" => "Ap",
-                        _ => correctedValue
+                        _ => correctedValue,
                     };
 
                     return correctedValue + " ";

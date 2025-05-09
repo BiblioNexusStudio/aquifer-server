@@ -12,13 +12,14 @@ This allows converting Tiptap JSON to HTML and back as needed for resource trans
 
 In order to update the version of aquifer-tiptap used, edit the `package.json` file and reference the appropriate tag.
 Example:
+
 ```
     "dependencies": {
         "aquifer-tiptap": "https://github.com/BiblioNexusStudio/aquifer-tiptap#1.0.2"
     },
 ```
 
-This project is currently configured to build with .net.  Upon build, the TypeScript compiler will create a 
+This project is currently configured to build with .net. Upon build, the TypeScript compiler will create a
 `TiptapUtilities.js` file from the `aquifer-tiptap` "node module" in the `dist` directory.
 
 If the `dist/TiptapUtilities.js` file exists on your local workstation then you can unload this project if desired

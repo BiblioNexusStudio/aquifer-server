@@ -11,6 +11,9 @@ namespace Aquifer.Public.API.Endpoints.Bibles.Alignments.Greek;
 
 public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Response>
 {
+    // SQL Server's max is 2,100 but batching in smaller numbers seems to help with DB performance
+    private const int SqlParameterBatchSize = 1000;
+
     public override void Configure()
     {
         Get("/bibles/{BibleId}/alignments/greek");
@@ -55,8 +58,8 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
         var bibleText = await GetBibleTextAsync(
             dbConnection,
             request.BibleId,
-            textLowerBounds: new BibleWordIdentifier(bookId, request.StartChapter, request.StartVerse, request.StartWord),
-            textUpperBounds: BibleWordIdentifier.GetUpperBoundOfWord(bookId, request.EndChapter, request.EndVerse, request.EndWord),
+            new BibleWordIdentifier(bookId, request.StartChapter, request.StartVerse, request.StartWord),
+            BibleWordIdentifier.GetUpperBoundOfWord(bookId, request.EndChapter, request.EndVerse, request.EndWord),
             ct);
 
         var greekWordResultByIdMap = await GetGreekWordResultByGreekWordIdMapAsync(
@@ -106,11 +109,11 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
                                             : bibleVersionWordIdBookendsInGroupByGroupId[bibleWord.BibleVersionWordGroupId!.Value];
 
                                         return MapToBibleWordResponse(
-                                            wordNumber: bibleWord.BibleWordIdentifier.Word,
+                                            bibleWord.BibleWordIdentifier.Word,
                                             bibleWord.Word,
                                             greekWordsForWord.Where(r => r.GreekWordId is not null).ToList(),
-                                            isFirstWordInGroup: firstWordIdInGroup == bibleWord.Id,
-                                            isLastWordInGroup: lastWordIdInGroup == bibleWord.Id,
+                                            firstWordIdInGroup == bibleWord.Id,
+                                            lastWordIdInGroup == bibleWord.Id,
                                             greekWordResultByIdMap,
                                             greekSenseResultsByIdMap);
                                     })
@@ -198,13 +201,6 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
             .FirstOrDefaultAsync(ct);
     }
 
-    private sealed record BookData(
-        int BibleId,
-        string BibleName,
-        string BibleAbbreviation,
-        string BookCode,
-        string BookName);
-
     private static async Task<string?> GetAssociatedGreekAlignmentNewTestamentNameForBibleAsync(
         DbConnection dbConnection,
         int bibleId,
@@ -228,7 +224,7 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
                 greekAlignmentSourceQuery,
                 new
                 {
-                    bibleId
+                    bibleId,
                 },
                 cancellationToken: ct));
     }
@@ -281,20 +277,6 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
             .ToList();
     }
 
-    public sealed record BibleTextWithGreekAlignmentForeignKeysResult(
-        int Id,
-        long WordIdentifier,
-        string Word,
-        bool IsPunctuation,
-        int? BibleVersionWordGroupId,
-        int? GreekSenseId,
-        int? GreekWordId)
-    {
-        public BibleWordIdentifier BibleWordIdentifier => _bibleWordIdentifier ??= new BibleWordIdentifier(WordIdentifier);
-
-        private BibleWordIdentifier? _bibleWordIdentifier;
-    }
-
     private static async Task<IReadOnlyDictionary<int, GreekWordResult>> GetGreekWordResultByGreekWordIdMapAsync(
         DbConnection dbConnection,
         IEnumerable<int> greekWordIds,
@@ -315,14 +297,14 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
             """;
 
         List<GreekWordResult> greekWordResults = [];
-        foreach (var batch in greekWordIds.Distinct().Order().Chunk(size: SqlParameterBatchSize))
+        foreach (var batch in greekWordIds.Distinct().Order().Chunk(SqlParameterBatchSize))
         {
             greekWordResults.AddRange(
                 await dbConnection.QueryWithRetriesAsync<GreekWordResult>(
                     greekWordsQuery,
                     new
                     {
-                        greekWordIds = batch
+                        greekWordIds = batch,
                     },
                     cancellationToken: ct));
         }
@@ -330,14 +312,6 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
         return greekWordResults
             .ToDictionary(gwr => gwr.Id);
     }
-
-    public sealed record GreekWordResult(
-        int Id,
-        string Word,
-        string GrammarType,
-        string UsageCode,
-        string Lemma,
-        string StrongsNumber);
 
     private static async Task<IReadOnlyDictionary<int, IReadOnlyList<GreekSenseResult>>> GetGreekSenseResultsByGreekSenseIdMapAsync(
         DbConnection dbConnection,
@@ -358,14 +332,14 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
             """;
 
         List<GreekSenseResult> greekSenseResults = [];
-        foreach (var batch in greekSenseIds.Distinct().Order().Chunk(size: SqlParameterBatchSize))
+        foreach (var batch in greekSenseIds.Distinct().Order().Chunk(SqlParameterBatchSize))
         {
             greekSenseResults.AddRange(
                 await dbConnection.QueryWithRetriesAsync<GreekSenseResult>(
                     greekSensesQuery,
                     new
                     {
-                        greekSenseIds = batch
+                        greekSenseIds = batch,
                     },
                     cancellationToken: ct));
         }
@@ -376,16 +350,40 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, Re
                 .Select(grp => new KeyValuePair<int, IReadOnlyList<GreekSenseResult>>(grp.Key, [.. grp])));
     }
 
+    private sealed record BookData(
+        int BibleId,
+        string BibleName,
+        string BibleAbbreviation,
+        string BookCode,
+        string BookName);
+
+    public sealed record BibleTextWithGreekAlignmentForeignKeysResult(
+        int Id,
+        long WordIdentifier,
+        string Word,
+        bool IsPunctuation,
+        int? BibleVersionWordGroupId,
+        int? GreekSenseId,
+        int? GreekWordId)
+    {
+        private BibleWordIdentifier? _bibleWordIdentifier;
+        public BibleWordIdentifier BibleWordIdentifier => _bibleWordIdentifier ??= new BibleWordIdentifier(WordIdentifier);
+    }
+
+    public sealed record GreekWordResult(
+        int Id,
+        string Word,
+        string GrammarType,
+        string UsageCode,
+        string Lemma,
+        string StrongsNumber);
+
     public sealed record GreekSenseResult(
         int Id,
         string Definition,
         string? Glosses)
     {
-        public IReadOnlyList<string> ExpandedGlosses => _expandedGlosses ??= Glosses?.Split("||").Order().ToList() ?? [];
-
         private IReadOnlyList<string>? _expandedGlosses;
+        public IReadOnlyList<string> ExpandedGlosses => _expandedGlosses ??= Glosses?.Split("||").Order().ToList() ?? [];
     }
-
-    // SQL Server's max is 2,100 but batching in smaller numbers seems to help with DB performance
-    private const int SqlParameterBatchSize = 1000;
 }

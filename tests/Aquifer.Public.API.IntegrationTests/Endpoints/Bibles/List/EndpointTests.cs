@@ -1,7 +1,8 @@
 ﻿using System.Net;
+using Aquifer.Common;
 using Aquifer.Public.API.Endpoints.Bibles.List;
-using FastEndpoints.Testing;
 using FastEndpoints;
+using FastEndpoints.Testing;
 
 namespace Aquifer.Public.API.IntegrationTests.Endpoints.Bibles.List;
 
@@ -13,7 +14,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
             new Request
             {
                 IsLanguageDefault = true,
-                LanguageId = Common.Constants.EnglishLanguageId,
+                LanguageId = Constants.EnglishLanguageId,
                 HasAudio = true,
                 HasGreekAlignment = true,
             },
@@ -26,10 +27,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
             },
             "RV1909"
         },
-        {
-            new Request(),
-            "TBI"
-        },
+        { new Request(), "TBI" },
     };
 
     [Theory]

@@ -17,7 +17,8 @@ public class Endpoint(AquiferDbContext dbContext, ILogger<Endpoint> logger) : En
     {
         try
         {
-            await dbContext.ContentSubscribers.Where(s => s.UnsubscribeId == req.UnsubscribeId)
+            await dbContext.ContentSubscribers
+                .Where(s => s.UnsubscribeId == req.UnsubscribeId)
                 .ExecuteUpdateAsync(x => x.SetProperty(p => p.Enabled, false), ct);
             await SendOkAsync("You have been successfully unsubscribed.", ct);
         }

@@ -38,10 +38,18 @@ public class ResourceContentVersionAssignedUserHistoryEntityConfiguration
             .WithMany()
             .OnDelete(DeleteBehavior.NoAction);
 
-        builder.HasIndex(e => new { e.ChangedByUserId, e.Created })
+        builder.HasIndex(e => new
+            {
+                e.ChangedByUserId,
+                e.Created,
+            })
             .IncludeProperties(e => e.ResourceContentVersionId);
 
         builder.HasIndex(e => e.Created)
-            .IncludeProperties(e => new { e.AssignedUserId, e.ResourceContentVersionId });
+            .IncludeProperties(e => new
+            {
+                e.AssignedUserId,
+                e.ResourceContentVersionId,
+            });
     }
 }

@@ -19,7 +19,7 @@ public static class BibleBookCodeUtilities
             {
                 BookId = bookId,
                 BookCode = bookId.ToString().Replace("Book", ""),
-                BookFullName = bookId.GetDisplayName()
+                BookFullName = bookId.GetDisplayName(),
             };
 
             s_bookCodeToMetadata.Add(bookId.ToString().Replace("Book", ""), metadata);
@@ -52,7 +52,7 @@ public static class BibleBookCodeUtilities
     {
         return s_bookIdToMetadata.Select(x => x.Value).Skip(1).ToList();
     }
-    
+
     public static bool TryCastBookId(int value, out BookId bookId)
     {
         if (Enum.IsDefined(typeof(BookId), value))

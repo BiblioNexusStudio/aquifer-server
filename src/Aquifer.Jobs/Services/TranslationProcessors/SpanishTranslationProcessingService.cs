@@ -109,7 +109,7 @@ public class SpanishTranslationProcessingService : ILanguageSpecificTranslationP
                         "2jn" => "2 Jn",
                         "3jn" => "3 Jn",
                         "apoc" => "Ap",
-                        _ => correctedValue
+                        _ => correctedValue,
                     };
 
                     return correctedValue + " ";

@@ -30,8 +30,8 @@ public class Endpoint(
 
         var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
             ResourceContentSearchIncludeFlags.Project |
-                ResourceContentSearchIncludeFlags.HasAudioForLanguage |
-                ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
+            ResourceContentSearchIncludeFlags.HasAudioForLanguage |
+            ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
             new ResourceContentSearchFilter
             {
                 IsDraft = true,
@@ -51,8 +51,8 @@ public class Endpoint(
                 HasUnresolvedCommentThreads = req.HasUnresolvedCommentThreads,
             },
             ResourceContentSearchSortOrder.ProjectProjectedDeliveryDate,
-            offset: 0,
-            limit: null,
+            0,
+            null,
             ct);
 
         var languageByIdMap = await _cachingLanguageService.GetLanguageByIdMapAsync(ct);
@@ -61,7 +61,7 @@ public class Endpoint(
         var lastUserAssignmentsByResourceContentVersionIdMap =
             await Helpers.GetLastUserAssignmentsByResourceContentVersionIdMapAsync(
                 resourceContentSummaries.Select(rcs => rcs.ResourceContentVersion!.Id),
-                numberOfAssignments: 2,
+                2,
                 _dbContext,
                 ct);
 
@@ -69,9 +69,10 @@ public class Endpoint(
         // Also get previously assigned user IDs.
         var userIdsToFetch = resourceContentSummaries
             .Select(rcs => rcs.ResourceContentVersion!.AssignedUserId!.Value)
-            .Concat(lastUserAssignmentsByResourceContentVersionIdMap.Values
-                .Select(x => x.Count > 1 ? x[1].UserId : null)
-                .OfType<int>())
+            .Concat(
+                lastUserAssignmentsByResourceContentVersionIdMap.Values
+                    .Select(x => x.Count > 1 ? x[1].UserId : null)
+                    .OfType<int>())
             .Concat(resourceContentSummaries.Select(rcs => rcs.ResourceContentVersion!.AssignedReviewerUserId).OfType<int>())
             .Distinct()
             .ToList();

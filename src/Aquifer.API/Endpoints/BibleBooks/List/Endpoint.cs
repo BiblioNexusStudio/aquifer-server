@@ -16,13 +16,14 @@ public class Endpoint : EndpointWithoutRequest<IReadOnlyList<Response>>
 
     public override async Task HandleAsync(CancellationToken ct)
     {
-        var response = BibleBookCodeUtilities.GetAll().Select(x => new Response
-        {
-            Id = (int)x.BookId,
-            Name = x.BookFullName,
-            Code = x.BookCode
-        })
-        .ToList();
+        var response = BibleBookCodeUtilities.GetAll()
+            .Select(x => new Response
+            {
+                Id = (int)x.BookId,
+                Name = x.BookFullName,
+                Code = x.BookCode,
+            })
+            .ToList();
 
         await SendOkAsync(response, ct);
     }

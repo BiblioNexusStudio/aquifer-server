@@ -37,7 +37,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
                 Days =
                     x.ProjectedDeliveryDate.HasValue
                         ? x.ProjectedDeliveryDate.Value.DayNumber - DateOnly.FromDateTime(DateTime.UtcNow).DayNumber
-                        : null
+                        : null,
             })
             .ToListAsync(ct);
 

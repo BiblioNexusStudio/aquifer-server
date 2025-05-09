@@ -7,7 +7,11 @@ using FastEndpoints;
 
 namespace Aquifer.API.Endpoints.Resources.Content.Aquiferize;
 
-public class Endpoint(AquiferDbContext dbContext, ITranslationMessagePublisher translationMessagePublisher, IUserService userService, IResourceHistoryService historyService) : Endpoint<Request>
+public class Endpoint(
+    AquiferDbContext dbContext,
+    ITranslationMessagePublisher translationMessagePublisher,
+    IUserService userService,
+    IResourceHistoryService historyService) : Endpoint<Request>
 {
     public override void Configure()
     {
@@ -23,7 +27,8 @@ public class Endpoint(AquiferDbContext dbContext, ITranslationMessagePublisher t
         }
 
         var (mostRecentContentVersion, _, currentDraftVersion) =
-            await Helpers.GetResourceContentVersionsAsync(request.ContentId,
+            await Helpers.GetResourceContentVersionsAsync(
+                request.ContentId,
                 dbContext,
                 ct);
 
@@ -37,7 +42,8 @@ public class Endpoint(AquiferDbContext dbContext, ITranslationMessagePublisher t
             ThrowError(Helpers.DraftAlreadyExistsResponse);
         }
 
-        await Helpers.CreateNewDraftAsync(dbContext,
+        await Helpers.CreateNewDraftAsync(
+            dbContext,
             translationMessagePublisher,
             request.ContentId,
             request.AssignedUserId,
