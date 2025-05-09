@@ -15,14 +15,16 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
         var user = await userService.GetUserFromJwtAsync(ct);
-        var existingMt = await dbContext.ResourceContentVersionMachineTranslations.AsTracking()
-            .FirstOrDefaultAsync(x =>
+        var existingMt = await dbContext.ResourceContentVersionMachineTranslations
+            .AsTracking()
+            .FirstOrDefaultAsync(
+                x =>
                     x.Id == req.Id &&
                     x.ResourceContentVersion
                         .ResourceContentVersionAssignedUserHistories
                         .Any(h => h.AssignedUserId == user.Id),
                 ct);
-        
+
         if (existingMt is null)
         {
             ThrowError(x => x.Id, "No machine translation exists for user");

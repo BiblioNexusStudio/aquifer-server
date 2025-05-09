@@ -38,21 +38,23 @@ public class PassagesModule : IModule
                     {
                         passage.Id,
                         PassageStartDetails = BibleUtilities.TranslateVerseId(passage.StartVerseId),
-                        PassageEndDetails = BibleUtilities.TranslateVerseId(passage.EndVerseId)
-                    }).ToListAsync(cancellationToken))
+                        PassageEndDetails = BibleUtilities.TranslateVerseId(passage.EndVerseId),
+                    })
+                .ToListAsync(cancellationToken))
             .GroupBy(passage => passage.PassageStartDetails.bookId)
             .OrderBy(grouped => grouped.Key)
             .Select(grouped => new PassagesByBookResponse
             {
                 BookCode = BibleBookCodeUtilities.CodeFromId(grouped.Key),
-                Passages = grouped.OrderBy(p => p.PassageStartDetails.chapter).ThenBy(p => p.PassageStartDetails.verse)
+                Passages = grouped.OrderBy(p => p.PassageStartDetails.chapter)
+                    .ThenBy(p => p.PassageStartDetails.verse)
                     .Select(p =>
                         new PassageResponse
                         {
                             Id = p.Id,
                             PassageStartDetails = p.PassageStartDetails,
-                            PassageEndDetails = p.PassageEndDetails
-                        })
+                            PassageEndDetails = p.PassageEndDetails,
+                        }),
             })
             .ToList();
 

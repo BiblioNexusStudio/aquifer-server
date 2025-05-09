@@ -17,7 +17,7 @@ public static class CryptographyUtilities
         '%',
         '^',
         '&',
-        '*'
+        '*',
     ];
 
     public static string GenerateSimplePassword()

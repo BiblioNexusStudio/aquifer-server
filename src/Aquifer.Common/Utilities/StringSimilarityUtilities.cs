@@ -10,7 +10,7 @@ public static class StringSimilarityUtilities
 
         return 1 - ((double)distance / Math.Max(textA.Length, textB.Length));
     }
-    
+
     private static int LevenshteinDistance(string textA, string textB)
     {
         var aLength = textA.Length;
@@ -28,13 +28,13 @@ public static class StringSimilarityUtilities
             matrix[0] = i;
             for (var j = 1; j <= bLength; j++)
             {
-                var cost = (textA[i - 1] == textB[j - 1]) ? 0 : 1;
+                var cost = textA[i - 1] == textB[j - 1] ? 0 : 1;
                 var temp = matrix[j];
                 matrix[j] = Math.Min(
                     Math.Min(
-                        prev + cost, 
+                        prev + cost,
                         matrix[j] + 1
-                    ), 
+                    ),
                     matrix[j - 1] + 1
                 );
                 prev = temp;
@@ -43,17 +43,17 @@ public static class StringSimilarityUtilities
 
         return matrix[bLength];
     }
-    
+
     private static List<string> GetSubstrings(string text, int limit)
     {
         var result = new List<string>();
-        
+
         while (text.Length > limit)
         {
             string? substring;
-            
+
             if (text.LastIndexOf(' ', limit) == -1)
-            { 
+            {
                 substring = text[..limit];
                 text = text[limit..];
             }
@@ -62,12 +62,12 @@ public static class StringSimilarityUtilities
                 substring = text[..text.LastIndexOf(' ', limit)];
                 text = text[(text.LastIndexOf(' ', limit) + 1)..];
             }
-            
+
             result.Add(substring);
         }
 
         result.Add(text);
-        
+
         return result;
     }
 
@@ -76,7 +76,7 @@ public static class StringSimilarityUtilities
         var totalDistance = 0;
         List<string> longestList;
         List<string> shortestList;
-        
+
         if (listA.Count > listB.Count)
         {
             longestList = listA;
@@ -87,7 +87,7 @@ public static class StringSimilarityUtilities
             longestList = listB;
             shortestList = listA;
         }
-        
+
         // We have to account for lists that are not the same length.
         // Levenshtein distance is cumulative, so the distance of a string
         // compared to an empty string is the character count of that non-empty string 
@@ -103,7 +103,7 @@ public static class StringSimilarityUtilities
                 totalDistance += LevenshteinDistance(longestList[i], shortestList[i]);
             }
         }
-        
+
         return totalDistance;
     }
 }

@@ -9,7 +9,7 @@ public static class JsonUtilities
     {
         PropertyNameCaseInsensitive = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
     public static T DefaultDeserialize<T>(string json)
@@ -29,7 +29,7 @@ public static class JsonUtilities
 
     /// <summary>
     /// Serializes the contents of a string value as raw JSON.  The string is validated as being an RFC 8259-compliant JSON payload.
-    /// The property is represented as an <see cref="object"/> instead of a <see cref="string"/> for API spec generation purposes.
+    /// The property is represented as an <see cref="object" /> instead of a <see cref="string" /> for API spec generation purposes.
     /// </summary>
     /// <example>
     /// [JsonConverter(typeof(JsonUtilities.RawJsonConverter))]
@@ -49,7 +49,7 @@ public static class JsonUtilities
             // However, unless the data is guaranteed to be valid JSON it should not be used.
             writer.WriteRawValue(
                 value as string ?? throw new ArgumentException("Value must be a string", nameof(value)),
-                skipInputValidation: false);
+                false);
         }
     }
 }

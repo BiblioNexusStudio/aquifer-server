@@ -18,7 +18,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var (mostRecentResourceContentVersion, currentlyPublishedVersion, currentDraftVersion) =
-            await Helpers.GetResourceContentVersionsAsync(request.ContentId,
+            await Helpers.GetResourceContentVersionsAsync(
+                request.ContentId,
                 dbContext,
                 ct);
 
@@ -45,9 +46,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             resourceContent.Updated = DateTime.UtcNow;
 
             var user = await userService.GetUserFromJwtAsync(ct);
-            await historyService.AddStatusHistoryAsync(currentlyPublishedVersion,
+            await historyService.AddStatusHistoryAsync(
+                currentlyPublishedVersion,
                 ResourceContentStatus.New,
-                user.Id, ct);
+                user.Id,
+                ct);
         }
 
         await dbContext.SaveChangesAsync(ct);

@@ -59,11 +59,12 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         if (changesMade)
         {
             entity.ResourceContent.ContentUpdated = DateTime.UtcNow;
-            await dbContext.ResourceContentVersionEditTimes.AddAsync(new ResourceContentVersionEditTimeEntity
-            {
-                UserId = user.Id,
-                ResourceContentVersionId = entity.Id
-            },
+            await dbContext.ResourceContentVersionEditTimes.AddAsync(
+                new ResourceContentVersionEditTimeEntity
+                {
+                    UserId = user.Id,
+                    ResourceContentVersionId = entity.Id,
+                },
                 ct);
         }
 

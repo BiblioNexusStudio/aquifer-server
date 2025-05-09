@@ -20,25 +20,35 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         var user = await userService.GetUserFromJwtAsync(ct);
         var permissions = ResourceStatusHelpers.GetAssignmentPermissions(userService);
 
-        await ResourceStatusHelpers.ValidateReviewerAndAssignedUserAsync<Request>(request.AssignedUserId, request.AssignedReviewerUserId,
-            dbContext, user, permissions, ct);
+        await ResourceStatusHelpers.ValidateReviewerAndAssignedUserAsync<Request>(
+            request.AssignedUserId,
+            request.AssignedReviewerUserId,
+            dbContext,
+            user,
+            permissions,
+            ct);
 
         var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
 
-        var draftVersions = await ResourceStatusHelpers.GetDraftVersionsAsync<Request>(contentIds,
-        [
-            ResourceContentStatus.TranslationEditorReview, ResourceContentStatus.TranslationAiDraftComplete,
-            ResourceContentStatus.New, ResourceContentStatus.AquiferizeAiDraftComplete,
-            ResourceContentStatus.AquiferizeEditorReview, ResourceContentStatus.AquiferizeCompanyReview,
-            ResourceContentStatus.TranslationCompanyReview
-        ], dbContext, ct);
+        var draftVersions = await ResourceStatusHelpers.GetDraftVersionsAsync<Request>(
+            contentIds,
+            [
+                ResourceContentStatus.TranslationEditorReview, ResourceContentStatus.TranslationAiDraftComplete,
+                ResourceContentStatus.New, ResourceContentStatus.AquiferizeAiDraftComplete,
+                ResourceContentStatus.AquiferizeEditorReview, ResourceContentStatus.AquiferizeCompanyReview,
+                ResourceContentStatus.TranslationCompanyReview,
+            ],
+            dbContext,
+            ct);
 
         foreach (var draftVersion in draftVersions)
         {
             var originalStatus = draftVersion.ResourceContent.Status;
 
-            ResourceStatusHelpers.ValidateAllowedToAssign<Request>(permissions,
-                draftVersion, user);
+            ResourceStatusHelpers.ValidateAllowedToAssign<Request>(
+                permissions,
+                draftVersion,
+                user);
 
             SetDraftVersionStatus(originalStatus, draftVersion, request.SkipEditorStep);
 
@@ -57,7 +67,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
         ResourceContentVersionEntity draftVersion,
         bool skipEditorStep)
     {
-        if(originalStatus == ResourceContentStatus.TranslationAiDraftComplete)
+        if (originalStatus == ResourceContentStatus.TranslationAiDraftComplete)
         {
             draftVersion.ResourceContent.Status = skipEditorStep
                 ? ResourceContentStatus.TranslationCompanyReview

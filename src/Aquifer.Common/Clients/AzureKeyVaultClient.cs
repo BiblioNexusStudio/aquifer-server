@@ -14,7 +14,8 @@ public class AzureKeyVaultClient : IAzureKeyVaultClient
 {
     private static readonly SecretClientOptions s_secretClientOptions = new()
     {
-        Retry = {
+        Retry =
+        {
             Delay = TimeSpan.FromMilliseconds(500),
             MaxRetries = 5,
             Mode = RetryMode.Exponential,

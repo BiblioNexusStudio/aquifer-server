@@ -10,9 +10,13 @@ namespace Aquifer.API.Endpoints.Resources.Content;
 
 public static class ResourceStatusHelpers
 {
-    public static async Task SaveHistoryAsync(int assignedUserId, IResourceHistoryService historyService,
-        ResourceContentVersionEntity draftVersion, ResourceContentStatus originalStatus,
-        UserEntity user, CancellationToken ct)
+    public static async Task SaveHistoryAsync(
+        int assignedUserId,
+        IResourceHistoryService historyService,
+        ResourceContentVersionEntity draftVersion,
+        ResourceContentStatus originalStatus,
+        UserEntity user,
+        CancellationToken ct)
     {
         if (draftVersion.AssignedUserId != assignedUserId || draftVersion.ResourceContentVersionSnapshots.Count == 0)
         {
@@ -39,7 +43,8 @@ public static class ResourceStatusHelpers
         }
     }
 
-    public static void ValidateAllowedToAssign<TRequest>(AssignmentPermissions permissions,
+    public static void ValidateAllowedToAssign<TRequest>(
+        AssignmentPermissions permissions,
         ResourceContentVersionEntity draftVersion,
         UserEntity user)
     {
@@ -47,8 +52,8 @@ public static class ResourceStatusHelpers
         var assignedUserIsInCompany = draftVersion.AssignedUser?.CompanyId == user.CompanyId;
 
         var allowedToAssign = (permissions.HasAssignOverridePermission &&
-                              (assignedUserIsInCompany || permissions.HasAssignOutsideCompanyPermission)) ||
-                              currentUserIsAssigned;
+                (assignedUserIsInCompany || permissions.HasAssignOutsideCompanyPermission)) ||
+            currentUserIsAssigned;
 
         if (!allowedToAssign)
         {
@@ -56,15 +61,18 @@ public static class ResourceStatusHelpers
         }
     }
 
-    public static async Task<List<ResourceContentVersionEntity>> GetDraftVersionsAsync<TRequest>(int[] contentIds,
-        List<ResourceContentStatus> allowedStatuses, AquiferDbContext dbContext,
+    public static async Task<List<ResourceContentVersionEntity>> GetDraftVersionsAsync<TRequest>(
+        int[] contentIds,
+        List<ResourceContentStatus> allowedStatuses,
+        AquiferDbContext dbContext,
         CancellationToken ct)
     {
         var draftVersions = await dbContext.ResourceContentVersions
             .AsTracking()
             .Where(rcv => contentIds.Contains(rcv.ResourceContentId) && allowedStatuses.Contains(rcv.ResourceContent.Status) && rcv.IsDraft)
             .Include(rcv => rcv.ResourceContent)
-            .Include(rcv => rcv.AssignedUser).Include(rcv => rcv.ResourceContentVersionSnapshots)
+            .Include(rcv => rcv.AssignedUser)
+            .Include(rcv => rcv.ResourceContentVersionSnapshots)
             .ToListAsync(ct);
 
         if (draftVersions.Count != contentIds.Length)
@@ -75,12 +83,16 @@ public static class ResourceStatusHelpers
         return draftVersions;
     }
 
-    public static async Task ValidateReviewerAndAssignedUserAsync<TRequest>(int assignedUserId, int? assignedReviewerUserId,
-        AquiferDbContext dbContext, UserEntity user, AssignmentPermissions permissions,
+    public static async Task ValidateReviewerAndAssignedUserAsync<TRequest>(
+        int assignedUserId,
+        int? assignedReviewerUserId,
+        AquiferDbContext dbContext,
+        UserEntity user,
+        AssignmentPermissions permissions,
         CancellationToken ct,
         UserEntity? userToAssign = null)
     {
-         userToAssign ??= await dbContext.Users
+        userToAssign ??= await dbContext.Users
             .AsTracking()
             .SingleOrDefaultAsync(u => u.Id == assignedUserId && u.Enabled, ct);
         if (userToAssign is null)
@@ -96,9 +108,9 @@ public static class ResourceStatusHelpers
         if (assignedReviewerUserId is not null)
         {
             var reviewer = await dbContext.Users
-                .Where(u => u.Id == assignedReviewerUserId
-                            && u.Enabled &&
-                            u.CompanyId == userToAssign.CompanyId)
+                .Where(u => u.Id == assignedReviewerUserId &&
+                    u.Enabled &&
+                    u.CompanyId == userToAssign.CompanyId)
                 .SingleOrDefaultAsync(ct);
 
             if (reviewer is null)
@@ -113,8 +125,7 @@ public static class ResourceStatusHelpers
         var hasSendReviewContentPermission = userService.HasPermission(PermissionName.SendReviewContent);
         var hasAssignOverridePermission = userService.HasPermission(PermissionName.AssignOverride);
         var hasAssignOutsideCompanyPermission = userService.HasPermission(PermissionName.AssignOutsideCompany);
-        return new AssignmentPermissions
-        (
+        return new AssignmentPermissions(
             hasSendReviewContentPermission,
             hasAssignOutsideCompanyPermission,
             hasAssignOverridePermission

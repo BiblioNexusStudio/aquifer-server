@@ -16,8 +16,8 @@ public static class QueueClientExtensions
         var serializedMessage = MessagesJsonSerializer.Serialize(message);
         return await queueClient.SendMessageAsync(
             serializedMessage,
-            visibilityTimeout: null,
-            timeToLive: s_noExpirationTimeSpan,
+            null,
+            s_noExpirationTimeSpan,
             cancellationToken);
     }
 }

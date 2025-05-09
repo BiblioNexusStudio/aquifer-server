@@ -18,9 +18,11 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var content = await dbContext.ResourceContentVersions.AsTracking()
+        var content = await dbContext.ResourceContentVersions
+            .AsTracking()
             .Include(x => x.ResourceContent)
-            .SingleOrDefaultAsync(x =>
+            .SingleOrDefaultAsync(
+                x =>
                     x.ResourceContentId == request.ContentId &&
                     x.ResourceContent.Status == ResourceContentStatus.TranslationNotApplicable &&
                     x.IsDraft,

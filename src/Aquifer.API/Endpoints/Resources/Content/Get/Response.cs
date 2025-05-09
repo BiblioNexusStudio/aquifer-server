@@ -43,7 +43,7 @@ public class Response
             {
                 Id = ProjectEntity.Id,
                 Name = ProjectEntity.Name,
-                IsComplete = ProjectEntity.ActualPublishDate is not null
+                IsComplete = ProjectEntity.ActualPublishDate is not null,
             };
 
     public bool HasUnresolvedCommentThreads => CommentThreads?.Threads.Any(t => !t.Resolved) ?? false;

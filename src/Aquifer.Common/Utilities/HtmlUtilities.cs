@@ -13,7 +13,7 @@ public static partial class HtmlUtilities
         new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
         {
             "script",
-            "style"
+            "style",
         };
 
     public static IEnumerable<(string name, string html)> GetChunks(string html)
@@ -35,7 +35,7 @@ public static partial class HtmlUtilities
     /// Returns a list of any HTML parsing errors.  If there are no errors then the list will be empty.
     /// Example error:
     /// <example>
-    /// <code>
+    ///     <code>
     /// TagNotOpened (1:912): Start tag &lt;span),&gt; was not found. Source: &lt;span), but this time, israel could keep the spoils with god's permission (v&gt;&lt;/span),&gt;
     /// </code>
     /// </example>
@@ -52,23 +52,25 @@ public static partial class HtmlUtilities
     }
 
     /// <summary>
-    ///     Note: Returned plain text will not necessarily be formatted in a friendly human-readable way.
+    /// Note: Returned plain text will not necessarily be formatted in a friendly human-readable way.
     /// </summary>
     public static string GetPlainText(string html)
     {
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
-        return string.Join(' ',
-            doc.DocumentNode.Descendants()
+        return string.Join(
+            ' ',
+            doc.DocumentNode
+                .Descendants()
                 .Where(n => n.NodeType == HtmlNodeType.Text && !s_nodeNamesToSkip.Contains(n.ParentNode.Name))
                 .Select(n => WebUtility.HtmlDecode(n.InnerText).Trim())
                 .Where(t => !string.IsNullOrWhiteSpace(t)));
     }
 
     /// <summary>
-    ///     Minifies HTML element attributes before processing and then reinstates the original element attributes after processing.
-    ///     Thus, processing should only act on the human-readable content, not directly on elements or attribute markdown.
+    /// Minifies HTML element attributes before processing and then reinstates the original element attributes after processing.
+    /// Thus, processing should only act on the human-readable content, not directly on elements or attribute markdown.
     /// </summary>
     /// <param name="html">The original HTML.</param>
     /// <param name="processAsync">A function which takes in HTML and processes the content without changing elements or attribute markdown.</param>
@@ -114,15 +116,15 @@ public static partial class HtmlUtilities
     }
 
     /// <summary>
-    ///     Extracts the text of each HTML node and runs the processor on the text, replacing the extracted text with the result.
-    ///     Thus, processing should only act on the human-readable content, not directly on elements or attribute markdown.
-    ///     Note that this doesn't HTML decode the text, as re-encoding might change more things that we expect and potentially cause
-    ///     issues. So if you need to act upon a potentially encoded character make sure you account for that.
+    /// Extracts the text of each HTML node and runs the processor on the text, replacing the extracted text with the result.
+    /// Thus, processing should only act on the human-readable content, not directly on elements or attribute markdown.
+    /// Note that this doesn't HTML decode the text, as re-encoding might change more things that we expect and potentially cause
+    /// issues. So if you need to act upon a potentially encoded character make sure you account for that.
     /// </summary>
     /// <param name="html">The original HTML.</param>
     /// <param name="processAsync">
-    ///     A function which takes in HTML and processes the readable text content without changing elements or attribute
-    ///     markdown.
+    /// A function which takes in HTML and processes the readable text content without changing elements or attribute
+    /// markdown.
     /// </param>
     /// <returns>The processed HTML.</returns>
     public static async Task<string> ProcessHtmlTextContentAsync(string html, Func<string, Task<string>> processAsync)
@@ -130,7 +132,8 @@ public static partial class HtmlUtilities
         HtmlDocument doc = new();
         doc.LoadHtml(html);
 
-        var textNodes = doc.DocumentNode.Descendants()
+        var textNodes = doc.DocumentNode
+            .Descendants()
             .Where(n => n.NodeType == HtmlNodeType.Text && !s_nodeNamesToSkip.Contains(n.ParentNode.Name));
 
         foreach (var node in textNodes)

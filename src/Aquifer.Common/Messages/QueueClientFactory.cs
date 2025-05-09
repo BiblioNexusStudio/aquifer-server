@@ -17,7 +17,8 @@ public sealed class QueueClientFactory(AzureStorageAccountOptions _azureStorageA
     private static readonly QueueClientOptions s_clientOptions = new()
     {
         MessageEncoding = QueueMessageEncoding.Base64,
-        Retry = {
+        Retry =
+        {
             Delay = TimeSpan.FromMilliseconds(50),
             MaxRetries = 5,
             Mode = RetryMode.Exponential,
@@ -56,9 +57,9 @@ public sealed class QueueClientFactory(AzureStorageAccountOptions _azureStorageA
         var client = string.IsNullOrEmpty(_azureStorageAccountOptions.ConnectionStringOverride)
             ? new QueueClient(
                 new Uri(
-                    _azureStorageAccountOptions.QueueEndpoint
-                        ?? throw new InvalidOperationException(
-                            $"The \"{nameof(AzureStorageAccountOptions.QueueEndpoint)}\" setting must be provided when \"{nameof(AzureStorageAccountOptions.ConnectionStringOverride)}\" is empty."),
+                    _azureStorageAccountOptions.QueueEndpoint ??
+                    throw new InvalidOperationException(
+                        $"The \"{nameof(AzureStorageAccountOptions.QueueEndpoint)}\" setting must be provided when \"{nameof(AzureStorageAccountOptions.ConnectionStringOverride)}\" is empty."),
                     queueName),
                 _azureClientService.GetCredential(),
                 s_clientOptions)

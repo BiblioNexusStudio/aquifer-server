@@ -4,9 +4,9 @@ using Kiota.Builder;
 namespace Aquifer.Public.API.OpenApi;
 
 /// <summary>
-///     Generate client code and make it available as a zip file per language at `/clients/language-id`.
-///     See https://fast-endpoints.com/docs/swagger-support#api-client-generation.
-///     We could also generate clients from the command line or on build if desired.
+/// Generate client code and make it available as a zip file per language at `/clients/language-id`.
+/// See https://fast-endpoints.com/docs/swagger-support#api-client-generation.
+/// We could also generate clients from the command line or on build if desired.
 /// </summary>
 public static class ClientGenerationSettings
 {

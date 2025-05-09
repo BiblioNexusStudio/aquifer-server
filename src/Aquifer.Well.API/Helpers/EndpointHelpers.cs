@@ -9,10 +9,9 @@ public static class EndpointHelpers
 
     public static Action<RouteHandlerBuilder> ServerCacheInSeconds(int seconds)
     {
-        return x => x.CacheOutput(
-            c => c
-                .Expire(TimeSpan.FromSeconds(seconds))
-                .Tag(AnonymousOutputCacheTag));
+        return x => x.CacheOutput(c => c
+            .Expire(TimeSpan.FromSeconds(seconds))
+            .Tag(AnonymousOutputCacheTag));
     }
 
     public static class EndpointTags

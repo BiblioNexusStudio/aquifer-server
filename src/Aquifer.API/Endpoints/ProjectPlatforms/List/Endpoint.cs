@@ -18,7 +18,11 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<List<
     public override async Task HandleAsync(CancellationToken ct)
     {
         var projectPlatforms = await dbContext.ProjectPlatforms
-            .Select(projectPlatform => new Response { Id = projectPlatform.Id, Name = projectPlatform.Name })
+            .Select(projectPlatform => new Response
+            {
+                Id = projectPlatform.Id,
+                Name = projectPlatform.Name,
+            })
             .ToListAsync(ct);
 
         await SendOkAsync(projectPlatforms, ct);

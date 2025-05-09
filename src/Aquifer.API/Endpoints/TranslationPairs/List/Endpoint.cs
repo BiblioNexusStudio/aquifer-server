@@ -20,17 +20,17 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var user = await userService.GetUserWithCompanyFromJwtAsync(ct);
 
         var query = """
-                        SELECT TP.LanguageId,
-                               L.EnglishDisplay AS LanguageEnglishDisplay,
-                               TP.Id AS TranslationPairId,
-                               TP.[Key] AS TranslationPairKey,
-                               TP.Value AS TranslationPairValue
-                        FROM CompanyLanguages CL
-                        INNER JOIN Languages L ON CL.LanguageId = L.Id
-                        INNER JOIN TranslationPairs TP ON L.Id = TP.LanguageId
-                        WHERE CL.CompanyId = @CompanyId
-                        ORDER BY TranslationPairKey
-                    """;
+                SELECT TP.LanguageId,
+                       L.EnglishDisplay AS LanguageEnglishDisplay,
+                       TP.Id AS TranslationPairId,
+                       TP.[Key] AS TranslationPairKey,
+                       TP.Value AS TranslationPairValue
+                FROM CompanyLanguages CL
+                INNER JOIN Languages L ON CL.LanguageId = L.Id
+                INNER JOIN TranslationPairs TP ON L.Id = TP.LanguageId
+                WHERE CL.CompanyId = @CompanyId
+                ORDER BY TranslationPairKey
+            """;
 
         var connection = dbContext.Database.GetDbConnection();
         var queryResults = await connection.QueryAsync<Response>(query, new { user.CompanyId });

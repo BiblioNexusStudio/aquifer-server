@@ -34,7 +34,7 @@ public sealed class Endpoint(AquiferDbReadOnlyContext _dbContext, ICachingLangua
         var (invalidLanguageIds, invalidLanguageCodes, validLanguageIds) = await _cachingLanguageService.ValidateLanguageIdsOrCodesAsync(
             req.LanguageIds,
             req.LanguageCodes,
-            shouldRequireInput: false,
+            false,
             ct);
 
         if (invalidLanguageIds is not [])
@@ -110,20 +110,10 @@ public sealed class Endpoint(AquiferDbReadOnlyContext _dbContext, ICachingLangua
             query,
             new
             {
-                code
+                code,
             },
             cancellationToken: ct);
     }
-
-    private sealed record ParentResource(
-        int Id,
-        string Code,
-        string DisplayName,
-        string ShortName,
-        ResourceType ResourceType,
-        string LicenseInfo,
-        string? SliCategory,
-        int? SliLevel);
 
     private static async Task<IReadOnlyList<ParentResourceLocalizationWithResourceContentCount>>
         GetParentResourceLocalizationWithResourceContentCountAsync(
@@ -140,9 +130,9 @@ public sealed class Endpoint(AquiferDbReadOnlyContext _dbContext, ICachingLangua
         {
             parameters.Add(nameof(languageIds), languageIds);
             parentResourceLocalizationsWhereClause = """
-                WHERE
-                    x.LanguageId IN @languageIds
-                """;
+            WHERE
+                x.LanguageId IN @languageIds
+            """;
             resourceContentCountWhereClause = "rc.LanguageId IN @languageIds AND";
         }
 
@@ -211,6 +201,16 @@ public sealed class Endpoint(AquiferDbReadOnlyContext _dbContext, ICachingLangua
                 (prl, rcc) => new ParentResourceLocalizationWithResourceContentCount(prl.LanguageId, prl.DisplayName, rcc.ResourceCount))
             .ToList();
     }
+
+    private sealed record ParentResource(
+        int Id,
+        string Code,
+        string DisplayName,
+        string ShortName,
+        ResourceType ResourceType,
+        string LicenseInfo,
+        string? SliCategory,
+        int? SliLevel);
 
     private sealed record ParentResourceLocalization(
         int LanguageId,

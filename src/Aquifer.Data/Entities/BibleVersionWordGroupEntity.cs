@@ -1,5 +1,5 @@
-﻿
-namespace Aquifer.Data.Entities;
+﻿namespace Aquifer.Data.Entities;
+
 public class BibleVersionWordGroupEntity
 {
     public int Id { get; set; }

@@ -24,7 +24,8 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext, IResourceContentReques
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        Response = await ResourceHelper.GetResourceContentAsync(dbContext,
+        Response = await ResourceHelper.GetResourceContentAsync(
+            dbContext,
             new CommonResourceRequest(req.ContentId, req.ContentTextType),
             ThrowError,
             ct);
@@ -33,6 +34,11 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext, IResourceContentReques
     public override async Task OnAfterHandleAsync(Request req, Response res, CancellationToken ct)
     {
         const string endpointId = "public-resources-get";
-        await trackingMessagePublisher.PublishTrackResourceContentRequestMessageAsync(HttpContext, req.ContentId, endpointId, source: "public-api", ct);
+        await trackingMessagePublisher.PublishTrackResourceContentRequestMessageAsync(
+            HttpContext,
+            req.ContentId,
+            endpointId,
+            "public-api",
+            ct);
     }
 }

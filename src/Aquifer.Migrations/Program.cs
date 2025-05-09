@@ -7,7 +7,8 @@ var configuration = builder.Configuration.Get<ConfigurationOptions>();
 
 builder.Services
     .AddDbContext<AquiferDbContext>(options =>
-        options.UseAzureSql(configuration?.ConnectionStrings?.BiblioNexusDb,
+        options.UseAzureSql(
+            configuration?.ConnectionStrings?.BiblioNexusDb,
             providerOptions =>
             {
                 providerOptions.EnableRetryOnFailure(3);

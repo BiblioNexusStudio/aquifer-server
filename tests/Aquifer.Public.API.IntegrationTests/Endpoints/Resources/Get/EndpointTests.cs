@@ -124,6 +124,6 @@ public sealed class EndpointTests(App _app) : TestBase<App>
 
     private sealed class CdnUrlWrapper
     {
-        public string Url { get; set; } = null!;
+        public string Url { get; } = null!;
     }
 }

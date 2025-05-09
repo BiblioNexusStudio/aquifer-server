@@ -2,5 +2,5 @@
 
 public enum CommentThreadType
 {
-    ResourceContentVersion = 1
+    ResourceContentVersion = 1,
 }

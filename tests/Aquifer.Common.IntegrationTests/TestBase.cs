@@ -1,11 +1,11 @@
 ﻿namespace Aquifer.Common.IntegrationTests;
 
 /// <summary>
-/// This class allows for injecting a <typeparamref name="TAppFixture"/> into the constructor of a test class by inheriting from
+/// This class allows for injecting a <typeparamref name="TAppFixture" /> into the constructor of a test class by inheriting from
 /// this base class.
 /// Example:
 /// <example>
-/// <code>
+///     <code>
 /// public sealed class FooTests(App _app) : TestBase&lt;App&gt; { }
 /// </code>
 /// </example>

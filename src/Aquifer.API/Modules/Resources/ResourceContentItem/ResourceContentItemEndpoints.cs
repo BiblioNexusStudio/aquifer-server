@@ -9,11 +9,13 @@ namespace Aquifer.API.Modules.Resources.ResourceContentItem;
 
 public static class ResourceContentItemEndpoints
 {
-    public static async Task<Results<RedirectHttpResult, NotFound>> GetResourceThumbnailByIdAsync(int contentId,
+    public static async Task<Results<RedirectHttpResult, NotFound>> GetResourceThumbnailByIdAsync(
+        int contentId,
         AquiferDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var contentVersion = await dbContext.ResourceContentVersions.Where(rcv => rcv.ResourceContentId == contentId && rcv.IsPublished)
+        var contentVersion = await dbContext.ResourceContentVersions
+            .Where(rcv => rcv.ResourceContentId == contentId && rcv.IsPublished)
             .Include(rcv => rcv.ResourceContent)
             .SingleOrDefaultAsync(cancellationToken);
 

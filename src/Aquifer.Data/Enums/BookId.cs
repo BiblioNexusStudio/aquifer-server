@@ -263,5 +263,5 @@ public enum BookId
     BookODA = 86,
 
     [Display(Name = "Psalms of Solomon")]
-    BookPSS = 87
+    BookPSS = 87,
 }

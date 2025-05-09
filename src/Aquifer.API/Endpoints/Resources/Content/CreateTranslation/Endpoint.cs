@@ -100,7 +100,7 @@ public class Endpoint(
             // Assign the resource immediately even though translation has not yet started
             // to ensure that Community Reviewers only have a single assigned resource.
             // This will also apply to other callers of this endpoint (Publishers) for consistency/simplicity.
-            AssignedUserId = user.Id
+            AssignedUserId = user.Id,
         };
 
         var newResourceContent = new ResourceContentEntity
@@ -111,7 +111,7 @@ public class Endpoint(
             MediaType = baseContent.MediaType,
             Status = ResourceContentStatus.TranslationAwaitingAiDraft,
             Trusted = true,
-            Versions = [newResourceContentVersion]
+            Versions = [newResourceContentVersion],
         };
 
         await dbContext.ResourceContents.AddAsync(newResourceContent, ct);

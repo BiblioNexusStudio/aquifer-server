@@ -13,13 +13,12 @@ public static class ServiceCollectionExtensions
         return services
             .AddScoped<IResourceContentRequestTrackingMessagePublisher, ResourceContentRequestTrackingMessagePublisher>()
             .AddHostedService<TrackResourceContentRequestBackgroundService>()
-            .AddSingleton(
-                _ => Channel.CreateUnbounded<TrackResourceContentRequestMessage>(
-                    new UnboundedChannelOptions
-                    {
-                        AllowSynchronousContinuations = false,
-                        SingleReader = false,
-                        SingleWriter = false,
-                    }));
+            .AddSingleton(_ => Channel.CreateUnbounded<TrackResourceContentRequestMessage>(
+                new UnboundedChannelOptions
+                {
+                    AllowSynchronousContinuations = false,
+                    SingleReader = false,
+                    SingleWriter = false,
+                }));
     }
 }

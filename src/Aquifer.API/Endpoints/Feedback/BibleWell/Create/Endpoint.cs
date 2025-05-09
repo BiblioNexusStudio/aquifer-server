@@ -14,8 +14,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var emailValue = req.Email is null && (req.ContactType == FeedbackContactType.Email) ? req.ContactValue : req.Email;
-        var phoneValue = req.Phone is null && (req.ContactType == FeedbackContactType.Phone) ? req.ContactValue : req.Phone;
+        var emailValue = req.Email is null && req.ContactType == FeedbackContactType.Email ? req.ContactValue : req.Email;
+        var phoneValue = req.Phone is null && req.ContactType == FeedbackContactType.Phone ? req.ContactValue : req.Phone;
         var feedback = new FeedbackEntity
         {
             Name = req.Name,
@@ -25,7 +25,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request>
             Feedback = req.Feedback,
             FeedbackType = req.FeedbackType,
             ContactType = req.ContactType,
-            ContactValue = req.ContactValue
+            ContactValue = req.ContactValue,
         };
 
         await dbContext.Feedback.AddAsync(feedback, ct);

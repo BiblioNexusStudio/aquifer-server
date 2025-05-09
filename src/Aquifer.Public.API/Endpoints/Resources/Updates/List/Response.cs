@@ -21,5 +21,5 @@ public class ResponseContent
 public enum ResponseContentUpdateType
 {
     New = 0,
-    Updated = 1
+    Updated = 1,
 }

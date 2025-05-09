@@ -53,7 +53,7 @@ public class Endpoint(AquiferDbContext dbContext, ILogger<Endpoint> logger) : En
             .Select(id => new ContentSubscriberParentResourceEntity
             {
                 ContentSubscriberId = subscriber.Id,
-                ParentResourceId = id
+                ParentResourceId = id,
             });
 
         var parentResourcesToRemove =
@@ -64,7 +64,7 @@ public class Endpoint(AquiferDbContext dbContext, ILogger<Endpoint> logger) : En
             .Select(id => new ContentSubscriberLanguageEntity
             {
                 ContentSubscriberId = subscriber.Id,
-                LanguageId = id
+                LanguageId = id,
             });
 
         var languagesToRemove = subscriber.ContentSubscriberLanguages.Where(x => !req.SelectedLanguageIds.Contains(x.LanguageId));
@@ -83,18 +83,21 @@ public class Endpoint(AquiferDbContext dbContext, ILogger<Endpoint> logger) : En
 
     private async Task HandleNewSubscriberAsync(Request req, CancellationToken ct)
     {
-        await dbContext.ContentSubscribers.AddAsync(new ContentSubscriberEntity
+        await dbContext.ContentSubscribers.AddAsync(
+            new ContentSubscriberEntity
             {
                 Name = req.Name,
                 Email = req.Email,
                 Organization = req.Organization,
                 GetNewsletter = req.GetNewsletter,
                 ContentSubscriberParentResources =
-                    req.SelectedParentResourceIds.Select(id => new ContentSubscriberParentResourceEntity { ParentResourceId = id })
+                    req.SelectedParentResourceIds
+                        .Select(id => new ContentSubscriberParentResourceEntity { ParentResourceId = id })
                         .ToList(),
-                ContentSubscriberLanguages = req.SelectedLanguageIds.Select(id => new ContentSubscriberLanguageEntity { LanguageId = id })
+                ContentSubscriberLanguages = req.SelectedLanguageIds
+                    .Select(id => new ContentSubscriberLanguageEntity { LanguageId = id })
                     .ToList(),
-                Enabled = true
+                Enabled = true,
             },
             ct);
     }

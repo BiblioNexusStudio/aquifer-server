@@ -23,14 +23,14 @@ using Endpoint = Aquifer.API.Endpoints.Users.List.Endpoint;
 namespace Aquifer.API.IntegrationTests;
 
 /// <summary>
-///     This is a FastEndpoints <see cref="App" /> that sits on top of a <see cref="WebApplicationFactory{TEntryPoint}" />
-///     which allows for in-memory web requests to be sent and received without actual network traffic.
-///     Details:
-///     * https://fast-endpoints.com/docs/integration-unit-testing
-///     * https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests
-///     This class configures both the internal API (so it can be spun up in-memory to test against) *and* this integration test project, each
-///     of which use separate configuration files. The internal API is configured via the override methods below.  The integration test
-///     configuration is only used for creating/authenticating test users.
+/// This is a FastEndpoints <see cref="App" /> that sits on top of a <see cref="WebApplicationFactory{TEntryPoint}" />
+/// which allows for in-memory web requests to be sent and received without actual network traffic.
+/// Details:
+/// * https://fast-endpoints.com/docs/integration-unit-testing
+/// * https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests
+/// This class configures both the internal API (so it can be spun up in-memory to test against) *and* this integration test project, each
+/// of which use separate configuration files. The internal API is configured via the override methods below.  The integration test
+/// configuration is only used for creating/authenticating test users.
 /// </summary>
 public sealed class App : AppFixture<Program>
 {
@@ -44,13 +44,13 @@ public sealed class App : AppFixture<Program>
     public HttpClient CommunityReviewerClient { get; private set; } = null!;
 
     /// <summary>
-    ///     Only use this <see cref="IHost" />> for integration test specific configuration outside the internal API's config.
+    /// Only use this <see cref="IHost" />> for integration test specific configuration outside the internal API's config.
     /// </summary>
     private IHost Host { get; set; } = null!;
 
     /// <summary>
-    ///     The app is configured in <see cref="Program" /> before this method is called.
-    ///     Only use this method to override or extend existing host configuration.
+    /// The app is configured in <see cref="Program" /> before this method is called.
+    /// Only use this method to override or extend existing host configuration.
     /// </summary>
     protected override void ConfigureApp(IWebHostBuilder builder)
     {
@@ -63,8 +63,8 @@ public sealed class App : AppFixture<Program>
     }
 
     /// <summary>
-    ///     The service registrations in <see cref="Program" /> run before this method is called.
-    ///     Only use this method to add additional services or to override existing registrations from the API.
+    /// The service registrations in <see cref="Program" /> run before this method is called.
+    /// Only use this method to add additional services or to override existing registrations from the API.
     /// </summary>
     protected override void ConfigureServices(IServiceCollection services)
     {
@@ -73,8 +73,8 @@ public sealed class App : AppFixture<Program>
     }
 
     /// <summary>
-    ///     Configure Clients here.
-    ///     Various authenticated client with different roles/permissions are needed.
+    /// Configure Clients here.
+    /// Various authenticated client with different roles/permissions are needed.
     /// </summary>
     protected override async ValueTask SetupAsync()
     {
@@ -108,7 +108,7 @@ public sealed class App : AppFixture<Program>
             AnonymousClient = CreateClient(integrationTestConfiguration.InternalApiKey, shouldBypassCaching: true);
 
             // Note: The Publisher client user must be manually created so that we have a user to create the other test users.
-            PublisherClient = CreateClient(integrationTestConfiguration.InternalApiKey, publisherBearerToken, shouldBypassCaching: true);
+            PublisherClient = CreateClient(integrationTestConfiguration.InternalApiKey, publisherBearerToken, true);
 
             var testUserBearerTokenByRoleMap = await CreateTestUsersAsync(
                 PublisherClient,
@@ -122,19 +122,19 @@ public sealed class App : AppFixture<Program>
             ManagerClient = CreateClient(
                 integrationTestConfiguration.InternalApiKey,
                 testUserBearerTokenByRoleMap[UserRole.Manager],
-                shouldBypassCaching: true);
+                true);
             EditorClient = CreateClient(
                 integrationTestConfiguration.InternalApiKey,
                 testUserBearerTokenByRoleMap[UserRole.Editor],
-                shouldBypassCaching: true);
+                true);
             ReviewerClient = CreateClient(
                 integrationTestConfiguration.InternalApiKey,
                 testUserBearerTokenByRoleMap[UserRole.Reviewer],
-                shouldBypassCaching: true);
+                true);
             CommunityReviewerClient = CreateClient(
                 integrationTestConfiguration.InternalApiKey,
                 testUserBearerTokenByRoleMap[UserRole.CommunityReviewer],
-                shouldBypassCaching: true);
+                true);
         }
         catch (Exception e)
         {
@@ -180,9 +180,9 @@ public sealed class App : AppFixture<Program>
     }
 
     /// <summary>
-    ///     Test users are all in the "Aquifer.API.IntegrationTests" company.
-    ///     A PublisherClient must already be set up before calling this method as it will be used to create any missing users.
-    ///     If a test user for a given role already exists then the existing user will be used instead of creating a new one.
+    /// Test users are all in the "Aquifer.API.IntegrationTests" company.
+    /// A PublisherClient must already be set up before calling this method as it will be used to create any missing users.
+    /// If a test user for a given role already exists then the existing user will be used instead of creating a new one.
     /// </summary>
     /// <returns>A map of bearer token for the created/existing user by role.</returns>
     private static async Task<ReadOnlyDictionary<UserRole, string>> CreateTestUsersAsync(
@@ -255,7 +255,7 @@ public sealed class App : AppFixture<Program>
                 CompanyId = AquiferApiIntegrationTestsCompanyId,
                 FirstName = testUserFirstName,
                 LastName = testUserLastName,
-                Role = testUserRole
+                Role = testUserRole,
             });
 
         createUserResponse.EnsureSuccessStatusCode();
@@ -276,29 +276,27 @@ public sealed class App : AppFixture<Program>
             .Host
             .CreateDefaultBuilder()
             .UseEnvironment(Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? Environments.Development)
-            .ConfigureServices(
-                (context, services) =>
-                {
-                    var isDevelopment = context.HostingEnvironment.EnvironmentName == Environments.Development;
+            .ConfigureServices((context, services) =>
+            {
+                var isDevelopment = context.HostingEnvironment.EnvironmentName == Environments.Development;
 
-                    services.AddOptions<ConfigurationOptions>().Bind(context.Configuration);
+                services.AddOptions<ConfigurationOptions>().Bind(context.Configuration);
 
-                    var configuration = context.Configuration.Get<ConfigurationOptions>() ??
-                        throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
+                var configuration = context.Configuration.Get<ConfigurationOptions>() ??
+                    throw new InvalidOperationException($"Unable to bind {nameof(ConfigurationOptions)}.");
 
-                    services.AddDbContext<AquiferDbContext>(
-                            options => options
-                                .UseAzureSql(
-                                    configuration.ConnectionStrings.BiblioNexusDb,
-                                    providerOptions => providerOptions.EnableRetryOnFailure(3))
-                                .EnableSensitiveDataLogging(isDevelopment)
-                                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
-                        .AddAzureClient(true)
-                        .AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>()
-                        .AddScoped<IAuth0Service, Auth0Service>()
-                        .AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.IntegrationTestAuth0Settings)
-                        .AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.IntegrationTestUserSettings);
-                })
+                services.AddDbContext<AquiferDbContext>(options => options
+                        .UseAzureSql(
+                            configuration.ConnectionStrings.BiblioNexusDb,
+                            providerOptions => providerOptions.EnableRetryOnFailure(3))
+                        .EnableSensitiveDataLogging(isDevelopment)
+                        .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
+                    .AddAzureClient(true)
+                    .AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>()
+                    .AddScoped<IAuth0Service, Auth0Service>()
+                    .AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.IntegrationTestAuth0Settings)
+                    .AddSingleton(cfg => cfg.GetService<IOptions<ConfigurationOptions>>()!.Value.IntegrationTestUserSettings);
+            })
             .ConfigureLogging(loggingBuilder => loggingBuilder.AddConsole())
             .Build();
 

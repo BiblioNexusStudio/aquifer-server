@@ -1,7 +1,7 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
+
 [PrimaryKey(nameof(GreekNewTestamentWordGroupId), nameof(GreekNewTestamentWordId))]
 public class GreekNewTestamentWordGroupWordEntity
 {

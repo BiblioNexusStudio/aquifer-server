@@ -23,7 +23,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
         var response = req.ThreadType switch
         {
             CommentThreadType.ResourceContentVersion => await CreateResourceContentVersionCommentThreadAsync(req, ct),
-            _ => throw new UnreachableException()
+            _ => throw new UnreachableException(),
         };
 
         await SendOkAsync(response, ct);
@@ -60,7 +60,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService)
         return new Response
         {
             ThreadId = newThread.Id,
-            CommentId = newComment.Id
+            CommentId = newComment.Id,
         };
     }
 }

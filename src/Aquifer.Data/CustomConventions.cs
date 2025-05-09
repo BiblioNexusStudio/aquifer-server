@@ -14,7 +14,8 @@ public static class SqlDefaultValueAttributeConvention
 
 public static class ConventionBehaviors
 {
-    public static void SetSqlValueForPropertiesWithAttribute<TAttribute>(ModelBuilder builder,
+    public static void SetSqlValueForPropertiesWithAttribute<TAttribute>(
+        ModelBuilder builder,
         Func<TAttribute, string> lambda) where TAttribute : class
     {
         SetPropertyValue<TAttribute>(builder).ForEach(x => x.Item1.SetDefaultValueSql(lambda(x.Item2)));
@@ -29,7 +30,8 @@ public static class ConventionBehaviors
             var properties = entity.GetProperties();
             foreach (var property in properties)
             {
-                if (property.PropertyInfo?
+                if (property.PropertyInfo
+                        ?
                         .GetCustomAttributes(typeof(TAttribute), false)
                         .FirstOrDefault() is TAttribute attribute)
                 {

@@ -10,7 +10,8 @@ public class Validator : Validator<Request>
         RuleFor(x => x.QuotedCost)
             .PrecisionScale(int.MaxValue, 2, true);
 
-        RuleFor(x => x).Must(x =>
+        RuleFor(x => x)
+            .Must(x =>
                 x.QuotedCost is not null ||
                 x.ProjectManagerUserId is not null ||
                 x.ProjectedDeliveryDate is not null ||

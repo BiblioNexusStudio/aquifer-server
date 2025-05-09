@@ -24,9 +24,9 @@ public class Endpoint(
         var user = await _userService.GetUserFromJwtAsync(ct);
 
         var (_, resourceContentSummaries) = await _resourceContentSearchService.SearchAsync(
-             ResourceContentSearchIncludeFlags.Project |
-                 ResourceContentSearchIncludeFlags.HasAudioForLanguage |
-                 ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
+            ResourceContentSearchIncludeFlags.Project |
+            ResourceContentSearchIncludeFlags.HasAudioForLanguage |
+            ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads,
             new ResourceContentSearchFilter
             {
                 IsDraft = true,
@@ -42,8 +42,8 @@ public class Endpoint(
                 HasUnresolvedCommentThreads = req.HasUnresolvedCommentThreads,
             },
             ResourceContentSearchSortOrder.ResourceContentId,
-            offset: 0,
-            limit: null,
+            0,
+            null,
             ct);
 
         var languageByIdMap = await _cachingLanguageService.GetLanguageByIdMapAsync(ct);

@@ -15,7 +15,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var result = await dbContext.ResourceContents.Where(rc => rc.Id == request.ContentId)
+        var result = await dbContext.ResourceContents
+            .Where(rc => rc.Id == request.ContentId)
             .Select(rc => new Response { Status = rc.Status })
             .SingleOrDefaultAsync(ct);
 

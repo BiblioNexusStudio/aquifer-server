@@ -57,7 +57,7 @@ public static class VersificationUtilities
     }
 
     /// <summary>
-    /// Returns <c>null</c> if the <paramref name="bibleId"/> or the relevant book do not contain text.  Also returns <c>null</c>
+    /// Returns <c>null</c> if the <paramref name="bibleId" /> or the relevant book do not contain text.  Also returns <c>null</c>
     /// if the two verse IDs refer to different books.
     /// Otherwise, if the given start and end chapter and verse numbers are not valid for the given Bible and Book then the range will be
     /// adjusted to the nearest valid chapter and verse numbers for the given Bible and Book based upon the text.
@@ -89,7 +89,7 @@ public static class VersificationUtilities
     }
 
     /// <summary>
-    /// Returns <c>null</c> if the <paramref name="bibleId"/> or <paramref name="bookId"/> do not contain text.
+    /// Returns <c>null</c> if the <paramref name="bibleId" /> or <paramref name="bookId" /> do not contain text.
     /// Otherwise, if the given start and end chapter and verse numbers are not valid for the given Bible and Book then the range will be
     /// adjusted to the nearest valid chapter and verse numbers for the given Bible and Book based upon the text.
     /// </summary>
@@ -143,9 +143,9 @@ public static class VersificationUtilities
     }
 
     /// <summary>
-    /// If the <paramref name="verseId"/> is outside the valid chapter/verse range for the given <paramref name="bibleId"/>  then the
-    /// <paramref name="verseId"/> will be adjusted to a valid verse ID within the book/chapter.  Furthermore, the returned verse ID is
-    /// guaranteed to not be an excluded verse in the given <paramref name="bibleId"/>.
+    /// If the <paramref name="verseId" /> is outside the valid chapter/verse range for the given <paramref name="bibleId" />  then the
+    /// <paramref name="verseId" /> will be adjusted to a valid verse ID within the book/chapter.  Furthermore, the returned verse ID is
+    /// guaranteed to not be an excluded verse in the given <paramref name="bibleId" />.
     /// If the Bible doesn't exist or the book is not present in the Bible then <c>null</c> will be returned.
     /// Note: If a verse ID is invalid then this method will prefer to increment the verse whenever possible.
     /// </summary>
@@ -164,7 +164,7 @@ public static class VersificationUtilities
 
     /// <summary>
     /// Note: The returned verse ID may still be outside the bounds of the chapter.
-    /// See <see cref="ConstrainOutOfBoundsVerseIdAsync"/> for solving that problem.
+    /// See <see cref="ConstrainOutOfBoundsVerseIdAsync" /> for solving that problem.
     /// </summary>
     private static async Task<int> GetNearestNonExcludedVerseIdAsync(
         int bibleId,
@@ -186,7 +186,7 @@ public static class VersificationUtilities
     /// <summary>
     /// If the verseId is outside the valid chapter/verse range for the given Bible and Book then the verse ID will be adjusted to
     /// a valid verse ID. If the Bible doesn't exist or the book is not present in the Bible then <c>null</c> will be returned.
-    /// Note: The returned verse ID may be excluded.  See <see cref="GetNearestNonExcludedVerseIdAsync"/> for solving that problem.
+    /// Note: The returned verse ID may be excluded.  See <see cref="GetNearestNonExcludedVerseIdAsync" /> for solving that problem.
     /// </summary>
     private static async Task<int?> ConstrainOutOfBoundsVerseIdAsync(
         int bibleId,
@@ -203,14 +203,15 @@ public static class VersificationUtilities
     /// <summary>
     /// If the verseId is outside the valid chapter/verse range for the given Bible and Book then the verse ID will be adjusted to
     /// a valid verse ID. If the Bible doesn't exist or the book is not present in the Bible then <c>null</c> will be returned.
-    /// Note: The returned verse ID may be excluded.  See <see cref="GetNearestNonExcludedVerseIdAsync"/> for solving that problem.
+    /// Note: The returned verse ID may be excluded.  See <see cref="GetNearestNonExcludedVerseIdAsync" /> for solving that problem.
     /// </summary>
     private static int? ConstrainOutOfBoundsVerseId(
         int verseId,
         ReadOnlyDictionary<
-            BookId,
-            (int MaxChapterNumber, ReadOnlyDictionary<int, (int MinVerseNumber, int MaxVerseNumber)> BookendVerseNumbersByChapterNumberMap)>
-                maxChapterNumberAndBookendVerseNumbersByBookIdMap)
+                BookId,
+                (int MaxChapterNumber, ReadOnlyDictionary<int, (int MinVerseNumber, int MaxVerseNumber)>
+                BookendVerseNumbersByChapterNumberMap)>
+            maxChapterNumberAndBookendVerseNumbersByBookIdMap)
     {
         var (bookId, chapter, verse) = BibleUtilities.TranslateVerseId(verseId);
 
@@ -223,12 +224,18 @@ public static class VersificationUtilities
 
         if (chapter < MinChapterNumber)
         {
-            return BibleUtilities.GetVerseId(bookId, MinChapterNumber, bookendVerseNumbersByChapterNumberMap[maxChapterNumber].MinVerseNumber);
+            return BibleUtilities.GetVerseId(
+                bookId,
+                MinChapterNumber,
+                bookendVerseNumbersByChapterNumberMap[maxChapterNumber].MinVerseNumber);
         }
 
         if (chapter > maxChapterNumber)
         {
-            return BibleUtilities.GetVerseId(bookId, maxChapterNumber, bookendVerseNumbersByChapterNumberMap[maxChapterNumber].MaxVerseNumber);
+            return BibleUtilities.GetVerseId(
+                bookId,
+                maxChapterNumber,
+                bookendVerseNumbersByChapterNumberMap[maxChapterNumber].MaxVerseNumber);
         }
 
         if (verse < bookendVerseNumbersByChapterNumberMap[chapter].MinVerseNumber)
@@ -249,8 +256,8 @@ public static class VersificationUtilities
 
     /// <summary>
     /// Returns an ordered list of verse IDs for any valid start and end verse IDs, even if the range spans across chapters or books.
-    /// Only verse IDs present for the given <see paramref="bibleId"/> will be included.
-    /// If the range spans across books then the standard <see cref="BookId"/> ordering will be used, even if that's different from
+    /// Only verse IDs present for the given <see paramref="bibleId" /> will be included.
+    /// If the range spans across books then the standard <see cref="BookId" /> ordering will be used, even if that's different from
     /// the given Bible's book ordering.
     /// </summary>
     public static async Task<IReadOnlyList<int>> ExpandVerseIdRangeAsync(
@@ -361,9 +368,15 @@ public static class VersificationUtilities
         }
 
         var baseVerseIdsWithOptionalPartBySourceBibleVerseIdMap =
-            await versificationService.GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(sourceBibleId, true, ct);
+            await versificationService.GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(
+                sourceBibleId,
+                true,
+                ct);
         var targetBibleVerseIdsByBaseVerseIdWithOptionalPartMap =
-            await versificationService.GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(targetBibleId, true, ct);
+            await versificationService.GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(
+                targetBibleId,
+                true,
+                ct);
         var targetBibleExcludedVerseIds = await versificationService.GetExcludedVerseIdsAsync(targetBibleId, ct);
         var maxChapterNumberAndBookendVerseNumbersByBookIdMap =
             await versificationService.GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(targetBibleId, ct);
@@ -377,7 +390,7 @@ public static class VersificationUtilities
     }
 
     /// <summary>
-    /// This method assumes that the <paramref name="sourceVerseId"/> is valid for the given maps and exclusions.
+    /// This method assumes that the <paramref name="sourceVerseId" /> is valid for the given maps and exclusions.
     /// </summary>
     /// <returns>The converted verse IDs (which may be empty if conversion is not possible).</returns>
     private static IReadOnlyList<int> ConvertVersificationCore(
@@ -388,7 +401,7 @@ public static class VersificationUtilities
         ReadOnlyDictionary<
             BookId,
             (int MaxChapterNumber, ReadOnlyDictionary<int, (int MinVerseNumber, int MaxVerseNumber)>
-                BookendVerseNumbersByChapterNumberMap)> targetBibleMaxChapterNumberAndBookendVerseNumbersByBookIdMap)
+            BookendVerseNumbersByChapterNumberMap)> targetBibleMaxChapterNumberAndBookendVerseNumbersByBookIdMap)
     {
         // The dictionary only contains mappings where the key is different from the value.
         // If the key verse ID is not present in the mapping (and is not in the exclusions list) then the value matches the key.
@@ -396,42 +409,41 @@ public static class VersificationUtilities
             [sourceVerseId.ToString()];
 
         return baseVerseIdsWithOptionalPart
-            .SelectMany(
-                baseVerseIdWithOptionalPart =>
-                {
-                    // Base Verse Data includes a Verse ID with an optional verse part at the end (such as 'a', 'b', etc.).
-                    var baseVerseId = baseVerseIdWithOptionalPart[..10];
+            .SelectMany(baseVerseIdWithOptionalPart =>
+            {
+                // Base Verse Data includes a Verse ID with an optional verse part at the end (such as 'a', 'b', etc.).
+                var baseVerseId = baseVerseIdWithOptionalPart[..10];
 
-                    // Rules when a part is present on base verse ID:
-                    // 1. Use the base verse ID with part if present in the target inverse mapping (the direct map).
-                    // 2. If not found, then try to map using the base verse ID without a part (in case the target mapping doesn't use parts).
-                    // 3. Default to the base verse ID without a part (no explicit mapping).
-                    // Rules when a part is not present on base verse ID:
-                    // 1. Use the base verse ID without a part if present in the target inverse mapping (the direct map).
-                    // 2. If not found, then try to map using the base verse ID with part 'a' (in case the target mapping uses parts).
-                    // 3. Default to the base verse ID without a part (no explicit mapping).
-                    var targetVerseIds =
-                        targetBibleVerseIdsByBaseVerseIdWithOptionalPartMap.GetValueOrDefault(baseVerseIdWithOptionalPart)
-                            ?? targetBibleVerseIdsByBaseVerseIdWithOptionalPartMap.GetValueOrDefault(
-                                baseVerseIdWithOptionalPart.Length > 10
-                                    ? baseVerseId
-                                    : $"{baseVerseId}a")
-                            ?? [int.Parse(baseVerseId)];
+                // Rules when a part is present on base verse ID:
+                // 1. Use the base verse ID with part if present in the target inverse mapping (the direct map).
+                // 2. If not found, then try to map using the base verse ID without a part (in case the target mapping doesn't use parts).
+                // 3. Default to the base verse ID without a part (no explicit mapping).
+                // Rules when a part is not present on base verse ID:
+                // 1. Use the base verse ID without a part if present in the target inverse mapping (the direct map).
+                // 2. If not found, then try to map using the base verse ID with part 'a' (in case the target mapping uses parts).
+                // 3. Default to the base verse ID without a part (no explicit mapping).
+                var targetVerseIds =
+                    targetBibleVerseIdsByBaseVerseIdWithOptionalPartMap.GetValueOrDefault(baseVerseIdWithOptionalPart) ??
+                    targetBibleVerseIdsByBaseVerseIdWithOptionalPartMap.GetValueOrDefault(
+                        baseVerseIdWithOptionalPart.Length > 10
+                            ? baseVerseId
+                            : $"{baseVerseId}a") ??
+                    [int.Parse(baseVerseId)];
 
-                    // Handle two scenarios:
-                    // 1. The target verse ID is in the exclusions list.  In this case omit it.
-                    // 2. The target verse ID is not in a valid book for the target Bible even though it exists in the base mapping.
-                    //    In this case omit it.
-                    // 3. The target verse ID is not in a valid chapter/verse range for the target Bible/book
-                    //    (e.g. it's "excluded" but at the very end of a chapter so it's not in the exclusions list).
-                    //    In this case constrain the verse to the nearest valid verse.
-                    return targetVerseIds
-                        .Select(targetVerseId => ConstrainOutOfBoundsVerseId(
-                            targetVerseId,
-                            targetBibleMaxChapterNumberAndBookendVerseNumbersByBookIdMap))
-                        .OfType<int>()
-                        .Where(constrainedTargetVerseId => !targetBibleExcludedVerseIds.Contains(constrainedTargetVerseId));
-                })
+                // Handle two scenarios:
+                // 1. The target verse ID is in the exclusions list.  In this case omit it.
+                // 2. The target verse ID is not in a valid book for the target Bible even though it exists in the base mapping.
+                //    In this case omit it.
+                // 3. The target verse ID is not in a valid chapter/verse range for the target Bible/book
+                //    (e.g. it's "excluded" but at the very end of a chapter so it's not in the exclusions list).
+                //    In this case constrain the verse to the nearest valid verse.
+                return targetVerseIds
+                    .Select(targetVerseId => ConstrainOutOfBoundsVerseId(
+                        targetVerseId,
+                        targetBibleMaxChapterNumberAndBookendVerseNumbersByBookIdMap))
+                    .OfType<int>()
+                    .Where(constrainedTargetVerseId => !targetBibleExcludedVerseIds.Contains(constrainedTargetVerseId));
+            })
             .Order()
             .Distinct()
             .ToList();
@@ -460,10 +472,16 @@ public static class VersificationUtilities
             ct);
 
         var baseVerseIdsWithOptionalPartBySourceBibleVerseIdMap =
-            await versificationService.GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(sourceBibleId, true, ct);
+            await versificationService.GetBaseVerseIdWithOptionalPartByBibleVerseIdMapAsync(
+                sourceBibleId,
+                true,
+                ct);
 
         var targetBibleVerseIdsByBaseVerseIdWithOptionalPartMap =
-            await versificationService.GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(targetBibleId, true, ct);
+            await versificationService.GetBibleVerseIdByBaseVerseIdWithOptionalPartMapAsync(
+                targetBibleId,
+                true,
+                ct);
         var targetBibleExcludedVerseIds = await versificationService.GetExcludedVerseIdsAsync(targetBibleId, ct);
         var maxChapterNumberAndBookendVerseNumbersByBookIdMap =
             await versificationService.GetMaxChapterNumberAndBookendVerseNumbersByBookIdMapAsync(targetBibleId, ct);

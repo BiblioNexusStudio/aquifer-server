@@ -49,7 +49,7 @@ public class ApiKeyAuthorizationMiddlewareOptions
     public ApiKeyScope Scope { get; set; }
 
     /// <summary>
-    ///     Routes that will not require an API key. This uses simple <c>StartsWith</c> logic.
+    /// Routes that will not require an API key. This uses simple <c>StartsWith</c> logic.
     /// </summary>
     /// <example>
     /// This would prevent any routes that start with "/marketing" from requiring an API key:

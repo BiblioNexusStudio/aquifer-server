@@ -15,14 +15,19 @@ public static class QueueMessageExtensions
         }
         catch (JsonException ex)
         {
-            logger.LogError(ex, "An error occurred while deserializing JSON message text (ID: {MessageId}): {MessageText}",
-                queueMessage.MessageId, queueMessage.MessageText);
+            logger.LogError(
+                ex,
+                "An error occurred while deserializing JSON message text (ID: {MessageId}): {MessageText}",
+                queueMessage.MessageId,
+                queueMessage.MessageText);
             throw;
         }
 
         if (message == null)
         {
-            logger.LogError("Message (ID: {MessageId}) unexpectedly deserialized to null: {MessageText}", queueMessage.MessageId,
+            logger.LogError(
+                "Message (ID: {MessageId}) unexpectedly deserialized to null: {MessageText}",
+                queueMessage.MessageId,
                 queueMessage.MessageText);
             throw new InvalidOperationException($"Message (ID: {queueMessage.MessageId}) unexpectedly deserialized to null.");
         }

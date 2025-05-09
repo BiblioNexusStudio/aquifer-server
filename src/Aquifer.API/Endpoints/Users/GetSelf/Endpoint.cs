@@ -26,10 +26,10 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
             Company = new CompanyResponse
             {
                 Id = user.CompanyId,
-                LanguageIds = user.Company.CompanyLanguages.Select(cl => cl.LanguageId).ToList()
+                LanguageIds = user.Company.CompanyLanguages.Select(cl => cl.LanguageId).ToList(),
             },
             LanguageId = user.LanguageId,
-            CanBeAssignedContent = true
+            CanBeAssignedContent = true,
         };
 
         if (userService.HasPermission(PermissionName.CreateCommunityContent) && !userService.HasPermission(PermissionName.CreateContent))

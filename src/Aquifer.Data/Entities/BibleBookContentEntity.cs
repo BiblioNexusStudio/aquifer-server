@@ -12,7 +12,7 @@ public class BibleBookContentEntity : IHasUpdatedTimestamp
     public string DisplayName { get; set; } = null!;
 
     /// <summary>
-    ///     JSON column. See <see cref="AudioUrlsData" /> for the deserialization class.
+    /// JSON column. See <see cref="AudioUrlsData" /> for the deserialization class.
     /// </summary>
     public string? AudioUrls { get; set; }
 
@@ -30,7 +30,7 @@ public class BibleBookContentEntity : IHasUpdatedTimestamp
     public DateTime Updated { get; set; } = DateTime.UtcNow;
 
     /// <summary>
-    ///     POCO for deserializing the AudioUrls column.
+    /// POCO for deserializing the AudioUrls column.
     /// </summary>
     public sealed class AudioUrlsData
     {
@@ -39,7 +39,7 @@ public class BibleBookContentEntity : IHasUpdatedTimestamp
         public sealed class Chapter
         {
             /// <summary>
-            ///     The chapter number is a JSON string type but is currently only populated with integer values (this might change in the future).
+            /// The chapter number is a JSON string type but is currently only populated with integer values (this might change in the future).
             /// </summary>
             public required string Number { get; set; }
 
@@ -56,7 +56,7 @@ public class BibleBookContentEntity : IHasUpdatedTimestamp
             public sealed class AudioTimestamp
             {
                 /// <summary>
-                ///     The verse number is a JSON string type but is currently only populated with integer values (this might change in the future).
+                /// The verse number is a JSON string type but is currently only populated with integer values (this might change in the future).
                 /// </summary>
                 public required string VerseNumber { get; set; }
 

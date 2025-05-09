@@ -15,12 +15,14 @@ public class Validator : Validator<Request>
         RuleFor(x => x.SourceLanguageId).GreaterThan(0);
         RuleFor(x => x.TargetLanguageId).GreaterThan(0);
         RuleFor(x => x.ParentResourceId).GreaterThan(0);
-        When(x => x.BookCode != null,
+        When(
+            x => x.BookCode != null,
             () =>
                 RuleFor(x => x.BookCode)
                     .Must(code => BibleBookCodeUtilities.IdFromCode(code!) != BookId.None)
                     .WithMessage("bookCode must be valid."));
-        When(x => x.Chapters != null,
+        When(
+            x => x.Chapters != null,
             () =>
                 RuleForEach(x => x.Chapters)
                     .Must(chapter => chapter is >= 1 and <= 150)

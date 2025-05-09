@@ -61,7 +61,7 @@ public static class Helpers
             ContentSize = mostRecentResourceContentVersion.ContentSize,
             AssignedUserId = assignedUserId,
             Created = DateTime.UtcNow,
-            Updated = DateTime.UtcNow
+            Updated = DateTime.UtcNow,
         };
 
         await dbContext.ResourceContentVersions.AddAsync(newResourceContentVersion, ct);
@@ -72,8 +72,8 @@ public static class Helpers
             await historyService.AddAssignedUserHistoryAsync(newResourceContentVersion, assignedUserId, user.Id, ct);
         }
 
-        var resourceContent = await dbContext.ResourceContents.AsTracking().SingleOrDefaultAsync(rc => rc.Id == contentId, ct)
-            ?? throw new ArgumentException($"Content with ID {contentId} not found.", nameof(contentId));
+        var resourceContent = await dbContext.ResourceContents.AsTracking().SingleOrDefaultAsync(rc => rc.Id == contentId, ct) ??
+            throw new ArgumentException($"Content with ID {contentId} not found.", nameof(contentId));
 
         var isAquiferization = resourceContent.SourceLanguageId == resourceContent.LanguageId;
         if (assignedUserId is null || isAquiferization)
@@ -85,19 +85,23 @@ public static class Helpers
         if (isAquiferization && resourceContent.Status == ResourceContentStatus.New)
         {
             resourceContent.Status = ResourceContentStatus.AquiferizeAwaitingAiDraft;
-            await historyService.AddStatusHistoryAsync(newResourceContentVersion, ResourceContentStatus.AquiferizeAwaitingAiDraft, user.Id, ct);
+            await historyService.AddStatusHistoryAsync(
+                newResourceContentVersion,
+                ResourceContentStatus.AquiferizeAwaitingAiDraft,
+                user.Id,
+                ct);
 
             // a save has to happen here (even though the callers will also do their own saves)
             // to ensure data is in the right state for TranslationMessageSubscriber
             await dbContext.SaveChangesAsync(ct);
 
             await translationMessagePublisher.PublishTranslateResourceMessageAsync(
-                    new TranslateResourceMessage(
-                        contentId,
-                        user.Id,
-                        ShouldForceRetranslation: false,
-                        TranslationOrigin.CreateAquiferization),
-                    ct);
+                new TranslateResourceMessage(
+                    contentId,
+                    user.Id,
+                    false,
+                    TranslationOrigin.CreateAquiferization),
+                ct);
         }
         else
         {
@@ -107,7 +111,11 @@ public static class Helpers
                 resourceContent.Updated = DateTime.UtcNow;
             }
 
-            await historyService.AddStatusHistoryAsync(newResourceContentVersion, ResourceContentStatus.AquiferizeEditorReview, user.Id, ct);
+            await historyService.AddStatusHistoryAsync(
+                newResourceContentVersion,
+                ResourceContentStatus.AquiferizeEditorReview,
+                user.Id,
+                ct);
         }
     }
 

@@ -7,13 +7,13 @@ public class ProjectResourceStatusCounts
     internal static readonly List<ResourceContentStatus> InCompanyReviewStatuses =
     [
         ResourceContentStatus.AquiferizeCompanyReview,
-        ResourceContentStatus.TranslationCompanyReview
+        ResourceContentStatus.TranslationCompanyReview,
     ];
 
     internal static readonly List<ResourceContentStatus> EditorReviewStatuses =
     [
         ResourceContentStatus.AquiferizeEditorReview,
-        ResourceContentStatus.TranslationEditorReview
+        ResourceContentStatus.TranslationEditorReview,
     ];
 
     internal static readonly List<ResourceContentStatus> InPublisherReviewStatuses =
@@ -22,7 +22,7 @@ public class ProjectResourceStatusCounts
         ResourceContentStatus.AquiferizeReviewPending,
         ResourceContentStatus.TranslationPublisherReview,
         ResourceContentStatus.TranslationReviewPending,
-        ResourceContentStatus.TranslationNotApplicable
+        ResourceContentStatus.TranslationNotApplicable,
     ];
 
     internal static readonly List<ResourceContentStatus> NotStartedStatuses =
@@ -31,12 +31,12 @@ public class ProjectResourceStatusCounts
         ResourceContentStatus.TranslationAwaitingAiDraft,
         ResourceContentStatus.TranslationAiDraftComplete,
         ResourceContentStatus.AquiferizeAwaitingAiDraft,
-        ResourceContentStatus.AquiferizeAiDraftComplete
+        ResourceContentStatus.AquiferizeAiDraftComplete,
     ];
 
     internal static readonly List<ResourceContentStatus> CompletedStatuses =
     [
-        ResourceContentStatus.Complete, ResourceContentStatus.CompleteNotApplicable
+        ResourceContentStatus.Complete, ResourceContentStatus.CompleteNotApplicable,
     ];
 
     internal static readonly List<ResourceContentStatus> RemainingStatuses =
@@ -48,7 +48,7 @@ public class ProjectResourceStatusCounts
         ResourceContentStatus.AquiferizeEditorReview,
         ResourceContentStatus.TranslationEditorReview,
         ResourceContentStatus.AquiferizeCompanyReview,
-        ResourceContentStatus.TranslationCompanyReview
+        ResourceContentStatus.TranslationCompanyReview,
     ];
 
     public ProjectResourceStatusCounts() { }
@@ -62,6 +62,7 @@ public class ProjectResourceStatusCounts
         Completed = resourceData.Where(x => CompletedStatuses.Contains(x.Status)).Sum(x => x.WordCount ?? 0);
         Remaining = resourceData.Where(x => RemainingStatuses.Contains(x.Status)).Sum(x => x.WordCount ?? 0);
     }
+
     public int NotStarted { get; init; }
     public int EditorReview { get; init; }
     public int InCompanyReview { get; init; }

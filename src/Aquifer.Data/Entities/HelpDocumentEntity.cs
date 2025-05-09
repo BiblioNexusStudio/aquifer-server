@@ -8,7 +8,7 @@ public class HelpDocumentEntity
     public string Url { get; set; } = null!;
     public bool Enabled { get; set; }
     public string? ThumbnailUrl { get; set; }
-    
+
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
@@ -20,5 +20,5 @@ public enum HelpDocumentType
 {
     None = 0,
     Release = 1,
-    HowTo = 2
+    HowTo = 2,
 }

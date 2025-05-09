@@ -19,10 +19,10 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : EndpointWithoutReque
         {
             s.Summary = "Get a list of available resource types and collections.";
             s.Description = """
-                            Get a list of resource types that are available. Within each resource type will be a list of resource collections
-                            that belong to that resource type. For example, Dictionary is a resource type, and "Bible Dictionary (Tyndale)"
-                            is a collection of resources within that type. The resource type and collection code can be used in other queries.
-                            """;
+            Get a list of resource types that are available. Within each resource type will be a list of resource collections
+            that belong to that resource type. For example, Dictionary is a resource type, and "Bible Dictionary (Tyndale)"
+            is a collection of resources within that type. The resource type and collection code can be used in other queries.
+            """;
         });
     }
 
@@ -34,16 +34,19 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : EndpointWithoutReque
         List<Response> response = [];
         foreach (var type in resourceTypes)
         {
-            response.Add(new Response
-            {
-                Type = type.GetDisplayName(),
-                Collections = parentResources.Where(x => x.ResourceType == type).Select(x => new AvailableResourceCollection
+            response.Add(
+                new Response
                 {
-                    Code = x.Code,
-                    Title = x.DisplayName,
-                    LicenseInformation = JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(x.LicenseInfo),
-                }).ToList()
-            });
+                    Type = type.GetDisplayName(),
+                    Collections = parentResources.Where(x => x.ResourceType == type)
+                        .Select(x => new AvailableResourceCollection
+                        {
+                            Code = x.Code,
+                            Title = x.DisplayName,
+                            LicenseInformation = JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(x.LicenseInfo),
+                        })
+                        .ToList(),
+                });
         }
 
         await SendAsync([.. response.OrderBy(x => x.Type)], 200, ct);

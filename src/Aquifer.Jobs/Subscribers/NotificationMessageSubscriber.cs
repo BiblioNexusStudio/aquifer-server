@@ -22,7 +22,8 @@ public sealed class NotificationMessageSubscriber(
 
     [Function(SendProjectStartedNotificationMessageSubscriberFunctionName)]
     public async Task SendProjectStartedNotificationAsync(
-        [QueueTrigger(Queues.SendProjectStartedNotification)] QueueMessage queueMessage,
+        [QueueTrigger(Queues.SendProjectStartedNotification)]
+        QueueMessage queueMessage,
         CancellationToken ct)
     {
         await queueMessage.ProcessAsync<SendProjectStartedNotificationMessage, NotificationMessageSubscriber>(
@@ -42,24 +43,24 @@ public sealed class NotificationMessageSubscriber(
         if (companyLeadUser is { Enabled: true, AquiferNotificationsEnabled: true })
         {
             var templatedEmail = new SendTemplatedEmailMessage(
-                From: NotificationsHelper.NotificationSenderEmailAddress,
-                TemplateId: _configurationOptions.Value.Notifications.SendProjectStartedNotificationTemplateId,
-                Tos: [NotificationsHelper.GetEmailAddress(companyLeadUser)],
-                DynamicTemplateData: new Dictionary<string, object>
+                NotificationsHelper.NotificationSenderEmailAddress,
+                _configurationOptions.Value.Notifications.SendProjectStartedNotificationTemplateId,
+                [NotificationsHelper.GetEmailAddress(companyLeadUser)],
+                new Dictionary<string, object>
                 {
                     [EmailMessagePublisher.DynamicTemplateDataSubjectPropertyName] = "Aquifer Notifications: Project Started",
                     ["aquiferAdminBaseUri"] = _configurationOptions.Value.AquiferAdminBaseUri,
                     ["projectId"] = project.Id,
                     ["projectName"] = project.Name,
                 },
-                EmailSpecificDynamicTemplateDataByToEmailAddressMap: new Dictionary<string, Dictionary<string, object>>
+                new Dictionary<string, Dictionary<string, object>>
                 {
                     [companyLeadUser.Email] = new()
                     {
                         ["recipientName"] = NotificationsHelper.GetUserFullName(companyLeadUser),
                     },
                 },
-                ReplyTos: [NotificationsHelper.NotificationNoReplyEmailAddress]);
+                [NotificationsHelper.NotificationNoReplyEmailAddress]);
 
             await _emailMessagePublisher.PublishSendTemplatedEmailMessageAsync(templatedEmail, ct);
 

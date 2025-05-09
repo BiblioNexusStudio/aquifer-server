@@ -10,24 +10,24 @@ using Microsoft.Extensions.Options;
 namespace Aquifer.Public.API.IntegrationTests;
 
 /// <summary>
-///     This is a FastEndpoints <see cref="App" /> that sits on top of a <see cref="WebApplicationFactory{TEntryPoint}" />
-///     which allows for in-memory web requests to be sent and received without actual network traffic.
-///     Details:
-///     * https://fast-endpoints.com/docs/integration-unit-testing
-///     * https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests
+/// This is a FastEndpoints <see cref="App" /> that sits on top of a <see cref="WebApplicationFactory{TEntryPoint}" />
+/// which allows for in-memory web requests to be sent and received without actual network traffic.
+/// Details:
+/// * https://fast-endpoints.com/docs/integration-unit-testing
+/// * https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests
 /// </summary>
 public sealed class App : AppFixture<Program>
 {
     public HttpClient AnonymousClient { get; private set; } = null!;
 
     /// <summary>
-    ///     Only use this <see cref="IHost" />> for integration test specific configuration outside the internal API's config.
+    /// Only use this <see cref="IHost" />> for integration test specific configuration outside the internal API's config.
     /// </summary>
     private IHost Host { get; set; } = null!;
 
     /// <summary>
-    ///     The app is configured in <see cref="Program" /> before this method is called.
-    ///     Only use this method to override or extend existing host configuration.
+    /// The app is configured in <see cref="Program" /> before this method is called.
+    /// Only use this method to override or extend existing host configuration.
     /// </summary>
     protected override void ConfigureApp(IWebHostBuilder builder)
     {
@@ -40,8 +40,8 @@ public sealed class App : AppFixture<Program>
     }
 
     /// <summary>
-    ///     The service registrations in <see cref="Program" /> run before this method is called.
-    ///     Only use this method to add additional services or to override existing registrations from the API.
+    /// The service registrations in <see cref="Program" /> run before this method is called.
+    /// Only use this method to add additional services or to override existing registrations from the API.
     /// </summary>
     protected override void ConfigureServices(IServiceCollection services)
     {
@@ -50,9 +50,9 @@ public sealed class App : AppFixture<Program>
     }
 
     /// <summary>
-    ///     Configure Clients here.
-    ///     The default requires an API Key header value.
-    ///     This is sufficient for Public API tests and no actual web requests are sent via this fixture.
+    /// Configure Clients here.
+    /// The default requires an API Key header value.
+    /// This is sufficient for Public API tests and no actual web requests are sent via this fixture.
     /// </summary>
     protected override ValueTask SetupAsync()
     {
@@ -69,7 +69,7 @@ public sealed class App : AppFixture<Program>
     }
 
     /// <summary>
-    ///     Use this method to dispose of any <see cref="HttpClient" />s created in <see cref="SetupAsync" />.
+    /// Use this method to dispose of any <see cref="HttpClient" />s created in <see cref="SetupAsync" />.
     /// </summary>
     protected override ValueTask TearDownAsync()
     {

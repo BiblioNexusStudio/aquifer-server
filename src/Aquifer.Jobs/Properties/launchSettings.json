@@ -1,9 +1,9 @@
 {
-  "profiles": {
-    "Aquifer_Jobs": {
-      "commandName": "Project",
-      "commandLineArgs": "--port 7253",
-      "launchBrowser": false
+    "profiles": {
+        "Aquifer_Jobs": {
+            "commandName": "Project",
+            "commandLineArgs": "--port 7253",
+            "launchBrowser": false
+        }
     }
-  }
 }

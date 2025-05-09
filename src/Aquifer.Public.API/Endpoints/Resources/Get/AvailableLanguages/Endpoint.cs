@@ -21,7 +21,8 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, IR
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
     {
-        var foundContent = await dbContext.ResourceContentVersions.Where(x => x.ResourceContentId == req.ContentId && x.IsPublished)
+        var foundContent = await dbContext.ResourceContentVersions
+            .Where(x => x.ResourceContentId == req.ContentId && x.IsPublished)
             .Select(x => new ResourceContentQueryResponse(x.ResourceContent.ResourceId, x.ResourceContent.LanguageId))
             .FirstOrDefaultAsync(ct);
 
@@ -42,7 +43,7 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, IR
                 LanguageId = x.ResourceContent.LanguageId,
                 LanguageDisplayName = x.ResourceContent.Language.DisplayName,
                 LanguageCode = x.ResourceContent.Language.ISO6393Code,
-                LanguageEnglishDisplayName = x.ResourceContent.Language.EnglishDisplay
+                LanguageEnglishDisplayName = x.ResourceContent.Language.EnglishDisplay,
             })
             .ToListAsync(ct);
     }

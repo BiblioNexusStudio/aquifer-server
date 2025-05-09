@@ -33,8 +33,8 @@ public class Endpoint(IResourceContentSearchService _resourceContentSearchServic
                 HasUnresolvedCommentThreads = req.HasUnresolvedCommentThreads,
             },
             ResourceContentSearchSortOrder.ResourceContentId,
-            offset: 0,
-            limit: null,
+            0,
+            null,
             ct);
 
         var languageByIdMap = await _cachingLanguageService.GetLanguageByIdMapAsync(ct);

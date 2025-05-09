@@ -11,9 +11,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Aquifer.API.Endpoints.Resources.Content.Publish;
 
 public class Endpoint(
-    AquiferDbContext dbContext, 
-    IUserService userService, 
-    ITranslationMessagePublisher translationMessagePublisher, 
+    AquiferDbContext dbContext,
+    IUserService userService,
+    ITranslationMessagePublisher translationMessagePublisher,
     IResourceHistoryService historyService,
     IResourceContentVersionSimilarityMessagePublisher resourceContentVersionSimilarityMessagePublisher) : Endpoint<Request>
 {
@@ -61,7 +61,8 @@ public class Endpoint(
             var user = await userService.GetUserFromJwtAsync(ct);
             if (mostRecentContentVersion.AssignedUserId is not null)
             {
-                await historyService.AddSnapshotHistoryAsync(mostRecentContentVersion,
+                await historyService.AddSnapshotHistoryAsync(
+                    mostRecentContentVersion,
                     mostRecentContentVersion.AssignedUserId,
                     mostRecentContentVersion.ResourceContent.Status,
                     ct);
@@ -72,7 +73,8 @@ public class Endpoint(
             if (request.CreateDraft)
             {
                 // create draft of published version
-                await Helpers.CreateNewDraftAsync(dbContext,
+                await Helpers.CreateNewDraftAsync(
+                    dbContext,
                     translationMessagePublisher,
                     contentId,
                     request.AssignedUserId,
@@ -86,9 +88,9 @@ public class Endpoint(
             else
             {
                 var resourceContent = await dbContext.ResourceContents
-                    .AsTracking()
-                    .FirstOrDefaultAsync(x => x.Id == contentId, ct)
-                    ?? throw new ArgumentNullException();
+                        .AsTracking()
+                        .FirstOrDefaultAsync(x => x.Id == contentId, ct) ??
+                    throw new ArgumentNullException();
                 resourceContent.Status = ResourceContentStatus.Complete;
 
                 await historyService.AddStatusHistoryAsync(mostRecentContentVersion, ResourceContentStatus.Complete, user.Id, ct);
@@ -106,9 +108,9 @@ public class Endpoint(
         foreach (var similarityScoreMessage in similarityScoreMessages)
         {
             await resourceContentVersionSimilarityMessagePublisher
-                    .PublishScoreResourceContentVersionSimilarityMessageAsync(similarityScoreMessage, CancellationToken.None);
+                .PublishScoreResourceContentVersionSimilarityMessageAsync(similarityScoreMessage, CancellationToken.None);
         }
-        
+
         await SendNoContentAsync(ct);
     }
 }

@@ -75,27 +75,28 @@ public class Endpoint(
                 },
                 HelpDocument = null,
                 IsRead = readNotificationEntityIdsByNotificationKindMap.GetValueOrDefault(NotificationKind.Comment)
-                    ?.Contains(c.CommentId)
-                         ?? false,
+                        ?.Contains(c.CommentId) ??
+                    false,
             })
-            .Concat(helpDocumentNotificationData
-                .Select(h => new Response
-                {
-                    Kind = NotificationKind.HelpDocument,
-                    Comment = null,
-                    HelpDocument = new HelpDocumentNotification
+            .Concat(
+                helpDocumentNotificationData
+                    .Select(h => new Response
                     {
-                        Id = h.Id,
-                        Created = h.Created,
-                        Title = h.Title,
-                        Type = h.Type,
-                        Url = h.Url,
-                        ThumbnailUrl = h.ThumbnailUrl,
-                    },
-                    IsRead = readNotificationEntityIdsByNotificationKindMap.GetValueOrDefault(NotificationKind.HelpDocument)
-                        ?.Contains(h.Id)
-                            ?? false,
-                }))
+                        Kind = NotificationKind.HelpDocument,
+                        Comment = null,
+                        HelpDocument = new HelpDocumentNotification
+                        {
+                            Id = h.Id,
+                            Created = h.Created,
+                            Title = h.Title,
+                            Type = h.Type,
+                            Url = h.Url,
+                            ThumbnailUrl = h.ThumbnailUrl,
+                        },
+                        IsRead = readNotificationEntityIdsByNotificationKindMap.GetValueOrDefault(NotificationKind.HelpDocument)
+                                ?.Contains(h.Id) ??
+                            false,
+                    }))
             .Where(x => !req.IsRead.HasValue || x.IsRead == req.IsRead.Value)
             .OrderByDescending(n => n.Comment?.Created ?? n.HelpDocument!.Created)
             .Skip(req.Offset)
@@ -108,16 +109,10 @@ public class Endpoint(
     private static int[]? GetNotifyUserIdsOnCommunityReviewerComment(NotificationOptions notificationOptions)
     {
         var userIds = notificationOptions.NotifyUserIdsOnCommunityReviewerComment;
-        return !string.IsNullOrEmpty(userIds) ? Array.ConvertAll(userIds.Split(",").Where(s => !string.IsNullOrEmpty(s)).ToArray(), int.Parse) : null;
+        return !string.IsNullOrEmpty(userIds)
+            ? Array.ConvertAll(userIds.Split(",").Where(s => !string.IsNullOrEmpty(s)).ToArray(), int.Parse)
+            : null;
     }
-
-    private sealed record HelpDocumentNotificationData(
-        int Id,
-        HelpDocumentType Type,
-        DateTime Created,
-        string Title,
-        string Url,
-        string? ThumbnailUrl);
 
     private static async Task<IReadOnlyList<HelpDocumentNotificationData>> GetHelpDocumentNotificationDataAsync(
         DbConnection dbConnection,
@@ -147,6 +142,125 @@ public class Endpoint(
             .ToList();
     }
 
+    private static async Task<IReadOnlyList<ResourceCommentNotificationData>> GetResourceCommentNotificationDataAsync(
+        DbConnection dbConnection,
+        int userId,
+        DateTime minimumCommentCreatedDate,
+        NotificationOptions notificationOptions,
+        CancellationToken ct)
+    {
+        var communityReviewerCommentNotificationUserIds = GetNotifyUserIdsOnCommunityReviewerComment(notificationOptions);
+        var isContainingCommunityReviewerComments = communityReviewerCommentNotificationUserIds is not null &&
+            communityReviewerCommentNotificationUserIds.Contains(userId);
+        var communityReviewerCommentsSubquery = $"""
+            OR EXISTS (
+                SELECT NULL
+                FROM CommentThreads ct2
+                JOIN Comments c2 ON c2.ThreadId = ct2.Id
+                WHERE  
+                    c2.UserId IN (
+                        SELECT Id FROM Users WHERE Role = {(int)UserRole.CommunityReviewer}
+                    ) AND
+                    c.ThreadId = ct2.Id
+            )
+            """;
+
+        // Get comments for the current user where:
+        // 1. The user was assigned to the resource content on which the comment was made at the time the comment was made.
+        // 2. The user previously created an older comment in the same thread as the comment.
+        // 3. The user was at-mentioned on the comment.
+        // 4. The user is in the list of users to notify when community reviewers create a comment and the comment is by a community reviewer.
+        // The user who created the comment should not get a notification.
+        var query = $"""
+            SELECT
+                c.Id AS CommentId,
+                c.Comment,
+                c.Created,
+                c.UserId,
+                u.FirstName AS UserFirstName,
+                u.LastName AS UserLastName,
+                rc.Id AS ResourceContentId,
+                r.EnglishLabel AS ResourceEnglishLabel,
+                pr.DisplayName AS ParentResourceDisplayName
+            FROM Comments c
+                JOIN Users u ON u.Id = c.UserId
+                JOIN CommentThreads ct ON ct.Id = c.ThreadId
+                JOIN ResourceContentVersionCommentThreads rcvct ON rcvct.CommentThreadId = ct.Id
+                JOIN ResourceContentVersions rcv ON rcv.Id = rcvct.ResourceContentVersionId
+                JOIN ResourceContents rc ON rc.Id = rcv.ResourceContentId
+                JOIN Resources r ON r.Id = rc.ResourceId
+                JOIN ParentResources pr ON pr.Id = r.ParentResourceId
+            WHERE
+                (
+                    EXISTS
+                    (
+                        SELECT NULL
+                        FROM
+                        (
+                            SELECT rcvauh.AssignedUserId,
+                            ROW_NUMBER() OVER
+                            (
+                                PARTITION BY rcvauh.ResourceContentVersionId
+                                ORDER BY rcvauh.Created DESC
+                            ) AS Rank
+                            FROM ResourceContentVersionAssignedUserHistory rcvauh
+                            WHERE
+                                rcvauh.ResourceContentVersionId = rcv.Id AND
+                                rcvauh.Created < c.Created
+                        ) mostRecentHistory
+                        WHERE
+                            mostRecentHistory.Rank = 1 AND
+                            mostRecentHistory.AssignedUserId = @userId
+                    ) {(isContainingCommunityReviewerComments ? communityReviewerCommentsSubquery : "")}
+                     OR 
+                    EXISTS
+                    (
+                        SELECT NULL
+                        FROM CommentThreads ct2
+                        JOIN Comments c2 ON c2.ThreadId = ct2.Id
+                        WHERE
+                            c.ThreadId = ct2.Id AND
+                            c2.UserId = @userId AND
+                            c.Created > c2.Created
+                    ) OR
+                    EXISTS
+                    (
+                        SELECT NULL
+                        FROM CommentMentions cm
+                        WHERE
+                            cm.CommentId = c.Id AND
+                            cm.UserId <> c.UserId AND
+                            cm.UserId = @userId
+                    )
+                ) AND
+                c.UserId <> @userId AND
+                rcv.IsDraft = 1 AND
+                c.Created > @minimumCommentCreatedDate AND
+                ct.Resolved = 0
+            ORDER BY
+                c.Created DESC,
+                c.Id DESC
+            """;
+
+        return (await dbConnection.QueryWithRetriesAsync<ResourceCommentNotificationData>(
+                query,
+                new
+                {
+                    userId,
+                    minimumCommentCreatedDate,
+                },
+                cancellationToken: ct))
+            .ToList();
+    }
+
+    private sealed record HelpDocumentNotificationData(
+        int Id,
+        HelpDocumentType Type,
+        DateTime Created,
+        string Title,
+        string Url,
+        string? ThumbnailUrl);
+
     private sealed record ResourceCommentNotificationData(
         int CommentId,
         string Comment,
@@ -157,110 +271,4 @@ public class Endpoint(
         int ResourceContentId,
         string ResourceEnglishLabel,
         string ParentResourceDisplayName);
-
-    private static async Task<IReadOnlyList<ResourceCommentNotificationData>> GetResourceCommentNotificationDataAsync(
-        DbConnection dbConnection,
-        int userId,
-        DateTime minimumCommentCreatedDate,
-        NotificationOptions notificationOptions,
-        CancellationToken ct)
-    {
-        var communityReviewerCommentNotificationUserIds = GetNotifyUserIdsOnCommunityReviewerComment(notificationOptions);
-        var isContainingCommunityReviewerComments = communityReviewerCommentNotificationUserIds is not null && communityReviewerCommentNotificationUserIds.Contains(userId);
-        var communityReviewerCommentsSubquery = $"""
-                                                 OR EXISTS (
-                                                     SELECT NULL
-                                                     FROM CommentThreads ct2
-                                                     JOIN Comments c2 ON c2.ThreadId = ct2.Id
-                                                     WHERE  
-                                                         c2.UserId IN (
-                                                             SELECT Id FROM Users WHERE Role = {(int)UserRole.CommunityReviewer}
-                                                         ) AND
-                                                         c.ThreadId = ct2.Id
-                                                 )
-                                                 """;
-
-        // Get comments for the current user where:
-        // 1. The user was assigned to the resource content on which the comment was made at the time the comment was made.
-        // 2. The user previously created an older comment in the same thread as the comment.
-        // 3. The user was at-mentioned on the comment.
-        // 4. The user is in the list of users to notify when community reviewers create a comment and the comment is by a community reviewer.
-        // The user who created the comment should not get a notification.
-        var query = $"""
-                     SELECT
-                         c.Id AS CommentId,
-                         c.Comment,
-                         c.Created,
-                         c.UserId,
-                         u.FirstName AS UserFirstName,
-                         u.LastName AS UserLastName,
-                         rc.Id AS ResourceContentId,
-                         r.EnglishLabel AS ResourceEnglishLabel,
-                         pr.DisplayName AS ParentResourceDisplayName
-                     FROM Comments c
-                         JOIN Users u ON u.Id = c.UserId
-                         JOIN CommentThreads ct ON ct.Id = c.ThreadId
-                         JOIN ResourceContentVersionCommentThreads rcvct ON rcvct.CommentThreadId = ct.Id
-                         JOIN ResourceContentVersions rcv ON rcv.Id = rcvct.ResourceContentVersionId
-                         JOIN ResourceContents rc ON rc.Id = rcv.ResourceContentId
-                         JOIN Resources r ON r.Id = rc.ResourceId
-                         JOIN ParentResources pr ON pr.Id = r.ParentResourceId
-                     WHERE
-                         (
-                             EXISTS
-                             (
-                                 SELECT NULL
-                                 FROM
-                                 (
-                                     SELECT rcvauh.AssignedUserId,
-                                     ROW_NUMBER() OVER
-                                     (
-                                         PARTITION BY rcvauh.ResourceContentVersionId
-                                         ORDER BY rcvauh.Created DESC
-                                     ) AS Rank
-                                     FROM ResourceContentVersionAssignedUserHistory rcvauh
-                                     WHERE
-                                         rcvauh.ResourceContentVersionId = rcv.Id AND
-                                         rcvauh.Created < c.Created
-                                 ) mostRecentHistory
-                                 WHERE
-                                     mostRecentHistory.Rank = 1 AND
-                                     mostRecentHistory.AssignedUserId = @userId
-                             ) {(isContainingCommunityReviewerComments ? communityReviewerCommentsSubquery : "")}
-                              OR 
-                             EXISTS
-                             (
-                                 SELECT NULL
-                                 FROM CommentThreads ct2
-                                 JOIN Comments c2 ON c2.ThreadId = ct2.Id
-                                 WHERE
-                                     c.ThreadId = ct2.Id AND
-                                     c2.UserId = @userId AND
-                                     c.Created > c2.Created
-                             ) OR
-                             EXISTS
-                             (
-                                 SELECT NULL
-                                 FROM CommentMentions cm
-                                 WHERE
-                                     cm.CommentId = c.Id AND
-                                     cm.UserId <> c.UserId AND
-                                     cm.UserId = @userId
-                             )
-                         ) AND
-                         c.UserId <> @userId AND
-                         rcv.IsDraft = 1 AND
-                         c.Created > @minimumCommentCreatedDate AND
-                         ct.Resolved = 0
-                     ORDER BY
-                         c.Created DESC,
-                         c.Id DESC
-                     """;
-
-        return (await dbConnection.QueryWithRetriesAsync<ResourceCommentNotificationData>(
-                query,
-                new { userId, minimumCommentCreatedDate },
-                cancellationToken: ct))
-            .ToList();
-    }
 }

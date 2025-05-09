@@ -3,7 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
 
-[Index(nameof(BibleId),
+[Index(
+    nameof(BibleId),
     nameof(WordIdentifier),
     IsUnique = true)]
 public class BibleVersionWordEntity : IHasUpdatedTimestamp
@@ -17,10 +18,10 @@ public class BibleVersionWordEntity : IHasUpdatedTimestamp
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
-    [SqlDefaultValue("getutcdate()")]
-    public DateTime Updated { get; set; } = DateTime.UtcNow;
-
     public BibleEntity Bible { get; set; } = null!;
 
     public ICollection<BibleVersionWordGroupWordEntity> BibleVersionWordGroupWords { get; set; } = [];
+
+    [SqlDefaultValue("getutcdate()")]
+    public DateTime Updated { get; set; } = DateTime.UtcNow;
 }

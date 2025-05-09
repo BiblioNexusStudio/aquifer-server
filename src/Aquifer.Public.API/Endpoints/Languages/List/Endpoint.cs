@@ -28,7 +28,7 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : EndpointWithoutReque
                 Code = x.ISO6393Code,
                 EnglishDisplay = x.EnglishDisplay,
                 LocalizedDisplay = x.DisplayName,
-                ScriptDirection = x.ScriptDirection.ToString()
+                ScriptDirection = x.ScriptDirection.ToString(),
             })
             .ToListAsync(ct);
 

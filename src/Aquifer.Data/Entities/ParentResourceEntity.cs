@@ -35,7 +35,7 @@ public enum ResourceTypeComplexityLevel
 {
     None = 0,
     Basic = 1,
-    Advanced = 2
+    Advanced = 2,
 }
 
 public enum ResourceType
@@ -55,5 +55,5 @@ public enum ResourceType
     Images = 4,
 
     [Display(Name = "Videos")]
-    Videos = 5
+    Videos = 5,
 }

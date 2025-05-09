@@ -26,7 +26,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 BookCode = BibleBookCodeUtilities.CodeFromId(bbc.BookId),
                 ChapterCount = bbc.ChapterCount,
                 DisplayName = bbc.DisplayName,
-                TextSize = bbc.TextSize
+                TextSize = bbc.TextSize,
             })
             .SingleOrDefaultAsync(ct);
 

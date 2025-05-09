@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Aquifer.Data.Entities;
 
-[EntityTypeConfiguration(typeof(ResourceContentEntityConfiguration)),
- Index(nameof(ResourceId), nameof(LanguageId), nameof(MediaType), IsUnique = true)]
+[EntityTypeConfiguration(typeof(ResourceContentEntityConfiguration))]
+[Index(nameof(ResourceId), nameof(LanguageId), nameof(MediaType), IsUnique = true)]
 public class ResourceContentEntity : IHasUpdatedTimestamp
 {
     public int Id { get; set; }
@@ -50,31 +50,28 @@ public class ResourceContentEntityConfiguration : IEntityTypeConfiguration<Resou
 {
     public void Configure(EntityTypeBuilder<ResourceContentEntity> builder)
     {
-        builder.HasIndex(
-                e => new
-                {
-                    e.LanguageId,
-                    e.MediaType,
-                    e.Status
-                })
-            .IncludeProperties(
-                e => new
-                {
-                    e.SourceLanguageId,
-                    e.Created,
-                    e.ResourceId,
-                    e.Updated,
-                    e.ContentUpdated
-                });
+        builder.HasIndex(e => new
+            {
+                e.LanguageId,
+                e.MediaType,
+                e.Status,
+            })
+            .IncludeProperties(e => new
+            {
+                e.SourceLanguageId,
+                e.Created,
+                e.ResourceId,
+                e.Updated,
+                e.ContentUpdated,
+            });
 
         builder.HasIndex(e => new { e.Status })
-        .IncludeProperties(
-            e => new
+            .IncludeProperties(e => new
             {
                 e.ContentUpdated,
                 e.SourceLanguageId,
                 e.LanguageId,
-                e.ResourceId
+                e.ResourceId,
             });
 
         // This necessary in order to prevent cascading delete cycles.
@@ -97,7 +94,7 @@ public enum ResourceContentMediaType
     Text = 1,
     Audio = 2,
     Video = 3,
-    Image = 4
+    Image = 4,
 }
 
 public enum ResourceContentStatus
@@ -153,5 +150,5 @@ public enum ResourceContentStatus
     AquiferizeAwaitingAiDraft = 16,
 
     [Display(Name = "Aquiferize - AI Draft Complete")]
-    AquiferizeAiDraftComplete = 17
+    AquiferizeAiDraftComplete = 17,
 }

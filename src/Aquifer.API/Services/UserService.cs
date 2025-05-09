@@ -30,7 +30,8 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
 
     public async Task<UserEntity> GetUserWithCompanyUsersFromJwtAsync(CancellationToken cancellationToken)
     {
-        return await dbContext.Users.AsTracking()
+        return await dbContext.Users
+            .AsTracking()
             .Include(x => x.Company)
             .ThenInclude(x => x.Users)
             .Include(x => x.Company)
@@ -59,25 +60,27 @@ public class UserService(AquiferDbContext dbContext, IHttpContextAccessor httpCo
     public bool HasPermission(string permission)
     {
         return httpContextAccessor.HttpContext?.User.HasClaim(c => c.Type == Permissions.PermissionsClaim && c.Value == permission) ??
-               false;
+            false;
     }
 
     public async Task<bool> ValidateNonNullUserIdAsync(int? userId, CancellationToken cancellationToken)
     {
         return userId is null ||
-               await dbContext.Users.AsTracking().SingleOrDefaultAsync(u => u.Id == userId && u.Enabled, cancellationToken) is not null;
+            await dbContext.Users.AsTracking().SingleOrDefaultAsync(u => u.Id == userId && u.Enabled, cancellationToken) is not null;
     }
 
     public async Task<UserEntity> GetUserWithCompanyFromJwtAsync(CancellationToken cancellationToken)
     {
-        return await dbContext.Users.AsTracking()
+        return await dbContext.Users
+            .AsTracking()
             .Include(x => x.Company)
             .SingleAsync(u => u.ProviderId == ProviderId && u.Enabled, cancellationToken);
     }
 
     public async Task<UserEntity> GetUserWithCompanyLanguagesFromJwtAsync(CancellationToken cancellationToken)
     {
-        return await dbContext.Users.AsTracking()
+        return await dbContext.Users
+            .AsTracking()
             .Include(x => x.Company)
             .ThenInclude(x => x.CompanyLanguages)
             .SingleAsync(u => u.ProviderId == ProviderId && u.Enabled, cancellationToken);

@@ -22,5 +22,5 @@ public class EmailTemplateEntity
 
 public enum EmailTemplateType
 {
-    MarketingNewContentNotification = 1
+    MarketingNewContentNotification = 1,
 }

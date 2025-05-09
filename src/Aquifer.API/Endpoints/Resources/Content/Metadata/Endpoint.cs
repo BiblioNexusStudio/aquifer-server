@@ -10,19 +10,19 @@ namespace Aquifer.API.Endpoints.Resources.Content.Metadata;
 public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
 {
     private const string AssociatedResourceQuery = """
-                                                      SELECT
-                                                          r.ExternalId,
-                                                          r.Id AS ResourceId,
-                                                          rc.Id AS ContentId,
-                                                          rc.MediaType
-                                                      FROM
-                                                          AssociatedResources ar
-                                                          INNER JOIN Resources r ON r.Id = ar.AssociatedResourceId
-                                                          INNER JOIN ResourceContents rc ON rc.ResourceId = ar.AssociatedResourceId AND rc.LanguageId = {0}
-                                                          INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = rc.Id AND rcv.IsPublished = 1
-                                                      WHERE
-                                                          ar.ResourceId = {1}
-                                                   """;
+           SELECT
+               r.ExternalId,
+               r.Id AS ResourceId,
+               rc.Id AS ContentId,
+               rc.MediaType
+           FROM
+               AssociatedResources ar
+               INNER JOIN Resources r ON r.Id = ar.AssociatedResourceId
+               INNER JOIN ResourceContents rc ON rc.ResourceId = ar.AssociatedResourceId AND rc.LanguageId = {0}
+               INNER JOIN ResourceContentVersions rcv ON rcv.ResourceContentId = rc.Id AND rcv.IsPublished = 1
+           WHERE
+               ar.ResourceId = {1}
+        """;
 
     public override void Configure()
     {
@@ -45,7 +45,9 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         }
 
         var associatedResources = await dbContext.Database
-            .SqlQueryRaw<AssociatedResourceResponse>(AssociatedResourceQuery, contentVersion.ResourceContent.LanguageId,
+            .SqlQueryRaw<AssociatedResourceResponse>(
+                AssociatedResourceQuery,
+                contentVersion.ResourceContent.LanguageId,
                 contentVersion.ResourceContent.ResourceId)
             .ToListAsync(ct);
 
@@ -57,7 +59,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
             Metadata = contentVersion.ResourceContent.MediaType == ResourceContentMediaType.Text
                 ? null
                 : JsonUtilities.DefaultDeserialize(contentVersion.Content),
-            AssociatedResources = associatedResources
+            AssociatedResources = associatedResources,
         };
 
         await SendOkAsync(response, ct);

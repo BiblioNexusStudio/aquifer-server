@@ -18,7 +18,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
-        var bibles = await dbContext.Bibles.Where(b => b.Enabled && b.RestrictedLicense == request.RestrictedLicense)
+        var bibles = await dbContext.Bibles
+            .Where(b => b.Enabled && b.RestrictedLicense == request.RestrictedLicense)
             .Select(bible => new Response
             {
                 Name = bible.Name,
@@ -28,7 +29,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                 LanguageId = bible.LanguageId,
                 IsLanguageDefault = bible.LanguageDefault,
                 RestrictedLicense = bible.RestrictedLicense,
-                GreekAlignment = bible.GreekAlignment
+                GreekAlignment = bible.GreekAlignment,
             })
             .ToListAsync(ct);
 

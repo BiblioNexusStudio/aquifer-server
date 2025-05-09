@@ -10,7 +10,8 @@ public class Validator : Validator<Request>
         RuleFor(x => x.ParentResourceId).GreaterThan(0);
 
         RuleFor(x => x.BookCode)
-            .NotEmpty().When(x => x.StartChapter.HasValue && x.EndChapter.HasValue)
+            .NotEmpty()
+            .When(x => x.StartChapter.HasValue && x.EndChapter.HasValue)
             .WithMessage("BookCode must be specified if StartChapter and EndChapter are specified.");
 
         RuleFor(x => x.StartChapter).GreaterThan(0);
@@ -27,7 +28,8 @@ public class Validator : Validator<Request>
             .WithMessage("Both StartChapter and EndChapter must be specified together.");
 
         RuleFor(x => x.SearchQuery)
-            .NotEmpty().When(x => x.SearchQuery != null)
+            .NotEmpty()
+            .When(x => x.SearchQuery != null)
             .WithMessage("SearchQuery must be non-empty if specified.");
 
         RuleFor(x => x)

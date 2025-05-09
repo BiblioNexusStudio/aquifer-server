@@ -69,7 +69,7 @@ public class Endpoint(AquiferDbContext _dbContext, IAuth0Service _authService, I
         var auth0Roles = await _authService.GetUsersRolesAsync(accessToken, user.ProviderId, ct);
         foreach (var auth0Role in auth0Roles)
         {
-            if (!Enum.TryParse(auth0Role.Name, ignoreCase: true, out UserRole _))
+            if (!Enum.TryParse(auth0Role.Name, true, out UserRole _))
             {
                 ThrowError(
                     x => x.UserId,
@@ -87,7 +87,11 @@ public class Endpoint(AquiferDbContext _dbContext, IAuth0Service _authService, I
         await _authService.RemoveRolesFromUserAsync(accessToken, user.ProviderId, auth0Roles.Select(r => r.Id).ToList(), ct);
 
         // update the user's role
-        _logger.LogInformation("Adding role {roleId} ({roleName}) to user {userId}.", desiredAuth0RoleId, requestedRole.ToString(), user.Id);
+        _logger.LogInformation(
+            "Adding role {roleId} ({roleName}) to user {userId}.",
+            desiredAuth0RoleId,
+            requestedRole.ToString(),
+            user.Id);
         await _authService.AssignRoleToUserAsync(accessToken, user.ProviderId, desiredAuth0RoleId, CancellationToken.None);
         user.Role = requestedRole;
         await _dbContext.SaveChangesAsync(CancellationToken.None);

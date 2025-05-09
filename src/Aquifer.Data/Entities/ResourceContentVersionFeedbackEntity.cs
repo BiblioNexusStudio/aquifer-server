@@ -23,5 +23,5 @@ public enum FeedbackContactType
     Phone = 2,
     WhatsApp = 3,
     Signal = 4,
-    Other = 5
+    Other = 5,
 }

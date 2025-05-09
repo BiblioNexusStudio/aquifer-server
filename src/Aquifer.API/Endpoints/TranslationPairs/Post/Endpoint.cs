@@ -41,7 +41,7 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         {
             LanguageId = request.LanguageId,
             Key = request.Key,
-            Value = request.Value
+            Value = request.Value,
         };
 
         await dbContext.TranslationPairs.AddAsync(translationPair, ct);

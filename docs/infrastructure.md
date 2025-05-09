@@ -10,6 +10,7 @@ authenticating with an external service requires some extra configuration
 steps. After creating the database, you'll need to go in as the user who is
 assigned as AD Admin, and run this statement for each user that needs access
 (replacing `<user-here>` with the full username of the person (or bot):
+
 ```
 CREATE USER [<user-here>] FROM EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
 GO

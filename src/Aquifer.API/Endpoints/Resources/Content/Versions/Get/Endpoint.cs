@@ -30,7 +30,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
                 Created = version.Created,
                 IsPublished = version.IsPublished,
                 Version = version.Version,
-                ContentValue = version.Content
-            }, ct);
+                ContentValue = version.Content,
+            },
+            ct);
     }
 }

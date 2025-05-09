@@ -36,17 +36,19 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 {
     public const string AzureCdnStorageAccountServiceKey = nameof(AzureCdnStorageAccountServiceKey);
 
-    private readonly CdnOptions _cdnOptions;
-    private readonly UploadOptions _uploadOptions;
-    private readonly AquiferDbContext _dbContext;
-    private readonly IBlobStorageService _blobStorageService;
-    private readonly IBlobStorageService _cdnBlobStorageService;
-    private readonly IResourceHistoryService _resourceHistoryService;
-    private readonly ILogger<UploadResourceContentAudioMessageSubscriber> _logger;
-    private readonly string _ffmpegFilePath;
-
     private const string FiaLegacyCode = "CBBTER";
     private const string FiaCode = "FIA";
+
+    private const string UploadResourceContentAudioMessageSubscriberName = "UploadResourceContentAudioMessageSubscriber";
+    private readonly IBlobStorageService _blobStorageService;
+    private readonly IBlobStorageService _cdnBlobStorageService;
+
+    private readonly CdnOptions _cdnOptions;
+    private readonly AquiferDbContext _dbContext;
+    private readonly string _ffmpegFilePath;
+    private readonly ILogger<UploadResourceContentAudioMessageSubscriber> _logger;
+    private readonly IResourceHistoryService _resourceHistoryService;
+    private readonly UploadOptions _uploadOptions;
 
     public UploadResourceContentAudioMessageSubscriber(
         FfmpegOptions ffmpegOptions,
@@ -54,7 +56,8 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         UploadOptions uploadOptions,
         AquiferDbContext dbContext,
         IBlobStorageService blobStorageService,
-        [FromKeyedServices(AzureCdnStorageAccountServiceKey)] IBlobStorageService cdnBlobStorageService,
+        [FromKeyedServices(AzureCdnStorageAccountServiceKey)]
+        IBlobStorageService cdnBlobStorageService,
         IResourceHistoryService resourceHistoryService,
         ILogger<UploadResourceContentAudioMessageSubscriber> logger)
     {
@@ -74,11 +77,10 @@ public sealed class UploadResourceContentAudioMessageSubscriber
             : ffmpegOptions.FfmpegFilePath;
     }
 
-    private const string UploadResourceContentAudioMessageSubscriberName = "UploadResourceContentAudioMessageSubscriber";
-
     [Function(UploadResourceContentAudioMessageSubscriberName)]
     public async Task UploadResourceContentAudioAsync(
-        [QueueTrigger(Queues.UploadResourceContentAudio)] QueueMessage queueMessage,
+        [QueueTrigger(Queues.UploadResourceContentAudio)]
+        QueueMessage queueMessage,
         CancellationToken ct)
     {
         await queueMessage.ProcessAsync<UploadResourceContentAudioMessage, UploadResourceContentAudioMessageSubscriber>(
@@ -93,17 +95,17 @@ public sealed class UploadResourceContentAudioMessageSubscriber
         _logger.LogInformation("Beginning processing of {Message}.", message);
 
         var resourceContent = await _dbContext.ResourceContents
-            .AsTracking()
-            .Include(rc => rc.Language)
-            .Include(rc => rc.Resource)
-            .ThenInclude(r => r.ParentResource)
-            .FirstOrDefaultAsync(rc => rc.Id == message.ResourceContentId, ct)
-                ?? throw new InvalidOperationException($"ResourceContent with ID {message.ResourceContentId} not found.");
+                .AsTracking()
+                .Include(rc => rc.Language)
+                .Include(rc => rc.Resource)
+                .ThenInclude(r => r.ParentResource)
+                .FirstOrDefaultAsync(rc => rc.Id == message.ResourceContentId, ct) ??
+            throw new InvalidOperationException($"ResourceContent with ID {message.ResourceContentId} not found.");
 
         var upload = await _dbContext.Uploads
-            .AsTracking()
-            .FirstOrDefaultAsync(u => u.Id == message.UploadId, ct)
-                ?? throw new InvalidOperationException($"Upload with ID {message.UploadId} not found.");
+                .AsTracking()
+                .FirstOrDefaultAsync(u => u.Id == message.UploadId, ct) ??
+            throw new InvalidOperationException($"Upload with ID {message.UploadId} not found.");
 
         if (upload.Status == UploadStatus.Completed)
         {
@@ -178,7 +180,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
                         (string.Format(cdnBlobFormatString, "mp3"), mp3FilePath),
                         (string.Format(cdnBlobFormatString, "webm"), webmFilePath),
                     ],
-                    overwrite: true, // overwrite existing files in case this job has to be replayed
+                    true, // overwrite existing files in case this job has to be replayed
                     ct);
             }
             finally
@@ -302,7 +304,11 @@ public sealed class UploadResourceContentAudioMessageSubscriber
             catch (Exception ex)
             {
                 // don't allow a failure in this catch block to prevent the original exception from being thrown
-                _logger.LogError(ex, "Error during processing of {Message} when attempting to mark upload as \"{Status}\". This error will be gracefully ignored and the upload will remain in its previous status.", message, failedStatus);
+                _logger.LogError(
+                    ex,
+                    "Error during processing of {Message} when attempting to mark upload as \"{Status}\". This error will be gracefully ignored and the upload will remain in its previous status.",
+                    message,
+                    failedStatus);
             }
 
             throw;
@@ -327,7 +333,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
     private static string GetBlobifiedResourceName(string resourceEnglishLabel)
     {
         // attempt to get the verse reference from English labels like "Fia Luke 1:1-4"
-        (BookId BookId, int ChapterNumber, int VerseNumber)? bibleReference = null;
+        (Data.Enums.BookId BookId, int ChapterNumber, int VerseNumber)? bibleReference = null;
         var possibleBibleReferenceStrings = resourceEnglishLabel.Split(' ').TakeLast(2).ToList();
         if (possibleBibleReferenceStrings.Count == 2)
         {
@@ -347,7 +353,7 @@ public sealed class UploadResourceContentAudioMessageSubscriber
 
         // get a name like "043_LUK_001_001" or "angel-of-the-lord"
         var blobifiedResourceName = bibleReference.HasValue
-            ? $"{(int) bibleReference.Value.BookId:D3}_{BibleBookCodeUtilities.CodeFromId(bibleReference.Value.BookId)}_{bibleReference.Value.ChapterNumber:D3}_{bibleReference.Value.VerseNumber:D3}"
+            ? $"{(int)bibleReference.Value.BookId:D3}_{BibleBookCodeUtilities.CodeFromId(bibleReference.Value.BookId)}_{bibleReference.Value.ChapterNumber:D3}_{bibleReference.Value.VerseNumber:D3}"
             : resourceEnglishLabel.ToKebabCase();
 
         return blobifiedResourceName;
@@ -374,7 +380,9 @@ public sealed class UploadResourceContentAudioMessageSubscriber
     private async Task NormalizeAudioFileAsync(string inputFilePath, string outputFilePath, CancellationToken ct)
     {
         // Trim leading/trailing silence and apply speech normalization.
-        await RunFfmpegAsync($"-y -i \"{inputFilePath}\" -af \"speechnorm=e=3:r=0.00001:l=1,areverse,atrim=start=0.2,silenceremove=start_periods=0.75:start_silence=0.75:start_threshold=0.03,areverse,atrim=start=0.2,silenceremove=start_periods=1:start_silence=0.75:start_threshold=0.05\" \"{outputFilePath}\"", ct);
+        await RunFfmpegAsync(
+            $"-y -i \"{inputFilePath}\" -af \"speechnorm=e=3:r=0.00001:l=1,areverse,atrim=start=0.2,silenceremove=start_periods=0.75:start_silence=0.75:start_threshold=0.03,areverse,atrim=start=0.2,silenceremove=start_periods=1:start_silence=0.75:start_threshold=0.05\" \"{outputFilePath}\"",
+            ct);
     }
 
     private async Task<string> CompressToMp3Async(string inputFilePath, CancellationToken ct)

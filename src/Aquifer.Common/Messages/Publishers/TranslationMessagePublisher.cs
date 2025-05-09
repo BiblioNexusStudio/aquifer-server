@@ -24,7 +24,7 @@ public sealed class TranslationMessagePublisher(IQueueClientFactory _queueClient
         CancellationToken cancellationToken)
     {
         var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.TranslateLanguageResources, cancellationToken);
-        await queueClient.SendMessageAsync(message, cancellationToken: cancellationToken);
+        await queueClient.SendMessageAsync(message, cancellationToken);
     }
 
     public async Task PublishTranslateProjectResourcesMessageAsync(
@@ -32,7 +32,7 @@ public sealed class TranslationMessagePublisher(IQueueClientFactory _queueClient
         CancellationToken cancellationToken)
     {
         var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.TranslateProjectResources, cancellationToken);
-        await queueClient.SendMessageAsync(message, cancellationToken: cancellationToken);
+        await queueClient.SendMessageAsync(message, cancellationToken);
     }
 
     public async Task PublishTranslateResourceMessageAsync(
@@ -40,6 +40,6 @@ public sealed class TranslationMessagePublisher(IQueueClientFactory _queueClient
         CancellationToken cancellationToken)
     {
         var queueClient = await _queueClientFactory.GetQueueClientAsync(Queues.TranslateResource, cancellationToken);
-        await queueClient.SendMessageAsync(message, cancellationToken: cancellationToken);
+        await queueClient.SendMessageAsync(message, cancellationToken);
     }
 }

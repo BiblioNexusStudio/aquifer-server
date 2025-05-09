@@ -8,7 +8,8 @@ namespace Aquifer.Public.API.Endpoints.Resources.Get;
 
 public static class ResourceHelper
 {
-    public static async Task<Response> GetResourceContentAsync(AquiferDbReadOnlyContext dbContext,
+    public static async Task<Response> GetResourceContentAsync(
+        AquiferDbReadOnlyContext dbContext,
         CommonResourceRequest req,
         Action<string, int?> throwError,
         CancellationToken ct)
@@ -31,15 +32,16 @@ public static class ResourceHelper
                     Id = x.ResourceContent.Language.Id,
                     DisplayName = x.ResourceContent.Language.EnglishDisplay,
                     Code = x.ResourceContent.Language.ISO6393Code,
-                    ScriptDirection = x.ResourceContent.Language.ScriptDirection
+                    ScriptDirection = x.ResourceContent.Language.ScriptDirection,
                 },
                 Grouping = new ResourceTypeMetadata
                 {
                     Name = x.ResourceContent.Resource.ParentResource.DisplayName,
                     Type = x.ResourceContent.Resource.ParentResource.ResourceType,
                     MediaTypeValue = x.ResourceContent.MediaType,
-                    LicenseInfo = JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(x.ResourceContent.Resource.ParentResource.LicenseInfo),
-                }
+                    LicenseInfo = JsonUtilities.DefaultDeserialize<ResourceLicenseInfo>(
+                        x.ResourceContent.Resource.ParentResource.LicenseInfo),
+                },
             })
             .ToListAsync(ct);
 

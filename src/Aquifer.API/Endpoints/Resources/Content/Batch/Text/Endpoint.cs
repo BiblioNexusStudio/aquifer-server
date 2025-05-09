@@ -30,13 +30,14 @@ public class Endpoint(
             .Select(contentVersion => new Response
             {
                 Id = contentVersion.ResourceContentId,
-                Content = JsonUtilities.DefaultDeserialize(contentVersion.Content)
+                Content = JsonUtilities.DefaultDeserialize(contentVersion.Content),
             })
             .ToListAsync(ct);
 
         if (contents.Count != req.Ids.Count)
         {
-            telemetry.TrackTrace("IDs and content found have different lengths.",
+            telemetry.TrackTrace(
+                "IDs and content found have different lengths.",
                 SeverityLevel.Error,
                 new Dictionary<string, string> { { "Ids", string.Join(", ", req.Ids) } });
             await SendNotFoundAsync(ct);
@@ -49,6 +50,6 @@ public class Endpoint(
     public override async Task OnAfterHandleAsync(Request req, List<Response> res, CancellationToken ct)
     {
         const string endpointId = "resources-content-batch-text";
-        await trackingMessagePublisher.PublishTrackResourceContentRequestMessageAsync(HttpContext, req.Ids, endpointId, source: null, ct);
+        await trackingMessagePublisher.PublishTrackResourceContentRequestMessageAsync(HttpContext, req.Ids, endpointId, null, ct);
     }
 }

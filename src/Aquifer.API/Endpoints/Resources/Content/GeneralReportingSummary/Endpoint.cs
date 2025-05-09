@@ -60,7 +60,8 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
         var parentResources = resourcesByLanguage.Select(x => x.ParentResourceName).Distinct().ToList();
 
         var resourcesByParentResourceResponse = GetResourcesByParentResourceResponse(resourcesByParentResource, months);
-        var resourcesByLanguageResponse = GetResourcesByLanguageResponse(resourcesByLanguage,
+        var resourcesByLanguageResponse = GetResourcesByLanguageResponse(
+            resourcesByLanguage,
             months,
             languages,
             parentResources);
@@ -71,8 +72,9 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
                 {
                     Date = x.Key,
                     MonthAbbreviation = x.First().MonthAbbreviation,
-                    ResourceCount = x.Sum(rc => rc.ResourceCount)
-                }).ToList();
+                    ResourceCount = x.Sum(rc => rc.ResourceCount),
+                })
+            .ToList();
 
         await SendOkAsync(
             new Response
@@ -83,8 +85,9 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
                 AllResourcesCount = allResourcesCount,
                 MultiLanguageResourcesCount = multiLanguageResourcesCount,
                 Languages = languages,
-                ParentResourceNames = parentResources
-            }, ct);
+                ParentResourceNames = parentResources,
+            },
+            ct);
     }
 
     private static List<ByParentResourceResponse> GetResourcesByParentResourceResponse(
@@ -102,12 +105,13 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
             {
                 if (resourceGroup.SingleOrDefault(x => x.Date == date) == null)
                 {
-                    resourcesByParentResource.Add(new ResourcesSummaryCommon
-                    {
-                        ParentResourceName = resourceGroup.Key,
-                        Date = date,
-                        ResourceCount = 0
-                    });
+                    resourcesByParentResource.Add(
+                        new ResourcesSummaryCommon
+                        {
+                            ParentResourceName = resourceGroup.Key,
+                            Date = date,
+                            ResourceCount = 0,
+                        });
                 }
             }
         }
@@ -127,12 +131,13 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
             }
         }
 
-        return resourcesByParentResource.Where(x => x.Date >= lastFiveMonths.Last()).OrderBy(x => x.Date)
+        return resourcesByParentResource.Where(x => x.Date >= lastFiveMonths.Last())
+            .OrderBy(x => x.Date)
             .Select(x => new ByParentResourceResponse
             {
                 ResourceCount = x.ResourceCount,
                 ParentResourceName = x.ParentResourceName,
-                FullDateTime = x.Date
+                FullDateTime = x.Date,
             })
             .ToList();
     }
@@ -152,13 +157,14 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
             {
                 if (!resourcesByLanguage.Any(x => x.ParentResourceName == resource && x.LanguageName == language))
                 {
-                    resourcesByLanguage.Add(new ResourcesSummaryByLanguage
-                    {
-                        Date = lastFiveMonths.Last(),
-                        LanguageName = language,
-                        ResourceCount = 0,
-                        ParentResourceName = resource
-                    });
+                    resourcesByLanguage.Add(
+                        new ResourcesSummaryByLanguage
+                        {
+                            Date = lastFiveMonths.Last(),
+                            LanguageName = language,
+                            ResourceCount = 0,
+                            ParentResourceName = resource,
+                        });
                 }
             }
         }
@@ -171,13 +177,14 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
             {
                 if (resourceGroup.SingleOrDefault(x => x.Date == date) == null)
                 {
-                    resourcesByLanguage.Add(new ResourcesSummaryByLanguage
-                    {
-                        LanguageName = resourceGroup.Key.LanguageName,
-                        ParentResourceName = resourceGroup.Key.ParentResourceName,
-                        Date = date,
-                        ResourceCount = 0
-                    });
+                    resourcesByLanguage.Add(
+                        new ResourcesSummaryByLanguage
+                        {
+                            LanguageName = resourceGroup.Key.LanguageName,
+                            ParentResourceName = resourceGroup.Key.ParentResourceName,
+                            Date = date,
+                            ResourceCount = 0,
+                        });
                 }
             }
         }
@@ -193,13 +200,14 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
             }
         }
 
-        return resourcesByLanguage.Where(x => x.Date >= lastFiveMonths.Last()).OrderBy(x => x.Date)
+        return resourcesByLanguage.Where(x => x.Date >= lastFiveMonths.Last())
+            .OrderBy(x => x.Date)
             .Select(x => new ByLanguageResponse
             {
                 Language = x.LanguageName,
                 ResourceCount = x.ResourceCount,
                 ParentResourceName = x.ParentResourceName,
-                FullDateTime = x.Date
+                FullDateTime = x.Date,
             })
             .ToList();
     }
@@ -219,7 +227,8 @@ public class Endpoint(AquiferDbContext dbContext) : EndpointWithoutRequest<Respo
             .ToListAsync(ct);
 
         var multiLanguageResourcesCount = (await dbContext.Database
-            .SqlQuery<int>($"exec ({GetMultiLanguageResourcesCountQuery})").ToListAsync(ct)).Single();
+            .SqlQuery<int>($"exec ({GetMultiLanguageResourcesCountQuery})")
+            .ToListAsync(ct)).Single();
 
         return (resourcesByParentResource, resourcesByLanguage, multiLanguageResourcesCount);
     }

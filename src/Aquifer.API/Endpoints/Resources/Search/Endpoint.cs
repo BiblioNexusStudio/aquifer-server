@@ -28,24 +28,25 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
             ? ((int?)null, (int?)null)
             : BibleUtilities.GetVerseIds(req.BookCode, req.StartChapter, req.EndChapter, req.StartVerse, req.EndVerse);
 
-        var query = dbContext.ResourceContentVersions.Where(x =>
+        var query = dbContext.ResourceContentVersions
+            .Where(x =>
                 x.IsPublished &&
                 x.ResourceContent.Resource.ParentResource.Enabled &&
                 (req.Query == null || x.DisplayName.Contains(req.Query) || x.ResourceContent.Resource.EnglishLabel.Contains(req.Query)) &&
                 (startVerseId == null ||
-                 x.ResourceContent.Resource.VerseResources.Any(vr =>
-                     vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
-                 x.ResourceContent.Resource.PassageResources.Any(pr =>
-                     (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
-                     (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
-                     (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
+                    x.ResourceContent.Resource.VerseResources.Any(vr =>
+                        vr.VerseId >= startVerseId && vr.VerseId <= endVerseId) ||
+                    x.ResourceContent.Resource.PassageResources.Any(pr =>
+                        (pr.Passage.StartVerseId >= startVerseId && pr.Passage.StartVerseId <= endVerseId) ||
+                        (pr.Passage.EndVerseId >= startVerseId && pr.Passage.EndVerseId <= endVerseId) ||
+                        (pr.Passage.StartVerseId <= startVerseId && pr.Passage.EndVerseId >= endVerseId))) &&
                 (req.ParentResourceId == x.ResourceContent.Resource.ParentResourceId ||
-                 req.ResourceTypes.Contains(x.ResourceContent.Resource.ParentResource.ResourceType)) &&
+                    req.ResourceTypes.Contains(x.ResourceContent.Resource.ParentResource.ResourceType)) &&
                 // Either it's in the requested language or it's allowed to fallback to English and has no resource in requested language
                 (x.ResourceContent.LanguageId == req.LanguageId ||
-                 (Constants.FallbackToEnglishForMediaTypes.Contains(x.ResourceContent.MediaType) &&
-                  x.ResourceContent.LanguageId == 1 &&
-                  !x.ResourceContent.Resource.ResourceContents.Any(rc => rc.LanguageId == req.LanguageId))))
+                    (Constants.FallbackToEnglishForMediaTypes.Contains(x.ResourceContent.MediaType) &&
+                        x.ResourceContent.LanguageId == 1 &&
+                        !x.ResourceContent.Resource.ResourceContents.Any(rc => rc.LanguageId == req.LanguageId))))
             .OrderBy(r => r.ResourceContent.Resource.SortOrder)
             .ThenBy(r => r.DisplayName)
             .Select(rcv => new Response
@@ -53,16 +54,19 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                 Id = rcv.ResourceContentId,
                 DependentOnId =
                     rcv.ResourceContent.MediaType != ResourceContentMediaType.Text
-                        ? rcv.ResourceContent.Resource.ResourceContents
+                        ? rcv.ResourceContent
+                            .Resource
+                            .ResourceContents
                             .Where(rc => rc.LanguageId == req.LanguageId && rc.MediaType == ResourceContentMediaType.Text)
-                            .Select(rc => rc.Id).FirstOrDefault()
+                            .Select(rc => rc.Id)
+                            .FirstOrDefault()
                         : null,
                 DisplayName = rcv.DisplayName,
                 MediaType = rcv.ResourceContent.MediaType.ToString(),
                 ParentResourceId = rcv.ResourceContent.Resource.ParentResourceId,
                 SortOrder = rcv.ResourceContent.Resource.SortOrder,
                 Version = rcv.Version,
-                ResourceType = rcv.ResourceContent.Resource.ParentResource.ResourceType.ToString()
+                ResourceType = rcv.ResourceContent.Resource.ParentResource.ResourceType.ToString(),
             });
 
         if (req.ParentResourceId is not null)

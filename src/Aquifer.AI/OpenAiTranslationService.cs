@@ -58,9 +58,9 @@ public sealed partial class OpenAiTranslationService : ITranslationService
     private static readonly TimeSpan s_openAiNetworkTimeout = TimeSpan.FromMinutes(10);
 
     private readonly ChatClient _chatClient;
-    private readonly float _temperature;
 
     private readonly OpenAiTranslationOptions _options;
+    private readonly float _temperature;
 
     public OpenAiTranslationService(
         OpenAiTranslationOptions openAiTranslationOptions,
@@ -217,7 +217,8 @@ public sealed partial class OpenAiTranslationService : ITranslationService
             _options.LanguageSpecificTextImprovementPromptAppendixByLanguageIso6393CodeMap
                 .GetValueOrDefault(destinationLanguage.Iso6393Code.ToUpper());
 
-        return $"{_options.HtmlBasePrompt} {textImprovementPrompt}{(languageSpecificTextImprovementPromptAppendix == null ? "" : $" {languageSpecificTextImprovementPromptAppendix}")}";
+        return
+            $"{_options.HtmlBasePrompt} {textImprovementPrompt}{(languageSpecificTextImprovementPromptAppendix == null ? "" : $" {languageSpecificTextImprovementPromptAppendix}")}";
     }
 
     private string GetPlainTextTranslationPrompt((string Iso6393Code, string EnglishName) destinationLanguage)

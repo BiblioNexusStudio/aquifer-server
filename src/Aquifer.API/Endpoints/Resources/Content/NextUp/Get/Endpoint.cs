@@ -15,49 +15,49 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
     /// -------------------------------------------------------------------------------------------
     /// -------------------------------------------------------------------------------------------
     private const string NextUpForEditorQuery = """
-                                                WITH UserAssignedResources AS (
-                                                   SELECT RCV.ResourceContentId,
-                                                          ROW_NUMBER() OVER (ORDER BY DATEDIFF(DAY, History.Created, GETDATE()) DESC, R.SortOrder ASC, R.EnglishLabel ASC) AS RowNum
-                                                   FROM ResourceContentVersions AS RCV
-                                                       INNER JOIN ResourceContents AS RC ON RCV.ResourceContentId = RC.Id
-                                                       INNER JOIN Resources AS R ON RC.ResourceId = R.Id
-                                                       CROSS APPLY (
-                                                           SELECT TOP 1 RCVAUH.Created AS Created
-                                                           FROM ResourceContentVersionAssignedUserHistory AS RCVAUH
-                                                           WHERE RCV.Id = RCVAUH.ResourceContentVersionId AND RCVAUH.AssignedUserId = {0}
-                                                           ORDER BY RCVAUH.Id DESC
-                                                       ) AS History
-                                                   WHERE RCV.AssignedUserId = {0} AND RC.Status NOT IN ({1}, {2})
-                                                )
-                                                SELECT ResourceContentId AS Value
-                                                FROM UserAssignedResources
-                                                WHERE RowNum = (
-                                                    SELECT RowNum + 1
-                                                    FROM UserAssignedResources
-                                                    WHERE ResourceContentId = {3}
-                                                );
-                                                """;
+        WITH UserAssignedResources AS (
+           SELECT RCV.ResourceContentId,
+                  ROW_NUMBER() OVER (ORDER BY DATEDIFF(DAY, History.Created, GETDATE()) DESC, R.SortOrder ASC, R.EnglishLabel ASC) AS RowNum
+           FROM ResourceContentVersions AS RCV
+               INNER JOIN ResourceContents AS RC ON RCV.ResourceContentId = RC.Id
+               INNER JOIN Resources AS R ON RC.ResourceId = R.Id
+               CROSS APPLY (
+                   SELECT TOP 1 RCVAUH.Created AS Created
+                   FROM ResourceContentVersionAssignedUserHistory AS RCVAUH
+                   WHERE RCV.Id = RCVAUH.ResourceContentVersionId AND RCVAUH.AssignedUserId = {0}
+                   ORDER BY RCVAUH.Id DESC
+               ) AS History
+           WHERE RCV.AssignedUserId = {0} AND RC.Status NOT IN ({1}, {2})
+        )
+        SELECT ResourceContentId AS Value
+        FROM UserAssignedResources
+        WHERE RowNum = (
+            SELECT RowNum + 1
+            FROM UserAssignedResources
+            WHERE ResourceContentId = {3}
+        );
+        """;
 
     private const string NextUpForManagerQuery = """
-                                                 WITH UserAssignedResources AS (
-                                                    SELECT RCV.ResourceContentId,
-                                                           ROW_NUMBER() OVER (ORDER BY DATEDIFF(DAY, GETDATE(), COALESCE(P.ProjectedDeliveryDate, '2100-12-31')) ASC,
-                                                                              P.Name ASC, R.SortOrder ASC, R.EnglishLabel ASC) AS RowNum
-                                                    FROM ResourceContentVersions AS RCV
-                                                        INNER JOIN ResourceContents AS RC ON RCV.ResourceContentId = RC.Id
-                                                        INNER JOIN Resources AS R ON RC.ResourceId = R.Id
-                                                        LEFT JOIN ProjectResourceContents PRC ON RC.Id = PRC.ResourceContentId
-                                                        LEFT JOIN Projects P ON PRC.ProjectId = P.Id
-                                                    WHERE RCV.AssignedUserId = {0} AND RC.Status NOT IN ({1}, {2})
-                                                 )
-                                                 SELECT ResourceContentId AS Value
-                                                 FROM UserAssignedResources
-                                                 WHERE RowNum = (
-                                                     SELECT RowNum + 1
-                                                     FROM UserAssignedResources
-                                                     WHERE ResourceContentId = {3}
-                                                 );
-                                                 """;
+        WITH UserAssignedResources AS (
+           SELECT RCV.ResourceContentId,
+                  ROW_NUMBER() OVER (ORDER BY DATEDIFF(DAY, GETDATE(), COALESCE(P.ProjectedDeliveryDate, '2100-12-31')) ASC,
+                                     P.Name ASC, R.SortOrder ASC, R.EnglishLabel ASC) AS RowNum
+           FROM ResourceContentVersions AS RCV
+               INNER JOIN ResourceContents AS RC ON RCV.ResourceContentId = RC.Id
+               INNER JOIN Resources AS R ON RC.ResourceId = R.Id
+               LEFT JOIN ProjectResourceContents PRC ON RC.Id = PRC.ResourceContentId
+               LEFT JOIN Projects P ON PRC.ProjectId = P.Id
+           WHERE RCV.AssignedUserId = {0} AND RC.Status NOT IN ({1}, {2})
+        )
+        SELECT ResourceContentId AS Value
+        FROM UserAssignedResources
+        WHERE RowNum = (
+            SELECT RowNum + 1
+            FROM UserAssignedResources
+            WHERE ResourceContentId = {3}
+        );
+        """;
 
     public override void Configure()
     {
@@ -71,12 +71,13 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService) : En
         var response = new Response
         {
             NextUpResourceContentId = (await dbContext.Database
-                .SqlQueryRaw<int?>(user.Role is UserRole.Manager or UserRole.Reviewer ? NextUpForManagerQuery : NextUpForEditorQuery,
+                .SqlQueryRaw<int?>(
+                    user.Role is UserRole.Manager or UserRole.Reviewer ? NextUpForManagerQuery : NextUpForEditorQuery,
                     user.Id,
                     (int)ResourceContentStatus.TranslationAiDraftComplete,
                     (int)ResourceContentStatus.AquiferizeAiDraftComplete,
                     request.Id)
-                .ToListAsync(ct)).FirstOrDefault()
+                .ToListAsync(ct)).FirstOrDefault(),
         };
         await SendOkAsync(response, ct);
     }

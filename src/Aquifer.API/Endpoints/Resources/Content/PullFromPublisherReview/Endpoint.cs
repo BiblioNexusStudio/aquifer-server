@@ -26,23 +26,34 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
             .SingleOrDefaultAsync(u => u.Id == request.AssignedUserId && u.Enabled, ct);
         var permissions = ResourceStatusHelpers.GetAssignmentPermissions(userService);
 
-        await ResourceStatusHelpers.ValidateReviewerAndAssignedUserAsync<Request>(request.AssignedUserId, null,
-            dbContext, user, permissions, ct, userToAssign);
+        await ResourceStatusHelpers.ValidateReviewerAndAssignedUserAsync<Request>(
+            request.AssignedUserId,
+            null,
+            dbContext,
+            user,
+            permissions,
+            ct,
+            userToAssign);
 
         var contentIds = request.ContentId is not null ? [(int)request.ContentId] : request.ContentIds!;
 
-        var draftVersions = await ResourceStatusHelpers.GetDraftVersionsAsync<Request>(contentIds,
-        [
-            ResourceContentStatus.AquiferizePublisherReview, ResourceContentStatus.TranslationPublisherReview,
-            ResourceContentStatus.TranslationNotApplicable
-        ], dbContext, ct);
+        var draftVersions = await ResourceStatusHelpers.GetDraftVersionsAsync<Request>(
+            contentIds,
+            [
+                ResourceContentStatus.AquiferizePublisherReview, ResourceContentStatus.TranslationPublisherReview,
+                ResourceContentStatus.TranslationNotApplicable,
+            ],
+            dbContext,
+            ct);
 
         foreach (var draftVersion in draftVersions)
         {
             var originalStatus = draftVersion.ResourceContent.Status;
 
-            ResourceStatusHelpers.ValidateAllowedToAssign<Request>(permissions,
-                draftVersion, user);
+            ResourceStatusHelpers.ValidateAllowedToAssign<Request>(
+                permissions,
+                draftVersion,
+                user);
 
             ValidateAssignedUserForNotApplicable(userToAssign!, originalStatus);
 
@@ -58,7 +69,8 @@ public class Endpoint(AquiferDbContext dbContext, IUserService userService, IRes
 
     private void ValidateAssignedUserForNotApplicable(UserEntity userToAssign, ResourceContentStatus originalStatus)
     {
-        if (originalStatus == ResourceContentStatus.TranslationNotApplicable && userToAssign.Role is not UserRole.Manager &&
+        if (originalStatus == ResourceContentStatus.TranslationNotApplicable &&
+            userToAssign.Role is not UserRole.Manager &&
             userToAssign.Role is not UserRole.Reviewer)
         {
             ThrowError($"Can only assign a manager to resource content when pulling back from status: {originalStatus}");

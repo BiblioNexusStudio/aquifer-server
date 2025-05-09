@@ -10,7 +10,11 @@ public class Validator : Validator<Request>
 {
     public Validator()
     {
-        RuleFor(x => x).Must(x => x.Query is not null || x.BookCode is not null || x.ResourceType is not ResourceType.None || x.ResourceCollectionCode is not null)
+        RuleFor(x => x)
+            .Must(x => x.Query is not null ||
+                x.BookCode is not null ||
+                x.ResourceType is not ResourceType.None ||
+                x.ResourceCollectionCode is not null)
             .WithMessage("One of search query, bookCode, resourceType, or resourceCollectionCode is required.");
 
         RuleFor(x => x)
@@ -18,11 +22,13 @@ public class Validator : Validator<Request>
             .WithMessage("Either languageId or languageCode is required. Cannot use both.");
 
         RuleFor(x => x.BookCode).NotNull().When(x => x.StartChapter > 0);
-        RuleFor(x => x.BookCode).Must(x => BibleBookCodeUtilities.IdFromCode(x!) != BookId.None)
+        RuleFor(x => x.BookCode)
+            .Must(x => BibleBookCodeUtilities.IdFromCode(x!) != BookId.None)
             .WithMessage("Invalid book code {PropertyValue}. Get a valid list from /bibles/books endpoint.")
             .When(x => x.BookCode is not null);
 
-        RuleFor(x => x).Must(x =>
+        RuleFor(x => x)
+            .Must(x =>
                 x.ResourceType == ResourceType.None ||
                 (x.ResourceType != ResourceType.None && x.ResourceCollectionCode is null))
             .WithMessage("Cannot specify both resourceType and resourceCollectionCode.");
@@ -37,7 +43,8 @@ public class Validator : Validator<Request>
         RuleFor(x => x.StartVerse).NotNull().When(x => x.EndVerse != null);
         RuleFor(x => x.EndVerse).NotNull().When(x => x.StartVerse != null);
 
-        RuleFor(x => x).Must(x => x.StartChapter <= x.EndChapter)
+        RuleFor(x => x)
+            .Must(x => x.StartChapter <= x.EndChapter)
             .When(x => x.StartChapter != null && x.EndChapter != null)
             .WithMessage("startChapter cannot be greater than endChapter");
 

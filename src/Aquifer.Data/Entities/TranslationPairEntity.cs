@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using Aquifer.Data.EventHandlers;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Data.Entities;
 
@@ -14,8 +14,8 @@ public class TranslationPairEntity : IHasUpdatedTimestamp
     [SqlDefaultValue("getutcdate()")]
     public DateTime Created { get; set; } = DateTime.UtcNow;
 
+    public LanguageEntity Language { get; set; } = null!;
+
     [SqlDefaultValue("getutcdate()")]
     public DateTime Updated { get; set; } = DateTime.UtcNow;
-
-    public LanguageEntity Language { get; set; } = null!;
 }

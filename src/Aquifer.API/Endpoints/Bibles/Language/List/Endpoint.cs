@@ -38,7 +38,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
                         ChapterCount = bbc.ChapterCount,
                     })
                     .ToList(),
-            }).ToListAsync(ct);
+            })
+            .ToListAsync(ct);
 
         await SendOkAsync(bibles, ct);
     }

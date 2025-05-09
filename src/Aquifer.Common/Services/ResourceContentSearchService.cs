@@ -101,19 +101,20 @@ public sealed class ResourceContentSearchResult
     public required ParentResourceSummary ParentResource { get; init; }
 
     /// <summary>
-    /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.Project"/> flag is specified.
+    /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.Project" /> flag is specified.
     /// Even if that flag is specified the result may still be <c>null</c> if the ResourceContent is not in a Project.
-    /// Will not be <c>null</c> if <see cref="ResourceContentSearchFilter.IsInProject"/> is <c>true</c>.
+    /// Will not be <c>null</c> if <see cref="ResourceContentSearchFilter.IsInProject" /> is <c>true</c>.
     /// </summary>
     public required ProjectSummary? Project { get; init; }
 
     /// <summary>
-    /// Is populated by default, but will not be populated if the <see cref="ResourceContentSearchIncludeFlags.ResourceContentVersions"/> flag is specified.
+    /// Is populated by default, but will not be populated if the <see cref="ResourceContentSearchIncludeFlags.ResourceContentVersions" /> flag is
+    /// specified.
     /// </summary>
     public required ResourceContentVersionSummary? ResourceContentVersion { get; init; }
 
     /// <summary>
-    /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.ResourceContentVersions"/> flag is specified.
+    /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.ResourceContentVersions" /> flag is specified.
     /// </summary>
     public required ResourceContentVersionsSummary? ResourceContentVersions { get; init; }
 
@@ -133,7 +134,7 @@ public sealed class ResourceContentSearchResult
         public required int SortOrder { get; init; }
 
         /// <summary>
-        /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.HasAudioForLanguage"/> flag is specified.
+        /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.HasAudioForLanguage" /> flag is specified.
         /// </summary>
         public required bool? HasAudioForLanguage { get; init; }
     }
@@ -162,7 +163,7 @@ public sealed class ResourceContentSearchResult
         public required ResourceContentVersionReviewLevel ReviewLevel { get; set; }
 
         /// <summary>
-        /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads"/> flag is specified.
+        /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads" /> flag is specified.
         /// </summary>
         public required bool? HasUnresolvedCommentThreads { get; init; }
     }
@@ -178,8 +179,8 @@ public sealed class ResourceContentSearchResult
         public required bool AnyIsDraft { get; init; }
 
         /// <summary>
-        /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads"/> flag is specified
-        /// and <see cref="AnyIsDraft"/> is <c>true</c>.
+        /// Will not be populated unless the <see cref="ResourceContentSearchIncludeFlags.HasUnresolvedCommentThreads" /> flag is specified
+        /// and <see cref="AnyIsDraft" /> is <c>true</c>.
         /// </summary>
         public required bool? HasUnresolvedCommentThreads { get; init; }
     }
@@ -456,7 +457,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         {
             const string verseIdRangesParamName = "verseIdRanges";
             coreParameters.Add(verseIdRangesParamName, filter.VerseIdRanges.AsTableValuedParameter(VerseIdRangesTableTypeName));
-            whereClausesSql.Add("""
+            whereClausesSql.Add(
+                """
                 (
                     EXISTS
                     (
@@ -542,18 +544,22 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         const string excludeContentMediaTypesParamName = "contentMediaTypeIds";
         if (filter.ExcludeContentMediaTypes is { Count: > 0 })
         {
-            coreParameters.Add(excludeContentMediaTypesParamName, filter.ExcludeContentMediaTypes
-                .Select(x => (int)x)
-                .ToArray());
+            coreParameters.Add(
+                excludeContentMediaTypesParamName,
+                filter.ExcludeContentMediaTypes
+                    .Select(x => (int)x)
+                    .ToArray());
             whereClausesSql.Add($"rc.MediaType NOT IN @{excludeContentMediaTypesParamName}");
         }
 
         const string includeContentMediaTypesParamName = "contentMediaTypeIds";
         if (filter.IncludeContentMediaTypes is { Count: > 0 })
         {
-            coreParameters.Add(includeContentMediaTypesParamName, filter.IncludeContentMediaTypes
-                .Select(x => (int)x)
-                .ToArray());
+            coreParameters.Add(
+                includeContentMediaTypesParamName,
+                filter.IncludeContentMediaTypes
+                    .Select(x => (int)x)
+                    .ToArray());
             whereClausesSql.Add($"rc.MediaType IN @{includeContentMediaTypesParamName}");
         }
 
@@ -561,9 +567,11 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         {
             const string excludeContentStatusesParamName = "contentStatusIds";
 
-            coreParameters.Add(excludeContentStatusesParamName, filter.ExcludeContentStatuses
-                .Select(x => (int)x)
-                .ToArray());
+            coreParameters.Add(
+                excludeContentStatusesParamName,
+                filter.ExcludeContentStatuses
+                    .Select(x => (int)x)
+                    .ToArray());
             whereClausesSql.Add($"rc.Status NOT IN @{excludeContentStatusesParamName}");
         }
 
@@ -571,9 +579,11 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         {
             const string includeContentStatusesParamName = "contentStatusIds";
 
-            coreParameters.Add(includeContentStatusesParamName, filter.IncludeContentStatuses
-                .Select(x => (int)x)
-                .ToArray());
+            coreParameters.Add(
+                includeContentStatusesParamName,
+                filter.IncludeContentStatuses
+                    .Select(x => (int)x)
+                    .ToArray());
             whereClausesSql.Add($"rc.Status IN @{includeContentStatusesParamName}");
         }
 
@@ -595,7 +605,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 // If the resource has a published (and no draft) version in the target language, it is considered already translated.
                 // The published check happens elsewhere by requiring the IsPublished filter to be true.
                 whereClausesSql.Add(
-                    $"""
+                    """
                         NOT EXISTS
                         (
                             SELECT NULL
@@ -609,7 +619,7 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             else
             {
                 whereClausesSql.Add(
-                        $"""
+                    $"""
                         NOT EXISTS
                         (
                             SELECT NULL
@@ -650,9 +660,10 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         {
             if (filter.IsPublished.Value)
             {
-                whereClausesSql.Add(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions)
-                    ? "rcvd.AnyIsPublished = 1"
-                    : "rcv.IsPublished = 1");
+                whereClausesSql.Add(
+                    includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions)
+                        ? "rcvd.AnyIsPublished = 1"
+                        : "rcv.IsPublished = 1");
             }
             else
             {
@@ -665,9 +676,10 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         {
             if (filter.IsDraft.Value)
             {
-                whereClausesSql.Add(includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions)
-                    ? "rcvd.AnyIsDraft = 1"
-                    : "rcv.IsDraft = 1");
+                whereClausesSql.Add(
+                    includeFlags.HasFlag(ResourceContentSearchIncludeFlags.ResourceContentVersions)
+                        ? "rcvd.AnyIsDraft = 1"
+                        : "rcv.IsDraft = 1");
             }
             else
             {
@@ -678,7 +690,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
 
         if (filter.IsNewestResourceContentVersion.HasValue)
         {
-            whereClausesSql.Add($"""
+            whereClausesSql.Add(
+                $"""
                     rcv.Id {(filter.IsNewestResourceContentVersion.Value ? "=" : "<>")}
                     (
                         SELECT TOP 1 rcv4.id
@@ -698,8 +711,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         const string offsetLiteralName = "offset";
         const string limitLiteralName = "limit";
         const string pagingSql = $$"""
-           OFFSET {={{offsetLiteralName}}} ROWS FETCH NEXT {={{limitLiteralName}}} ROWS ONLY
-           """;
+            OFFSET {={{offsetLiteralName}}} ROWS FETCH NEXT {={{limitLiteralName}}} ROWS ONLY
+            """;
 
         var pagingParameters = new DynamicParameters(coreParameters);
         if (hasPaging)
@@ -712,22 +725,25 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
         {
             ResourceContentSearchSortOrder.ResourceContentId => "ORDER BY rc.Id",
             ResourceContentSearchSortOrder.ParentResourceAndResourceName => """
-                ORDER BY
-                    pr.DisplayName,
-                    r.SortOrder,
-                    r.EnglishLabel,
-                    rc.LanguageId
-                """,
+            ORDER BY
+                pr.DisplayName,
+                r.SortOrder,
+                r.EnglishLabel,
+                rc.LanguageId
+            """,
             ResourceContentSearchSortOrder.ProjectProjectedDeliveryDate => """
-                ORDER BY
-                    COALESCE(p.ProjectedDeliveryDate, '2100-12-31'),
-                    p.Name,
-                    pr.DisplayName,
-                    r.SortOrder,
-                    r.EnglishLabel,
-                    rc.LanguageId
-                """,
-            _ => throw new ArgumentOutOfRangeException(nameof(sortOrder), sortOrder, $"Unexpected \"{nameof(sortOrder)}\": \"{sortOrder}\"."),
+            ORDER BY
+                COALESCE(p.ProjectedDeliveryDate, '2100-12-31'),
+                p.Name,
+                pr.DisplayName,
+                r.SortOrder,
+                r.EnglishLabel,
+                rc.LanguageId
+            """,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(sortOrder),
+                sortOrder,
+                $"Unexpected \"{nameof(sortOrder)}\": \"{sortOrder}\"."),
         };
 
         var dataSql = $"""
@@ -738,15 +754,16 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
             {(hasPaging ? pagingSql : "")}
             """;
 
-        var resourceContentSearchResults = (await dbContext.Database.GetDbConnection()
-            .QueryWithRetriesAsync<
-                ResourceContentSummary,
-                ResourceSummary,
-                ParentResourceSummary,
-                ProjectSummary,
-                ResourceContentVersionsSummary,
-                ResourceContentVersionSummary,
-                ResourceContentSearchResult>(
+        var resourceContentSearchResults = (await dbContext.Database
+                .GetDbConnection()
+                .QueryWithRetriesAsync<
+                    ResourceContentSummary,
+                    ResourceSummary,
+                    ParentResourceSummary,
+                    ProjectSummary,
+                    ResourceContentVersionsSummary,
+                    ResourceContentVersionSummary,
+                    ResourceContentSearchResult>(
                     dataSql,
                     (rc, r, pr, p, rcvd, rcv) => new ResourceContentSearchResult
                     {
@@ -777,7 +794,8 @@ public sealed class ResourceContentSearchService(AquiferDbContext dbContext) : I
                 {whereSql}
                 """;
 
-            total = await dbContext.Database.GetDbConnection()
+            total = await dbContext.Database
+                .GetDbConnection()
                 .ExecuteScalarWithRetriesAsync<int>(totalSql, coreParameters, cancellationToken: ct);
         }
 

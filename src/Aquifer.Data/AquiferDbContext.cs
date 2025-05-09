@@ -10,7 +10,7 @@ public class AquiferDbContext : DbContext
 {
     private readonly DbContextOptions _options;
 
-    public AquiferDbContext(DbContextOptions<AquiferDbContext> options) : this(options, isReadOnly: false)
+    public AquiferDbContext(DbContextOptions<AquiferDbContext> options) : this(options, false)
     {
     }
 

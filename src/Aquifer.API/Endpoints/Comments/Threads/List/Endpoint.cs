@@ -19,7 +19,7 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
         var response = req.ThreadType switch
         {
             CommentThreadType.ResourceContentVersion => await GetResourceContentVersionCommentThreadAsync(req, ct),
-            _ => throw new UnreachableException()
+            _ => throw new UnreachableException(),
         };
 
         await SendOkAsync(response, ct);
@@ -27,18 +27,26 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, List<Respo
 
     private async Task<List<Response>> GetResourceContentVersionCommentThreadAsync(Request req, CancellationToken ct)
     {
-        return await dbContext.ResourceContentVersions.Where(x => x.Id == req.TypeId)
-            .SelectMany(x => x.CommentThreads).Select(x => new Response
+        return await dbContext.ResourceContentVersions
+            .Where(x => x.Id == req.TypeId)
+            .SelectMany(x => x.CommentThreads)
+            .Select(x => new Response
             {
                 Id = x.CommentThreadId,
                 Resolved = x.CommentThread.Resolved,
-                Comments = x.CommentThread.Comments.Select(c => new CommentResponse
-                {
-                    Id = c.Id,
-                    Comment = c.Comment,
-                    User = UserDto.FromUserEntity(c.User)!,
-                    DateTime = c.Updated
-                }).OrderBy(o => o.Id).ToList()
-            }).OrderBy(o => o.Id).ToListAsync(ct);
+                Comments = x.CommentThread
+                    .Comments
+                    .Select(c => new CommentResponse
+                    {
+                        Id = c.Id,
+                        Comment = c.Comment,
+                        User = UserDto.FromUserEntity(c.User)!,
+                        DateTime = c.Updated,
+                    })
+                    .OrderBy(o => o.Id)
+                    .ToList(),
+            })
+            .OrderBy(o => o.Id)
+            .ToListAsync(ct);
     }
 }

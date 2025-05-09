@@ -38,7 +38,8 @@ public sealed class EndpointTests(App _app) : TestBase<App>
         }
 
         // assert specific results are present
-        var bibleDictionaries = results.Should().Contain(x => x.Type == "Bible Dictionaries")
+        var bibleDictionaries = results.Should()
+            .Contain(x => x.Type == "Bible Dictionaries")
             .Subject;
         bibleDictionaries.Collections.Should().Contain(x => x.Code == "TyndaleBibleDictionary");
     }

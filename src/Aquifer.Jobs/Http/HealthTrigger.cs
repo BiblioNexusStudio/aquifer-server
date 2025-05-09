@@ -10,7 +10,8 @@ public class HealthTrigger(IQueueClientFactory _queueClientFactory, ILogger<Heal
 {
     [Function("Health")]
     public async Task<HttpResponseData> RunAsync(
-        [HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req,
+        [HttpTrigger(AuthorizationLevel.Function, "get")]
+        HttpRequestData req,
         CancellationToken ct)
     {
         try

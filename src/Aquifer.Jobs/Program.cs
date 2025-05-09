@@ -44,7 +44,9 @@ var host = new HostBuilder()
         services.AddSingleton(cfg => cfg.GetRequiredService<IOptions<ConfigurationOptions>>().Value.Upload);
 
         services.AddDbContext<AquiferDbContext>(options => options
-            .UseAzureSql(configuration.ConnectionStrings.BiblioNexusDb, providerOptions => providerOptions.EnableRetryOnFailure(3))
+            .UseAzureSql(
+                configuration.ConnectionStrings.BiblioNexusDb,
+                providerOptions => providerOptions.EnableRetryOnFailure(3))
             .EnableSensitiveDataLogging(isDevelopment)
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
@@ -63,9 +65,10 @@ var host = new HostBuilder()
         services.AddTranslationProcessingServices();
 
         services.AddHttpClient<IIpAddressLookupHttpClient, IpAddressLookupHttpClient>()
-            .AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
-                .OrResult(res => res.StatusCode == HttpStatusCode.TooManyRequests)
-                .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(5), 2)));
+            .AddPolicyHandler(
+                HttpPolicyExtensions.HandleTransientHttpError()
+                    .OrResult(res => res.StatusCode == HttpStatusCode.TooManyRequests)
+                    .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(TimeSpan.FromSeconds(5), 2)));
         services.AddSingleton<IAzureKeyVaultClient, AzureKeyVaultClient>();
         services.AddScoped<IResourceHistoryService, ResourceHistoryService>();
         services.AddSingleton<IEmailMessagePublisher, EmailMessagePublisher>();

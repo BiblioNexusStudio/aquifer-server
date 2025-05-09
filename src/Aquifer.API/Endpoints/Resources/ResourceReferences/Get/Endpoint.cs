@@ -18,7 +18,11 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         var query = dbContext.Resources.Where(r => r.ParentResourceId == request.ParentResourceId && r.Id == request.ResourceId);
 
         var resource = await query
-            .Select(r => new Response { ResourceId = r.Id, EnglishLabel = r.EnglishLabel })
+            .Select(r => new Response
+            {
+                ResourceId = r.Id,
+                EnglishLabel = r.EnglishLabel,
+            })
             .FirstOrDefaultAsync(ct);
 
         if (resource == null)

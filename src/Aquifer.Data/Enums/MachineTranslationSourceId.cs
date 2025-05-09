@@ -3,5 +3,5 @@
 public enum MachineTranslationSourceId
 {
     None = 0,
-    OpenAi = 1
+    OpenAi = 1,
 }
