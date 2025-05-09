@@ -28,6 +28,7 @@ jobs:
                   cache: true
                   cache-dependency-path: "Directory.Packages.props"
             - name: Build
+              id: build
               run: dotnet build --no-incremental -m:1 --configuration Release /p:WarningsAsErrors=true /warnaserror
             - name: Login to Azure
               uses: azure/login@v2.2.0
@@ -59,14 +60,14 @@ jobs:
                       -e PublicApiKey="${{ secrets.PUBLIC_API_KEY }}"
             - name: Test Results
               uses: dorny/test-reporter@v2.0.0
-              if: success() || failure()
+              if: success() || steps.build.conclusion == 'success'
               with:
                 name: Test Results
                 path: tests/**/*.trx
                 reporter: dotnet-trx
             - name: Upload Test Results Artifacts
               uses: actions/upload-artifact@v4.6.1
-              if: success() || failure()
+              if: success() || steps.build.conclusion == 'success'
               with:
                   include-hidden-files: true
                   name: test-results
