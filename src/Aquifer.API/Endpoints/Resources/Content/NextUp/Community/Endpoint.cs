@@ -1,7 +1,6 @@
 using Aquifer.API.Common;
 using Aquifer.Common;
 using Aquifer.Data;
-using Aquifer.Data.Entities;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,7 +28,8 @@ public class Endpoint(AquiferDbContext dbContext) : Endpoint<Request, Response>
         var query = $"""
                      SELECT TOP 1 RC.Id
                      FROM Resources R
-                     INNER JOIN ResourceContents RC ON RC.ResourceId = R.Id AND RC.LanguageId = {Constants.EnglishLanguageId} AND RC.Status = {(int)ResourceContentStatus.Complete}
+                     INNER JOIN ResourceContents RC ON RC.ResourceId = R.Id AND RC.LanguageId = {Constants.EnglishLanguageId}
+                     INNER JOIN ResourceContentVersions RCV ON RC.Id = RCV.ResourceContentId AND RCV.IsPublished = 1
                      LEFT OUTER JOIN ResourceContents RC2 ON RC2.ResourceId = R.Id AND RC2.LanguageId = {resourceContentFromReq.LanguageId}
                      WHERE R.ParentResourceId = {resourceContentFromReq.Resource.ParentResourceId}
                      AND R.SortOrder >= {resourceContentFromReq.Resource.SortOrder}
