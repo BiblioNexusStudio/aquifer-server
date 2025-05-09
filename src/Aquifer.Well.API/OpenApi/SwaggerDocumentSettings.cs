@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using Aquifer.Well.API.Helpers;
+﻿using Aquifer.Well.API.Helpers;
 using FastEndpoints.Swagger;
 using NSwag;
 
@@ -18,11 +16,6 @@ public static class SwaggerDocumentSettings
             sd.ShortSchemaNames = true;
             sd.EnableJWTBearerAuth = false;
             sd.EndpointFilter = ep => ep.EndpointTags?.Contains(EndpointHelpers.EndpointTags.ExcludeFromSwaggerDocument) != true;
-            sd.SerializerSettings = s =>
-            {
-                s.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-                s.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-            };
             sd.DocumentSettings = ds =>
             {
                 ds.DocumentName = DocumentName;

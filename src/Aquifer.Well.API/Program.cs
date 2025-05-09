@@ -32,6 +32,7 @@ builder.Services
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking))
     .AddScoped<AquiferDbContext, AquiferDbReadOnlyContext>()
     .Configure<JsonOptions>(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()))
+    .AddSwaggerDocumentSettings()
     .AddFastEndpoints()
     .AddMemoryCache()
     .AddScoped<ICachingLanguageService, CachingLanguageService>()
@@ -40,7 +41,6 @@ builder.Services
     .AddTrackResourceContentRequestServices()
     .AddSingleton<ITelemetryInitializer, RequestTelemetryInitializer>()
     .AddAzureClient(builder.Environment.IsDevelopment())
-    .AddSwaggerDocumentSettings()
     .AddOutputCache()
     .AddApplicationInsightsTelemetry()
     .AddHealthChecks()
@@ -57,7 +57,6 @@ app.UseHealthChecks("/_health")
     .UseMiddleware<ApiKeyAuthorizationMiddleware>()
     .UseResponseCaching()
     .UseOutputCache()
-    .UseOpenApi()
     .UseFastEndpoints(
         config =>
         {
@@ -65,6 +64,7 @@ app.UseHealthChecks("/_health")
             config.Endpoints.Configurator = ep => ep.AllowAnonymous();
             config.Versioning.Prefix = "v";
         })
+    .UseOpenApi()
     .UseResponseCachingVaryByAllQueryKeys();
 
 await app.GenerateApiClientAsync(SwaggerDocumentSettings.DocumentName);
