@@ -4,7 +4,7 @@ using FastEndpoints;
 
 namespace Aquifer.Well.API.Endpoints.PushNotifications.Installations.Create;
 
-public class DeviceInstallationEndpoint(INotificationService notificationService) : Endpoint<Request>
+public class CreateDeviceInstallationEndpoint(INotificationService notificationService) : Endpoint<Request>
 {
     public override void Configure()
     {
