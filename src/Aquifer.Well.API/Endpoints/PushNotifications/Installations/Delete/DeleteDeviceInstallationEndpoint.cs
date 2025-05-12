@@ -8,6 +8,11 @@ public class DeleteDeviceInstallationEndpoint(INotificationService notificationS
     public override void Configure()
     {
         Delete("/push-notifications/device-installation/{DeviceInstallationId}");
+        Summary( s =>
+        {
+            s.Summary = "Delete a device installation.";
+            s.Description = "Delete a device installation with the relevant push notification service.";
+        });
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)

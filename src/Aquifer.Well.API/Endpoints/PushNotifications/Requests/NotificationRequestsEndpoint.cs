@@ -9,6 +9,11 @@ public class NotificationRequestsEndpoint(INotificationService notificationServi
     public override void Configure()
     {
         Post("/push-notifications/requests");
+        Summary( s =>
+        {
+            s.Summary = "Requests a push notification.";
+            s.Description = "Requests a push notification be sent with the given content and action.";
+        });
     }
 
     public override async Task HandleAsync(NotificationRequest req, CancellationToken ct)

@@ -9,6 +9,11 @@ public class DeviceInstallationEndpoint(INotificationService notificationService
     public override void Configure()
     {
         Post("/push-notifications/device-installation");
+        Summary( s =>
+        {
+            s.Summary = "Create or update a device installation.";
+            s.Description = "Create or update a device installation with the relevant push notification service.";
+        });
     }
 
     public override async Task HandleAsync(Request req, CancellationToken ct)
