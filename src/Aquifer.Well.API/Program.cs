@@ -70,3 +70,6 @@ app.UseHealthChecks("/_health")
 await app.GenerateApiClientAsync(SwaggerDocumentSettings.DocumentName);
 
 app.Run();
+
+// make this class public to access from integration tests
+public partial class Program;

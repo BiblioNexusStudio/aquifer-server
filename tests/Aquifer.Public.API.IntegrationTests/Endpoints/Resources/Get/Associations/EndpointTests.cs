@@ -10,6 +10,19 @@ public sealed class EndpointTests(App _app) : TestBase<App>
     private const int ImageResourceContentId = 303872;
     private const int TextResourceContentId = 1432;
 
+    [Fact]
+    public async Task InvalidRequest_NoApiKey_ShouldReturnUnauthorized()
+    {
+        var (response, result) = await _app.Client.GETAsync<Endpoint, Request, Response>(
+            new Request
+            {
+                ContentId = TextResourceContentId,
+            });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        result.Should().BeNull();
+    }
+
     [Theory]
     [InlineData(ImageResourceContentId, true, false)]
     [InlineData(TextResourceContentId, true, true)]

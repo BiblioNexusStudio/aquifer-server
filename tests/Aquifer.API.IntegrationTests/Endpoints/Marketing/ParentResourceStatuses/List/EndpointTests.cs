@@ -9,7 +9,7 @@ namespace Aquifer.API.IntegrationTests.Endpoints.Marketing.ParentResourceStatuse
 public sealed class EndpointTests(App _app) : TestBase<App>
 {
     [Fact]
-    public async Task NoAuthenticationAndNoApiKey_ShouldReturnSuccess()
+    public async Task ValidRequest_NoAuthenticationAndNoApiKey_ShouldReturnSuccess()
     {
         var request = new Request
         {
