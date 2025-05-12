@@ -94,8 +94,8 @@ public class NotificationHubService : INotificationService
             PushNotificationTemplates.Generic.Android;
 
         var iOSPushTemplate = notificationRequest.Silent ?
-            PushNotificationTemplates.Silent.iOS :
-            PushNotificationTemplates.Generic.iOS;
+            PushNotificationTemplates.Silent.Ios :
+            PushNotificationTemplates.Generic.Ios;
 
         var androidPayload = PrepareNotificationPayload(
             androidPushTemplate,
