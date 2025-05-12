@@ -23,6 +23,16 @@ public sealed class EndpointTests(App _app) : TestBase<App>
 
     [Theory]
     [MemberData(nameof(GetValidRequestData))]
+    public async Task InvalidRequest_NoApiKey_ShouldReturnUnauthorized(Request request)
+    {
+        var (response, results) = await _app.Client.GETAsync<Endpoint, Request, IReadOnlyList<Response>>(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        results.Should().BeNull();
+    }
+
+    [Theory]
+    [MemberData(nameof(GetValidRequestData))]
     public async Task ValidRequest_ShouldReturnSuccess(Request request)
     {
         var (response, results) = await _app.AnonymousClient.GETAsync<Endpoint, Request, IReadOnlyList<Response>>(request);

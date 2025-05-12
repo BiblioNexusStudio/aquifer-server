@@ -13,7 +13,7 @@ public sealed class ListLanguagesEndpointTests(App _app) : TestBase<App>
         var (response, results) = await _app.Client.GETAsync<ListLanguagesEndpoint, IReadOnlyList<ListLanguagesResponse>>();
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        results.Should().BeNullOrEmpty();
+        results.Should().BeNull();
     }
 
     [Fact]
