@@ -1,0 +1,33 @@
+using Aquifer.Well.API.Endpoints.PushNotifications.Models;
+using Aquifer.Well.API.Services;
+using FastEndpoints;
+
+namespace Aquifer.Well.API.Endpoints.PushNotifications.Installations.Create;
+
+public class DeviceInstallationEndpoint(INotificationService notificationService) : Endpoint<Request>
+{
+    public override void Configure()
+    {
+        Post("/push-notifications/device-installation");
+    }
+
+    public override async Task HandleAsync(Request req, CancellationToken ct)
+    {
+        var installationSuccess = await notificationService.CreateOrUpdateInstallationAsync(
+            new DeviceInstallation {
+                InstallationId = req.InstallationId,
+                Platform = req.Platform,
+                PushChannel = req.PushChannel,
+                Tags = req.Tags ?? Array.Empty<string>()
+            },
+            ct);
+
+        if (!installationSuccess)
+        {
+            await SendAsync("Installation Failed.",422, ct);
+            return;
+        }
+        
+        await SendOkAsync(ct);
+    }
+}
