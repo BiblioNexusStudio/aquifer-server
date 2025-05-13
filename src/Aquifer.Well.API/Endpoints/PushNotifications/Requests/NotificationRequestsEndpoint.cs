@@ -10,7 +10,7 @@ public class NotificationRequestsEndpoint(INotificationService notificationServi
     public override void Configure()
     {
         Post("/push-notifications/requests");
-        Description(d => d.ProducesProblemFE((int)HttpStatusCode.UnprocessableContent));
+        Description(d => d.ProducesProblemFE((int)HttpStatusCode.BadRequest));
         Summary( s =>
         {
             s.Summary = "Requests a push notification.";
@@ -23,7 +23,7 @@ public class NotificationRequestsEndpoint(INotificationService notificationServi
         if ((req.Silent && string.IsNullOrWhiteSpace(req?.Action)) ||
             (!req.Silent && !string.IsNullOrWhiteSpace(req?.Text)))
         {
-            await SendAsync("Bad notification request.", (int)HttpStatusCode.UnprocessableContent, ct);
+            await SendAsync("Bad notification request.", (int)HttpStatusCode.BadRequest, ct);
         }
         
         var success = await notificationService.RequestNotificationAsync(req!, ct);
@@ -31,7 +31,7 @@ public class NotificationRequestsEndpoint(INotificationService notificationServi
 
         if (!success)
         {
-            await SendAsync("Notification request failed.", (int)HttpStatusCode.UnprocessableContent, ct);
+            await SendAsync("Notification request failed.", (int)HttpStatusCode.BadRequest, ct);
             return;
         }
         

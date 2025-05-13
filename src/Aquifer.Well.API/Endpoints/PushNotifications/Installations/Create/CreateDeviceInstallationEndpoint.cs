@@ -10,7 +10,7 @@ public class CreateDeviceInstallationEndpoint(INotificationService notificationS
     public override void Configure()
     {
         Post("/push-notifications/device-installation");
-        Description(d => d.ProducesProblemFE((int)HttpStatusCode.UnprocessableContent));
+        Description(d => d.ProducesProblemFE((int)HttpStatusCode.BadRequest));
         Summary( s =>
         {
             s.Summary = "Create or update a device installation.";
@@ -31,7 +31,7 @@ public class CreateDeviceInstallationEndpoint(INotificationService notificationS
 
         if (!installationSuccess)
         {
-            await SendAsync("Installation Failed.", (int)HttpStatusCode.UnprocessableContent, ct);
+            await SendAsync("Installation Failed.", (int)HttpStatusCode.BadRequest, ct);
             return;
         }
         

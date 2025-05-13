@@ -9,7 +9,7 @@ public class DeleteDeviceInstallationEndpoint(INotificationService notificationS
     public override void Configure()
     {
         Delete("/push-notifications/device-installation/{DeviceInstallationId}");
-        Description(d => d.ProducesProblemFE((int)HttpStatusCode.UnprocessableContent));
+        Description(d => d.ProducesProblemFE((int)HttpStatusCode.BadRequest));
         Summary( s =>
         {
             s.Summary = "Delete a device installation.";
@@ -25,7 +25,7 @@ public class DeleteDeviceInstallationEndpoint(INotificationService notificationS
 
         if (!deletionSuccess)
         {
-            await SendAsync("Deleting the device installation Failed.", (int)HttpStatusCode.UnprocessableContent, ct);
+            await SendAsync("Deleting the device installation Failed.", (int)HttpStatusCode.BadRequest, ct);
             return;
         }
         
