@@ -1,3 +1,4 @@
+using System.Net;
 using Aquifer.Well.API.Endpoints.PushNotifications.Models;
 using Aquifer.Well.API.Services;
 using FastEndpoints;
@@ -9,6 +10,7 @@ public class NotificationRequestsEndpoint(INotificationService notificationServi
     public override void Configure()
     {
         Post("/push-notifications/requests");
+        Description(d => d.ProducesProblemFE((int)HttpStatusCode.UnprocessableContent));
         Summary( s =>
         {
             s.Summary = "Requests a push notification.";
@@ -21,17 +23,18 @@ public class NotificationRequestsEndpoint(INotificationService notificationServi
         if ((req.Silent && string.IsNullOrWhiteSpace(req?.Action)) ||
             (!req.Silent && !string.IsNullOrWhiteSpace(req?.Text)))
         {
-            await SendAsync("Bad notification request.",422, ct);
+            await SendAsync("Bad notification request.", (int)HttpStatusCode.UnprocessableContent, ct);
         }
         
         var success = await notificationService.RequestNotificationAsync(req!, ct);
+        Console.WriteLine("Requested");
 
         if (!success)
         {
-            await SendAsync("Notification request failed.",422, ct);
+            await SendAsync("Notification request failed.", (int)HttpStatusCode.UnprocessableContent, ct);
             return;
         }
         
-        await SendOkAsync(ct);
+        await SendNoContentAsync(ct);
     }
 }

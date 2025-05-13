@@ -1,14 +1,16 @@
+using System.Net;
 using Aquifer.Well.API.Endpoints.PushNotifications.Models;
 using Aquifer.Well.API.Services;
 using FastEndpoints;
 
 namespace Aquifer.Well.API.Endpoints.PushNotifications.Installations.Create;
 
-public class CreateDeviceInstallationEndpoint(INotificationService notificationService) : Endpoint<Request>
+public class CreateDeviceInstallationEndpoint(INotificationService notificationService) : Endpoint<CreateDeviceInstallationRequest>
 {
     public override void Configure()
     {
         Post("/push-notifications/device-installation");
+        Description(d => d.ProducesProblemFE((int)HttpStatusCode.UnprocessableContent));
         Summary( s =>
         {
             s.Summary = "Create or update a device installation.";
@@ -16,7 +18,7 @@ public class CreateDeviceInstallationEndpoint(INotificationService notificationS
         });
     }
 
-    public override async Task HandleAsync(Request req, CancellationToken ct)
+    public override async Task HandleAsync(CreateDeviceInstallationRequest req, CancellationToken ct)
     {
         var installationSuccess = await notificationService.CreateOrUpdateInstallationAsync(
             new DeviceInstallation {
@@ -29,10 +31,10 @@ public class CreateDeviceInstallationEndpoint(INotificationService notificationS
 
         if (!installationSuccess)
         {
-            await SendAsync("Installation Failed.",422, ct);
+            await SendAsync("Installation Failed.", (int)HttpStatusCode.UnprocessableContent, ct);
             return;
         }
         
-        await SendOkAsync(ct);
+        await SendNoContentAsync(ct);
     }
 }

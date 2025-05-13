@@ -2,7 +2,7 @@
 
 namespace Aquifer.Well.API.Endpoints.PushNotifications.Installations.Create;
 
-public sealed class Request
+public sealed class CreateDeviceInstallationRequest
 {
     public required string InstallationId { get; set; }
     

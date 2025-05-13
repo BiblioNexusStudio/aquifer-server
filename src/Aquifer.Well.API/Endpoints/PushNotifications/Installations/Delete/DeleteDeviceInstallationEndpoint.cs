@@ -1,13 +1,15 @@
+using System.Net;
 using Aquifer.Well.API.Services;
 using FastEndpoints;
 
 namespace Aquifer.Well.API.Endpoints.PushNotifications.Installations.Delete;
 
-public class DeleteDeviceInstallationEndpoint(INotificationService notificationService) : Endpoint<Request>
+public class DeleteDeviceInstallationEndpoint(INotificationService notificationService) : Endpoint<DeleteDeviceInstallationRequest>
 {
     public override void Configure()
     {
         Delete("/push-notifications/device-installation/{DeviceInstallationId}");
+        Description(d => d.ProducesProblemFE((int)HttpStatusCode.UnprocessableContent));
         Summary( s =>
         {
             s.Summary = "Delete a device installation.";
@@ -15,7 +17,7 @@ public class DeleteDeviceInstallationEndpoint(INotificationService notificationS
         });
     }
 
-    public override async Task HandleAsync(Request req, CancellationToken ct)
+    public override async Task HandleAsync(DeleteDeviceInstallationRequest req, CancellationToken ct)
     {
         var deletionSuccess = await notificationService.DeleteInstallationByIdAsync(
             req.DeviceInstallationId,
@@ -23,10 +25,10 @@ public class DeleteDeviceInstallationEndpoint(INotificationService notificationS
 
         if (!deletionSuccess)
         {
-            await SendAsync("Deleting the device installation Failed.",422, ct);
+            await SendAsync("Deleting the device installation Failed.", (int)HttpStatusCode.UnprocessableContent, ct);
             return;
         }
         
-        await SendOkAsync(ct);
+        await SendNoContentAsync(ct);
     }
 }
