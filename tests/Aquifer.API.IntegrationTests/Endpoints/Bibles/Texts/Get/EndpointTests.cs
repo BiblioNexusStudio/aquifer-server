@@ -7,10 +7,9 @@ namespace Aquifer.API.IntegrationTests.Endpoints.Bibles.Texts.Get;
 
 public sealed class EndpointTests(App _app) : TestBase<App>
 {
-    [Fact]
-    public async Task ValidRequest_ShouldReturnSuccess()
-    {
-        var request = new Request
+    public static TheoryData<Request> GetValidRequestData =>
+    [
+        new Request
         {
             BibleId = 1,
             BookCode = "MRK",
@@ -18,8 +17,23 @@ public sealed class EndpointTests(App _app) : TestBase<App>
             EndChapter = 1,
             StartVerse = 1,
             EndVerse = 1,
-        };
+        },
+    ];
 
+    [Theory]
+    [MemberData(nameof(GetValidRequestData))]
+    public async Task InvalidRequest_NoApiKey_ShouldReturnUnauthorized(Request request)
+    {
+        var (response, result) = await _app.Client.GETAsync<Endpoint, Request, Response>(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        result.Should().BeNull();
+    }
+
+    [Theory]
+    [MemberData(nameof(GetValidRequestData))]
+    public async Task ValidRequest_ShouldReturnSuccess(Request request)
+    {
         var (response, result) = await _app.AnonymousClient.GETAsync<Endpoint, Request, Response>(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);

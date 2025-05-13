@@ -1,16 +1,16 @@
 ﻿using System.Net;
-using Aquifer.Public.API.Endpoints.Languages.List;
+using Aquifer.Well.API.Endpoints.Languages.List;
 using FastEndpoints;
 using FastEndpoints.Testing;
 
-namespace Aquifer.Public.API.IntegrationTests.Endpoints.Languages.List;
+namespace Aquifer.Well.API.IntegrationTests.Endpoints.Languages.List;
 
-public sealed class EndpointTests(App _app) : TestBase<App>
+public sealed class ListLanguagesEndpointTests(App _app) : TestBase<App>
 {
     [Fact]
     public async Task InvalidRequest_NoApiKey_ShouldReturnUnauthorized()
     {
-        var (response, results) = await _app.Client.GETAsync<Endpoint, IReadOnlyList<Response>>();
+        var (response, results) = await _app.Client.GETAsync<ListLanguagesEndpoint, IReadOnlyList<ListLanguagesResponse>>();
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         results.Should().BeNull();
@@ -19,7 +19,7 @@ public sealed class EndpointTests(App _app) : TestBase<App>
     [Fact]
     public async Task ValidRequest_ShouldReturnSuccess()
     {
-        var (response, results) = await _app.AnonymousClient.GETAsync<Endpoint, IReadOnlyList<Response>>();
+        var (response, results) = await _app.AnonymousClient.GETAsync<ListLanguagesEndpoint, IReadOnlyList<ListLanguagesResponse>>();
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         results.Should().NotBeNullOrEmpty();
