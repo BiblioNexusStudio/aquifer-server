@@ -9,7 +9,7 @@ public class DeleteDeviceInstallationEndpoint(INotificationService notificationS
     public override void Configure()
     {
         Delete("/push-notifications/device-installation/{DeviceInstallationId}");
-        Description(d => d.ProducesProblemFE((int)HttpStatusCode.BadRequest));
+        Description(d => d.ProducesProblemFE());
         Summary( s =>
         {
             s.Summary = "Delete a device installation.";

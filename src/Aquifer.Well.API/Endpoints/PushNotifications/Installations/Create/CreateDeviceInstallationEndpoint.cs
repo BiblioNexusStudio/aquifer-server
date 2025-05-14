@@ -10,7 +10,7 @@ public class CreateDeviceInstallationEndpoint(INotificationService notificationS
     public override void Configure()
     {
         Post("/push-notifications/device-installation");
-        Description(d => d.ProducesProblemFE((int)HttpStatusCode.BadRequest));
+        Description(d => d.ProducesProblemFE());
         Summary( s =>
         {
             s.Summary = "Create or update a device installation.";

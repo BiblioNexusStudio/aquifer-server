@@ -10,7 +10,7 @@ public class NotificationRequestsEndpoint(INotificationService notificationServi
     public override void Configure()
     {
         Post("/push-notifications/requests");
-        Description(d => d.ProducesProblemFE((int)HttpStatusCode.BadRequest));
+        Description(d => d.ProducesProblemFE());
         Summary( s =>
         {
             s.Summary = "Requests a push notification.";
