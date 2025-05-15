@@ -11,7 +11,7 @@ public static class DictionaryExtensions
     }
 
     /// <summary>
-    /// Creates a dictionary from a sequence of values, ignoring duplicate keys (the last value for duplicate keys will win).
+    /// Creates a dictionary from a sequence of values, ignoring duplicate keys (the first value for duplicate keys will win).
     /// The standard ToDictionary() method will throw on duplicate keys.
     /// </summary>
     public static Dictionary<TKey, TSource> ToDictionaryIgnoringDuplicates<TSource, TKey>(
@@ -24,7 +24,7 @@ public static class DictionaryExtensions
     }
 
     /// <summary>
-    /// Creates a dictionary from a sequence of values, ignoring duplicate keys (the last value for duplicate keys will win).
+    /// Creates a dictionary from a sequence of values, ignoring duplicate keys (the first value for duplicate keys will win).
     /// The standard ToDictionary() method will throw on duplicate keys.
     /// </summary>
     public static Dictionary<TKey, TElement> ToDictionaryIgnoringDuplicates<TSource, TKey, TElement>(
@@ -43,7 +43,11 @@ public static class DictionaryExtensions
 
         foreach (var element in source)
         {
-            dictionary[keySelector(element)] = elementSelector(element);
+            var key = keySelector(element);
+            if (!dictionary.ContainsKey(key))
+            {
+                dictionary[key] = elementSelector(element);
+            }
         }
 
         return dictionary;
