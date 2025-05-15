@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aquifer.Well.API.Endpoints.Resources.ParentResources.List;
 
-// TODO add paging
 public class ListParentResourcesEndpoint(AquiferDbContext _dbContext)
     : EndpointWithoutRequest<IReadOnlyList<ListParentResourcesResponse>>
 {
@@ -18,7 +17,12 @@ public class ListParentResourcesEndpoint(AquiferDbContext _dbContext)
         ResponseCache(EndpointHelpers.OneHourInSeconds);
         Options(EndpointHelpers.ServerCacheInSeconds(EndpointHelpers.TenMinutesInSeconds));
 
-        // TODO add summary and description
+        Description(d => d.ProducesProblemFE());
+        Summary(s =>
+        {
+            s.Summary = "Return parent resources list.";
+            s.Description = "Return a list of parent resources and localization information.";
+        });
     }
 
     public override async Task HandleAsync(CancellationToken ct)

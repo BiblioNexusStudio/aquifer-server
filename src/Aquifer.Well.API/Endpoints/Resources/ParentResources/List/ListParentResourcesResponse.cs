@@ -2,7 +2,7 @@ using Aquifer.Data.Entities;
 
 namespace Aquifer.Well.API.Endpoints.Resources.ParentResources.List;
 
-public class ListParentResourcesResponse
+public sealed class ListParentResourcesResponse
 {
     public required int Id { get; set; }
     public required string Code { get; set; }
