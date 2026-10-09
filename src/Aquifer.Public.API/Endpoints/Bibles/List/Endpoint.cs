@@ -1,5 +1,6 @@
 ﻿using Aquifer.Common.Utilities;
 using Aquifer.Data;
+using Aquifer.Data.Schemas;
 using FastEndpoints;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,9 +11,7 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, IR
     public override void Configure()
     {
         Get("/bibles");
-        Description(d => d
-            .WithTags("Bibles")
-            .ProducesProblemFE());
+        Description(d => d.WithTags("Bibles").ProducesProblemFE());
         Summary(s =>
         {
             s.Summary = "Get a list of Bibles.";
@@ -24,8 +23,7 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, IR
     public override async Task HandleAsync(Request request, CancellationToken ct)
     {
         var bibles = await dbContext.Bibles
-            .Where(b =>
-                b.Enabled &&
+            .Where(b => b.Enabled &&
                 !b.RestrictedLicense &&
                 (!request.LanguageId.HasValue || b.LanguageId == request.LanguageId) &&
                 (request.LanguageCode == null || b.Language.ISO6393Code == request.LanguageCode) &&
@@ -37,7 +35,7 @@ public class Endpoint(AquiferDbReadOnlyContext dbContext) : Endpoint<Request, IR
                 Name = bible.Name,
                 Abbreviation = bible.Abbreviation,
                 Id = bible.Id,
-                LicenseInfo = JsonUtilities.DefaultDeserialize<BibleLicenseInfo>(bible.LicenseInfo),
+                LicenseInfo = JsonUtilities.DefaultDeserialize<BibleLicenseInfoSchema>(bible.LicenseInfo),
                 LanguageId = bible.LanguageId,
                 IsLanguageDefault = bible.LanguageDefault,
                 HasAudio = bible.BibleBookContents.Any(bbc => bbc.AudioUrls != null),

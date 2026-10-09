@@ -1,4 +1,6 @@
-﻿namespace Aquifer.Public.API.Endpoints.Bibles.List;
+﻿using Aquifer.Data.Schemas;
+
+namespace Aquifer.Public.API.Endpoints.Bibles.List;
 
 public record Response
 {
@@ -9,5 +11,5 @@ public record Response
     public required bool IsLanguageDefault { get; init; }
     public required bool HasAudio { get; init; }
     public required bool HasGreekAlignment { get; init; }
-    public required BibleLicenseInfo LicenseInfo { get; init; }
+    public required BibleLicenseInfoSchema LicenseInfo { get; init; }
 }
